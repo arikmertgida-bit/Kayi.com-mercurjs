@@ -29,6 +29,107 @@ services:
       timeout: 5s
       retries: 5
 
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    ports:
+      - "9002:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/mercurjs
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: supersecret
+      COOKIE_SECRET: supersecret
+      STORE_CORS: http://localhost:3000,http://localhost:8000
+      ADMIN_CORS: http://localhost:5173,http://localhost:9000
+      AUTH_CORS: http://localhost:5173,http://localhost:7001,http://localhost:9000
+      VENDOR_CORS: http://localhost:7001
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: "9000"
+      MINIO_USE_SSL: "false"
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin123
+      MINIO_BUCKET: medusa-media
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9000/health || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  admin-panel:
+    build:
+      context: ./admin-panel
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      VITE_MEDUSA_BASE: /
+      VITE_MEDUSA_BACKEND_URL: http://localhost:9000
+      VITE_MEDUSA_STOREFRONT_URL: http://localhost:3000
+
+  vendor-panel:
+    build:
+      context: ./vendor-panel
+    restart: unless-stopped
+    ports:
+      - "7001:7001"
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      PORT: "7001"
+      BACKEND_INTERNAL_URL: http://backend:9000
+      VITE_MEDUSA_BASE: /
+      VITE_MEDUSA_BACKEND_URL: http://localhost:9000
+      VITE_MEDUSA_STOREFRONT_URL: http://localhost:3000
+      VITE_DISABLE_SELLERS_REGISTRATION: "false"
+
+  storefront:
+    build:
+      context: ./storefront
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      MEDUSA_BACKEND_URL: http://backend:9000
+      NEXT_PUBLIC_BASE_URL: http://localhost:3000
+      NEXT_PUBLIC_DEFAULT_REGION: tr
+      REVALIDATE_SECRET: supersecret
+      NEXT_PUBLIC_SITE_NAME: "Kayı Marketplace"
+      NEXT_PUBLIC_SITE_DESCRIPTION: "Kayı Multi-Vendor Marketplace"
+      NEXT_PUBLIC_VENDOR_URL: http://localhost:7001
+
 volumes:
   postgres_data:
   redis_data:
+  minio_data:

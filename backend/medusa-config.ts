@@ -59,6 +59,8 @@ module.exports = defineConfig({
             id: 'minio',
             options: {
               endPoint: process.env.MINIO_ENDPOINT,
+              port: process.env.MINIO_PORT ? parseInt(process.env.MINIO_PORT) : 443,
+              useSSL: process.env.MINIO_USE_SSL !== 'false',
               accessKey: process.env.MINIO_ACCESS_KEY,
               secretKey: process.env.MINIO_SECRET_KEY,
               bucket: process.env.MINIO_BUCKET // Optional, defaults to 'medusa-media'

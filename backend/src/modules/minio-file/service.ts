@@ -16,6 +16,8 @@ type InjectedDependencies = {
 
 interface MinioServiceConfig {
   endPoint: string
+  port: number
+  useSSL: boolean
   accessKey: string
   secretKey: string
   bucket?: string
@@ -23,6 +25,8 @@ interface MinioServiceConfig {
 
 export interface MinioFileProviderOptions {
   endPoint: string
+  port?: number
+  useSSL?: boolean
   accessKey: string
   secretKey: string
   bucket?: string
@@ -45,6 +49,8 @@ class MinioFileProviderService extends AbstractFileProviderService {
     this.logger_ = logger
     this.config_ = {
       endPoint: options.endPoint,
+      port: options.port ?? 443,
+      useSSL: options.useSSL ?? true,
       accessKey: options.accessKey,
       secretKey: options.secretKey,
       bucket: options.bucket
@@ -54,11 +60,11 @@ class MinioFileProviderService extends AbstractFileProviderService {
     this.bucket = this.config_.bucket || DEFAULT_BUCKET
     this.logger_.info(`MinIO service initialized with bucket: ${this.bucket}`)
 
-    // Initialize Minio client with hardcoded SSL settings
+    // Initialize Minio client
     this.client = new Client({
       endPoint: this.config_.endPoint,
-      port: 443,
-      useSSL: true,
+      port: this.config_.port,
+      useSSL: this.config_.useSSL,
       accessKey: this.config_.accessKey,
       secretKey: this.config_.secretKey
     })
