@@ -11,4 +11,4 @@ COPY . .
 
 EXPOSE 3000
 
-CMD ["pnpm", "dev"]
+CMD ["sh", "-c", "pnpm run launcher build && pnpm run launcher start"]

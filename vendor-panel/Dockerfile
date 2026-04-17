@@ -11,4 +11,4 @@ COPY . .
 
 EXPOSE 7001
 
-CMD ["pnpm", "dev"]
+CMD ["node", "./scripts/launch-vendor.js"]

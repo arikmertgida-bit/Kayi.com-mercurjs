@@ -54,7 +54,7 @@ async function launch() {
   // Run vite
   console.log('Starting Vite dev server...\n');
   try {
-    execSync('vite', { stdio: 'inherit', env: process.env });
+    execSync('./node_modules/.bin/vite', { stdio: 'inherit', env: process.env });
   } catch (error) {
     console.error('Error starting Vite:', error.message);
     process.exit(1);

@@ -101,22 +101,35 @@ const CartShippingMethodsSection: React.FC<ShippingProps> = ({
   }, [cart])
 
   useEffect(() => {
-    if (_shippingMethods?.length) {
-      const promises = _shippingMethods
-        .filter((sm) => sm.price_type === "calculated")
-        .map((sm) => calculatePriceForShippingOption(sm.id, cart.id))
+    if (!_shippingMethods?.length) return
 
-      if (promises.length) {
-        Promise.allSettled(promises).then((res) => {
-          const pricesMap: Record<string, number> = {}
-          res
-            .filter((r) => r.status === "fulfilled")
-            .forEach((p) => (pricesMap[p.value?.id || ""] = p.value?.amount!))
+    const controller = new AbortController()
 
-          setCalculatedPricesMap(pricesMap)
-          setIsLoadingPrices(false)
-        })
-      }
+    const calculatedMethods = _shippingMethods.filter(
+      (sm) => sm.price_type === "calculated"
+    )
+
+    if (calculatedMethods.length) {
+      setIsLoadingPrices(true)
+      const promises = calculatedMethods.map((sm) =>
+        calculatePriceForShippingOption(sm.id, cart.id)
+      )
+
+      Promise.allSettled(promises).then((res) => {
+        if (controller.signal.aborted) return
+
+        const pricesMap: Record<string, number> = {}
+        res
+          .filter((r) => r.status === "fulfilled")
+          .forEach((p) => (pricesMap[p.value?.id || ""] = p.value?.amount!))
+
+        setCalculatedPricesMap(pricesMap)
+        setIsLoadingPrices(false)
+      })
+    }
+
+    return () => {
+      controller.abort()
     }
   }, [availableShippingMethods])
 

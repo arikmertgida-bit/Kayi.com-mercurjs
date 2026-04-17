@@ -104,7 +104,8 @@ const ProductsListing = ({
 
   useEffect(() => {
     handleSetProducts()
-  }, [items.length])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items])
 
   if (!results?.processingTimeMS) return <ProductListingSkeleton />
 

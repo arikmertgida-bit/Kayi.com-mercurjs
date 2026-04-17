@@ -8,7 +8,8 @@ export const getSellerByHandle = async (handle: string) => {
         fields:
           "+created_at,+email,+reviews.seller.name,+reviews.rating,+reviews.customer_note,+reviews.seller_note,+reviews.created_at,+reviews.updated_at,+reviews.customer.first_name,+reviews.customer.last_name",
       },
-      cache: "no-cache",
+      next: { revalidate: 300 },
+      cache: "force-cache",
     })
     .then(({ seller }) => {
       const response = {
