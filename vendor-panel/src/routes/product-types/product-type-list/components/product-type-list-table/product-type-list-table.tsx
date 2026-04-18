@@ -19,29 +19,53 @@ const PAGE_SIZE = 20
 export const ProductTypeListTable = () => {
   const { t } = useTranslation()
 
-  const { searchParams, raw } = useProductTypeTableQuery({
+  const { searchParams, raw, q } = useProductTypeTableQuery({
     pageSize: PAGE_SIZE,
   })
+
+  const queryWithLimit = useMemo(
+    () => (q ? { ...searchParams, limit: 9999, offset: 0 } : searchParams),
+    [searchParams, q]
+  )
+
   const { product_types, count, isLoading, isError, error } = useProductTypes(
-    searchParams,
+    queryWithLimit,
     {
       placeholderData: keepPreviousData,
     }
   )
+
+  const filteredTypes = useMemo(() => {
+    if (!q) return product_types ?? []
+    const lower = q.toLowerCase()
+    return (product_types ?? []).filter((pt) =>
+      pt.value?.toLowerCase().includes(lower)
+    )
+  }, [product_types, q])
+
+  const filteredCount = q ? filteredTypes.length : count
 
   const filters = useProductTypeTableFilters()
   const columns = useColumns()
 
   const { table } = useDataTable({
     columns,
-    data: product_types,
-    count,
+    data: filteredTypes,
+    count: filteredCount,
     getRowId: (row) => row.id,
     pageSize: PAGE_SIZE,
   })
 
   if (isError) {
-    throw error
+    return (
+      <Container className="divide-y p-0">
+        <div className="px-6 py-4">
+          <Text className="text-ui-fg-error">
+            {error instanceof Error ? error.message : "An error occurred while loading product types."}
+          </Text>
+        </div>
+      </Container>
+    )
   }
 
   return (
@@ -63,7 +87,7 @@ export const ProductTypeListTable = () => {
         isLoading={isLoading}
         columns={columns}
         pageSize={PAGE_SIZE}
-        count={count}
+        count={filteredCount}
         orderBy={[
           { key: "value", label: t("fields.value") },
           {

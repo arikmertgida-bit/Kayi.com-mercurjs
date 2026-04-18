@@ -11,4 +11,4 @@ COPY . .
 
 EXPOSE 5173
 
-CMD ["pnpm", "dev"]
+CMD ["sh", "-c", "pnpm build:preview && pnpm preview --host --port 5173"]

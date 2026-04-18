@@ -33,12 +33,22 @@ export const ProductTagListTable = () => {
     }
   )
 
+  const filteredTags = useMemo(() => {
+    if (!product_tags) return []
+    const q = raw.q
+    if (!q || q.length < 2) return product_tags
+    const lower = q.toLowerCase()
+    return product_tags.filter((tag) =>
+      tag.value?.toLowerCase().includes(lower)
+    )
+  }, [product_tags, raw.q])
+
   const columns = useColumns()
   const filters = useProductTagTableFilters()
 
   const { table } = useDataTable({
-    data: product_tags,
-    count,
+    data: filteredTags,
+    count: filteredTags.length,
     columns,
     getRowId: (row) => row.id,
     pageSize: PAGE_SIZE,
@@ -63,7 +73,7 @@ export const ProductTagListTable = () => {
         isLoading={isPending}
         columns={columns}
         pageSize={PAGE_SIZE}
-        count={count}
+        count={filteredTags.length}
         navigateTo={(row) => row.original.id}
         search
         pagination

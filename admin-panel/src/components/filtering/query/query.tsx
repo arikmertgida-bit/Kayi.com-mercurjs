@@ -29,7 +29,7 @@ export const Query = ({ placeholder }: QueryProps) => {
   }
 
   const debouncedUpdate = useCallback(
-    debounce((newValue: string) => updateSearchParams(newValue), 500),
+    debounce((newValue: string) => updateSearchParams(newValue), 300),
     []
   )
 

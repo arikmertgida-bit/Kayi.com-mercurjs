@@ -28,7 +28,7 @@ export default async function seedDemoData({ container }: ExecArgs) {
   const salesChannelModuleService = container.resolve(Modules.SALES_CHANNEL);
   const storeModuleService = container.resolve(Modules.STORE);
 
-  const countries = ["us", "ca", "gb", "de", "fr", "es", "it"];
+  const countries = ["us", "ca", "gb", "de", "fr", "es", "it", "tr"];
 
   logger.info("Seeding store data...");
   const [store] = await storeModuleService.listStores();
@@ -57,8 +57,11 @@ export default async function seedDemoData({ container }: ExecArgs) {
       update: {
         supported_currencies: [
           {
-            currency_code: "usd",
+            currency_code: "try",
             is_default: true,
+          },
+          {
+            currency_code: "usd",
           },
           {
             currency_code: "eur",
@@ -72,6 +75,12 @@ export default async function seedDemoData({ container }: ExecArgs) {
   const { result: regionResult } = await createRegionsWorkflow(container).run({
     input: {
       regions: [
+        {
+          name: "Türkiye",
+          currency_code: "try",
+          countries: ["tr"],
+          payment_providers: ["pp_system_default"],
+        },
         {
           name: "North America",
           currency_code: "usd",
@@ -186,6 +195,10 @@ export default async function seedDemoData({ container }: ExecArgs) {
         },
         prices: [
           {
+            currency_code: "try",
+            amount: 350,
+          },
+          {
             currency_code: "usd",
             amount: 10,
           },
@@ -223,6 +236,10 @@ export default async function seedDemoData({ container }: ExecArgs) {
           code: "express",
         },
         prices: [
+          {
+            currency_code: "try",
+            amount: 700,
+          },
           {
             currency_code: "usd",
             amount: 20,

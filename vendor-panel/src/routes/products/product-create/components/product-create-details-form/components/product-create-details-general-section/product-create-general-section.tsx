@@ -1,9 +1,11 @@
 import { Input, Textarea } from "@medusajs/ui"
+import { useEffect, useRef } from "react"
 import { UseFormReturn } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
 import { Form } from "../../../../../../../components/common/form"
 import { HandleInput } from "../../../../../../../components/inputs/handle-input"
+import { generateHandle } from "../../../../../../../lib/generate-handle"
 import { ProductCreateSchemaType } from "../../../../types"
 
 type ProductCreateGeneralSectionProps = {
@@ -14,6 +16,16 @@ export const ProductCreateGeneralSection = ({
   form,
 }: ProductCreateGeneralSectionProps) => {
   const { t } = useTranslation()
+  const isManualHandle = useRef(false)
+  const titleValue = form.watch("title")
+
+  useEffect(() => {
+    if (!isManualHandle.current) {
+      form.setValue("handle", generateHandle(titleValue || ""), {
+        shouldValidate: false,
+      })
+    }
+  }, [titleValue, form])
 
   return (
     <div id="general" className="flex flex-col gap-y-6">
@@ -62,7 +74,14 @@ export const ProductCreateGeneralSection = ({
                     {t("fields.handle")}
                   </Form.Label>
                   <Form.Control>
-                    <HandleInput {...field} placeholder="winter-jacket" />
+                    <HandleInput
+                      {...field}
+                      placeholder="winter-jacket"
+                      onChange={(e) => {
+                        isManualHandle.current = true
+                        field.onChange(e)
+                      }}
+                    />
                   </Form.Control>
                 </Form.Item>
               )

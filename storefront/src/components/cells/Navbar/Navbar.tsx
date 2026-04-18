@@ -1,5 +1,6 @@
 import { HttpTypes } from "@medusajs/types"
-import { CategoryNavbar, NavbarSearch } from "@/components/molecules"
+import { CategoryNavbar } from "@/components/molecules"
+import { SellNowButton } from "@/components/cells/SellNowButton/SellNowButton"
 
 export const Navbar = ({
   categories,
@@ -12,7 +13,7 @@ export const Navbar = ({
         <CategoryNavbar categories={categories} />
       </div>
 
-      <NavbarSearch />
+      <SellNowButton />
     </div>
   )
 }

@@ -15,12 +15,22 @@ export const convertToLocale = ({
   maximumFractionDigits,
   locale = "en-US",
 }: ConvertToLocaleParams) => {
-  return currency_code && !isEmpty(currency_code)
-    ? new Intl.NumberFormat(locale, {
-        style: "currency",
-        currency: currency_code,
-        minimumFractionDigits,
-        maximumFractionDigits,
-      }).format(amount)
-    : amount.toString()
+  if (!currency_code || isEmpty(currency_code)) {
+    return amount.toString()
+  }
+
+  const formatted = new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency: currency_code,
+    minimumFractionDigits,
+    maximumFractionDigits,
+  }).format(amount)
+
+  if (currency_code.toUpperCase() === "TRY") {
+    return formatted
+      .replace(/^([+-]?)\s*(TRY|TL)\s*/i, "$1₺")
+      .replace(/\s*(TRY|TL)\s*$/i, "₺")
+  }
+
+  return formatted
 }

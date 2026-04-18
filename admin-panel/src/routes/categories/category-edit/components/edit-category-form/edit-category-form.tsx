@@ -1,16 +1,20 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button, Input, Select, Textarea, toast } from "@medusajs/ui"
+import { useEffect, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
 
 import { HttpTypes } from "@medusajs/types"
 import { Form } from "../../../../../components/common/form"
+import { FileUpload } from "../../../../../components/common/file-upload"
 import { HandleInput } from "../../../../../components/inputs/handle-input"
 import { RouteDrawer, useRouteModal } from "../../../../../components/modals"
 import { KeyboundForm } from "../../../../../components/utilities/keybound-form"
 import { useUpdateProductCategory } from "../../../../../hooks/api/categories"
 import { useDocumentDirection } from "../../../../../hooks/use-document-direction"
+import { generateHandle } from "../../../../../lib/generate-handle"
+import { sdk } from "../../../../../lib/client"
 
 const EditCategorySchema = z.object({
   name: z.string().min(1),
@@ -18,6 +22,7 @@ const EditCategorySchema = z.object({
   description: z.string().optional(),
   status: z.enum(["active", "inactive"]),
   visibility: z.enum(["public", "internal"]),
+  thumbnail: z.instanceof(File).optional(),
 })
 
 type EditCategoryFormProps = {
@@ -28,6 +33,9 @@ export const EditCategoryForm = ({ category }: EditCategoryFormProps) => {
   const { t } = useTranslation()
   const { handleSuccess } = useRouteModal()
   const direction = useDocumentDirection()
+  const [isPendingUpload, setIsPendingUpload] = useState(false)
+  const isRootCategory = !category.parent_category_id
+  const existingThumbnail = category.metadata?.thumbnail as string | undefined
   const form = useForm<z.infer<typeof EditCategorySchema>>({
     defaultValues: {
       name: category.name,
@@ -39,8 +47,34 @@ export const EditCategoryForm = ({ category }: EditCategoryFormProps) => {
     resolver: zodResolver(EditCategorySchema),
   })
 
+  const isManualHandle = useRef(!!category.handle)
+  const nameValue = form.watch("name")
+
+  useEffect(() => {
+    if (!isManualHandle.current) {
+      form.setValue("handle", generateHandle(nameValue || ""), {
+        shouldValidate: false,
+      })
+    }
+  }, [nameValue, form])
+
   const { mutateAsync, isPending } = useUpdateProductCategory(category.id)
   const handleSubmit = form.handleSubmit(async (data) => {
+    let thumbnailUrl: string | undefined = existingThumbnail
+
+    if (isRootCategory && data.thumbnail) {
+      setIsPendingUpload(true)
+      try {
+        const { files: uploaded } = await sdk.admin.upload.create({ files: [data.thumbnail] })
+        thumbnailUrl = uploaded[0]?.url
+      } catch {
+        toast.error("Görsel yüklenemedi")
+        setIsPendingUpload(false)
+        return
+      }
+      setIsPendingUpload(false)
+    }
+
     await mutateAsync(
       {
         name: data.name,
@@ -48,6 +82,7 @@ export const EditCategoryForm = ({ category }: EditCategoryFormProps) => {
         handle: data.handle,
         is_active: data.status === "active",
         is_internal: data.visibility === "internal",
+        ...(isRootCategory ? { metadata: { thumbnail: thumbnailUrl ?? null } } : {}),
       },
       {
         onSuccess: () => {
@@ -94,7 +129,13 @@ export const EditCategoryForm = ({ category }: EditCategoryFormProps) => {
                       {t("fields.handle")}
                     </Form.Label>
                     <Form.Control>
-                      <HandleInput {...field} />
+                      <HandleInput
+                        {...field}
+                        onChange={(e) => {
+                          isManualHandle.current = true
+                          field.onChange(e)
+                        }}
+                      />
                     </Form.Control>
                     <Form.ErrorMessage />
                   </Form.Item>
@@ -184,6 +225,43 @@ export const EditCategoryForm = ({ category }: EditCategoryFormProps) => {
                 }}
               />
             </div>
+            {isRootCategory && (
+              <Form.Field
+                control={form.control}
+                name="thumbnail"
+                render={({ field }) => {
+                  return (
+                    <Form.Item>
+                      <Form.Label optional>Görsel (Thumbnail)</Form.Label>
+                      {existingThumbnail && !field.value && (
+                        <img
+                          src={existingThumbnail}
+                          alt="Mevcut görsel"
+                          className="mb-2 h-20 w-20 rounded-md object-cover"
+                        />
+                      )}
+                      <Form.Control>
+                        <FileUpload
+                          label="Yeni görsel yüklemek için tıklayın veya sürükleyin"
+                          hint="JPEG, PNG, WebP, GIF desteklenir"
+                          multiple={false}
+                          formats={[
+                            "image/jpeg",
+                            "image/png",
+                            "image/webp",
+                            "image/gif",
+                          ]}
+                          onUploaded={(files) => {
+                            field.onChange(files[0]?.file ?? undefined)
+                          }}
+                        />
+                      </Form.Control>
+                      <Form.ErrorMessage />
+                    </Form.Item>
+                  )
+                }}
+              />
+            )}
           </div>
         </RouteDrawer.Body>
         <RouteDrawer.Footer>
@@ -193,7 +271,7 @@ export const EditCategoryForm = ({ category }: EditCategoryFormProps) => {
                 {t("actions.cancel")}
               </Button>
             </RouteDrawer.Close>
-            <Button size="small" type="submit" isLoading={isPending}>
+            <Button size="small" type="submit" isLoading={isPending || isPendingUpload}>
               {t("actions.save")}
             </Button>
           </div>

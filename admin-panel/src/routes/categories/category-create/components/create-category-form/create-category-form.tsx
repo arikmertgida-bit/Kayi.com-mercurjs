@@ -11,6 +11,7 @@ import {
 import { KeyboundForm } from "../../../../../components/utilities/keybound-form"
 import { useCreateProductCategory } from "../../../../../hooks/api/categories"
 import { transformNullableFormData } from "../../../../../lib/form-helpers"
+import { sdk } from "../../../../../lib/client"
 import { CreateCategoryDetails } from "./create-category-details"
 import { CreateCategoryNesting } from "./create-category-nesting"
 import { CreateCategoryDetailsSchema, CreateCategorySchema } from "./schema"
@@ -80,11 +81,23 @@ export const CreateCategoryForm = ({
 
   const { mutateAsync, isPending } = useCreateProductCategory()
 
-  const handleSubmit = form.handleSubmit((data) => {
-    const { visibility, status, parent_category_id, rank, name, ...rest } = data
+  const handleSubmit = form.handleSubmit(async (data) => {
+    const { visibility, status, parent_category_id, rank, name, thumbnail, ...rest } = data
     const parsedData = transformNullableFormData(rest, false)
 
     setShouldFreeze(true)
+
+    let thumbnailUrl: string | undefined
+    if (!parent_category_id && thumbnail) {
+      try {
+        const { files: uploaded } = await sdk.admin.upload.create({ files: [thumbnail] })
+        thumbnailUrl = uploaded[0]?.url
+      } catch {
+        toast.error("Görsel yüklenemedi")
+        setShouldFreeze(false)
+        return
+      }
+    }
 
     mutateAsync(
       {
@@ -94,6 +107,7 @@ export const CreateCategoryForm = ({
         rank: rank ?? undefined,
         is_active: status === "active",
         is_internal: visibility === "internal",
+        ...(thumbnailUrl ? { metadata: { thumbnail: thumbnailUrl } } : {}),
       },
       {
         onSuccess: ({ product_category }) => {

@@ -1,3 +1,4 @@
+import { useRef } from "react"
 import { DashboardExtensionManager } from "./extensions"
 import { Providers } from "./providers/providers"
 import { RouterProvider } from "./providers/router-provider"
@@ -10,14 +11,17 @@ import widgetModule from "virtual:medusa/widgets"
 import "./index.css"
 
 function App() {
-  const manager = new DashboardExtensionManager({
-    displayModule,
-    formModule,
-    menuItemModule,
-    widgetModule,
-  })
+  const managerRef = useRef<DashboardExtensionManager | null>(null)
+  if (!managerRef.current) {
+    managerRef.current = new DashboardExtensionManager({
+      displayModule,
+      formModule,
+      menuItemModule,
+      widgetModule,
+    })
+  }
   return (
-    <Providers api={manager.api}>
+    <Providers api={managerRef.current.api}>
       <RouterProvider />
     </Providers>
   )

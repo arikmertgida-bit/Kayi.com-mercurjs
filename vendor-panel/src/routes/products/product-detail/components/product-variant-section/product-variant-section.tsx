@@ -11,8 +11,10 @@ import {
   Tooltip,
   usePrompt,
 } from "@medusajs/ui"
-import { useCallback, useMemo } from "react"
+import { useCallback, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { StockCell } from "./stock-cell"
+import { VariantStockDistributionModal } from "./variant-stock-distribution-modal"
 
 import { CellContext } from "@tanstack/react-table"
 import { useNavigate } from "react-router-dom"
@@ -21,7 +23,6 @@ import { useDataTableDateColumns } from "../../../../../components/data-table/he
 import { useDataTableDateFilters } from "../../../../../components/data-table/helpers/general/use-data-table-date-filters"
 import { useDeleteVariantLazy } from "../../../../../hooks/api/products"
 import { PRODUCT_VARIANT_IDS_KEY } from "../../../common/constants"
-import { useInventoryItemLevels } from "../../../../../hooks/api"
 
 type ProductVariantSectionProps = {
   product: ExtendedAdminProduct
@@ -33,6 +34,7 @@ export const ProductVariantSection = ({
   product,
 }: ProductVariantSectionProps) => {
   const { t } = useTranslation()
+  const [distributionOpen, setDistributionOpen] = useState(false)
 
   const columns = useColumns(product)
   const filters = useFilters()
@@ -43,6 +45,7 @@ export const ProductVariantSection = ({
   const count = variants ? variants?.length : 0
 
   return (
+    <>
     <Container className="divide-y p-0">
       <DataTable
         data={variants || undefined}
@@ -72,6 +75,11 @@ export const ProductVariantSection = ({
                   to: `edit-stocks-and-prices`,
                   icon: <PencilSquare />,
                 },
+                {
+                  label: t("products.stock.distributionTitle"),
+                  onClick: () => setDistributionOpen(true),
+                  icon: <Component />,
+                },
               ],
             },
           ],
@@ -83,6 +91,14 @@ export const ProductVariantSection = ({
         commands={commands}
       />
     </Container>
+    {distributionOpen && (
+      <VariantStockDistributionModal
+        variants={variants ?? []}
+        open={true}
+        onClose={() => setDistributionOpen(false)}
+      />
+    )}
+    </>
   )
 }
 
@@ -229,28 +245,13 @@ const useColumns = (product: ExtendedAdminProduct) => {
 
       const hasInventoryKit = inventoryItems ? inventoryItems.length > 1 : false
 
-      const locations: Record<string, boolean> = {}
+      const levels = inventoryItems?.[0]?.location_levels ?? []
 
-      inventoryItems?.forEach((i) => {
-        i?.location_levels?.forEach((l) => {
-          locations[l.id] = true
-        })
-      })
-
-      const { location_levels } = useInventoryItemLevels(
-        variant?.inventory_items?.[0]?.inventory_item_id!
+      const quantity = levels.reduce(
+        (acc: number, curr: any) => acc + (curr.available_quantity ?? 0),
+        0
       )
-
-      const quantity =
-        location_levels?.reduce(
-          (acc, curr) => acc + curr.available_quantity,
-          0
-        ) || 0
-      const locationCount =
-        location_levels?.reduce(
-          (acc, curr) => acc + curr.stock_locations?.length,
-          0
-        ) || 0
+      const locationCount = levels.length
 
       const text = hasInventoryKit
         ? t("products.variant.tableItemAvailable", {
@@ -280,6 +281,12 @@ const useColumns = (product: ExtendedAdminProduct) => {
         enableSorting: true,
         sortAscLabel: t("filters.sorting.alphabeticallyAsc"),
         sortDescLabel: t("filters.sorting.alphabeticallyDesc"),
+      }),
+      columnHelper.display({
+        id: "totalStock",
+        header: t("fields.totalStock"),
+        cell: ({ row }) => <StockCell variant={row.original} />,
+        maxSize: 120,
       }),
       ...optionColumns,
       columnHelper.display({

@@ -35,7 +35,21 @@ export const ReviewListTable = () => {
     ? filtered.filter((review: any) => !review.seller_note)
     : filtered
 
-  const count = filteredReviews.length
+  const q = searchParams.q as string | undefined
+  const displayedReviews = q
+    ? filteredReviews.filter((review: any) => {
+        const lower = q.toLowerCase()
+        return (
+          review.id?.toLowerCase().includes(lower) ||
+          review.title?.toLowerCase().includes(lower) ||
+          review.content?.toLowerCase().includes(lower) ||
+          review.customer?.email?.toLowerCase().includes(lower) ||
+          String(review.rating).includes(lower)
+        )
+      })
+    : filteredReviews
+
+  const count = displayedReviews.length
 
   const averageRating =
     count > 0
@@ -50,7 +64,7 @@ export const ReviewListTable = () => {
   const columns = useColumns()
 
   const { table } = useDataTable({
-    data: filteredReviews,
+    data: displayedReviews,
     columns,
     count,
     enablePagination: true,
@@ -94,7 +108,7 @@ export const ReviewListTable = () => {
         // ]}
         isLoading={isLoading}
         navigateTo={(row) => row.original.id}
-        // search
+        search
         queryObject={raw}
         noRecords={{
           message: "Your reviews will show up here.",

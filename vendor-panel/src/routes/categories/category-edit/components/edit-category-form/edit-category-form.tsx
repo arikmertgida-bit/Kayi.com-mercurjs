@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button, Input, Textarea, toast } from "@medusajs/ui"
+import { useEffect, useRef } from "react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
@@ -10,6 +11,7 @@ import { HandleInput } from "../../../../../components/inputs/handle-input"
 import { RouteDrawer, useRouteModal } from "../../../../../components/modals"
 import { KeyboundForm } from "../../../../../components/utilities/keybound-form"
 import { useUpdateRequest } from "../../../../../hooks/api"
+import { generateHandle } from "../../../../../lib/generate-handle"
 
 const EditCategorySchema = z.object({
   name: z.string().min(1),
@@ -41,6 +43,17 @@ export const EditCategoryForm = ({
     },
     resolver: zodResolver(EditCategorySchema),
   })
+
+  const isManualHandle = useRef(!!category.handle)
+  const nameValue = form.watch("name")
+
+  useEffect(() => {
+    if (!isManualHandle.current) {
+      form.setValue("handle", generateHandle(nameValue || ""), {
+        shouldValidate: false,
+      })
+    }
+  }, [nameValue, form])
 
   const { mutateAsync, isPending } = useUpdateRequest(requestId)
   const handleSubmit = form.handleSubmit(async (data) => {
@@ -99,7 +112,13 @@ export const EditCategoryForm = ({
                       {t("fields.handle")}
                     </Form.Label>
                     <Form.Control>
-                      <HandleInput {...field} />
+                      <HandleInput
+                        {...field}
+                        onChange={(e) => {
+                          isManualHandle.current = true
+                          field.onChange(e)
+                        }}
+                      />
                     </Form.Control>
                     <Form.ErrorMessage />
                   </Form.Item>

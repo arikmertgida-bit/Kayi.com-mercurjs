@@ -147,6 +147,17 @@ const useColumns = ({
           return <DataGrid.TextCell context={context} />
         },
       }),
+      columnHelper.column({
+        id: "initial_stock",
+        name: t("fields.totalStock"),
+        header: t("fields.totalStock"),
+        field: (context) =>
+          `variants.${context.row.original.originalIndex}.initial_stock`,
+        type: "number",
+        cell: (context) => {
+          return <DataGrid.NumberCell context={context} min={0} />
+        },
+      }),
 
       ...createDataGridPriceColumns<VariantWithIndex, ProductCreateSchemaType>({
         currencies,

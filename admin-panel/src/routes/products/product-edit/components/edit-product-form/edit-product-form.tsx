@@ -1,4 +1,5 @@
 import { Button, Input, Select, Text, Textarea, toast } from "@medusajs/ui"
+import { useEffect, useRef } from "react"
 import { useTranslation } from "react-i18next"
 import * as zod from "zod"
 
@@ -14,6 +15,7 @@ import { KeyboundForm } from "../../../../../components/utilities/keybound-form"
 import { FormExtensionZone } from "../../../../../dashboard-app"
 import { useExtension } from "../../../../../providers/extension-provider"
 import { useDocumentDirection } from "../../../../../hooks/use-document-direction"
+import { generateHandle } from "../../../../../lib/generate-handle"
 
 type EditProductFormProps = {
   product: HttpTypes.AdminProduct
@@ -51,6 +53,17 @@ export const EditProductForm = ({ product }: EditProductFormProps) => {
     configs: configs,
     data: product,
   })
+
+  const isManualHandle = useRef(!!product.handle)
+  const titleValue = form.watch("title")
+
+  useEffect(() => {
+    if (!isManualHandle.current) {
+      form.setValue("handle", generateHandle(titleValue || ""), {
+        shouldValidate: false,
+      })
+    }
+  }, [titleValue, form])
 
   const { mutateAsync, isPending } = useUpdateProduct(product.id)
 
@@ -178,7 +191,14 @@ export const EditProductForm = ({ product }: EditProductFormProps) => {
                               /
                             </Text>
                           </div>
-                          <Input {...field} className="pl-10" />
+                          <Input
+                            {...field}
+                            className="pl-10"
+                            onChange={(e) => {
+                              isManualHandle.current = true
+                              field.onChange(e)
+                            }}
+                          />
                         </div>
                       </Form.Control>
                       <Form.ErrorMessage />

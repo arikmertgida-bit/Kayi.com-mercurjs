@@ -686,6 +686,14 @@
       "heading": "Manage product stock levels and locations",
       "description": "Update the stocked inventory levels for all of the product's variants.",
       "loading": "Hang on this may take a moment...",
+      "inventoryKitTooltip": "This variant uses an inventory kit. Edit via Stock Levels.",
+      "distributionTitle": "Stock Distribution",
+      "distributionHint": "Set stock quantities per variant. Use bulk distribute or edit individually.",
+      "distributionSuccess": "Stock levels updated successfully.",
+      "bulkInputPlaceholder": "Total qty",
+      "equalDistribute": "Equal",
+      "proportionalDistribute": "Proportional",
+      "noEligibleVariants": "No eligible variants found.",
       "tooltips": {
         "alreadyManaged": "This inventory item is already editable under {{title}}.",
         "alreadyManagedWithSku": "This inventory item is already editable under {{title}} ({{sku}})."
@@ -2887,6 +2895,7 @@
     "providers": "Providers",
     "availability": "Availability",
     "inventory": "Inventory",
+    "totalStock": "Total Stock",
     "optional": "Optional",
     "note": "Note",
     "automaticTaxes": "Automatic Taxes",

@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
   const BACKEND_URL = env.VITE_MEDUSA_BACKEND_URL || "http://localhost:9000"
   const STOREFRONT_URL =
     env.VITE_MEDUSA_STOREFRONT_URL || "http://localhost:8000"
-  const PUBLISHABLE_API_KEY = env.VITE_PUBLISHABLE_API_KEY || ""
+  const PUBLISHABLE_API_KEY = env.VITE_PUBLISHABLE_API_KEY || env.VITE_MEDUSA_PUBLISHABLE_KEY || ""
   const TALK_JS_APP_ID = env.VITE_TALK_JS_APP_ID || ""
   const DISABLE_SELLERS_REGISTRATION =
     env.VITE_DISABLE_SELLERS_REGISTRATION || "false"
@@ -46,6 +46,10 @@ export default defineConfig(({ mode }) => {
       port: parseInt(process.env.PORT || '5173'),
       open: false,
       allowedHosts: PUBLIC_BASE_URL ? [PUBLIC_BASE_URL.replace('https://', '').replace('http://', '').split('/')[0]] : [],
+    },
+    preview: {
+      host: true,
+      port: parseInt(process.env.PORT || '7001'),
     },
     optimizeDeps: {
       entries: [],

@@ -1,10 +1,13 @@
 import { Heading, Input, Select, Text, Textarea } from "@medusajs/ui"
-import { UseFormReturn } from "react-hook-form"
+import { useEffect, useRef } from "react"
+import { UseFormReturn, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
 import { Form } from "../../../../../components/common/form"
+import { FileUpload } from "../../../../../components/common/file-upload"
 import { HandleInput } from "../../../../../components/inputs/handle-input"
 import { useDocumentDirection } from "../../../../../hooks/use-document-direction"
+import { generateHandle } from "../../../../../lib/generate-handle"
 import { CreateCategorySchema } from "./schema"
 
 type CreateCategoryDetailsProps = {
@@ -14,6 +17,21 @@ type CreateCategoryDetailsProps = {
 export const CreateCategoryDetails = ({ form }: CreateCategoryDetailsProps) => {
   const { t } = useTranslation()
   const direction = useDocumentDirection()
+  const isManualHandle = useRef(false)
+  const nameValue = form.watch("name")
+  const parentCategoryId = useWatch({
+    control: form.control,
+    name: "parent_category_id",
+  })
+  const isRootCategory = !parentCategoryId
+
+  useEffect(() => {
+    if (!isManualHandle.current) {
+      form.setValue("handle", generateHandle(nameValue || ""), {
+        shouldValidate: false,
+      })
+    }
+  }, [nameValue, form])
   return (
     <div className="flex flex-col items-center p-16">
       <div className="flex w-full max-w-[720px] flex-col gap-y-8">
@@ -49,7 +67,13 @@ export const CreateCategoryDetails = ({ form }: CreateCategoryDetailsProps) => {
                     {t("fields.handle")}
                   </Form.Label>
                   <Form.Control>
-                    <HandleInput {...field} />
+                    <HandleInput
+                      {...field}
+                      onChange={(e) => {
+                        isManualHandle.current = true
+                        field.onChange(e)
+                      }}
+                    />
                   </Form.Control>
                   <Form.ErrorMessage />
                 </Form.Item>
@@ -138,6 +162,36 @@ export const CreateCategoryDetails = ({ form }: CreateCategoryDetailsProps) => {
             }}
           />
         </div>
+        {isRootCategory && (
+          <Form.Field
+            control={form.control}
+            name="thumbnail"
+            render={({ field }) => {
+              return (
+                <Form.Item>
+                  <Form.Label optional>Görsel (Thumbnail)</Form.Label>
+                  <Form.Control>
+                    <FileUpload
+                      label="Görsel yüklemek için tıklayın veya sürükleyin"
+                      hint="JPEG, PNG, WebP, GIF desteklenir"
+                      multiple={false}
+                      formats={[
+                        "image/jpeg",
+                        "image/png",
+                        "image/webp",
+                        "image/gif",
+                      ]}
+                      onUploaded={(files) => {
+                        field.onChange(files[0]?.file ?? undefined)
+                      }}
+                    />
+                  </Form.Control>
+                  <Form.ErrorMessage />
+                </Form.Item>
+              )
+            }}
+          />
+        )}
       </div>
     </div>
   )

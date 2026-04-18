@@ -14,17 +14,32 @@ export const RequestReturnListTable = ({
 }) => {
   const [searchParams] = useSearchParams()
   const offset = searchParams.get("offset") || "0"
+  const q = searchParams.get("q") || ""
 
-  const { order_return_request, count, isPending, isError, error } =
+  const { order_return_request, count: totalCount, isPending, isError, error } =
     useOrderReturnRequests({
       limit: PAGE_SIZE,
       offset,
     })
 
+  const filteredData = q
+    ? (order_return_request ?? []).filter((row: any) => {
+        const lower = q.toLowerCase()
+        return (
+          row.id?.toLowerCase().includes(lower) ||
+          row.status?.toLowerCase().includes(lower) ||
+          row.order_id?.toLowerCase().includes(lower) ||
+          row.reason?.toLowerCase().includes(lower)
+        )
+      })
+    : order_return_request
+
+  const count = q ? filteredData?.length ?? 0 : totalCount
+
   const columns = useOrderReturnRequestTableColumns()
 
   const { table } = useDataTable({
-    data: order_return_request,
+    data: filteredData ?? [],
     columns: customColumns || columns,
     count,
     enablePagination: true,
@@ -48,7 +63,7 @@ export const RequestReturnListTable = ({
         navigateTo={({ original }: any) => {
           return `/requests/orders/${original.id}/review`
         }}
-        search={false}
+        search
       />
     </div>
   )

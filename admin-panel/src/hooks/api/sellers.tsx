@@ -569,3 +569,56 @@ export const useOrderSet = (id: string) => {
       }),
   });
 };
+
+const sellerStockLocationsKey = (sellerId: string) => [
+  "seller-stock-locations",
+  sellerId,
+];
+
+export const useSellerStockLocations = (sellerId: string) => {
+  return useQuery<
+    { stock_locations: any[] },
+    Error,
+    { stock_locations: any[] }
+  >({
+    queryKey: sellerStockLocationsKey(sellerId),
+    queryFn: () =>
+      sdk.client.fetch(`/admin/sellers/${sellerId}/stock-locations`, {
+        method: "GET",
+      }),
+    enabled: !!sellerId,
+  });
+};
+
+export const useAssignSellerStockLocation = (sellerId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (stock_location_id: string) =>
+      sdk.client.fetch(`/admin/sellers/${sellerId}/stock-locations`, {
+        method: "POST",
+        body: { stock_location_id },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: sellerStockLocationsKey(sellerId),
+      });
+    },
+  });
+};
+
+export const useRemoveSellerStockLocation = (sellerId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (locationId: string) =>
+      sdk.client.fetch(
+        `/admin/sellers/${sellerId}/stock-locations/${locationId}`,
+        { method: "DELETE" }
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: sellerStockLocationsKey(sellerId),
+      });
+    },
+  });
+};
+

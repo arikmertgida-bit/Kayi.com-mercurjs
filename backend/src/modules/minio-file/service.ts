@@ -166,10 +166,19 @@ class MinioFileProviderService extends AbstractFileProviderService {
 
     try {
       const parsedFilename = path.parse(file.filename)
-      const fileKey = `${parsedFilename.name}-${ulid()}${parsedFilename.ext}`
+      // Sanitize: normalize unicode (NFD), strip diacritics, replace non-ASCII/special chars
+      const safeName = parsedFilename.name
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9._-]/g, '-')
+        .replace(/-+/g, '-')
+        .toLowerCase()
+        .substring(0, 60)
+      const safeExt = parsedFilename.ext.replace(/[^a-zA-Z0-9.]/g, '').toLowerCase()
+      const fileKey = `${safeName}-${ulid()}${safeExt}`
       const content = Buffer.from(file.content, 'binary')
 
-      // Upload file with public-read access
+      // Upload file (MinIO does not support x-amz-acl or custom x-amz-meta-* headers in signature)
       await this.client.putObject(
         this.bucket,
         fileKey,
@@ -177,13 +186,14 @@ class MinioFileProviderService extends AbstractFileProviderService {
         content.length,
         {
           'Content-Type': file.mimeType,
-          'x-amz-meta-original-filename': file.filename,
-          'x-amz-acl': 'public-read'
         }
       )
 
-      // Generate URL using the endpoint and bucket
-      const url = `https://${this.config_.endPoint}/${this.bucket}/${fileKey}`
+      // Build public-facing URL
+      const protocol = this.config_.useSSL ? 'https' : 'http'
+      const baseUrl = process.env.MINIO_PUBLIC_URL ||
+        `${protocol}://${this.config_.endPoint}:${this.config_.port}`
+      const url = `${baseUrl}/${this.bucket}/${fileKey}`
 
       this.logger_.info(`Successfully uploaded file ${fileKey} to MinIO bucket ${this.bucket}`)
 

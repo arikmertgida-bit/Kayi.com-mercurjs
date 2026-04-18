@@ -21,6 +21,11 @@ async function generateCurrencies() {
     return acc
   }, {})
 
+  // Override TRY symbol to always use ₺ instead of TL
+  if (record["TRY"]) {
+    record["TRY"].symbol_native = "₺"
+  }
+
   const json = JSON.stringify(record, null, 2)
 
   const dest = path.join(__dirname, "../src/lib/currencies.ts")

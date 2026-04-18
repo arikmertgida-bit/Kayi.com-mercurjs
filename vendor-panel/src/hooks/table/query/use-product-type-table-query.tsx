@@ -22,11 +22,11 @@ export const useProductTypeTableQuery = ({
     order,
     created_at: created_at ? JSON.parse(created_at) : undefined,
     updated_at: updated_at ? JSON.parse(updated_at) : undefined,
-    q,
   }
 
   return {
     searchParams,
     raw: queryObject,
+    q,
   }
 }

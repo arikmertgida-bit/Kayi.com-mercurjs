@@ -3,8 +3,6 @@ import Medusa from "@medusajs/js-sdk"
 export const backendUrl = __BACKEND_URL__ ?? "/"
 export const publishableApiKey = __PUBLISHABLE_API_KEY__ ?? ""
 
-const token = window.localStorage.getItem("medusa_auth_token") || ""
-
 export const sdk = new Medusa({
   baseUrl: backendUrl,
   publishableKey: publishableApiKey,
@@ -18,6 +16,7 @@ if (typeof window !== "undefined") {
 export const importProductsQuery = async (file: File) => {
   const formData = new FormData()
   formData.append("file", file)
+  const token = window.localStorage.getItem("medusa_auth_token") || ""
 
   return await fetch(`${backendUrl}/vendor/products/import`, {
     method: "POST",
@@ -33,6 +32,7 @@ export const importProductsQuery = async (file: File) => {
 
 export const uploadFilesQuery = async (files: any[]) => {
   const formData = new FormData()
+  const token = window.localStorage.getItem("medusa_auth_token") || ""
 
   for (const { file } of files) {
     formData.append("files", file)
@@ -65,18 +65,10 @@ export const fetchQuery = async (
   }
 ) => {
   const bearer = (await window.localStorage.getItem("medusa_auth_token")) || ""
-  const params = Object.entries(query || {}).reduce(
-    (acc, [key, value], index) => {
-      if (value && value !== undefined) {
-        const queryLength = Object.values(query || {}).filter(
-          (i) => i && i !== undefined
-        ).length
-        acc += `${key}=${value}${index + 1 <= queryLength ? "&" : ""}`
-      }
-      return acc
-    },
-    ""
-  )
+  const params = Object.entries(query || {})
+    .filter(([, value]) => value !== null && value !== undefined && value !== "")
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
+    .join("&")
   const response = await fetch(`${backendUrl}${url}${params && `?${params}`}`, {
     method: method,
     headers: {

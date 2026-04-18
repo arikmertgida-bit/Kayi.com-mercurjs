@@ -8,6 +8,10 @@ import { DataGridReadonlyCell } from "../components/data-grid-readonly-cell"
 import { FieldContext } from "../types"
 import { createDataGridHelper } from "./create-data-grid-column-helper"
 import { formatCurrency } from "../../../lib/format-currency"
+import { currencies as currencyMap } from "../../../lib/data/currencies"
+
+const getCurrencySymbol = (code?: string): string =>
+  (code ? currencyMap[code.toUpperCase()]?.symbol_native : undefined) ?? code?.toUpperCase() ?? ""
 
 type CreateDataGridPriceColumnsProps<
   TData,
@@ -47,17 +51,17 @@ export const createDataGridPriceColumns = <
       )
 
       const translatedCurrencyName = t("fields.priceTemplate", {
-        regionOrCurrency: currency.toUpperCase(),
+        regionOrCurrency: getCurrencySymbol(currency),
       })
 
       const translatedCurrentCurrencyName = t("fields.currentPriceTemplate", {
-        regionOrCurrency: currency.toUpperCase(),
+        regionOrCurrency: getCurrencySymbol(currency),
       })
 
       const editableCol = columnHelper.column({
         id: `currency_prices.${currency}`,
         name: t("fields.priceTemplate", {
-          regionOrCurrency: currency.toUpperCase(),
+          regionOrCurrency: getCurrencySymbol(currency),
         }),
         field: (context) => {
           const isReadyOnlyValue = isReadyOnly?.(context)

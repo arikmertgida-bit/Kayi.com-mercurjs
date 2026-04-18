@@ -46,12 +46,7 @@ export const Shell = ({ children }: PropsWithChildren) => {
           <div className="flex h-full w-full flex-col overflow-auto">
             <Topbar />
             <main
-              className={clx(
-                "flex h-full w-full flex-col items-center overflow-y-auto transition-opacity delay-200 duration-200",
-                {
-                  "opacity-25": loading,
-                }
-              )}
+              className="flex h-full w-full flex-col items-center overflow-y-auto"
             >
               <Gutter>
                 <Outlet />

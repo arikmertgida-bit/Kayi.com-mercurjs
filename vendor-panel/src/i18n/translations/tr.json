@@ -691,6 +691,14 @@
       "heading": "Ürün stok seviyelerini ve konumlarını yönetin",
       "description": "Tüm ürün varyantlarının stok seviyelerini güncelleyin.",
       "loading": "Bu biraz zaman alabilir...",
+      "inventoryKitTooltip": "Bu varyant envanter kiti kullanıyor. Stok Seviyeleri üzerinden düzenleyin.",
+      "distributionTitle": "Stok Dağıtımı",
+      "distributionHint": "Varyant bazında stok miktarlarını belirleyin. Toplu dağıt veya ayrı ayrı düzenleyin.",
+      "distributionSuccess": "Stok seviyeleri başarıyla güncellendi.",
+      "bulkInputPlaceholder": "Toplam adet",
+      "equalDistribute": "Eşit Dağıt",
+      "proportionalDistribute": "Orantılı Dağıt",
+      "noEligibleVariants": "Uygun varyant bulunamadı.",
       "tooltips": {
         "alreadyManaged": "Bu envanter öğesi zaten {{title}} altında düzenlenebilir.",
         "alreadyManagedWithSku": "Bu envanter öğesi zaten {{title}} altında düzenlenebilir ({{sku}})."
@@ -2845,6 +2853,7 @@
     "providers": "Sağlayıcılar",
     "availability": "Mevcudiyet",
     "inventory": "Envanter",
+    "totalStock": "Toplam Stok",
     "optional": "Opsiyonel",
     "note": "Not",
     "automaticTaxes": "Otomatik Vergiler",

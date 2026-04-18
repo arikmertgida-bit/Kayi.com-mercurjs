@@ -47,6 +47,7 @@ export class DashboardApp {
   private displays: DisplayMap
   private coreRoutes: RouteObject[]
   private settingsRoutes: RouteObject[]
+  private router: ReturnType<typeof createBrowserRouter>
 
   constructor({ plugins }: DashboardAppProps) {
     this.widgets = this.populateWidgets(plugins)
@@ -60,6 +61,14 @@ export class DashboardApp {
     this.fields = fields
     this.configs = configs
     this.displays = this.populateDisplays(plugins)
+
+    const routes = getRouteMap({
+      settingsRoutes: this.settingsRoutes,
+      coreRoutes: this.coreRoutes,
+    })
+    this.router = createBrowserRouter(routes, {
+      basename: __BASE__ || "/",
+    })
   }
 
   private populateRoutes(plugins: DashboardPlugin[]) {
@@ -442,18 +451,9 @@ export class DashboardApp {
   }
 
   render() {
-    const routes = getRouteMap({
-      settingsRoutes: this.settingsRoutes,
-      coreRoutes: this.coreRoutes,
-    })
-
-    const router = createBrowserRouter(routes, {
-      basename: __BASE__ || "/",
-    })
-
     return (
       <Providers api={this.api}>
-        <RouterProvider router={router} />
+        <RouterProvider router={this.router} />
       </Providers>
     )
   }

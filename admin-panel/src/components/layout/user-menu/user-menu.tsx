@@ -59,16 +59,16 @@ export const UserMenu = () => {
           </DropdownMenu.Item>
           <DropdownMenu.Separator />
           <DropdownMenu.Item asChild>
-            <Link to="https://docs.medusajs.com" target="_blank">
+            <a href="https://docs.medusajs.com" target="_blank" rel="noopener noreferrer">
               <BookOpen className="text-ui-fg-subtle me-2" />
               {t("app.menus.user.documentation")}
-            </Link>
+            </a>
           </DropdownMenu.Item>
           <DropdownMenu.Item asChild>
-            <Link to="https://medusajs.com/changelog/" target="_blank">
+            <a href="https://medusajs.com/changelog/" target="_blank" rel="noopener noreferrer">
               <TimelineVertical className="text-ui-fg-subtle me-2" />
               {t("app.menus.user.changelog")}
-            </Link>
+            </a>
           </DropdownMenu.Item>
           <DropdownMenu.Separator />
           <DropdownMenu.Item onClick={toggleModal}>

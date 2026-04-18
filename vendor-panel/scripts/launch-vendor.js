@@ -51,12 +51,21 @@ async function launch() {
     console.log('✓ API key set in environment\n');
   }
   
-  // Run vite
-  console.log('Starting Vite dev server...\n');
+  // Build then serve as production preview
+  console.log('Building vendor panel for production...\n');
   try {
-    execSync('./node_modules/.bin/vite', { stdio: 'inherit', env: process.env });
+    execSync('./node_modules/.bin/vite build', { stdio: 'inherit', env: process.env });
   } catch (error) {
-    console.error('Error starting Vite:', error.message);
+    console.error('Build failed:', error.message);
+    process.exit(1);
+  }
+
+  const port = process.env.PORT || '7001';
+  console.log(`Starting Vite preview server on port ${port}...\n`);
+  try {
+    execSync(`./node_modules/.bin/vite preview --host --port ${port}`, { stdio: 'inherit', env: process.env });
+  } catch (error) {
+    console.error('Error starting preview server:', error.message);
     process.exit(1);
   }
 }

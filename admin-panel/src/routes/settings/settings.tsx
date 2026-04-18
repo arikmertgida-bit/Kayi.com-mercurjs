@@ -1,15 +1,11 @@
-import { useEffect } from "react"
-import { Outlet, useLocation, useNavigate } from "react-router-dom"
+import { Navigate, Outlet, useLocation } from "react-router-dom"
 
 export const Settings = () => {
-  const navigate = useNavigate()
   const location = useLocation()
 
-  useEffect(() => {
-    if (location.pathname === "/settings") {
-      navigate("/settings/store", { replace: true })
-    }
-  }, [location.pathname, navigate])
+  if (location.pathname === "/settings") {
+    return <Navigate to="/settings/store" replace />
+  }
 
   return <Outlet />
 }

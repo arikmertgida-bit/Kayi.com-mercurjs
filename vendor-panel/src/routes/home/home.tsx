@@ -1,12 +1,5 @@
-import { useEffect } from "react"
-import { useNavigate } from "react-router-dom"
+import { Navigate } from "react-router-dom"
 
 export const Home = () => {
-  const navigate = useNavigate()
-
-  useEffect(() => {
-    navigate("/dashboard", { replace: true })
-  }, [navigate])
-
-  return <div />
+  return <Navigate to="/dashboard" replace />
 }

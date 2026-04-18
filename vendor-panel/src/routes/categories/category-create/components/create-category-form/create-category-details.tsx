@@ -1,9 +1,11 @@
 import { Heading, Input, Text, Textarea } from "@medusajs/ui"
+import { useEffect, useRef } from "react"
 import { UseFormReturn } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
 import { Form } from "../../../../../components/common/form"
 import { HandleInput } from "../../../../../components/inputs/handle-input"
+import { generateHandle } from "../../../../../lib/generate-handle"
 import { CreateCategorySchema } from "./schema"
 
 type CreateCategoryDetailsProps = {
@@ -12,6 +14,16 @@ type CreateCategoryDetailsProps = {
 
 export const CreateCategoryDetails = ({ form }: CreateCategoryDetailsProps) => {
   const { t } = useTranslation()
+  const isManualHandle = useRef(false)
+  const nameValue = form.watch("name")
+
+  useEffect(() => {
+    if (!isManualHandle.current) {
+      form.setValue("handle", generateHandle(nameValue || ""), {
+        shouldValidate: false,
+      })
+    }
+  }, [nameValue, form])
 
   return (
     <div className="flex flex-col items-center p-16">
@@ -48,7 +60,13 @@ export const CreateCategoryDetails = ({ form }: CreateCategoryDetailsProps) => {
                     {t("fields.handle")}
                   </Form.Label>
                   <Form.Control>
-                    <HandleInput {...field} />
+                    <HandleInput
+                      {...field}
+                      onChange={(e) => {
+                        isManualHandle.current = true
+                        field.onChange(e)
+                      }}
+                    />
                   </Form.Control>
                   <Form.ErrorMessage />
                 </Form.Item>

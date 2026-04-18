@@ -62,9 +62,7 @@ export const Login = () => {
           })
         },
         onSuccess: () => {
-          setTimeout(() => {
-            navigate(from, { replace: true })
-          }, 1000)
+          navigate(from, { replace: true })
         },
       }
     )

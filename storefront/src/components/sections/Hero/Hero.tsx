@@ -2,7 +2,6 @@ import Image from "next/image"
 
 import tailwindConfig from "../../../../tailwind.config"
 import { ArrowRightIcon } from "@/icons"
-import Link from "next/link"
 
 type HeroProps = {
   image: string
@@ -37,7 +36,7 @@ export const Hero = ({ image, heading, paragraph, buttons }: HeroProps) => {
         {buttons.length && (
           <div className="h-[72px] lg:h-[144px] flex font-bold uppercase">
             {buttons.map(({ label, path }) => (
-              <Link
+              <a
                 key={path}
                 href={path}
                 className="group flex border rounded-sm h-full w-1/2 bg-content hover:bg-action hover:text-tertiary transition-all duration-300 p-6 justify-between items-end"
@@ -53,7 +52,7 @@ export const Hero = ({ image, heading, paragraph, buttons }: HeroProps) => {
                   color={tailwindConfig.theme.extend.backgroundColor.primary}
                   aria-hidden
                 />
-              </Link>
+              </a>
             ))}
           </div>
         )}

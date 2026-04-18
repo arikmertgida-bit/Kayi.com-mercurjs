@@ -30,6 +30,7 @@ export const OrderListTable = () => {
       created_at: searchParams.created_at,
       updated_at: searchParams.updated_at,
       sort: searchParams.order,
+      q: searchParams.q,
     }
   )
 
@@ -62,6 +63,7 @@ export const OrderListTable = () => {
         columns={columns}
         table={table}
         pagination
+        search
         filters={filters}
         navigateTo={(row) => `/orders/${row.original.id}`}
         count={processedCount}

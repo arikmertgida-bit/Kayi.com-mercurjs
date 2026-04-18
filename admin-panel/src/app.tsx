@@ -1,3 +1,4 @@
+import { useRef } from "react"
 import { DashboardApp } from "./dashboard-app"
 import { DashboardPlugin } from "./dashboard-app/types"
 
@@ -22,11 +23,14 @@ interface AppProps {
 }
 
 function App({ plugins = [] }: AppProps) {
-  const app = new DashboardApp({
-    plugins: [localPlugin, ...plugins],
-  })
+  const appRef = useRef<DashboardApp | null>(null)
+  if (!appRef.current) {
+    appRef.current = new DashboardApp({
+      plugins: [localPlugin, ...plugins],
+    })
+  }
 
-  return <div>{app.render()}</div>
+  return <div>{appRef.current.render()}</div>
 }
 
 export default App

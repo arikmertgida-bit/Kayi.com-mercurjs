@@ -33,6 +33,7 @@ export const InventoryListTable = () => {
   } = useInventoryItems({
     limit: PAGE_SIZE,
     offset: searchParams?.offset,
+    q: searchParams?.q,
     fields: "id,title,sku,*location_levels",
   })
 
@@ -73,6 +74,7 @@ export const InventoryListTable = () => {
         count={count}
         isLoading={isLoading}
         pagination
+        search
         queryObject={raw}
         navigateTo={(row) => `${row.id}`}
         commands={[

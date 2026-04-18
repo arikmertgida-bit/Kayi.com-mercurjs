@@ -29,9 +29,9 @@ export const OnboardingRow = ({
         </div>
         <Heading className="text-sm">{label}</Heading>
       </div>
-      <Link to={link}>
-        <Button className="min-w-20">{buttonLabel}</Button>
-      </Link>
+      <Button className="min-w-20" asChild>
+        <Link to={link}>{buttonLabel}</Link>
+      </Button>
     </div>
   )
 }

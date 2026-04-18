@@ -9,6 +9,19 @@ export const ProtectedRoute = () => {
   const { seller, isPending, error } = useMe()
 
   const location = useLocation()
+
+  const hasToken = !!window.localStorage.getItem("medusa_auth_token")
+
+  if (!hasToken) {
+    return (
+      <Navigate
+        to="/login"
+        state={{ from: location }}
+        replace
+      />
+    )
+  }
+
   if (isPending) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -18,9 +31,10 @@ export const ProtectedRoute = () => {
   }
 
   if (!seller) {
+    const reason = error?.message ? `?reason=${error.message}` : ""
     return (
       <Navigate
-        to={`/login${error?.message ? `?reason=${error.message}` : ""}`}
+        to={`/login${reason}`}
         state={{ from: location }}
         replace
       />

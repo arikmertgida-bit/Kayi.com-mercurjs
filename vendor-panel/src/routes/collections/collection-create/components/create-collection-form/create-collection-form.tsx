@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button, Heading, Input, Text, toast } from "@medusajs/ui"
+import { useEffect, useRef } from "react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import * as zod from "zod"
@@ -21,6 +22,7 @@ const CreateCollectionSchema = zod.object({
 export const CreateCollectionForm = () => {
   const { t } = useTranslation()
   const { handleSuccess } = useRouteModal()
+  const handleTouched = useRef(false)
 
   const form = useForm<zod.infer<typeof CreateCollectionSchema>>({
     defaultValues: {
@@ -29,6 +31,22 @@ export const CreateCollectionForm = () => {
     },
     resolver: zodResolver(CreateCollectionSchema),
   })
+
+  const titleValue = form.watch("title")
+
+  useEffect(() => {
+    if (!handleTouched.current) {
+      const slug = titleValue
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9\s-]/g, "")
+        .trim()
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
+      form.setValue("handle", slug, { shouldValidate: false })
+    }
+  }, [titleValue, form])
 
   const { mutateAsync, isPending } = useCreateCollection()
 
@@ -101,7 +119,13 @@ export const CreateCollectionForm = () => {
                         {t("fields.handle")}
                       </Form.Label>
                       <Form.Control>
-                        <HandleInput {...field} />
+                        <HandleInput
+                          {...field}
+                          onChange={(e) => {
+                            handleTouched.current = e.target.value.length > 0
+                            field.onChange(e)
+                          }}
+                        />
                       </Form.Control>
                       <Form.ErrorMessage />
                     </Form.Item>

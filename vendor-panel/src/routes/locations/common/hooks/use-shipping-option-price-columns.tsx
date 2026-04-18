@@ -11,6 +11,10 @@ import {
 } from "../../../../components/data-grid"
 import { FieldContext } from "../../../../components/data-grid/types"
 import { ShippingOptionPriceCell } from "../components/shipping-option-price-cell"
+import { currencies as currencyMap } from "../../../../lib/data/currencies"
+
+const getCurrencySymbol = (code?: string): string =>
+  (code ? currencyMap[code.toUpperCase()]?.symbol_native : undefined) ?? code?.toUpperCase() ?? ""
 
 const columnHelper = createDataGridHelper()
 
@@ -133,13 +137,13 @@ export const createDataGridPriceColumns = <
       )
 
       const translatedRegionName = t("fields.priceTemplate", {
-        regionOrCurrency: region.name,
+        regionOrCurrency: getCurrencySymbol(region.currency_code),
       })
 
       return columnHelper.column({
         id: `region_prices.${region.id}`,
         name: t("fields.priceTemplate", {
-          regionOrCurrency: region.name,
+          regionOrCurrency: getCurrencySymbol(region.currency_code),
         }),
         field: (context) => {
           return getFieldName(context, region.id)

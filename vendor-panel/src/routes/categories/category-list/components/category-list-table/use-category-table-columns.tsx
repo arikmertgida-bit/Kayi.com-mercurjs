@@ -5,16 +5,11 @@ import { createColumnHelper } from "@tanstack/react-table"
 import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
 
-// import { StatusCell } from '../../../../../components/table/table-cells/common/status-cell';
 import {
   TextCell,
   TextHeader,
 } from "../../../../../components/table/table-cells/common/text-cell"
-import {
-  getCategoryPath,
-  // getIsActiveProps,
-  // getIsInternalProps,
-} from "../../../common/utils"
+import { getCategoryPath } from "../../../common/utils"
 
 const columnHelper =
   createColumnHelper<AdminProductCategoryResponse["product_category"]>()
@@ -92,38 +87,6 @@ export const useCategoryTableColumns = () => {
           return <TextCell text={`/${getValue()}`} />
         },
       }),
-      // columnHelper.accessor('is_active', {
-      //   header: () => (
-      //     <TextHeader text={t('fields.status')} />
-      //   ),
-      //   cell: ({ getValue }) => {
-      //     console.log('getValue', getValue());
-      //     // const { color, label } = getIsActiveProps(
-      //     //   getValue(),
-      //     //   t
-      //     // );
-
-      //     return (
-      //       // <StatusCell color={color}>{label}</StatusCell>
-      //       <span>eee</span>
-      //     );
-      //   },
-      // }),
-      // columnHelper.accessor('is_internal', {
-      //   header: () => (
-      //     <TextHeader
-      //       text={t('categories.fields.visibility.label')}
-      //     />
-      //   ),
-      //   cell: ({ getValue }) => {
-      //     // const { color, label } = getIsInternalProps(
-      //     //   getValue(),
-      //     //   t
-      //     // );
-
-      //     return <span>ddd</span>;
-      //   },
-      // }),
     ],
     [t]
   )

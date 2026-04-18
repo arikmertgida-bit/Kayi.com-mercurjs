@@ -75,6 +75,7 @@ services:
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin123
       MINIO_BUCKET: medusa-media
+      MINIO_PUBLIC_URL: http://localhost:9002
       NODE_OPTIONS: "--max-old-space-size=512"
     mem_limit: 1g
     healthcheck:

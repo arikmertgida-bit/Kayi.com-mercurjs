@@ -11,4 +11,4 @@ COPY . .
 
 EXPOSE 7001
 
-CMD ["node", "./scripts/launch-vendor.js"]
+CMD ["sh", "-c", "node ./scripts/launch-vendor.js"]

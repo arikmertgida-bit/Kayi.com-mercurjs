@@ -6,6 +6,7 @@ export const CreateCategoryDetailsSchema = z.object({
   handle: z.string().optional(),
   status: z.enum(["active", "inactive"]),
   visibility: z.enum(["public", "internal"]),
+  thumbnail: z.instanceof(File).optional(),
 })
 
 export type CreateCategorySchema = z.infer<typeof CreateCategorySchema>

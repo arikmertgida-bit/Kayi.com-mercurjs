@@ -26,6 +26,7 @@ const ProductCreateVariantSchema = z.object({
   material: z.string().optional(),
   origin_country: z.string().optional(),
   sku: z.string().optional(),
+  initial_stock: optionalInt,
   manage_inventory: z.boolean().optional(),
   allow_backorder: z.boolean().optional(),
   inventory_kit: z.boolean().optional(),

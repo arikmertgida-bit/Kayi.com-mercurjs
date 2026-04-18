@@ -18,6 +18,7 @@ import { SellerCustomerGroupsSection } from "@routes/sellers/common/components/s
 import { SellerGeneralSection } from "@routes/sellers/common/components/seller-general-section";
 import { SellerOrdersSection } from "@routes/sellers/common/components/seller-orders-section";
 import { SellerProductsSection } from "@routes/sellers/common/components/seller-products-section";
+import { SellerStockLocationsSection } from "@routes/sellers/common/components/seller-stock-locations-section";
 
 const PAGE_SIZE = 10;
 const ORDER_PREFIX = "so";
@@ -101,6 +102,7 @@ export const SellerDetails = () => {
         }
         refetch={customerGroupsRefetch}
       />
+      <SellerStockLocationsSection sellerId={id!} />
     </>
   );
 };

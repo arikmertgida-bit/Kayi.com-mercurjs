@@ -13,7 +13,9 @@ import {
   useExtendableForm,
 } from "../../../../../extensions"
 import { useCreateProduct } from "../../../../../hooks/api/products"
-import { uploadFilesQuery } from "../../../../../lib/client"
+import { useBatchInventoryItemsLocationLevels } from "../../../../../hooks/api/inventory"
+import { useStockLocations } from "../../../../../hooks/api/stock-locations"
+import { uploadFilesQuery, fetchQuery } from "../../../../../lib/client"
 import {
   PRODUCT_CREATE_FORM_DEFAULTS,
   ProductCreateSchema,
@@ -81,6 +83,8 @@ export const ProductCreateForm = ({
   })
 
   const { mutateAsync, isPending } = useCreateProduct()
+  const { mutateAsync: batchUpdateStock } = useBatchInventoryItemsLocationLevels()
+  const { stock_locations } = useStockLocations({ limit: 9999 })
 
   /**
    * TODO: Important to revisit this - use variants watch so high in the tree can cause needless rerenders of the entire page
@@ -176,6 +180,7 @@ export const ProductCreateForm = ({
           is_default: undefined,
           inventory_kit: undefined,
           inventory: undefined,
+          initial_stock: undefined,
           prices: Object.keys(variant.prices || {}).map((key) => ({
             currency_code: key,
             amount: parseFloat(variant.prices?.[key] as string),
@@ -183,7 +188,46 @@ export const ProductCreateForm = ({
         })),
       },
       {
-        onSuccess: (data) => {
+        onSuccess: async (data) => {
+          // Set initial stock for variants that have it
+          const variantsWithStock = values.variants
+            .map((v: any, i: number) => ({ index: i, stock: Number(v.initial_stock) || 0 }))
+            .filter(({ stock }) => stock > 0)
+
+          if (variantsWithStock.length > 0 && stock_locations?.length) {
+            try {
+              const productData: any = await fetchQuery(
+                `/vendor/products/${data.product.id}`,
+                { method: "GET", query: { fields: "*variants.inventory_items" } }
+              )
+              const createdVariants = productData?.product?.variants ?? []
+              const createLevels: any[] = []
+
+              for (const { index, stock } of variantsWithStock) {
+                const variant = createdVariants[index]
+                if (!variant?.inventory_items?.length) continue
+                const inventoryItemId = variant.inventory_items[0].inventory_item_id
+                const locationCount = stock_locations.length
+                const perLocation = Math.floor(stock / locationCount)
+                const remainder = stock % locationCount
+
+                for (let i = 0; i < stock_locations.length; i++) {
+                  createLevels.push({
+                    inventory_item_id: inventoryItemId,
+                    location_id: stock_locations[i].id,
+                    stocked_quantity: perLocation + (i === 0 ? remainder : 0),
+                  })
+                }
+              }
+
+              if (createLevels.length > 0) {
+                await batchUpdateStock({ create: createLevels })
+              }
+            } catch (e) {
+              console.error("Failed to set initial stock:", e)
+            }
+          }
+
           toast.success(
             t("products.create.successToast", {
               title: data.product.title,
