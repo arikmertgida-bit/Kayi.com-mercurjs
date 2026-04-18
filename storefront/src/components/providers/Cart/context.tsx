@@ -4,6 +4,7 @@ import { Cart, StoreCartLineItemOptimisticUpdate } from "@/types/cart"
 
 interface CartContextInterface {
   cart: Cart | null
+  setCart: (cart: Cart | null) => void
   onAddToCart: (
     item: StoreCartLineItemOptimisticUpdate,
     currency_code: string

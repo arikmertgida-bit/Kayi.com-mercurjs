@@ -45,6 +45,7 @@ export const ProductCreateOrganizationSection = ({
         label: type.value,
         value: type.id,
       })),
+    pageSize: 200,
   })
 
   const tags = useComboboxData({
@@ -85,9 +86,6 @@ export const ProductCreateOrganizationSection = ({
                   <Combobox
                     {...field}
                     options={types.options}
-                    searchValue={types.searchValue}
-                    onSearchValueChange={types.onSearchValueChange}
-                    fetchNextPage={types.fetchNextPage}
                   />
                 </Form.Control>
                 <Form.ErrorMessage />

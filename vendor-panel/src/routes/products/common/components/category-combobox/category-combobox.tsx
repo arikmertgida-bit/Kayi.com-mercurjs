@@ -6,6 +6,7 @@ import {
 } from "@medusajs/icons"
 import { AdminProductCategoryResponse } from "@medusajs/types"
 import { Divider, Text, clx } from "@medusajs/ui"
+import { matchSorter } from "match-sorter"
 import { Popover as RadixPopover } from "radix-ui"
 import {
   CSSProperties,
@@ -64,7 +65,6 @@ export const CategoryCombobox = forwardRef<
   const { product_categories, isPending, isError, error } =
     useProductCategories(
       {
-        q: query,
         parent_category_id: !searchValue ? getParentId(level) : undefined,
         include_descendants_tree: !searchValue ? true : false,
       },
@@ -72,6 +72,12 @@ export const CategoryCombobox = forwardRef<
         enabled: open,
       }
     )
+
+  // Load all categories for client-side search filtering
+  const { product_categories: allCategories } = useProductCategories(
+    { limit: 500 },
+    { enabled: open }
+  )
 
   const [showLoading, setShowLoading] = useState(false)
 
@@ -146,7 +152,12 @@ export const CategoryCombobox = forwardRef<
     setOpen(open)
   }
 
-  const options = getOptions(product_categories || [])
+  const treeOptions = getOptions(product_categories || [])
+  const allOptions = getOptions(allCategories || [])
+
+  const options = searchValue
+    ? matchSorter(allOptions, searchValue, { keys: ["label"] })
+    : treeOptions
 
   const showTag = value.length > 0
   const showSelected = !open && value.length > 0

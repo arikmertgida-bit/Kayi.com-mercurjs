@@ -1,4 +1,6 @@
-import { PropsWithChildren, useEffect, useState } from "react"
+"use client"
+
+import { PropsWithChildren, useCallback, useEffect, useState } from "react"
 
 import { CartContext } from "./context"
 import { Cart, StoreCartLineItemOptimisticUpdate } from "@/types/cart"
@@ -83,10 +85,15 @@ export function CartProvider({ cart, children }: CartProviderProps) {
     )
   }
 
+  const setCart = useCallback((cart: Cart | null) => {
+    setCartState(cart)
+  }, [])
+
   return (
     <CartContext.Provider
       value={{
         cart: cartState,
+        setCart,
         onAddToCart: handleAddToCart,
       }}
     >

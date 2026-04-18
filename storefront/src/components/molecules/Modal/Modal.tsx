@@ -1,3 +1,5 @@
+"use client"
+
 import { CloseIcon } from "@/icons"
 
 export const Modal = ({

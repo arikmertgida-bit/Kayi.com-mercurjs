@@ -2,7 +2,7 @@ import Image from "next/image"
 import { HttpTypes } from "@medusajs/types"
 
 import { CartDropdown, MobileNavbar, Navbar } from "@/components/cells"
-import { HeartIcon, MessageIcon } from "@/icons"
+import { HeartIcon } from "@/icons"
 import { listCategories } from "@/lib/data/categories"
 import { PARENT_CATEGORIES } from "@/const"
 import { UserDropdown } from "@/components/cells/UserDropdown/UserDropdown"
@@ -13,24 +13,27 @@ import { Badge } from "@/components/atoms"
 import CountrySelector from "@/components/molecules/CountrySelector/CountrySelector"
 import { listRegions } from "@/lib/data/regions"
 import LocalizedClientLink from "@/components/molecules/LocalizedLink/LocalizedLink"
-import { MessageButton } from "@/components/molecules/MessageButton/MessageButton"
 import { NavbarSearch } from "@/components/molecules"
 
 export const Header = async () => {
-  const user = await retrieveCustomer()
+  // Parallelise all independent data fetches — eliminates a ~3-request waterfall
+  // and reduces total server-side blocking time to that of the slowest single fetch.
+  const [user, regions, categoriesResult] = await Promise.all([
+    retrieveCustomer(),
+    listRegions(),
+    listCategories({ headingCategories: PARENT_CATEGORIES }),
+  ])
+
+  // Wishlist depends on user — only fetch when needed
   let wishlist: Wishlist[] = []
   if (user) {
     const response = await getUserWishlists()
     wishlist = response.wishlists
   }
 
-  const regions = await listRegions()
-
   const wishlistCount = wishlist?.[0]?.products.length || 0
 
-  const { categories, parentCategories } = (await listCategories({
-    headingCategories: PARENT_CATEGORIES,
-  })) as {
+  const { categories, parentCategories } = categoriesResult as {
     categories: HttpTypes.StoreProductCategory[]
     parentCategories: HttpTypes.StoreProductCategory[]
   }
@@ -59,7 +62,6 @@ export const Header = async () => {
           </div>
           <div className="flex items-center justify-end gap-2 lg:gap-4 shrink-0 py-2">
             <CountrySelector regions={regions} />
-            {user && <MessageButton />}
             <UserDropdown user={user} />
             {user && (
               <LocalizedClientLink href="/user/wishlist" className="relative">
@@ -71,7 +73,6 @@ export const Header = async () => {
                 )}
               </LocalizedClientLink>
             )}
-
             <CartDropdown />
           </div>
         </div>

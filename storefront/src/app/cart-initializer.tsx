@@ -1,16 +1,13 @@
 import { retrieveCart } from "@/lib/data/cart"
-import { Providers } from "./providers"
+import { CartSynchronizer } from "./cart-synchronizer"
 
 /**
- * Async server component that fetches cart data and initialises the CartProvider.
- * Placed inside a <Suspense> boundary in layout.tsx so that the initial HTML
- * streams immediately (with cart=null) while this component resolves in parallel.
+ * Async server component that fetches cart data and injects it into
+ * CartContext via CartSynchronizer — without wrapping or remounting children.
+ * Placed inside a <Suspense> boundary whose fallback={null} so that the
+ * children tree (already mounted outside Suspense) is never touched.
  */
-export async function CartInitializer({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export async function CartInitializer() {
   const cart = await retrieveCart()
-  return <Providers cart={cart}>{children}</Providers>
+  return <CartSynchronizer cart={cart} />
 }

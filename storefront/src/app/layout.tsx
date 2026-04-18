@@ -120,9 +120,18 @@ export default async function RootLayout({
       <body
         className={`${funnelDisplay.className} antialiased bg-primary text-secondary relative`}
       >
-        <Suspense fallback={<Providers cart={null}>{children}</Providers>}>
-          <CartInitializer>{children}</CartInitializer>
-        </Suspense>
+        <Providers cart={null}>
+          {/*
+            CartInitializer fetches cart data server-side and injects it via
+            CartSynchronizer (a client component). It does NOT wrap children,
+            so children are mounted exactly once and event handlers are never
+            detached during the cart fetch — eliminating the double-click issue.
+          */}
+          <Suspense fallback={null}>
+            <CartInitializer />
+          </Suspense>
+          {children}
+        </Providers>
         <Toaster position="top-right" />
       </body>
     </html>
