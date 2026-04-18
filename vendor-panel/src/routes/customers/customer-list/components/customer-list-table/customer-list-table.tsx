@@ -4,6 +4,7 @@ import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
 
 import { _DataTable } from "../../../../../components/table/data-table"
+import { DataTableSearch } from "../../../../../components/table/data-table/data-table-search"
 import { useCustomers } from "../../../../../hooks/api/customers"
 import { useCustomerTableColumns } from "../../../../../hooks/table/columns/use-customer-table-columns"
 import { useCustomerTableFilters } from "../../../../../hooks/table/filters/use-customer-table-filters"
@@ -55,6 +56,7 @@ export const CustomerListTable = () => {
     <Container className="divide-y p-0">
       <div className="flex items-center justify-between px-6 py-4">
         <Heading>{t("customers.domain")}</Heading>
+        <DataTableSearch />
       </div>
       <_DataTable
         table={table}
@@ -85,7 +87,6 @@ export const CustomerListTable = () => {
         isLoading={isLoading}
         navigateTo={(row) => row.original.id}
         queryObject={raw}
-        search
         noRecords={{
           message: t("customers.list.noRecordsMessage"),
         }}
