@@ -3,6 +3,7 @@
 import { Button } from "@/components/atoms"
 import { BinIcon } from "@/icons"
 import { deleteLineItem } from "@/lib/data/cart"
+import { toast } from "@/lib/helpers/toast"
 import { useState } from "react"
 
 export const DeleteCartItemButton = ({ id }: { id: string }) => {
@@ -10,10 +11,24 @@ export const DeleteCartItemButton = ({ id }: { id: string }) => {
 
   const handleDelete = async (id: string) => {
     setIsDeleting(true)
-    await deleteLineItem(id).finally(() => {
+    try {
+      const res = await deleteLineItem(id)
+      if (res && !res.ok) {
+        toast.error({
+          title: "Error removing item",
+          description: res.error?.message ?? "Could not remove item from cart",
+        })
+      }
+    } catch (error: any) {
+      toast.error({
+        title: "Error removing item",
+        description: error.message ?? "Could not remove item from cart",
+      })
+    } finally {
       setIsDeleting(false)
-    })
+    }
   }
+
   return (
     <Button
       variant="text"

@@ -220,13 +220,16 @@ export async function deleteLineItem(lineId: string) {
     ...(await getAuthHeaders()),
   }
 
-  await sdk.store.cart
-    .deleteLineItem(cartId, lineId, headers)
-    .then(async () => {
-      const cartCacheTag = await getCacheTag("carts")
-      await revalidateTag(cartCacheTag)
-    })
-    .catch(medusaError)
+  const res = await fetchQuery(`/store/carts/${cartId}/line-items/${lineId}`, {
+    method: "DELETE",
+    headers,
+  })
+
+  const cartCacheTag = await getCacheTag("carts")
+  await revalidateTag(cartCacheTag)
+  revalidatePath("/cart")
+
+  return res
 }
 
 export async function setShippingMethod({
