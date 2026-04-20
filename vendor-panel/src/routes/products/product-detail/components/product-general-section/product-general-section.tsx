@@ -67,7 +67,7 @@ export const ProductGeneralSection = ({
         <Heading>{product.title}</Heading>
         <div className="flex items-center gap-x-4">
           <StatusBadge color={productStatusColor(product.status)}>
-            {t(`products.productStatus.${product.status}`)}
+            {t(`products.productStatus.${product.status ?? "draft"}`)}
           </StatusBadge>
           <ActionMenu
             groups={[

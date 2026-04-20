@@ -117,6 +117,7 @@ export const ProductCreateAttributeSection = ({
             )
           }}
         />
+        {/* mid_code alanı gizlendi
         <Form.Field
           control={form.control}
           name="mid_code"
@@ -133,6 +134,8 @@ export const ProductCreateAttributeSection = ({
             )
           }}
         />
+        */}
+        {/* hs_code alanı gizlendi
         <Form.Field
           control={form.control}
           name="hs_code"
@@ -149,6 +152,7 @@ export const ProductCreateAttributeSection = ({
             )
           }}
         />
+        */}
       </div>
     </div>
   )

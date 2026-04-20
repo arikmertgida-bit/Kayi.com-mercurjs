@@ -605,7 +605,7 @@
         "optionTitle": "Option title",
         "optionTitlePlaceholder": "Color",
         "variations": "Variations (comma-separated)",
-        "variantionsPlaceholder": "Red, Blue, Green"
+        "variantionsPlaceholder": "Kırmızı, Mavi, Yeşil"
       },
       "variants": {
         "label": "Product variants",

@@ -3,8 +3,7 @@
 import { Button } from "@/components/atoms"
 import { HttpTypes } from "@medusajs/types"
 import { ProductVariants } from "@/components/molecules"
-import useGetAllSearchParams from "@/hooks/useGetAllSearchParams"
-import { getProductPrice } from "@/lib/helpers/get-product-price"
+import { useProductVariants } from "@/hooks/useProductVariants"
 import { useState } from "react"
 import { addToCart } from "@/lib/data/cart"
 import { Chat } from "@/components/organisms/Chat/Chat"
@@ -13,22 +12,7 @@ import { WishlistButton } from "../WishlistButton/WishlistButton"
 import { Wishlist } from "@/types/wishlist"
 import { toast } from "@/lib/helpers/toast"
 import { useCartContext } from "@/components/providers"
-
-const optionsAsKeymap = (
-  variantOptions: HttpTypes.StoreProductVariant["options"]
-) => {
-  return variantOptions?.reduce(
-    (
-      acc: Record<string, string>,
-      varopt: HttpTypes.StoreProductOptionValue
-    ) => {
-      acc[varopt.option?.title.toLowerCase() || ""] = varopt.value
-
-      return acc
-    },
-    {}
-  )
-}
+import { AdditionalAttributeProps } from "@/types/product"
 
 export const ProductDetailsHeader = ({
   product,
@@ -36,60 +20,36 @@ export const ProductDetailsHeader = ({
   user,
   wishlist,
 }: {
-  product: HttpTypes.StoreProduct & { seller?: SellerProps }
+  product: HttpTypes.StoreProduct & {
+    seller?: SellerProps
+    attribute_values?: AdditionalAttributeProps[]
+    metadata?: Record<string, unknown> | null
+  }
   locale: string
   user: HttpTypes.StoreCustomer | null
   wishlist?: Wishlist[]
 }) => {
   const { onAddToCart, cart } = useCartContext()
   const [isAdding, setIsAdding] = useState(false)
-  const { allSearchParams } = useGetAllSearchParams()
 
-  const { cheapestVariant, cheapestPrice } = getProductPrice({
-    product,
-  })
-
-  // Check if product has any valid prices in current region
-  const hasAnyPrice = cheapestPrice !== null && cheapestVariant !== null
-
-  // set default variant
-  const selectedVariant = hasAnyPrice
-    ? {
-        ...optionsAsKeymap(cheapestVariant.options ?? null),
-        ...allSearchParams,
-      }
-    : allSearchParams
-
-  // get selected variant id
-  const variantId =
-    product.variants?.find(({ options }: { options: any }) =>
-      options?.every((option: any) =>
-        selectedVariant[option.option?.title.toLowerCase() || ""]?.includes(
-          option.value
-        )
-      )
-    )?.id || ""
-
-  // get variant price
-  const { variantPrice } = getProductPrice({
-    product,
-    variantId,
-  })
-
-  const variantStock =
-    product.variants?.find(({ id }) => id === variantId)?.inventory_quantity ||
-    0
-
-  const variantHasPrice = !!product.variants?.find(({ id }) => id === variantId)
-    ?.calculated_price
+  const {
+    selectedVariant,
+    variantPrice,
+    variantStock,
+    isOutOfStock,
+    hasAnyPrice,
+    allOptionsSelected,
+    hasVariants,
+  } = useProductVariants()
 
   const isVariantStockMaxLimitReached =
-    (cart?.items?.find((item) => item.variant_id === variantId)?.quantity ??
-      0) >= variantStock
+    (cart?.items?.find((item) => item.variant_id === selectedVariant?.id)
+      ?.quantity ?? 0) >= variantStock
 
-  // add the selected variant to the cart
+  const variantHasPrice = !!selectedVariant?.calculated_price
+
   const handleAddToCart = async () => {
-    if (!variantId || !hasAnyPrice) return null
+    if (!selectedVariant?.id || !hasAnyPrice || !allOptionsSelected) return null
 
     setIsAdding(true)
 
@@ -103,9 +63,9 @@ export const ProductDetailsHeader = ({
       subtotal,
       total,
       tax_total: total - subtotal,
-      variant_id: variantId,
+      variant_id: selectedVariant.id,
       product_id: product.id,
-      variant: product.variants?.find(({ id }) => id === variantId),
+      variant: selectedVariant,
     }
 
     try {
@@ -113,7 +73,7 @@ export const ProductDetailsHeader = ({
         onAddToCart(storeCartLineItem, variantPrice?.currency_code || "eur")
       }
       await addToCart({
-        variantId: variantId,
+        variantId: selectedVariant.id,
         quantity: 1,
         countryCode: locale,
       })
@@ -131,9 +91,7 @@ export const ProductDetailsHeader = ({
     <div className="border rounded-sm p-5">
       <div className="flex justify-between">
         <div>
-          <h2 className="label-md text-secondary">
-            {/* {product?.brand || "No brand"} */}
-          </h2>
+          <h2 className="label-md text-secondary"></h2>
           <h1 className="heading-lg text-primary">{product.title}</h1>
           <div className="mt-2 flex gap-2 items-center">
             {hasAnyPrice && variantPrice ? (
@@ -156,7 +114,6 @@ export const ProductDetailsHeader = ({
           </div>
         </div>
         <div>
-          {/* Add to Wishlist */}
           <WishlistButton
             productId={product.id}
             wishlist={wishlist}
@@ -164,26 +121,33 @@ export const ProductDetailsHeader = ({
           />
         </div>
       </div>
+
       {/* Product Variants */}
-      {hasAnyPrice && (
-        <ProductVariants product={product} selectedVariant={selectedVariant} />
-      )}
+      {hasAnyPrice && <ProductVariants product={product} />}
+
       {/* Add to Cart */}
       <Button
         onClick={handleAddToCart}
-        disabled={!variantStock || !variantHasPrice || !hasAnyPrice}
+        disabled={
+          !hasAnyPrice ||
+          (hasVariants && !allOptionsSelected) ||
+          !variantStock ||
+          !variantHasPrice
+        }
         loading={isAdding}
         className="w-full uppercase mb-4 py-3 flex justify-center"
         size="large"
       >
         {!hasAnyPrice
           ? "NOT AVAILABLE IN YOUR REGION"
-          : variantStock && variantHasPrice
-          ? "ADD TO CART"
-          : "OUT OF STOCK"}
+          : hasVariants && !allOptionsSelected
+          ? "PLEASE SELECT OPTIONS"
+          : isOutOfStock || !variantHasPrice
+          ? "OUT OF STOCK"
+          : "ADD TO CART"}
       </Button>
-      {/* Seller message */}
 
+      {/* Seller message */}
       {user && product.seller && (
         <Chat
           user={user}

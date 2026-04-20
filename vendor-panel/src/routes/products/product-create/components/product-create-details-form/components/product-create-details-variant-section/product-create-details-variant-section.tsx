@@ -1,12 +1,9 @@
-import { XMarkMini } from "@medusajs/icons"
+import { ChevronDownMini, ChevronUpMini } from "@medusajs/icons"
 import {
   Alert,
+  Badge,
   Button,
-  Checkbox,
   Heading,
-  Hint,
-  IconButton,
-  InlineTip,
   Input,
   Label,
   Text,
@@ -14,66 +11,420 @@ import {
 } from "@medusajs/ui"
 import {
   Controller,
-  FieldArrayWithId,
   UseFormReturn,
   useFieldArray,
   useWatch,
 } from "react-hook-form"
 import { useTranslation } from "react-i18next"
+import { useRef, useState } from "react"
 
 import { Form } from "../../../../../../../components/common/form"
-import { SortableList } from "../../../../../../../components/common/sortable-list"
-import { SwitchBox } from "../../../../../../../components/common/switch-box"
 import { ChipInput } from "../../../../../../../components/inputs/chip-input"
 import { ProductCreateSchemaType } from "../../../../types"
 import { decorateVariantsWithDefaultValues } from "../../../../utils"
+import { ProductCreateMediaSection } from "../product-create-details-media-section"
+import { generateVariantSku } from "../../../../../../../utils/generate-sku"
 
 type ProductCreateVariantsSectionProps = {
   form: UseFormReturn<ProductCreateSchemaType>
+  currencyCodes?: string[]
+}
+
+const VariantColorImagePicker = ({
+  value,
+  onChange,
+  hasError,
+}: {
+  value: File | undefined
+  onChange: (file: File) => void
+  hasError?: boolean
+}) => {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    onChange(file)
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    setPreviewUrl(URL.createObjectURL(file))
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        className={clx(
+          "flex items-center gap-2 rounded-lg border px-3 py-2 text-xs transition-colors",
+          "bg-ui-bg-field-component hover:bg-ui-bg-field-component-hover",
+          hasError ? "border-ui-fg-error" : "border-ui-border-base"
+        )}
+      >
+        {previewUrl ? (
+          <img
+            src={previewUrl}
+            alt="preview"
+            className="h-8 w-8 rounded object-cover"
+          />
+        ) : (
+          <div className="flex h-8 w-8 items-center justify-center rounded bg-ui-bg-subtle text-ui-fg-muted text-lg">
+            +
+          </div>
+        )}
+        <span className="text-ui-fg-subtle">
+          {previewUrl ? "Degistir" : "Gorsel Ekle"}
+        </span>
+      </button>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+    </div>
+  )
 }
 
 const getPermutations = (
   data: { title: string; values: string[] }[]
 ): { [key: string]: string }[] => {
-  if (data.length === 0) {
-    return []
-  }
-
-  if (data.length === 1) {
+  if (data.length === 0) return []
+  if (data.length === 1)
     return data[0].values.map((value) => ({ [data[0].title]: value }))
-  }
-
   const toProcess = data[0]
   const rest = data.slice(1)
-
-  return toProcess.values.flatMap((value) => {
-    return getPermutations(rest).map((permutation) => {
-      return {
-        [toProcess.title]: value,
-        ...permutation,
-      }
-    })
-  })
+  return toProcess.values.flatMap((value) =>
+    getPermutations(rest).map((permutation) => ({
+      [toProcess.title]: value,
+      ...permutation,
+    }))
+  )
 }
 
-const getVariantName = (options: Record<string, string>) => {
-  return Object.values(options).join(" / ")
+const getVariantName = (options: Record<string, string>) =>
+  Object.values(options).join(" / ")
+
+const getColorKey = (options: Record<string, string>) => {
+  const key = Object.keys(options).find((k) =>
+    ["renk", "color"].includes(k.toLowerCase())
+  )
+  return key ? options[key] : null
+}
+
+const getSizeKey = (options: Record<string, string>) => {
+  const key = Object.keys(options).find((k) =>
+    ["beden", "numara", "size"].includes(k.toLowerCase())
+  )
+  return key ? options[key] : null
+}
+
+/* ────────────────── Accordion Color Group ───────────────────────────────── */
+type VariantWithIndex = {
+  originalIndex: number
+  title: string
+  options: Record<string, string>
+  [key: string]: any
+}
+
+type ColorGroupProps = {
+  colorName: string
+  variants: VariantWithIndex[]
+  form: UseFormReturn<ProductCreateSchemaType>
+  currencyCodes: string[]
+  isExpanded: boolean
+  onToggle: () => void
+}
+
+const ColorGroup = ({
+  colorName,
+  variants,
+  form,
+  currencyCodes,
+  isExpanded,
+  onToggle,
+}: ColorGroupProps) => {
+  const firstIdx = variants[0]?.originalIndex
+  const firstVariantOptions = variants[0]?.options ?? {}
+  const sizeKey = Object.keys(firstVariantOptions).find((k) =>
+    ["beden", "numara", "size"].includes(k.toLowerCase())
+  )
+  const sizeLabel = sizeKey ?? "Beden"
+
+  return (
+    <div className="rounded-xl border border-ui-border-base overflow-hidden">
+      {/* Color header row */}
+      <div
+        className="flex items-center justify-between bg-ui-bg-component px-4 py-3 cursor-pointer hover:bg-ui-bg-component-hover transition-colors"
+        onClick={onToggle}
+      >
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            className="text-ui-fg-muted hover:text-ui-fg-base"
+          >
+            {isExpanded ? (
+              <ChevronUpMini className="h-4 w-4" />
+            ) : (
+              <ChevronDownMini className="h-4 w-4" />
+            )}
+          </button>
+          <Text weight="plus" size="small">
+            {colorName}
+          </Text>
+          <Badge size="xsmall" color="grey">
+            {variants.length} {sizeLabel}
+          </Badge>
+        </div>
+        {/* Color image picker per group */}
+        {firstIdx !== undefined && (
+          <div onClick={(e) => e.stopPropagation()}>
+            <Form.Field
+              control={form.control}
+              name={`variants.${firstIdx}.variant_thumbnail_file` as any}
+              render={({ field, fieldState }) => (
+                <Form.Item>
+                  <Form.Control>
+                    <VariantColorImagePicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      hasError={!!fieldState.error}
+                    />
+                  </Form.Control>
+                </Form.Item>
+              )}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Size rows */}
+      {isExpanded && (
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs border-collapse">
+            <thead>
+              <tr className="bg-ui-bg-subtle border-b border-ui-border-base">
+                <th className="px-3 py-2 text-left font-medium text-ui-fg-subtle whitespace-nowrap">
+                  {sizeLabel}
+                </th>
+                <th className="px-3 py-2 text-left font-medium text-ui-fg-subtle whitespace-nowrap">
+                  SKU
+                </th>
+                <th className="px-3 py-2 text-left font-medium text-ui-fg-subtle whitespace-nowrap">
+                  Barkod
+                </th>
+                <th className="px-3 py-2 text-left font-medium text-ui-fg-subtle whitespace-nowrap">
+                  Stok
+                </th>
+                {currencyCodes.map((cc) => (
+                  <th
+                    key={"th-" + cc}
+                    className="px-3 py-2 text-left font-medium text-ui-fg-subtle whitespace-nowrap"
+                  >
+                    Fiyat ({cc.toUpperCase()})
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {variants.map((variant, rowIdx) => {
+                const idx = variant.originalIndex
+                const sizeName = getSizeKey(variant.options) ?? variant.title
+
+                return (
+                  <tr
+                    key={idx}
+                    className={clx(
+                      "border-b border-ui-border-base last:border-b-0",
+                      rowIdx % 2 === 0 ? "bg-ui-bg-base" : "bg-ui-bg-subtle"
+                    )}
+                  >
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <Text size="xsmall" weight="plus">
+                        {sizeName}
+                      </Text>
+                    </td>
+                    <td className="px-3 py-2">
+                      <Form.Field
+                        control={form.control}
+                        name={`variants.${idx}.sku`}
+                        render={({ field }) => (
+                          <Form.Item>
+                            <Form.Control>
+                              <Input
+                                {...field}
+                                size="small"
+                                placeholder="ABC-001"
+                                className="min-w-[110px]"
+                              />
+                            </Form.Control>
+                          </Form.Item>
+                        )}
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <Form.Field
+                        control={form.control}
+                        name={`variants.${idx}.barcode`}
+                        render={({ field }) => (
+                          <Form.Item>
+                            <Form.Control>
+                              <Input
+                                {...field}
+                                size="small"
+                                placeholder="1234567890"
+                                className="min-w-[120px]"
+                              />
+                            </Form.Control>
+                          </Form.Item>
+                        )}
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <Form.Field
+                        control={form.control}
+                        name={`variants.${idx}.initial_stock`}
+                        render={({ field }) => (
+                          <Form.Item>
+                            <Form.Control>
+                              <Input
+                                {...field}
+                                type="number"
+                                min={0}
+                                size="small"
+                                placeholder="0"
+                                className="min-w-[70px]"
+                              />
+                            </Form.Control>
+                          </Form.Item>
+                        )}
+                      />
+                    </td>
+                    {currencyCodes.map((cc) => (
+                      <td key={"p-" + cc} className="px-3 py-2">
+                        <Form.Field
+                          control={form.control}
+                          name={`variants.${idx}.prices.${cc}` as any}
+                          render={({ field }) => (
+                            <Form.Item>
+                              <Form.Control>
+                                <Input
+                                  {...field}
+                                  type="number"
+                                  min={0}
+                                  step="0.01"
+                                  size="small"
+                                  placeholder="0.00"
+                                  className="min-w-[90px]"
+                                />
+                              </Form.Control>
+                            </Form.Item>
+                          )}
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ────────────────── BulkEditBar ─────────────────────────────────────────── */
+type BulkEditBarProps = {
+  currencyCodes: string[]
+  onApplyPrice: (cc: string, price: string) => void
+  onApplyStock: (stock: string) => void
+}
+
+const BulkEditBar = ({ currencyCodes, onApplyPrice, onApplyStock }: BulkEditBarProps) => {
+  const [bulkPrice, setBulkPrice] = useState<Record<string, string>>({})
+  const [bulkStock, setBulkStock] = useState("")
+
+  return (
+    <div className="flex flex-wrap items-end gap-3 rounded-xl border border-ui-border-base bg-ui-bg-subtle px-4 py-3">
+      <Text size="xsmall" weight="plus" className="text-ui-fg-subtle self-center mr-1">
+        Tumune Uygula:
+      </Text>
+
+      {/* Stock */}
+      <div className="flex items-end gap-2">
+        <div className="flex flex-col gap-y-1">
+          <Label size="xsmall" className="text-ui-fg-muted">
+            Stok
+          </Label>
+          <Input
+            size="small"
+            type="number"
+            min={0}
+            placeholder="0"
+            className="w-24"
+            value={bulkStock}
+            onChange={(e) => setBulkStock(e.target.value)}
+          />
+        </div>
+        <Button
+          size="small"
+          variant="secondary"
+          type="button"
+          onClick={() => {
+            onApplyStock(bulkStock)
+            setBulkStock("")
+          }}
+        >
+          Uygula
+        </Button>
+      </div>
+
+      {/* Price per currency */}
+      {currencyCodes.map((cc) => (
+        <div key={cc} className="flex items-end gap-2">
+          <div className="flex flex-col gap-y-1">
+            <Label size="xsmall" className="text-ui-fg-muted">
+              Fiyat ({cc.toUpperCase()})
+            </Label>
+            <Input
+              size="small"
+              type="number"
+              min={0}
+              step="0.01"
+              placeholder="0.00"
+              className="w-28"
+              value={bulkPrice[cc] ?? ""}
+              onChange={(e) =>
+                setBulkPrice((prev) => ({ ...prev, [cc]: e.target.value }))
+              }
+            />
+          </div>
+          <Button
+            size="small"
+            variant="secondary"
+            type="button"
+            onClick={() => {
+              onApplyPrice(cc, bulkPrice[cc] ?? "")
+              setBulkPrice((prev) => ({ ...prev, [cc]: "" }))
+            }}
+          >
+            Uygula
+          </Button>
+        </div>
+      ))}
+    </div>
+  )
 }
 
 export const ProductCreateVariantsSection = ({
   form,
+  currencyCodes = [],
 }: ProductCreateVariantsSectionProps) => {
   const { t } = useTranslation()
 
-  const options = useFieldArray({
-    control: form.control,
-    name: "options",
-  })
-
-  const variants = useFieldArray({
-    control: form.control,
-    name: "variants",
-  })
+  const options = useFieldArray({ control: form.control, name: "options" })
 
   const watchedAreVariantsEnabled = useWatch({
     control: form.control,
@@ -93,448 +444,472 @@ export const ProductCreateVariantsSection = ({
     defaultValue: [],
   })
 
+  // Model Kodu: handle field
+  const modelCode = useWatch({
+    control: form.control,
+    name: "handle",
+    defaultValue: "",
+  })
+
+  // Her ürün oturumuna özgü 4-karakterlik random suffix — SKU çakışmalarını önler
+  const skuSuffix = useRef(
+    Array.from(crypto.getRandomValues(new Uint8Array(2)))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("")
+      .toUpperCase()
+  )
+
+  const [expandedColors, setExpandedColors] = useState<Set<string>>(new Set())
+
   const showInvalidOptionsMessage = !!form.formState.errors.options?.length
   const showInvalidVariantsMessage =
     form.formState.errors.variants?.root?.message === "invalid_length"
 
-  const handleOptionValueUpdate = (index: number, value: string[]) => {
-    const { isTouched: hasUserSelectedVariants } =
-      form.getFieldState("variants")
+  const isColorGrouped =
+    watchedAreVariantsEnabled &&
+    watchedOptions.some((o) =>
+      ["renk", "color"].includes(o.title?.toLowerCase() ?? "")
+    )
 
-    const newOptions = [...watchedOptions]
-    newOptions[index].values = value
+  const rebuildVariants = (newOptions: { title: string; values: string[] }[]) => {
+    const valid = newOptions.filter((o) => o.title && o.values.length > 0)
+    const permutations = getPermutations(valid)
+    const old = [...watchedVariants]
 
-    const permutations = getPermutations(newOptions)
-    const oldVariants = [...watchedVariants]
-
-    const findMatchingPermutation = (options: Record<string, string>) => {
-      return permutations.find((permutation) =>
-        Object.keys(options).every((key) => options[key] === permutation[key])
+    const merged = permutations.map((perm) => {
+      const match = old.find((v) =>
+        Object.keys(perm).every((k) => v.options[k] === perm[k])
       )
-    }
-
-    const newVariants = oldVariants.reduce(
-      (variants, variant) => {
-        const match = findMatchingPermutation(variant.options)
-
-        if (match) {
-          variants.push({
-            ...variant,
-            title: getVariantName(match),
-            options: match,
-          })
-        }
-
-        return variants
-      },
-      [] as typeof oldVariants
-    )
-
-    const usedPermutations = new Set(
-      newVariants.map((variant) => variant.options)
-    )
-    const unusedPermutations = permutations.filter(
-      (permutation) => !usedPermutations.has(permutation)
-    )
-
-    unusedPermutations.forEach((permutation) => {
-      newVariants.push({
-        title: getVariantName(permutation),
-        options: permutation,
-        should_create: hasUserSelectedVariants ? false : true,
-        variant_rank: newVariants.length,
-        // NOTE - prepare inventory array here for now so we prevent rendering issue if we append the items later
-        inventory: [{ inventory_item_id: "", required_quantity: "" }],
-      })
-    })
-
-    form.setValue("variants", newVariants)
-  }
-
-  const handleRemoveOption = (index: number) => {
-    if (index === 0) {
-      return
-    }
-
-    options.remove(index)
-
-    const newOptions = [...watchedOptions]
-    newOptions.splice(index, 1)
-
-    const permutations = getPermutations(newOptions)
-    const oldVariants = [...watchedVariants]
-
-    const findMatchingPermutation = (options: Record<string, string>) => {
-      return permutations.find((permutation) =>
-        Object.keys(options).every((key) => options[key] === permutation[key])
-      )
-    }
-
-    const newVariants = oldVariants.reduce(
-      (variants, variant) => {
-        const match = findMatchingPermutation(variant.options)
-
-        if (match) {
-          variants.push({
-            ...variant,
-            title: getVariantName(match),
-            options: match,
-          })
-        }
-
-        return variants
-      },
-      [] as typeof oldVariants
-    )
-
-    const usedPermutations = new Set(
-      newVariants.map((variant) => variant.options)
-    )
-    const unusedPermutations = permutations.filter(
-      (permutation) => !usedPermutations.has(permutation)
-    )
-
-    unusedPermutations.forEach((permutation) => {
-      newVariants.push({
-        title: getVariantName(permutation),
-        options: permutation,
-        should_create: false,
-        variant_rank: newVariants.length,
-      })
-    })
-
-    form.setValue("variants", newVariants)
-  }
-
-  const handleRankChange = (
-    items: FieldArrayWithId<ProductCreateSchemaType, "variants">[]
-  ) => {
-    // Items in the SortableList are memorised, so we need to find the current
-    // value to preserve any changes that have been made to `should_create`.
-    const update = items.map((item, index) => {
-      const variant = watchedVariants.find((v) => v.title === item.title)
-
+      if (match) {
+        return { ...match, title: getVariantName(perm), options: perm, should_create: true }
+      }
+      const colorVal = getColorKey(perm) ?? ""
+      const sizeVal = getSizeKey(perm) ?? ""
+      const autoSku = generateVariantSku(modelCode || "VND", colorVal, sizeVal) + "-" + skuSuffix.current
       return {
-        id: item.id,
-        ...(variant || item),
-        variant_rank: index,
+        ...decorateVariantsWithDefaultValues([
+          {
+            title: getVariantName(perm),
+            options: perm,
+            should_create: true,
+            variant_rank: 0,
+            inventory: [{ inventory_item_id: "", required_quantity: "" }],
+          },
+        ])[0],
+        sku: autoSku,
       }
     })
 
-    variants.replace(update)
-  }
+    form.setValue("variants", merged)
 
-  const getCheckboxState = (variants: ProductCreateSchemaType["variants"]) => {
-    if (variants.every((variant) => variant.should_create)) {
-      return true
-    }
-
-    if (variants.some((variant) => variant.should_create)) {
-      return "indeterminate"
-    }
-
-    return false
-  }
-
-  const onCheckboxChange = (value: boolean | "indeterminate") => {
-    switch (value) {
-      case true: {
-        const update = watchedVariants.map((variant) => {
-          return {
-            ...variant,
-            should_create: true,
-          }
-        })
-
-        form.setValue("variants", update)
-        break
-      }
-      case false: {
-        const update = watchedVariants.map((variant) => {
-          return {
-            ...variant,
-            should_create: false,
-          }
-        })
-
-        form.setValue("variants", decorateVariantsWithDefaultValues(update))
-        break
-      }
-      case "indeterminate":
-        break
-    }
-  }
-
-  const createDefaultOptionAndVariant = () => {
-    form.setValue("options", [
-      {
-        title: "Default option",
-        values: ["Default option value"],
-      },
-    ])
-    form.setValue(
-      "variants",
-      decorateVariantsWithDefaultValues([
-        {
-          title: "Default variant",
-          should_create: true,
-          variant_rank: 0,
-          options: {
-            "Default option": "Default option value",
-          },
-          inventory: [{ inventory_item_id: "", required_quantity: "" }],
-          is_default: true,
-        },
-      ])
+    const allColors = new Set(
+      merged.map((v) => getColorKey(v.options) ?? "__no_color__")
     )
+    setExpandedColors(allColors)
+  }
+
+  const handleOptionValueUpdate = (index: number, value: string[]) => {
+    const newOptions = watchedOptions.map((o, i) =>
+      i === index ? { ...o, values: value } : o
+    )
+    rebuildVariants(newOptions)
+  }
+
+  const visibleVariants = watchedVariants
+    .map((v, i) => ({ ...v, originalIndex: i }))
+    .filter((v) => v.should_create) as VariantWithIndex[]
+
+  const colorGroups: Record<string, VariantWithIndex[]> = {}
+  const noColorVariants: VariantWithIndex[] = []
+
+  for (const v of visibleVariants) {
+    const color = getColorKey(v.options)
+    if (color) {
+      if (!colorGroups[color]) colorGroups[color] = []
+      colorGroups[color].push(v)
+    } else {
+      noColorVariants.push(v)
+    }
+  }
+
+  const toggleColor = (color: string) => {
+    setExpandedColors((prev) => {
+      const next = new Set(prev)
+      if (next.has(color)) next.delete(color)
+      else next.add(color)
+      return next
+    })
+  }
+
+  const applyBulkPrice = (cc: string, price: string) => {
+    visibleVariants.forEach((v) => {
+      form.setValue(`variants.${v.originalIndex}.prices.${cc}` as any, price)
+    })
+  }
+
+  const applyBulkStock = (stock: string) => {
+    visibleVariants.forEach((v) => {
+      form.setValue(`variants.${v.originalIndex}.initial_stock` as any, stock)
+    })
   }
 
   return (
     <div id="variants" className="flex flex-col gap-y-8">
       <div className="flex flex-col gap-y-6">
         <Heading level="h2">{t("products.create.variants.header")}</Heading>
-        <SwitchBox
-          control={form.control}
-          name="enable_variants"
-          label={t("products.create.variants.subHeadingTitle")}
-          description={t("products.create.variants.subHeadingDescription")}
-          onCheckedChange={(checked) => {
-            if (checked) {
-              form.setValue("options", [
-                {
-                  title: "",
-                  values: [],
-                },
-              ])
-              form.setValue("variants", [])
-            } else {
-              createDefaultOptionAndVariant()
-            }
-          }}
-        />
       </div>
-      {watchedAreVariantsEnabled && (
+
+      {watchedAreVariantsEnabled ? (
         <>
+          {/* Option definition */}
           <div className="flex flex-col gap-y-6">
             <Form.Field
               control={form.control}
               name="options"
-              render={() => {
-                return (
-                  <Form.Item>
-                    <div className="flex flex-col gap-y-6">
-                      <div className="flex items-start justify-between gap-x-4">
-                        <div className="flex flex-col">
-                          <Form.Label>
-                            {t("products.create.variants.productOptions.label")}
-                          </Form.Label>
-                          <Form.Hint>
-                            {t("products.create.variants.productOptions.hint")}
-                          </Form.Hint>
-                        </div>
-                        <Button
-                          size="small"
-                          variant="secondary"
-                          type="button"
-                          onClick={() => {
-                            options.append({
-                              title: "",
-                              values: [],
-                            })
-                          }}
-                        >
-                          {t("actions.add")}
-                        </Button>
+              render={() => (
+                <Form.Item>
+                  <div className="flex flex-col gap-y-6">
+                    <div className="flex items-start justify-between gap-x-4">
+                      <div className="flex flex-col">
+                        <Form.Label>
+                          {t("products.create.variants.productOptions.label")}
+                        </Form.Label>
+                        <Form.Hint>
+                          {t("products.create.variants.productOptions.hint")}
+                        </Form.Hint>
                       </div>
-                      {showInvalidOptionsMessage && (
-                        <Alert dismissible variant="error">
-                          {t("products.create.errors.options")}
-                        </Alert>
-                      )}
-                      <ul className="flex flex-col gap-y-4">
-                        {options.fields.map((option, index) => {
-                          return (
-                            <li
-                              key={option.id}
-                              className="bg-ui-bg-component shadow-elevation-card-rest grid grid-cols-[1fr_28px] items-center gap-1.5 rounded-xl p-1.5"
-                            >
-                              <div className="grid grid-cols-[min-content,1fr] items-center gap-1.5">
-                                <div className="flex items-center px-2 py-1.5">
-                                  <Label
-                                    size="xsmall"
-                                    weight="plus"
-                                    className="text-ui-fg-subtle"
-                                    htmlFor={`options.${index}.title`}
-                                  >
-                                    {t("fields.title")}
-                                  </Label>
-                                </div>
-                                <Input
-                                  className="bg-ui-bg-field-component hover:bg-ui-bg-field-component-hover"
-                                  {...form.register(
-                                    `options.${index}.title` as const
-                                  )}
-                                  placeholder={t(
-                                    "products.fields.options.optionTitlePlaceholder"
-                                  )}
-                                />
-                                <div className="flex items-center px-2 py-1.5">
-                                  <Label
-                                    size="xsmall"
-                                    weight="plus"
-                                    className="text-ui-fg-subtle"
-                                    htmlFor={`options.${index}.values`}
-                                  >
-                                    {t("fields.values")}
-                                  </Label>
-                                </div>
-                                <Controller
-                                  control={form.control}
-                                  name={`options.${index}.values` as const}
-                                  render={({
-                                    field: { onChange, ...field },
-                                  }) => {
-                                    const handleValueChange = (
-                                      value: string[]
-                                    ) => {
-                                      handleOptionValueUpdate(index, value)
-                                      onChange(value)
-                                    }
-
-                                    return (
-                                      <ChipInput
-                                        {...field}
-                                        variant="contrast"
-                                        onChange={handleValueChange}
-                                        placeholder={t(
-                                          "products.fields.options.variantionsPlaceholder"
-                                        )}
-                                      />
-                                    )
-                                  }}
-                                />
-                              </div>
-                              <IconButton
-                                type="button"
-                                size="small"
-                                variant="transparent"
-                                className="text-ui-fg-muted"
-                                disabled={index === 0}
-                                onClick={() => handleRemoveOption(index)}
-                              >
-                                <XMarkMini />
-                              </IconButton>
-                            </li>
-                          )
-                        })}
-                      </ul>
+                      <Button
+                        size="small"
+                        variant="secondary"
+                        type="button"
+                        onClick={() => options.append({ title: "", values: [] })}
+                      >
+                        {t("actions.add")}
+                      </Button>
                     </div>
-                  </Form.Item>
-                )
-              }}
+                    {showInvalidOptionsMessage && (
+                      <Alert dismissible variant="error">
+                        {t("products.create.errors.options")}
+                      </Alert>
+                    )}
+                    <div className="w-full bg-ui-bg-component shadow-elevation-card-rest rounded-xl p-3 flex flex-col gap-y-3">
+                      {options.fields.map((option, index) => (
+                        <div
+                          key={option.id}
+                          className="grid grid-cols-[min-content,1fr] items-center gap-1.5"
+                        >
+                          <div className="flex items-center px-2 py-1.5 min-w-[80px]">
+                            <Label
+                              size="xsmall"
+                              weight="plus"
+                              className="text-ui-fg-subtle whitespace-nowrap"
+                            >
+                              {form.watch(`options.${index}.title`) ||
+                                `Option ${index + 1}`}
+                            </Label>
+                          </div>
+                          <Controller
+                            control={form.control}
+                            name={`options.${index}.values` as const}
+                            render={({ field: { onChange, ...field } }) => (
+                              <ChipInput
+                                {...field}
+                                variant="contrast"
+                                onChange={(value) => {
+                                  handleOptionValueUpdate(index, value as string[])
+                                  onChange(value)
+                                }}
+                                placeholder={(() => {
+                                  const title = (form.watch(`options.${index}.title`) ?? "").toLowerCase()
+                                  if (["renk", "color"].includes(title)) return "Kırmızı, Mavi, Yeşil"
+                                  if (["beden", "size"].includes(title)) return "S, M, L"
+                                  if (["numara"].includes(title)) return "22, 24, 26"
+                                  return t("products.fields.options.variantionsPlaceholder")
+                                })()}
+                              />
+                            )}
+                          />
+                        </div>
+                      ))}
+                      <div className="pt-2 flex justify-center">
+                        <ProductCreateMediaSection form={form} />
+                      </div>
+                    </div>
+                  </div>
+                </Form.Item>
+              )}
             />
           </div>
-          <div className="grid grid-cols-1 gap-x-4 gap-y-8">
-            <div className="flex flex-col gap-y-6">
-              <div className="flex flex-col">
-                <Label weight="plus">
-                  {t("products.create.variants.productVariants.label")}
-                </Label>
-                <Hint>
-                  {t("products.create.variants.productVariants.hint")}
-                </Hint>
-              </div>
-              {!showInvalidOptionsMessage && showInvalidVariantsMessage && (
-                <Alert dismissible variant="error">
-                  {t("products.create.errors.variants")}
-                </Alert>
-              )}
-              {variants.fields.length > 0 ? (
-                <div className="overflow-hidden rounded-xl border">
-                  <div
-                    className="bg-ui-bg-component text-ui-fg-subtle grid items-center gap-3 border-b px-6 py-2.5"
-                    style={{
-                      gridTemplateColumns: `20px 28px repeat(${watchedOptions.length}, 1fr)`,
-                    }}
-                  >
-                    <div>
-                      <Checkbox
-                        className="relative"
-                        checked={getCheckboxState(watchedVariants)}
-                        onCheckedChange={onCheckboxChange}
-                      />
-                    </div>
-                    <div />
-                    {watchedOptions.map((option, index) => (
-                      <div key={index}>
-                        <Text size="small" leading="compact" weight="plus">
-                          {option.title}
-                        </Text>
-                      </div>
-                    ))}
-                  </div>
-                  <SortableList
-                    items={variants.fields}
-                    onChange={handleRankChange}
-                    renderItem={(item, index) => {
-                      return (
-                        <SortableList.Item
-                          id={item.id}
-                          className={clx("bg-ui-bg-base border-b", {
-                            "border-b-0": index === variants.fields.length - 1,
-                          })}
-                        >
-                          <div
-                            className="text-ui-fg-subtle grid w-full items-center gap-3 px-6 py-2.5"
-                            style={{
-                              gridTemplateColumns: `20px 28px repeat(${watchedOptions.length}, 1fr)`,
-                            }}
+
+          {/* Errors */}
+          {!showInvalidOptionsMessage && showInvalidVariantsMessage && (
+            <Alert dismissible variant="error">
+              {t("products.create.errors.variants")}
+            </Alert>
+          )}
+
+          {/* Variant accordion */}
+          {visibleVariants.length > 0 && (
+            <div className="flex flex-col gap-y-3">
+              <Label weight="plus">
+                {t("products.create.variants.productVariants.label")}
+              </Label>
+
+              {/* Bulk edit bar */}
+              <BulkEditBar
+                currencyCodes={currencyCodes}
+                onApplyPrice={applyBulkPrice}
+                onApplyStock={applyBulkStock}
+              />
+
+              {/* Color accordion groups */}
+              {isColorGrouped ? (
+                <div className="flex flex-col gap-y-2">
+                  {Object.entries(colorGroups).map(([color, variants]) => (
+                    <ColorGroup
+                      key={color}
+                      colorName={color}
+                      variants={variants}
+                      form={form}
+                      currencyCodes={currencyCodes}
+                      isExpanded={expandedColors.has(color)}
+                      onToggle={() => toggleColor(color)}
+                    />
+                  ))}
+                  {noColorVariants.length > 0 && (
+                    <ColorGroup
+                      key="__no_color__"
+                      colorName="Diger"
+                      variants={noColorVariants}
+                      form={form}
+                      currencyCodes={currencyCodes}
+                      isExpanded={expandedColors.has("__no_color__")}
+                      onToggle={() => toggleColor("__no_color__")}
+                    />
+                  )}
+                </div>
+              ) : (
+                /* Flat table when no color option */
+                <div className="overflow-x-auto rounded-xl border border-ui-border-base">
+                  <table className="w-full text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-ui-bg-component border-b border-ui-border-base">
+                        <th className="px-3 py-2 text-left font-medium text-ui-fg-subtle whitespace-nowrap">
+                          Varyant
+                        </th>
+                        <th className="px-3 py-2 text-left font-medium text-ui-fg-subtle whitespace-nowrap">
+                          SKU
+                        </th>
+                        <th className="px-3 py-2 text-left font-medium text-ui-fg-subtle whitespace-nowrap">
+                          Barkod
+                        </th>
+                        <th className="px-3 py-2 text-left font-medium text-ui-fg-subtle whitespace-nowrap">
+                          Stok
+                        </th>
+                        {currencyCodes.map((cc) => (
+                          <th
+                            key={"ph-" + cc}
+                            className="px-3 py-2 text-left font-medium text-ui-fg-subtle whitespace-nowrap"
                           >
-                            <Form.Field
-                              control={form.control}
-                              name={`variants.${index}.should_create` as const}
-                              render={({
-                                field: { value, onChange, ...field },
-                              }) => {
-                                return (
+                            Fiyat ({cc.toUpperCase()})
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {visibleVariants.map((variant, rowIdx) => {
+                        const idx = variant.originalIndex
+                        return (
+                          <tr
+                            key={idx}
+                            className={clx(
+                              "border-b border-ui-border-base last:border-b-0",
+                              rowIdx % 2 === 0 ? "bg-ui-bg-base" : "bg-ui-bg-subtle"
+                            )}
+                          >
+                            <td className="px-3 py-2 whitespace-nowrap">
+                              <Text size="xsmall" weight="plus">
+                                {variant.title || getVariantName(variant.options)}
+                              </Text>
+                            </td>
+                            <td className="px-3 py-2">
+                              <Form.Field
+                                control={form.control}
+                                name={`variants.${idx}.sku`}
+                                render={({ field }) => (
                                   <Form.Item>
                                     <Form.Control>
-                                      <Checkbox
-                                        className="relative"
+                                      <Input
                                         {...field}
-                                        checked={value}
-                                        onCheckedChange={onChange}
+                                        size="small"
+                                        placeholder="ABC-001"
+                                        className="min-w-[90px]"
                                       />
                                     </Form.Control>
                                   </Form.Item>
-                                )
-                              }}
-                            />
-                            <SortableList.DragHandle />
-                            {Object.values(item.options).map((value, index) => (
-                              <Text key={index} size="small" leading="compact">
-                                {value}
-                              </Text>
+                                )}
+                              />
+                            </td>
+                            <td className="px-3 py-2">
+                              <Form.Field
+                                control={form.control}
+                                name={`variants.${idx}.barcode`}
+                                render={({ field }) => (
+                                  <Form.Item>
+                                    <Form.Control>
+                                      <Input
+                                        {...field}
+                                        size="small"
+                                        placeholder="1234567890"
+                                        className="min-w-[110px]"
+                                      />
+                                    </Form.Control>
+                                  </Form.Item>
+                                )}
+                              />
+                            </td>
+                            <td className="px-3 py-2">
+                              <Form.Field
+                                control={form.control}
+                                name={`variants.${idx}.initial_stock`}
+                                render={({ field }) => (
+                                  <Form.Item>
+                                    <Form.Control>
+                                      <Input
+                                        {...field}
+                                        type="number"
+                                        min={0}
+                                        size="small"
+                                        placeholder="0"
+                                        className="min-w-[70px]"
+                                      />
+                                    </Form.Control>
+                                  </Form.Item>
+                                )}
+                              />
+                            </td>
+                            {currencyCodes.map((cc) => (
+                              <td key={"p-" + cc} className="px-3 py-2">
+                                <Form.Field
+                                  control={form.control}
+                                  name={`variants.${idx}.prices.${cc}` as any}
+                                  render={({ field }) => (
+                                    <Form.Item>
+                                      <Form.Control>
+                                        <Input
+                                          {...field}
+                                          type="number"
+                                          min={0}
+                                          step="0.01"
+                                          size="small"
+                                          placeholder="0.00"
+                                          className="min-w-[90px]"
+                                        />
+                                      </Form.Control>
+                                    </Form.Item>
+                                  )}
+                                />
+                              </td>
                             ))}
-                          </div>
-                        </SortableList.Item>
-                      )
-                    }}
-                  />
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
                 </div>
-              ) : (
-                <Alert>
-                  {t("products.create.variants.productVariants.alert")}
-                </Alert>
-              )}
-              {variants.fields.length > 0 && (
-                <InlineTip label={t("general.tip")}>
-                  {t("products.create.variants.productVariants.tip")}
-                </InlineTip>
               )}
             </div>
-          </div>
+          )}
+
+          {visibleVariants.length === 0 && !showInvalidOptionsMessage && (
+            <Alert>{t("products.create.variants.productVariants.alert")}</Alert>
+          )}
         </>
+      ) : (
+        /* Single product: price and stock */
+        <div className="flex flex-col gap-y-4">
+          <div className="bg-ui-bg-subtle border rounded-xl overflow-hidden">
+            <div className="bg-ui-bg-component border-b px-4 py-2">
+              <Text size="small" weight="plus">
+                {t("fields.priceAndStock", "Fiyat & Stok")}
+              </Text>
+            </div>
+            <div className="p-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+              <Form.Field
+                control={form.control}
+                name="variants.0.sku"
+                render={({ field }) => (
+                  <Form.Item>
+                    <Form.Label optional size="small">
+                      SKU
+                    </Form.Label>
+                    <Form.Control>
+                      <Input {...field} size="small" placeholder="ABC-001" />
+                    </Form.Control>
+                  </Form.Item>
+                )}
+              />
+              <Form.Field
+                control={form.control}
+                name="variants.0.barcode"
+                render={({ field }) => (
+                  <Form.Item>
+                    <Form.Label optional size="small">
+                      Barkod
+                    </Form.Label>
+                    <Form.Control>
+                      <Input {...field} size="small" placeholder="1234567890" />
+                    </Form.Control>
+                  </Form.Item>
+                )}
+              />
+              <Form.Field
+                control={form.control}
+                name="variants.0.initial_stock"
+                render={({ field }) => (
+                  <Form.Item>
+                    <Form.Label size="small">
+                      {t("fields.totalStock", "Stok")}
+                    </Form.Label>
+                    <Form.Control>
+                      <Input
+                        {...field}
+                        type="number"
+                        min={0}
+                        size="small"
+                        placeholder="0"
+                      />
+                    </Form.Control>
+                  </Form.Item>
+                )}
+              />
+              {currencyCodes.map((cc) => (
+                <Form.Field
+                  key={cc}
+                  control={form.control}
+                  name={`variants.0.prices.${cc}` as any}
+                  render={({ field }) => (
+                    <Form.Item>
+                      <Form.Label size="small">
+                        {t("fields.price", "Satis Fiyati")} ({cc.toUpperCase()})
+                      </Form.Label>
+                      <Form.Control>
+                        <Input
+                          {...field}
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          size="small"
+                          placeholder="0.00"
+                        />
+                      </Form.Control>
+                    </Form.Item>
+                  )}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

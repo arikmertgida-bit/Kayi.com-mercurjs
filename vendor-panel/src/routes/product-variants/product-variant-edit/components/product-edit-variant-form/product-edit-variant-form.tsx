@@ -7,6 +7,10 @@ import { z } from "zod"
 import { Form } from "../../../../../components/common/form"
 import { Combobox } from "../../../../../components/inputs/combobox"
 import { CountrySelect } from "../../../../../components/inputs/country-select"
+import {
+  FileUpload,
+  FileType,
+} from "../../../../../components/common/file-upload/file-upload"
 import { RouteDrawer, useRouteModal } from "../../../../../components/modals"
 import { KeyboundForm } from "../../../../../components/utilities/keybound-form"
 import { useUpdateProductVariant } from "../../../../../hooks/api/products"
@@ -15,12 +19,19 @@ import {
   transformNullableFormNumber,
 } from "../../../../../lib/form-helpers"
 import { optionalInt } from "../../../../../lib/validation"
+import { uploadFilesQuery } from "../../../../../lib/client"
 import { ExtendedAdminProduct, ExtendedAdminProductVariant } from "../../../../../types/products"
 
 type ProductEditVariantFormProps = {
   product: ExtendedAdminProduct
   variant?: ExtendedAdminProductVariant
 }
+
+const VariantThumbnailSchema = z.object({
+  id: z.string().optional(),
+  url: z.string(),
+  file: z.any().nullable(),
+})
 
 const ProductEditVariantSchema = z.object({
   title: z.string().min(1),
@@ -39,6 +50,7 @@ const ProductEditVariantSchema = z.object({
   hs_code: z.string().optional(),
   origin_country: z.string().optional(),
   options: z.record(z.string()),
+  variant_thumbnail: VariantThumbnailSchema.nullable().optional(),
 })
 
 // TODO: Either pass option ID or make the backend handle options constraints differently to handle the lack of IDs
@@ -53,6 +65,8 @@ export const ProductEditVariantForm = ({
     acc[option.title] = varOpt?.value
     return acc
   }, {})
+
+  const existingThumbnailUrl = (variant?.metadata as any)?.thumbnail_url as string | undefined
 
   const form = useForm<z.infer<typeof ProductEditVariantSchema>>({
     defaultValues: {
@@ -72,6 +86,9 @@ export const ProductEditVariantForm = ({
       hs_code: variant?.hs_code || "",
       origin_country: variant?.origin_country || "",
       options: defaultOptions,
+      variant_thumbnail: existingThumbnailUrl
+        ? { id: undefined, url: existingThumbnailUrl, file: null }
+        : null,
     },
     resolver: zodResolver(ProductEditVariantSchema),
   })
@@ -91,10 +108,19 @@ export const ProductEditVariantForm = ({
       allow_backorder,
       manage_inventory,
       options,
+      variant_thumbnail,
       ...optional
     } = data
 
     const nullableData = transformNullableFormData(optional)
+
+    let thumbnailUrl: string | undefined = existingThumbnailUrl
+    if (variant_thumbnail?.file) {
+      const uploaded = await uploadFilesQuery([{ file: variant_thumbnail.file }])
+      thumbnailUrl = uploaded?.files?.[0]?.url
+    } else if (variant_thumbnail === null || !variant_thumbnail?.url) {
+      thumbnailUrl = undefined
+    }
 
     await mutateAsync(
       {
@@ -106,6 +132,10 @@ export const ProductEditVariantForm = ({
         allow_backorder,
         manage_inventory,
         options,
+        metadata: {
+          ...((variant?.metadata as Record<string, unknown>) || {}),
+          thumbnail_url: thumbnailUrl ?? null,
+        },
         ...nullableData,
       },
       {
@@ -188,6 +218,47 @@ export const ProductEditVariantForm = ({
               )
             })}
           </div>
+          <Divider />
+          <Form.Field
+            control={form.control}
+            name="variant_thumbnail"
+            render={({ field: { value, onChange } }) => {
+              return (
+                <Form.Item>
+                  <Form.Label optional>
+                    {t("products.variant.thumbnail.label", "Varyant Görseli")}
+                  </Form.Label>
+                  <Form.Hint>
+                    {t(
+                      "products.variant.thumbnail.hint",
+                      "Bu varyanta ait 1 adet temsilci görsel"
+                    )}
+                  </Form.Hint>
+                  <Form.Control>
+                    <FileUpload
+                      label={t(
+                        "products.variant.thumbnail.upload",
+                        "Görsel Yükle"
+                      )}
+                      multiple={false}
+                      formats={["image/jpeg", "image/png", "image/webp", "image/gif"]}
+                      uploadedImage={value?.url || ""}
+                      onUploaded={(files: FileType[]) => {
+                        if (files[0]) {
+                          onChange({
+                            id: files[0].id,
+                            url: files[0].url,
+                            file: files[0].file,
+                          })
+                        }
+                      }}
+                    />
+                  </Form.Control>
+                  <Form.ErrorMessage />
+                </Form.Item>
+              )
+            }}
+          />
           <Divider />
           <div className="flex flex-col gap-y-8">
             <div className="flex flex-col gap-y-4">

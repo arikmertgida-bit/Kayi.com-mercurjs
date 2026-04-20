@@ -94,7 +94,7 @@ export const UploadMediaFormItem = ({
           <Form.Item>
             <div className="flex flex-col gap-y-2">
               <div className="flex flex-col gap-y-1">
-                <Form.Label optional>{t("products.media.label")}</Form.Label>
+                <Form.Label>{t("products.media.label")}</Form.Label>
                 {showHint && (
                   <Form.Hint>{t("products.media.editHint")}</Form.Hint>
                 )}

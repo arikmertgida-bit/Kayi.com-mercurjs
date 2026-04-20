@@ -1,5 +1,6 @@
 import { HttpTypes } from "@medusajs/types"
 import { castNumber } from "../../../lib/cast-number"
+import { generateSku } from "../../../utils/generate-sku"
 import { ProductCreateSchemaType } from "./types"
 
 export const normalizeProductFormValues = (
@@ -57,6 +58,9 @@ export const normalizeVariants = (
     title: variant.title || Object.values(variant.options || {}).join(" / "),
     options: variant.options,
     sku: variant.sku || undefined,
+    barcode: variant.barcode || undefined,
+    ean: variant.ean || undefined,
+    upc: variant.upc || undefined,
     manage_inventory: !!variant.manage_inventory,
     allow_backorder: !!variant.allow_backorder,
     variant_rank: variant.variant_rank,
@@ -110,7 +114,7 @@ export const decorateVariantsWithDefaultValues = (
   return variants.map((variant) => ({
     ...variant,
     title: variant.title || "",
-    sku: variant.sku || "",
+    sku: variant.sku || generateSku(),
     manage_inventory: variant.manage_inventory || false,
     allow_backorder: variant.allow_backorder || false,
     inventory_kit: variant.inventory_kit || false,

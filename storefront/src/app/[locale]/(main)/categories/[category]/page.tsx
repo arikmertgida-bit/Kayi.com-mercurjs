@@ -79,6 +79,16 @@ export async function generateMetadata({
 const ALGOLIA_ID = process.env.NEXT_PUBLIC_ALGOLIA_ID
 const ALGOLIA_SEARCH_KEY = process.env.NEXT_PUBLIC_ALGOLIA_SEARCH_KEY
 
+function getAllCategoryIds(cat: {
+  id: string
+  category_children?: { id: string; category_children?: any[] }[] | null
+}): string[] {
+  return [
+    cat.id,
+    ...(cat.category_children ?? []).flatMap(getAllCategoryIds),
+  ]
+}
+
 async function Category({
   params,
 }: {
@@ -94,6 +104,9 @@ async function Category({
   if (!category) {
     return notFound()
   }
+
+  const allCategoryIds = getAllCategoryIds(category)
+
   const currency_code = (await getRegion(locale))?.currency_code || "usd"
   const ua = (await headers()).get("user-agent") || ""
   const bot = isBot(ua)
@@ -115,7 +128,7 @@ async function Category({
   } = await listProducts({
     countryCode: locale,
     queryParams: { limit: 8, order: "created_at", fields: "id,title,handle" },
-    category_id: category.id,
+    category_id: allCategoryIds,
   })
 
   const itemList = jsonLdProducts.slice(0, 8).map((p, idx) => ({
@@ -164,10 +177,10 @@ async function Category({
 
       <Suspense fallback={<ProductListingSkeleton />}>
         {bot || !ALGOLIA_ID || !ALGOLIA_SEARCH_KEY ? (
-          <ProductListing category_id={category.id} showSidebar />
+          <ProductListing category_id={allCategoryIds} showSidebar />
         ) : (
           <AlgoliaProductsListing
-            category_id={category.id}
+            category_id={allCategoryIds}
             locale={locale}
             currency_code={currency_code}
           />

@@ -7,6 +7,10 @@ import { ExtendedAdminProduct } from "../../../../../types/products"
 
 import { Form } from "../../../../../components/common/form"
 import { Combobox } from "../../../../../components/inputs/combobox"
+import {
+  FileUpload,
+  FileType,
+} from "../../../../../components/common/file-upload/file-upload"
 import { CreateProductVariantSchema } from "./constants"
 
 type DetailsTabProps = {
@@ -83,6 +87,48 @@ function DetailsTab({ form, product }: DetailsTabProps) {
             />
           ))}
         </div>
+
+        <Form.Field
+          control={form.control}
+          name="variant_thumbnail"
+          render={({ field: { value, onChange } }) => {
+            return (
+              <Form.Item>
+                <Form.Label optional>
+                  {t("products.variant.thumbnail.label", "Varyant Görseli")}
+                </Form.Label>
+                <Form.Hint>
+                  {t(
+                    "products.variant.thumbnail.hint",
+                    "Bu varyanta ait 1 adet temsilci görsel"
+                  )}
+                </Form.Hint>
+                <Form.Control>
+                  <FileUpload
+                    label={t(
+                      "products.variant.thumbnail.upload",
+                      "Görsel Yükle"
+                    )}
+                    multiple={false}
+                    formats={["image/jpeg", "image/png", "image/webp", "image/gif"]}
+                    uploadedImage={value?.url || ""}
+                    onUploaded={(files: FileType[]) => {
+                      if (files[0]) {
+                        onChange({
+                          id: files[0].id,
+                          url: files[0].url,
+                          file: files[0].file,
+                        })
+                      }
+                    }}
+                  />
+                </Form.Control>
+                <Form.ErrorMessage />
+              </Form.Item>
+            )
+          }}
+        />
+
         {/* <div className="flex flex-col gap-y-4">
           <Form.Field
             control={form.control}

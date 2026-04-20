@@ -126,6 +126,14 @@ const useCoreRoutes = (): Omit<INavItem, "pathname">[] => {
       to: "/products",
       items: [
         {
+          label: "Tekil Ürünler",
+          to: "/products/single",
+        },
+        {
+          label: "Varyasyonlu Ürünler",
+          to: "/products/variants",
+        },
+        {
           label: t("collections.domain"),
           to: "/collections",
         },
@@ -133,11 +141,6 @@ const useCoreRoutes = (): Omit<INavItem, "pathname">[] => {
           label: t("categories.domain"),
           to: "/categories",
         },
-        // TODO: Enable when domin is introduced
-        // {
-        //   label: t("giftCards.domain"),
-        //   to: "/gift-cards",
-        // },
       ],
     },
     {

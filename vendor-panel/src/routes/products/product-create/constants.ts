@@ -33,6 +33,7 @@ const ProductCreateVariantSchema = z.object({
   options: z.record(z.string(), z.string()),
   variant_rank: z.number(),
   prices: z.record(z.string(), optionalFloat).optional(),
+  compare_at_prices: z.record(z.string(), optionalFloat).optional(),
   inventory: z
     .array(
       z.object({
@@ -41,6 +42,7 @@ const ProductCreateVariantSchema = z.object({
       })
     )
     .optional(),
+  variant_thumbnail_file: z.any().optional(), // File — renk varyantları için görsel
 })
 
 export type ProductCreateVariantSchema = z.infer<
@@ -49,7 +51,7 @@ export type ProductCreateVariantSchema = z.infer<
 
 const ProductCreateOptionSchema = z.object({
   title: z.string(),
-  values: z.array(z.string()).min(1),
+  values: z.array(z.string()),
 })
 
 export type ProductCreateOptionSchema = z.infer<
@@ -87,7 +89,8 @@ export const ProductCreateSchema = z
     options: z.array(ProductCreateOptionSchema).min(1),
     enable_variants: z.boolean(),
     variants: z.array(ProductCreateVariantSchema).min(1),
-    media: z.array(MediaSchema).optional(),
+    media: z.array(MediaSchema).min(1, "En az bir ürün görseli ekleyin"),
+    attribute_values: z.record(z.string(), z.string()).optional(),
   })
   .superRefine((data, ctx) => {
     if (data.variants.every((v) => !v.should_create)) {
@@ -161,4 +164,5 @@ export const PRODUCT_CREATE_FORM_DEFAULTS: Partial<
   type_id: "",
   weight: "",
   width: "",
+  attribute_values: {},
 }

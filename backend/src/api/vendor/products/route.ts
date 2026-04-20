@@ -57,9 +57,14 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
     })
   }
 
+  const requestedFields = req.queryConfig.fields ?? []
+  const fields = requestedFields.includes("*categories")
+    ? requestedFields
+    : [...requestedFields, "*categories"]
+
   const { data: sellerProducts } = await query.graph({
     entity: "product",
-    fields: req.queryConfig.fields,
+    fields,
     filters: {
       id: productIds,
     },

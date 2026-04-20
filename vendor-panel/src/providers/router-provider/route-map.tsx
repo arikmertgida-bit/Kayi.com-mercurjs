@@ -242,12 +242,50 @@ export const RouteMap: RouteObject[] = [
                     lazy: () => import("../../routes/products/product-create"),
                   },
                   {
+                    path: "create-single",
+                    lazy: () =>
+                      import("../../routes/products/product-create-single"),
+                  },
+                  {
+                    path: "create-with-variants",
+                    lazy: () =>
+                      import(
+                        "../../routes/products/product-create-with-variants"
+                      ),
+                  },
+                  {
                     path: "import",
                     lazy: () => import("../../routes/products/product-import"),
                   },
                   {
                     path: "export",
                     lazy: () => import("../../routes/products/product-export"),
+                  },
+                ],
+              },
+              {
+                path: "single",
+                lazy: () =>
+                  import("../../routes/products/product-single-list"),
+                children: [
+                  {
+                    path: "create-single",
+                    lazy: () =>
+                      import("../../routes/products/product-create-single"),
+                  },
+                ],
+              },
+              {
+                path: "variants",
+                lazy: () =>
+                  import("../../routes/products/product-variant-list"),
+                children: [
+                  {
+                    path: "create-with-variants",
+                    lazy: () =>
+                      import(
+                        "../../routes/products/product-create-with-variants"
+                      ),
                   },
                 ],
               },

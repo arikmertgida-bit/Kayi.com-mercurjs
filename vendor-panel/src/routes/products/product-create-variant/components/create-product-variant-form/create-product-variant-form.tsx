@@ -17,6 +17,7 @@ import { useRegions } from "../../../../../hooks/api"
 import { useCreateProductVariant } from "../../../../../hooks/api/products"
 import { castNumber } from "../../../../../lib/cast-number"
 import { partialFormValidation } from "../../../../../lib/validation"
+import { uploadFilesQuery } from "../../../../../lib/client"
 import {
   CreateProductVariantSchema,
   CreateVariantDetailsFields,
@@ -208,6 +209,12 @@ export const CreateProductVariantForm = ({
   const handleSubmit = form.handleSubmit(async (data) => {
     const { sku, title } = data
 
+    let thumbnailUrl: string | undefined
+    if (data.variant_thumbnail?.file) {
+      const uploaded = await uploadFilesQuery([{ file: data.variant_thumbnail.file }])
+      thumbnailUrl = uploaded?.files?.[0]?.url
+    }
+
     await mutateAsync(
       {
         title,
@@ -215,6 +222,7 @@ export const CreateProductVariantForm = ({
         allow_backorder: false,
         manage_inventory: true,
         options: data.options,
+        ...(thumbnailUrl ? { metadata: { thumbnail_url: thumbnailUrl } } : {}),
         prices: Object.entries(data.prices ?? {})
           .map(([currencyOrRegion, value]) => {
             if (value === "" || value === undefined) {

@@ -345,6 +345,26 @@ export const useProductAttributes = (id: string) => {
   return { ...data, ...rest }
 }
 
+const ALL_ATTRIBUTES_QUERY_KEY = ["vendor", "attributes"]
+
+/**
+ * Ürün oluşturma formunda kullanmak için tüm attribute'ları döndürür.
+ * Ürün ID'si gerektirmez; /vendor/attributes endpoint'ini kullanır.
+ */
+export const useAllAttributes = () => {
+  const { data, ...rest } = useQuery<ProductAttributesResponse>({
+    queryFn: () =>
+      fetchQuery(`/vendor/attributes`, {
+        method: "GET",
+        query: { limit: 200 },
+      }),
+    queryKey: ALL_ATTRIBUTES_QUERY_KEY,
+    staleTime: 5 * 60 * 1000,
+  })
+
+  return { ...data, ...rest }
+}
+
 export const useProduct = (
   id: string,
   query?: Record<string, any>,

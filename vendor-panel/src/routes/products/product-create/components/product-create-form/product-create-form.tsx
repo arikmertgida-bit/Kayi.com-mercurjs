@@ -1,8 +1,8 @@
-import { Button, ProgressStatus, ProgressTabs, toast } from "@medusajs/ui"
+import { Button, Heading, ProgressStatus, ProgressTabs, Text, toast } from "@medusajs/ui"
 import { HttpTypes } from "@medusajs/types"
-import { useEffect, useMemo, useState } from "react"
-import { useWatch } from "react-hook-form"
+import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { useNavigate } from "react-router-dom"
 import {
   RouteFocusModal,
   useRouteModal,
@@ -20,51 +20,66 @@ import {
   PRODUCT_CREATE_FORM_DEFAULTS,
   ProductCreateSchema,
 } from "../../constants"
+import { decorateVariantsWithDefaultValues } from "../../utils"
 import { ProductCreateDetailsForm } from "../product-create-details-form"
-import { ProductCreateInventoryKitForm } from "../product-create-inventory-kit-form"
-import { ProductCreateOrganizeForm } from "../product-create-organize-form"
 import { ProductCreateVariantsForm } from "../product-create-variants-form"
-import { usePricePreferences } from "../../../../../hooks/api/price-preferences"
-import { useRegions } from "../../../../../hooks/api"
+import { ProductCreateReviewForm } from "../product-create-review-form/product-create-review-form"
+import { ProductCreateAttributesForm } from "../product-create-attributes-form/product-create-attributes-form"
+
+type ProductType = "single" | "variant"
 
 enum Tab {
   DETAILS = "details",
-  ORGANIZE = "organize",
   VARIANTS = "variants",
-  INVENTORY = "inventory",
+  ATTRIBUTES = "attributes",
+  REVIEW = "review",
 }
 
 type TabState = Record<Tab, ProgressStatus>
 
 const SAVE_DRAFT_BUTTON = "save-draft-button"
 
+// Her tab yalnızca kendi alanlarını validate eder
+const DETAILS_FIELDS = [
+  "title", "subtitle", "handle", "description", "discountable",
+  "type_id", "collection_id", "shipping_profile_id", "categories", "tags",
+  "origin_country", "material", "width", "length", "height", "weight",
+  "mid_code", "hs_code", "media",
+] as const
+
+const VARIANT_FIELDS = [
+  "enable_variants", "options", "variants",
+] as const
+
+const ATTRIBUTE_FIELDS = [
+  "attribute_values",
+] as const
+
 type ProductCreateFormProps = {
   defaultChannel?: HttpTypes.AdminSalesChannel
   store?: HttpTypes.AdminStore
   pricePreferences?: HttpTypes.AdminPricePreference[]
+  initialProductType?: ProductType
 }
 
 export const ProductCreateForm = ({
   defaultChannel,
   store,
+  initialProductType,
 }: ProductCreateFormProps) => {
+  const [typeSelected, setTypeSelected] = useState<ProductType | null>(initialProductType ?? null)
   const [tab, setTab] = useState<Tab>(Tab.DETAILS)
   const [tabState, setTabState] = useState<TabState>({
     [Tab.DETAILS]: "in-progress",
-    [Tab.ORGANIZE]: "not-started",
     [Tab.VARIANTS]: "not-started",
-    [Tab.INVENTORY]: "not-started",
+    [Tab.ATTRIBUTES]: "not-started",
+    [Tab.REVIEW]: "not-started",
   })
 
   const { t } = useTranslation()
   const { handleSuccess } = useRouteModal()
   const { getFormConfigs } = useDashboardExtension()
   const configs = getFormConfigs("product", "create")
-
-  const { regions } = useRegions({ limit: 9999 })
-  const { price_preferences: pricePreferences } = usePricePreferences({
-    limit: 9999,
-  })
 
   const form = useExtendableForm({
     defaultValues: {
@@ -86,20 +101,65 @@ export const ProductCreateForm = ({
   const { mutateAsync: batchUpdateStock } = useBatchInventoryItemsLocationLevels()
   const { stock_locations } = useStockLocations({ limit: 9999 })
 
-  /**
-   * TODO: Important to revisit this - use variants watch so high in the tree can cause needless rerenders of the entire page
-   * which is suboptimal when rerenders are caused by bulk editor changes
-   */
+  const handleTypeSelect = (type: ProductType) => {
+    form.setValue("enable_variants", type === "variant")
+    if (type === "single") {
+      form.setValue("options", [{ title: "Default option", values: ["Default option value"] }])
+      form.setValue(
+        "variants",
+        decorateVariantsWithDefaultValues([
+          {
+            title: "Default variant",
+            should_create: true,
+            variant_rank: 0,
+            options: { "Default option": "Default option value" },
+            inventory: [{ inventory_item_id: "", required_quantity: "" }],
+            is_default: true,
+          },
+        ])
+      )
+    } else {
+      form.setValue("options", [
+        { title: "Renk", values: [] },
+        { title: "Beden", values: [] },
+        { title: "Numara", values: [] },
+      ])
+      form.setValue("variants", [])
+    }
+    setTypeSelected(type)
+  }
 
-  const watchedVariants = useWatch({
-    control: form.control,
-    name: "variants",
-  })
-
-  const showInventoryTab = useMemo(
-    () => watchedVariants.some((v) => v.manage_inventory && v.inventory_kit),
-    [watchedVariants]
-  )
+  // initialProductType ile doğrudan açılan formlarda seçici ekranı atlanır,
+  // form değerleri mount anında set edilir.
+  useEffect(() => {
+    if (!initialProductType) return
+    if (initialProductType === "single") {
+      form.setValue("enable_variants", false)
+      form.setValue("options", [{ title: "Default option", values: ["Default option value"] }])
+      form.setValue(
+        "variants",
+        decorateVariantsWithDefaultValues([
+          {
+            title: "Default variant",
+            should_create: true,
+            variant_rank: 0,
+            options: { "Default option": "Default option value" },
+            inventory: [{ inventory_item_id: "", required_quantity: "" }],
+            is_default: true,
+          },
+        ])
+      )
+    } else {
+      form.setValue("enable_variants", true)
+      form.setValue("options", [
+        { title: "Renk", values: [] },
+        { title: "Beden", values: [] },
+        { title: "Numara", values: [] },
+      ])
+      form.setValue("variants", [])
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleSubmit = form.handleSubmit(async (values, e) => {
     let isDraftSubmission = false
@@ -110,7 +170,7 @@ export const ProductCreateForm = ({
     }
 
     const media = values.media || []
-    const payload = { ...values, media: undefined }
+    const payload = { ...values, media: undefined, attribute_values: values.attribute_values }
 
     let uploadedMedia: (HttpTypes.AdminFile & {
       isThumbnail: boolean
@@ -150,15 +210,63 @@ export const ProductCreateForm = ({
       }
     }
 
+    // Upload variant thumbnail files
+    // variant_thumbnail_file sadece her renk grubunun ilk varyantında set edilir.
+    // Upload sonrası aynı renk değerine sahip tüm varyantlara URL yayılır.
+    const variantThumbnailUrls: Record<number, string> = {}
+    try {
+      const thumbUploads = payload.variants
+        .map((v, i) => (v as any).variant_thumbnail_file ? { i, file: (v as any).variant_thumbnail_file } : null)
+        .filter((x): x is { i: number; file: File } => x !== null)
+      if (thumbUploads.length) {
+        await Promise.all(
+          thumbUploads.map(async ({ i, file }) => {
+            const r = await uploadFilesQuery([{ file }])
+            const url = (r as any)?.files?.[0]?.url
+            if (url) variantThumbnailUrls[i] = url
+          })
+        )
+        // Aynı renk grubundaki diğer varyantlara URL'i yay
+        payload.variants.forEach((v, i) => {
+          if (variantThumbnailUrls[i] !== undefined) return
+          const colorKey = Object.keys(v.options || {}).find((k) =>
+            ["renk", "color"].includes(k.toLowerCase())
+          )
+          if (!colorKey) return
+          const colorVal = (v.options as any)[colorKey]
+          const match = payload.variants.findIndex((other, j) => {
+            if (variantThumbnailUrls[j] === undefined) return false
+            const otherColorKey = Object.keys(other.options || {}).find((k) =>
+              ["renk", "color"].includes(k.toLowerCase())
+            )
+            return otherColorKey && (other.options as any)[otherColorKey] === colorVal
+          })
+          if (match >= 0) variantThumbnailUrls[i] = variantThumbnailUrls[match]
+        })
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message)
+      }
+    }
+
     await mutateAsync(
       {
         ...payload,
+        attribute_values: undefined,
         status: isDraftSubmission ? "draft" : "proposed",
-        images: uploadedMedia,
+        thumbnail: uploadedMedia.find((m) => m.isThumbnail)?.url,
+        images: uploadedMedia
+          .filter((m) => !m.isThumbnail)
+          .map((m) => ({ url: m.url })),
         weight: parseInt(payload.weight || "") || undefined,
         length: parseInt(payload.length || "") || undefined,
         height: parseInt(payload.height || "") || undefined,
         width: parseInt(payload.width || "") || undefined,
+        origin_country: payload.origin_country || undefined,
+        material: payload.material || undefined,
+        hs_code: undefined,
+        mid_code: undefined,
         type_id: payload.type_id || undefined,
         tags:
           payload.tags?.map((tag) => ({
@@ -167,11 +275,22 @@ export const ProductCreateForm = ({
         collection_id: payload.collection_id || undefined,
         shipping_profile_id: undefined,
         enable_variants: undefined,
-        additional_data: undefined,
+        additional_data: (() => {
+          const avEntries = Object.entries(payload.attribute_values || {}).filter(
+            ([, v]) => v !== "" && v !== null && v !== undefined
+          )
+          if (avEntries.length === 0) return undefined
+          return {
+            values: avEntries.map(([attribute_id, value]) => ({ attribute_id, value })),
+          }
+        })(),
+        metadata: {
+          product_type: (typeSelected ?? initialProductType) === "variant" ? "variant" : "single",
+        },
         categories: payload.categories.map((cat) => ({
           id: cat,
         })),
-        variants: payload.variants.map((variant) => ({
+        variants: payload.variants.map((variant, variantIdx) => ({
           ...variant,
           sku: variant.sku === "" ? undefined : variant.sku,
           manage_inventory: true,
@@ -181,14 +300,39 @@ export const ProductCreateForm = ({
           inventory_kit: undefined,
           inventory: undefined,
           initial_stock: undefined,
+          compare_at_prices: undefined,
+          variant_thumbnail_file: undefined,
+          metadata: variantThumbnailUrls[variantIdx]
+            ? { thumbnail_url: variantThumbnailUrls[variantIdx] }
+            : undefined,
           prices: Object.keys(variant.prices || {}).map((key) => ({
             currency_code: key,
             amount: parseFloat(variant.prices?.[key] as string),
           })),
         })),
+        options: payload.options.filter((o) => o.title && o.values.length > 0),
       },
       {
         onSuccess: async (data) => {
+          // Attribute values varsa ürün oluşturulduktan hemen sonra kaydet
+          const attrValues = values.attribute_values
+          if (attrValues && Object.keys(attrValues).length > 0) {
+            try {
+              const filteredValues = Object.entries(attrValues)
+                .filter(([, value]) => value !== "" && value !== null && value !== undefined)
+                .map(([attribute_id, value]) => ({ attribute_id, value: String(value) }))
+
+              if (filteredValues.length > 0) {
+                await fetchQuery(`/vendor/products/${data.product.id}`, {
+                  method: "POST",
+                  body: { additional_data: { values: filteredValues } },
+                })
+              }
+            } catch (e) {
+              console.error("Failed to save attribute values:", e)
+            }
+          }
+
           // Set initial stock for variants that have it
           const variantsWithStock = values.variants
             .map((v: any, i: number) => ({ index: i, stock: Number(v.initial_stock) || 0 }))
@@ -234,7 +378,7 @@ export const ProductCreateForm = ({
             })
           )
 
-          handleSuccess(`../${data.product.id}`)
+          handleSuccess(`/products/${data.product.id}`)
         },
         onError: (error) => {
           toast.error(error.message)
@@ -244,22 +388,21 @@ export const ProductCreateForm = ({
   })
 
   const onNext = async (currentTab: Tab) => {
-    const valid = await form.trigger()
-
-    if (!valid) {
+    if (currentTab === Tab.DETAILS) {
+      const valid = await form.trigger(DETAILS_FIELDS as any)
+      if (valid) setTab(Tab.VARIANTS)
       return
     }
-
-    if (currentTab === Tab.DETAILS) {
-      setTab(Tab.ORGANIZE)
-    }
-
-    if (currentTab === Tab.ORGANIZE) {
-      setTab(Tab.VARIANTS)
-    }
-
     if (currentTab === Tab.VARIANTS) {
-      setTab(Tab.INVENTORY)
+      const enableVariants = form.getValues("enable_variants")
+      const valid = await form.trigger(enableVariants ? (VARIANT_FIELDS as any) : [])
+      if (valid) setTab(Tab.ATTRIBUTES)
+      return
+    }
+    if (currentTab === Tab.ATTRIBUTES) {
+      const valid = await form.trigger(ATTRIBUTE_FIELDS as any)
+      if (valid) setTab(Tab.REVIEW)
+      return
     }
   }
 
@@ -268,31 +411,32 @@ export const ProductCreateForm = ({
     if (tab === Tab.DETAILS) {
       currentState[Tab.DETAILS] = "in-progress"
     }
-    if (tab === Tab.ORGANIZE) {
-      currentState[Tab.DETAILS] = "completed"
-      currentState[Tab.ORGANIZE] = "in-progress"
-    }
     if (tab === Tab.VARIANTS) {
       currentState[Tab.DETAILS] = "completed"
-      currentState[Tab.ORGANIZE] = "completed"
       currentState[Tab.VARIANTS] = "in-progress"
     }
-    if (tab === Tab.INVENTORY) {
+    if (tab === Tab.ATTRIBUTES) {
       currentState[Tab.DETAILS] = "completed"
-      currentState[Tab.ORGANIZE] = "completed"
       currentState[Tab.VARIANTS] = "completed"
-      currentState[Tab.INVENTORY] = "in-progress"
+      currentState[Tab.ATTRIBUTES] = "in-progress"
     }
-
+    if (tab === Tab.REVIEW) {
+      currentState[Tab.DETAILS] = "completed"
+      currentState[Tab.VARIANTS] = "completed"
+      currentState[Tab.ATTRIBUTES] = "completed"
+      currentState[Tab.REVIEW] = "in-progress"
+    }
     setTabState({ ...currentState })
     // eslint-disable-next-line react-hooks/exhaustive-deps -- we only want this effect to run when the tab changes
   }, [tab])
 
   return (
     <RouteFocusModal.Form form={form}>
+      {typeSelected === null ? (
+        <ProductTypeSelector onSelect={handleTypeSelect} />
+      ) : (
       <KeyboundForm
         onKeyDown={(e) => {
-          // We want to continue to the next tab on enter instead of saving as draft immediately
           if (e.key === "Enter") {
             if (
               e.target instanceof HTMLTextAreaElement &&
@@ -304,7 +448,7 @@ export const ProductCreateForm = ({
             e.preventDefault()
 
             if (e.metaKey || e.ctrlKey) {
-              if (tab !== Tab.VARIANTS) {
+              if (tab !== Tab.REVIEW) {
                 e.preventDefault()
                 e.stopPropagation()
                 onNext(tab)
@@ -343,28 +487,28 @@ export const ProductCreateForm = ({
                   {t("products.create.tabs.details")}
                 </ProgressTabs.Trigger>
                 <ProgressTabs.Trigger
-                  status={tabState[Tab.ORGANIZE]}
-                  value={Tab.ORGANIZE}
-                  className="max-w-[200px] truncate"
-                >
-                  {t("products.create.tabs.organize")}
-                </ProgressTabs.Trigger>
-                <ProgressTabs.Trigger
                   status={tabState[Tab.VARIANTS]}
                   value={Tab.VARIANTS}
                   className="max-w-[200px] truncate"
                 >
-                  {t("products.create.tabs.variants")}
+                  {initialProductType === "single"
+                    ? t("products.create.tabs.priceAndStock", "Fiyat & Stok")
+                    : t("products.create.tabs.variants")}
                 </ProgressTabs.Trigger>
-                {showInventoryTab && (
-                  <ProgressTabs.Trigger
-                    status={tabState[Tab.INVENTORY]}
-                    value={Tab.INVENTORY}
-                    className="max-w-[200px] truncate"
-                  >
-                    {t("products.create.tabs.inventory")}
-                  </ProgressTabs.Trigger>
-                )}
+                <ProgressTabs.Trigger
+                  status={tabState[Tab.ATTRIBUTES]}
+                  value={Tab.ATTRIBUTES}
+                  className="max-w-[200px] truncate"
+                >
+                  {t("products.create.tabs.attributes", "Özellikler")}
+                </ProgressTabs.Trigger>
+                <ProgressTabs.Trigger
+                  status={tabState[Tab.REVIEW]}
+                  value={Tab.REVIEW}
+                  className="max-w-[200px] truncate"
+                >
+                  {t("products.create.tabs.review", "Özet")}
+                </ProgressTabs.Trigger>
               </ProgressTabs.List>
             </div>
           </RouteFocusModal.Header>
@@ -377,29 +521,25 @@ export const ProductCreateForm = ({
             </ProgressTabs.Content>
             <ProgressTabs.Content
               className="size-full overflow-y-auto"
-              value={Tab.ORGANIZE}
-            >
-              <ProductCreateOrganizeForm form={form} />
-            </ProgressTabs.Content>
-            <ProgressTabs.Content
-              className="size-full overflow-y-auto"
               value={Tab.VARIANTS}
             >
               <ProductCreateVariantsForm
                 form={form}
                 store={store}
-                regions={regions}
-                pricePreferences={pricePreferences}
               />
             </ProgressTabs.Content>
-            {showInventoryTab && (
-              <ProgressTabs.Content
-                className="size-full overflow-y-auto"
-                value={Tab.INVENTORY}
-              >
-                <ProductCreateInventoryKitForm form={form} />
-              </ProgressTabs.Content>
-            )}
+            <ProgressTabs.Content
+              className="size-full overflow-y-auto"
+              value={Tab.ATTRIBUTES}
+            >
+              <ProductCreateAttributesForm form={form} />
+            </ProgressTabs.Content>
+            <ProgressTabs.Content
+              className="size-full overflow-y-auto"
+              value={Tab.REVIEW}
+            >
+              <ProductCreateReviewForm form={form} />
+            </ProgressTabs.Content>
           </RouteFocusModal.Body>
         </ProgressTabs>
         <RouteFocusModal.Footer>
@@ -416,18 +556,127 @@ export const ProductCreateForm = ({
               isLoading={isPending}
               className="whitespace-nowrap"
             >
-              Draft
+              {t("actions.saveAsDraft", "Taslak Kaydet")}
             </Button>
             <PrimaryButton
               tab={tab}
               next={onNext}
               isLoading={isPending}
-              showInventoryTab={showInventoryTab}
             />
           </div>
         </RouteFocusModal.Footer>
       </KeyboundForm>
+      )}
     </RouteFocusModal.Form>
+  )
+}
+
+type ProductTypeSelectorProps = {
+  onSelect: (type: ProductType) => void
+}
+
+const ProductTypeSelector = ({ onSelect }: ProductTypeSelectorProps) => {
+  const { t } = useTranslation()
+  const navigate = useNavigate()
+
+  const handleSelect = (type: ProductType) => {
+    if (type === "single") {
+      navigate("/products/create-single")
+    } else {
+      navigate("/products/create-with-variants")
+    }
+  }
+
+  return (
+    <>
+      <RouteFocusModal.Header>
+        <div className="-my-2 w-full border-l px-6 py-3">
+          <span className="txt-compact-medium-plus text-ui-fg-base">
+            {t("products.create.typeSelect.heading", "Ürün Oluştur")}
+          </span>
+        </div>
+      </RouteFocusModal.Header>
+
+      <RouteFocusModal.Body className="flex items-center justify-center p-8 overflow-y-auto">
+        <div className="flex w-full max-w-2xl flex-col items-center gap-y-10">
+          <div className="flex flex-col items-center gap-y-2 text-center">
+            <Heading>
+              {t("products.create.typeSelect.title", "Nasıl bir ürün ekleyeceksiniz?")}
+            </Heading>
+            <Text size="small" className="text-ui-fg-subtle max-w-md">
+              {t(
+                "products.create.typeSelect.subtitle",
+                "Ürün türünü seçerek devam edin. Tekil ürün tek bir çeşide sahipken, varyasyonlu ürün farklı renk veya beden seçenekleri sunar."
+              )}
+            </Text>
+          </div>
+
+          <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => handleSelect("single")}
+              className="group flex flex-col gap-y-5 rounded-xl border-2 border-ui-border-base bg-ui-bg-base p-6 text-left transition-all hover:border-ui-border-interactive hover:bg-ui-bg-base-hover focus:outline-none focus:ring-2 focus:ring-ui-border-interactive"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-ui-bg-component text-2xl group-hover:bg-ui-bg-subtle">
+                🏷️
+              </div>
+              <div className="flex flex-col gap-y-2">
+                <Text weight="plus" size="base">
+                  {t("products.create.typeSelect.single.label", "Tekil Ürün")}
+                </Text>
+                <Text size="small" className="text-ui-fg-subtle leading-relaxed">
+                  {t(
+                    "products.create.typeSelect.single.desc",
+                    "Tek bir renk ve bedenden oluşan ürün. Kendine ait Model Kodu ve Barkodu bulunur."
+                  )}
+                </Text>
+              </div>
+              <div className="mt-auto">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-ui-bg-subtle px-3 py-1 text-xs text-ui-fg-subtle">
+                  SKU · Barkod · Fiyat · Stok
+                </span>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleSelect("variant")}
+              className="group flex flex-col gap-y-5 rounded-xl border-2 border-ui-border-base bg-ui-bg-base p-6 text-left transition-all hover:border-ui-border-interactive hover:bg-ui-bg-base-hover focus:outline-none focus:ring-2 focus:ring-ui-border-interactive"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-ui-bg-component text-2xl group-hover:bg-ui-bg-subtle">
+                🎨
+              </div>
+              <div className="flex flex-col gap-y-2">
+                <Text weight="plus" size="base">
+                  {t("products.create.typeSelect.variant.label", "Varyasyonlu Ürün")}
+                </Text>
+                <Text size="small" className="text-ui-fg-subtle leading-relaxed">
+                  {t(
+                    "products.create.typeSelect.variant.desc",
+                    "Aynı modelin farklı renk, beden veya boyut seçenekleri. Tüm seçeneklerin Model Kodu aynı, Barkodları farklı olur."
+                  )}
+                </Text>
+              </div>
+              <div className="mt-auto">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-ui-bg-subtle px-3 py-1 text-xs text-ui-fg-subtle">
+                  Model Kodu · Renk / Beden · Her varyant ayrı Barkod
+                </span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </RouteFocusModal.Body>
+
+      <RouteFocusModal.Footer>
+        <div className="flex items-center justify-end gap-x-2">
+          <RouteFocusModal.Close asChild>
+            <Button variant="secondary" size="small">
+              {t("actions.cancel")}
+            </Button>
+          </RouteFocusModal.Close>
+        </div>
+      </RouteFocusModal.Footer>
+    </>
   )
 }
 
@@ -435,21 +684,12 @@ type PrimaryButtonProps = {
   tab: Tab
   next: (tab: Tab) => void
   isLoading?: boolean
-  showInventoryTab: boolean
 }
 
-const PrimaryButton = ({
-  tab,
-  next,
-  isLoading,
-  showInventoryTab,
-}: PrimaryButtonProps) => {
+const PrimaryButton = ({ tab, next, isLoading }: PrimaryButtonProps) => {
   const { t } = useTranslation()
 
-  if (
-    (tab === Tab.VARIANTS && !showInventoryTab) ||
-    (tab === Tab.INVENTORY && showInventoryTab)
-  ) {
+  if (tab === Tab.REVIEW) {
     return (
       <Button
         data-name="publish-button"
@@ -459,7 +699,7 @@ const PrimaryButton = ({
         size="small"
         isLoading={isLoading}
       >
-        Create Product
+        {t("actions.publish", "Yayınla")}
       </Button>
     )
   }

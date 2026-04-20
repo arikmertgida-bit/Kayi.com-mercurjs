@@ -2,6 +2,12 @@ import { z } from "zod"
 import * as zod from "zod"
 import { optionalInt } from "../../../../../lib/validation"
 
+export const VariantThumbnailSchema = z.object({
+  id: z.string().optional(),
+  url: z.string(),
+  file: z.any().nullable(),
+})
+
 export const CreateProductVariantSchema = z.object({
   title: z.string().min(1),
   sku: z.string().optional(),
@@ -9,6 +15,7 @@ export const CreateProductVariantSchema = z.object({
   allow_backorder: z.boolean().optional(),
   inventory_kit: z.boolean().optional(),
   options: z.record(z.string()),
+  variant_thumbnail: VariantThumbnailSchema.nullable().optional(),
   prices: zod
     .record(zod.string(), zod.string().or(zod.number()).optional())
     .optional(),
@@ -29,6 +36,7 @@ export const CreateVariantDetailsSchema = CreateProductVariantSchema.pick({
   allow_backorder: true,
   inventory_kit: true,
   options: true,
+  variant_thumbnail: true,
 })
 
 export const CreateVariantDetailsFields = Object.keys(

@@ -9,7 +9,7 @@ import {
 import { ProductCreateSchemaType } from "../../types"
 import { ProductCreateGeneralSection } from "./components/product-create-details-general-section"
 import { ProductCreateMediaSection } from "./components/product-create-details-media-section"
-import { ProductCreateVariantsSection } from "./components/product-create-details-variant-section"
+import { ProductCreateOrganizationSection } from "../product-create-organize-form/components/product-create-organize-section"
 
 type ProductAttributesProps = {
   form: UseFormReturn<ProductCreateSchemaType>
@@ -23,13 +23,18 @@ export const ProductCreateDetailsForm = ({ form }: ProductAttributesProps) => {
     <div className="flex flex-col items-center p-16">
       <div className="flex w-full max-w-[720px] flex-col gap-y-8">
         <Header />
+
+        {/* Genel Bilgiler */}
         <div className="flex flex-col gap-y-6">
           <ProductCreateGeneralSection form={form} />
           <FormExtensionZone fields={fields} form={form} />
           <ProductCreateMediaSection form={form} />
         </div>
+
         <Divider />
-        <ProductCreateVariantsSection form={form} />
+
+        {/* Organize: Kategori, Koleksiyon, Tip, Etiketler */}
+        <ProductCreateOrganizationSection form={form} />
       </div>
     </div>
   )

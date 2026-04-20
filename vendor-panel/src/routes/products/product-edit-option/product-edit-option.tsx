@@ -26,7 +26,9 @@ export const ProductEditOption = () => {
       <RouteDrawer.Header>
         <Heading>{t("products.options.edit.header")}</Heading>
       </RouteDrawer.Header>
-      {option && <CreateProductOptionForm option={option} />}
+      {option && product && (
+        <CreateProductOptionForm option={option} product={product} />
+      )}
     </RouteDrawer>
   )
 }

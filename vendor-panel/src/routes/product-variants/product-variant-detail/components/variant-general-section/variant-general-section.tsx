@@ -45,9 +45,17 @@ export function VariantGeneralSection({ variant }: VariantGeneralSectionProps) {
   return (
     <Container className="divide-y p-0">
       <div className="flex items-center justify-between px-6 py-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <Heading>{variant.title}</Heading>
+        <div className="flex items-center gap-4">
+          {(variant.metadata as any)?.thumbnail_url && (
+            <img
+              src={(variant.metadata as any).thumbnail_url}
+              alt={variant.title || ""}
+              className="h-16 w-16 rounded-md object-cover object-center border"
+            />
+          )}
+          <div>
+            <div className="flex items-center gap-2">
+              <Heading>{variant.title}</Heading>
             {hasInventoryKit && (
               <span className="text-ui-fg-muted font-normal">
                 <Component />
@@ -57,6 +65,7 @@ export function VariantGeneralSection({ variant }: VariantGeneralSectionProps) {
           <span className="text-ui-fg-subtle txt-small mt-2">
             {t("labels.productVariant")}
           </span>
+          </div>
         </div>
         <div className="flex items-center gap-x-4">
           <ActionMenu

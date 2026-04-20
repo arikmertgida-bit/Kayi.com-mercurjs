@@ -22,7 +22,7 @@ export const listProducts = async ({
     HttpTypes.StoreProductParams & {
       handle?: string[]
     }
-  category_id?: string
+  category_id?: string | string[]
   collection_id?: string
   countryCode?: string
   regionId?: string
@@ -78,8 +78,9 @@ export const listProducts = async ({
         offset,
         region_id: region?.id,
         fields:
-          "*variants.calculated_price,+variants.inventory_quantity,*seller,*variants,*seller.products," +
-          "*seller.reviews,*seller.reviews.customer,*seller.reviews.seller,*seller.products.variants,*attribute_values,*attribute_values.attribute",
+          "*variants.calculated_price,+variants.inventory_quantity,*seller,*variants,*variants.options,*options," +
+          "*seller.products,*seller.reviews,*seller.reviews.customer,*seller.reviews.seller," +
+          "*seller.products.variants,*attribute_values,*attribute_values.attribute",
         ...queryParams,
       },
       headers,
@@ -147,7 +148,7 @@ export const listProductsWithSort = async ({
   queryParams?: HttpTypes.FindParams & HttpTypes.StoreProductParams
   sortBy?: SortOptions
   countryCode: string
-  category_id?: string
+  category_id?: string | string[]
   seller_id?: string
   collection_id?: string
 }): Promise<{

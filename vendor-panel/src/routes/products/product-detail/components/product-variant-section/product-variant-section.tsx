@@ -270,6 +270,28 @@ const useColumns = (product: ExtendedAdminProduct) => {
 
   return useMemo(() => {
     return [
+      columnHelper.display({
+        id: "thumbnail",
+        header: "Görsel",
+        cell: ({ row }) => {
+          const url = (row.original.metadata as any)?.thumbnail_url
+          if (!url) {
+            return (
+              <div className="flex h-8 w-8 items-center justify-center rounded border border-ui-border-base bg-ui-bg-subtle text-ui-fg-muted text-xs">
+                —
+              </div>
+            )
+          }
+          return (
+            <img
+              src={url}
+              alt={row.original.title ?? ""}
+              className="h-8 w-8 rounded object-cover border border-ui-border-base"
+            />
+          )
+        },
+        maxSize: 60,
+      }),
       columnHelper.accessor("title", {
         header: t("fields.title"),
         enableSorting: true,

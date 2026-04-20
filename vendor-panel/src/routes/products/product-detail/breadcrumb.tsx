@@ -1,6 +1,4 @@
 import { UIMatch } from "react-router-dom"
-import { useProduct } from "../../../hooks/api"
-import { PRODUCT_DETAIL_FIELDS } from "./constants"
 import { ExtendedAdminProductResponse } from "../../../types/products"
 
 type ProductDetailBreadcrumbProps = UIMatch<ExtendedAdminProductResponse>
@@ -8,21 +6,11 @@ type ProductDetailBreadcrumbProps = UIMatch<ExtendedAdminProductResponse>
 export const ProductDetailBreadcrumb = (
   props: ProductDetailBreadcrumbProps
 ) => {
-  const { id } = props.params || {}
+  const title = props.data?.product?.title
 
-  const { product } = useProduct(
-    id!,
-    {
-      fields: PRODUCT_DETAIL_FIELDS,
-    },
-    {
-      enabled: Boolean(id),
-    }
-  )
-
-  if (!product) {
+  if (!title) {
     return null
   }
 
-  return <span>{product?.title}</span>
+  return <span>{title}</span>
 }

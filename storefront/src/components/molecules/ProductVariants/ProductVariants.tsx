@@ -1,55 +1,85 @@
 "use client"
 
 import { HttpTypes } from "@medusajs/types"
-
 import { Chip } from "@/components/atoms"
-import useUpdateSearchParams from "@/hooks/useUpdateSearchParams"
-import { BaseHit, Hit } from "instantsearch.js"
+import { useProductVariants, type ColorOption } from "@/hooks/useProductVariants"
+
+const COLOR_TITLES = ["color", "renk", "colour"]
 
 export const ProductVariants = ({
   product,
-  selectedVariant,
 }: {
-  product: HttpTypes.StoreProduct
-  selectedVariant: Record<string, string>
-}) => {
-  const updateSearchParams = useUpdateSearchParams()
-
-  // update the options when a variant is selected
-  const setOptionValue = (optionId: string, value: string) => {
-    if (value) updateSearchParams(optionId, value)
+  product: HttpTypes.StoreProduct & {
+    metadata?: Record<string, unknown> | null
   }
+}) => {
+  const {
+    selectedOptions,
+    colorOptions,
+    availableValuesForOption,
+    isValueInStock,
+    setOption,
+  } = useProductVariants()
+
+  const productOptions = product.options ?? []
 
   return (
-    <div className="my-4 space-y-2">
-      {(product.options || []).map(
-        ({ id, title, values }: HttpTypes.StoreProductOption) => (
-          <div key={id}>
-            <span className="label-md text-secondary">{title}: </span>
-            <span className="label-md text-primary">
-              {selectedVariant[title.toLowerCase()]}
-            </span>
-            <div className="flex gap-2 mt-2">
-              {(values || []).map(
-                ({
-                  id,
-                  value,
-                }: Partial<Hit<HttpTypes.StoreProductOptionValue>>) => (
+    <div className="my-4 space-y-3">
+      {productOptions.map((opt) => {
+        const titleLower = opt.title.toLowerCase()
+        const isColor = COLOR_TITLES.includes(titleLower)
+
+        if (isColor) {
+          return (
+            <div key={opt.id}>
+              <span className="label-md text-secondary">{opt.title}: </span>
+              <span className="label-md text-primary">
+                {selectedOptions[titleLower]}
+              </span>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {colorOptions.map((colorOpt: ColorOption) => (
                   <Chip
-                    key={id}
-                    selected={selectedVariant[title.toLowerCase()] === value}
-                    color={title === "Color"}
+                    key={colorOpt.value}
+                    selected={selectedOptions[titleLower] === colorOpt.value}
+                    color
+                    swatchImage={colorOpt.swatchUrl ?? colorOpt.thumbnailUrl}
+                    value={colorOpt.value}
+                    onSelect={() => setOption(titleLower, colorOpt.value)}
+                  />
+                ))}
+              </div>
+            </div>
+          )
+        }
+
+        // Non-color option: cross-filtered values only
+        const availableValues = availableValuesForOption(opt.title)
+
+        return (
+          <div key={opt.id}>
+            <span className="label-md text-secondary">{opt.title}: </span>
+            <span className="label-md text-primary">
+              {selectedOptions[titleLower]}
+            </span>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {availableValues.map((value) => {
+                const inStock = isValueInStock(opt.title, value)
+                return (
+                  <Chip
+                    key={value}
+                    selected={selectedOptions[titleLower] === value}
+                    disabled={!inStock}
                     value={value}
-                    onSelect={() =>
-                      setOptionValue(title.toLowerCase(), value || "")
-                    }
+                    onSelect={() => {
+                      if (inStock) setOption(titleLower, value)
+                    }}
                   />
                 )
-              )}
+              })}
             </div>
           </div>
         )
-      )}
+      })}
     </div>
   )
 }

@@ -5,6 +5,7 @@ interface ChipProps {
   selected?: boolean;
   disabled?: boolean;
   color?: boolean;
+  swatchImage?: string;
   onSelect?: () => void;
   className?: string;
 }
@@ -14,6 +15,7 @@ export function Chip({
   selected,
   disabled,
   color,
+  swatchImage,
   onSelect,
   className,
 }: ChipProps) {
@@ -44,15 +46,26 @@ export function Chip({
       tabIndex={disabled ? -1 : 0}
     >
       {color ? (
-        <span
-          className={cn(
-            'w-[32px] h-[32px] bg-action absolute top-[3px] left-[3px] rounded-xs',
-            disabled && 'bg-disabled'
-          )}
-          style={{
-            backgroundColor: (value || '').toString(),
-          }}
-        />
+        swatchImage ? (
+          <img
+            src={swatchImage}
+            alt={value?.toString() || ''}
+            className={cn(
+              'w-[32px] h-[32px] absolute top-[3px] left-[3px] rounded-xs object-cover object-center',
+              disabled && 'opacity-40'
+            )}
+          />
+        ) : (
+          <span
+            className={cn(
+              'w-[32px] h-[32px] bg-action absolute top-[3px] left-[3px] rounded-xs',
+              disabled && 'bg-disabled'
+            )}
+            style={{
+              backgroundColor: (value || '').toString(),
+            }}
+          />
+        )
       ) : (
         value
       )}

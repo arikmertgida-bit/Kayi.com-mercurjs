@@ -50,7 +50,7 @@ export const getCategoryByHandle = async (categoryHandle: string[]) => {
       `/store/product-categories`,
       {
         query: {
-          fields: "*category_children",
+          fields: "*category_children,*category_children.category_children",
           handle,
         },
         cache: "force-cache",

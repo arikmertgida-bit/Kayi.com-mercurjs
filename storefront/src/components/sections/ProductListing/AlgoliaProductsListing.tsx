@@ -25,7 +25,7 @@ export const AlgoliaProductsListing = ({
   locale = process.env.NEXT_PUBLIC_DEFAULT_REGION,
   currency_code,
 }: {
-  category_id?: string
+  category_id?: string | string[]
   collection_id?: string
   locale?: string
   seller_handle?: string
@@ -36,13 +36,19 @@ export const AlgoliaProductsListing = ({
   const facetFilters: string = getFacedFilters(searchParamas)
   const query: string = searchParamas.get("query") || ""
 
+  const categoryFilter = category_id
+    ? Array.isArray(category_id)
+      ? `(${category_id.map((id) => `categories.id:${id}`).join(" OR ")})`
+      : `categories.id:${category_id}`
+    : null
+
   const filters = `${
     seller_handle
       ? `NOT seller:null AND seller.handle:${seller_handle} AND `
       : "NOT seller:null AND "
   }NOT seller.store_status:SUSPENDED AND supported_countries:${locale}${
-    category_id
-      ? ` AND categories.id:${category_id}${
+    categoryFilter
+      ? ` AND ${categoryFilter}${
           collection_id !== undefined
             ? ` AND collections.id:${collection_id}`
             : ""
