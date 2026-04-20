@@ -1,6 +1,6 @@
-import { InventoryTypes } from "@medusajs/types"
 import { Container, Heading, Text } from "@medusajs/ui"
 
+import { keepPreviousData } from "@tanstack/react-query"
 import { RowSelectionState } from "@tanstack/react-table"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -30,19 +30,20 @@ export const InventoryListTable = () => {
     isPending: isLoading,
     isError,
     error,
-  } = useInventoryItems({
-    limit: PAGE_SIZE,
-    offset: searchParams?.offset,
-    q: searchParams?.q,
-    fields: "id,title,sku,*location_levels",
-  })
+  } = useInventoryItems(
+    {
+      ...searchParams,
+      fields: "id,title,sku,*location_levels",
+    },
+    { placeholderData: keepPreviousData }
+  )
 
   const columns = useInventoryTableColumns()
 
   const { table } = useDataTable({
-    data: (inventory_items ?? []) as InventoryTypes.InventoryItemDTO[],
+    data: inventory_items ?? [],
     columns,
-    count,
+    count: count ?? 0,
     enablePagination: true,
     getRowId: (row) => row.id,
     pageSize: PAGE_SIZE,
@@ -71,7 +72,7 @@ export const InventoryListTable = () => {
         table={table}
         columns={columns}
         pageSize={PAGE_SIZE}
-        count={count}
+        count={count ?? 0}
         isLoading={isLoading}
         pagination
         search

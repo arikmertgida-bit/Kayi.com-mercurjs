@@ -22,7 +22,7 @@ const PAGE_SIZE = 20
 export const PromotionListTable = () => {
   const { t } = useTranslation()
 
-  const { raw } = usePromotionTableQuery({
+  const { raw, searchParams } = usePromotionTableQuery({
     pageSize: PAGE_SIZE,
   })
   const {
@@ -32,6 +32,7 @@ export const PromotionListTable = () => {
     isError,
     error,
   } = usePromotions({
+    ...searchParams,
     fields: "+status",
   })
 

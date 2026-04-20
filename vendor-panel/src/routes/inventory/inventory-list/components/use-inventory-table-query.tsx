@@ -57,9 +57,6 @@ export const useInventoryTableQuery = ({
     mid_code: params.mid_code,
     hs_code: params.hs_code,
     material: params.material,
-    location_levels: {
-      location_id: params.location_id || [],
-    },
     id: params.id ? params.id.split(",") : undefined,
   }
 

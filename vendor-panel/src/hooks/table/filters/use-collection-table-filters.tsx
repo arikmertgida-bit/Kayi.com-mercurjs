@@ -1,7 +1,5 @@
-import { useDateTableFilters } from "./use-date-table-filters"
+import type { Filter } from "../../../components/table/data-table"
 
-export const useCollectionTableFilters = () => {
-  const dateFilters = useDateTableFilters()
-
-  return dateFilters
+export const useCollectionTableFilters = (): Filter[] => {
+  return []
 }

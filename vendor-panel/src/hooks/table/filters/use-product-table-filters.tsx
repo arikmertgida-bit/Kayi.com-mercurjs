@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next"
 import { Filter } from "../../../components/table/data-table"
+import { TreeOption } from "../../../components/table/data-table/data-table-filter/category-tree-filter"
 import { useCollections, useProductCategories, useProductTags } from "../../api"
 import { useProductTypes } from "../../api/product-types"
 
@@ -41,8 +42,8 @@ export const useProductTableFilters = (
     {
       limit: 1000,
       offset: 0,
-      fields: "id,name",
-    },
+      include_descendants_tree: true,
+    } as any,
     {
       enabled: !isCategoryExcluded,
     }
@@ -79,7 +80,7 @@ export const useProductTableFilters = (
 
   if (product_tags && !isProductTagExcluded) {
     const tagFilter: Filter = {
-      key: "tagId",
+      key: "tag_id",
       label: t("fields.tag"),
       type: "select",
       multiple: true,
@@ -93,15 +94,32 @@ export const useProductTableFilters = (
   }
 
   if (product_categories) {
+    type CategoryItem = {
+      id: string
+      name: string
+      parent_category_id?: string | null
+      category_children?: CategoryItem[]
+    }
+    const buildTreeOptions = (cats: CategoryItem[]): TreeOption[] =>
+      cats.map((c) => ({
+        label: c.name,
+        value: c.id,
+        children: c.category_children?.length
+          ? buildTreeOptions(c.category_children)
+          : undefined,
+      }))
+
+    // Sadece root kategorileri al (parent_category_id olmayan)
+    const rootCategories = (product_categories as CategoryItem[]).filter(
+      (c) => !c.parent_category_id
+    )
+
     const categoryFilter: Filter = {
       key: "category_id",
       label: t("fields.category"),
-      type: "select",
+      type: "category-tree",
       multiple: true,
-      options: product_categories.map((c) => ({
-        label: c.name,
-        value: c.id,
-      })),
+      options: buildTreeOptions(rootCategories),
     }
 
     filters = [...filters, categoryFilter]

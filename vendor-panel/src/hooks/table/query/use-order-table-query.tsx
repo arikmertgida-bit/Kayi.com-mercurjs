@@ -19,6 +19,7 @@ export const useOrderTableQuery = ({
       "region_id",
       "sales_channel_id",
       "order",
+      "order_status",
     ],
     prefix
   )
@@ -31,6 +32,7 @@ export const useOrderTableQuery = ({
     region_id,
     q,
     order,
+    order_status,
   } = queryObject
 
   const searchParams: HttpTypes.AdminOrderFilters = {
@@ -40,6 +42,7 @@ export const useOrderTableQuery = ({
     created_at: created_at ? JSON.parse(created_at) : undefined,
     updated_at: updated_at ? JSON.parse(updated_at) : undefined,
     region_id: region_id?.split(","),
+    fulfillment_status: order_status ? [order_status] : undefined,
     order: order,
     q,
   }

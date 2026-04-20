@@ -5,6 +5,7 @@ import { useSearchParams } from "react-router-dom"
 
 import { useTranslation } from "react-i18next"
 import { DataTableFilterContext, useDataTableFilterContext } from "./context"
+import { CategoryTreeFilter, TreeOption } from "./category-tree-filter"
 import { DateFilter } from "./date-filter"
 import { NumberFilter } from "./number-filter"
 import { SelectFilter } from "./select-filter"
@@ -36,6 +37,11 @@ export type Filter = {
   | {
       type: "number"
       options?: never
+    }
+  | {
+      type: "category-tree"
+      options: TreeOption[]
+      multiple?: boolean
     }
 )
 
@@ -166,6 +172,18 @@ export const DataTableFilter = ({
                   filter={filter}
                   prefix={prefix}
                   readonly={readonly}
+                  openOnMount={filter.openOnMount}
+                />
+              )
+            case "category-tree":
+              return (
+                <CategoryTreeFilter
+                  key={filter.key}
+                  filter={filter}
+                  prefix={prefix}
+                  readonly={readonly}
+                  options={filter.options}
+                  multiple={filter.multiple}
                   openOnMount={filter.openOnMount}
                 />
               )

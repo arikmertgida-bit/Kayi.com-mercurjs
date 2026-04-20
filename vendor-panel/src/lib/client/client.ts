@@ -1,4 +1,5 @@
 import Medusa from "@medusajs/js-sdk"
+import qs from "qs"
 
 export const backendUrl = __BACKEND_URL__ ?? "/"
 export const publishableApiKey = __PUBLISHABLE_API_KEY__ ?? ""
@@ -60,16 +61,19 @@ export const fetchQuery = async (
   }: {
     method: "GET" | "POST" | "DELETE"
     body?: object
-    query?: Record<string, string | number>
+    query?: Record<string, any>
     headers?: { [key: string]: string }
   }
 ) => {
   const bearer = (await window.localStorage.getItem("medusa_auth_token")) || ""
-  const params = Object.entries(query || {})
-    .filter(([, value]) => value !== null && value !== undefined && value !== "")
-    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
-    .join("&")
-  const response = await fetch(`${backendUrl}${url}${params && `?${params}`}`, {
+  const cleanQuery: Record<string, any> = {}
+  for (const [k, v] of Object.entries(query || {})) {
+    if (v === null || v === undefined || v === "") continue
+    if (Array.isArray(v) && v.length === 0) continue
+    cleanQuery[k] = v
+  }
+  const params = qs.stringify(cleanQuery, { skipNulls: true })
+  const response = await fetch(`${backendUrl}${url}${params ? `?${params}` : ""}`, {
     method: method,
     headers: {
       authorization: `Bearer ${bearer}`,

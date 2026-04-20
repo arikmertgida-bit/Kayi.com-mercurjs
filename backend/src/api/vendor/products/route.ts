@@ -1,16 +1,35 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 
+function applyOperatorFilter(query: any, column: string, filter: any): any {
+  if (filter === null || filter === undefined) return query
+  if (typeof filter === "string" || typeof filter === "number")
+    return query.where(column, "=", filter)
+  if (typeof filter === "object" && !Array.isArray(filter)) {
+    let q = query
+    if (filter.$gte !== undefined) q = q.where(column, ">=", filter.$gte)
+    if (filter.$gt !== undefined)  q = q.where(column, ">",  filter.$gt)
+    if (filter.$lte !== undefined) q = q.where(column, "<=", filter.$lte)
+    if (filter.$lt !== undefined)  q = q.where(column, "<",  filter.$lt)
+    if (filter.$eq !== undefined)  q = q.where(column, "=",  filter.$eq)
+    if (filter.$ne !== undefined)  q = q.where(column, "!=", filter.$ne)
+    if (filter.$in !== undefined)  q = q.whereIn(column, filter.$in)
+    if (filter.$nin !== undefined) q = q.whereNotIn(column, filter.$nin)
+    if (filter.$ilike !== undefined) q = q.whereRaw(`${column} ILIKE ?`, [filter.$ilike])
+    return q
+  }
+  return query
+}
+
 export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
   const knex = req.scope.resolve(ContainerRegistrationKeys.PG_CONNECTION)
 
-  const filterableFields = req.filterableFields as Record<string, any>
-  const q = filterableFields.q as string | undefined
+  const f = req.filterableFields as Record<string, any>
   const skip = req.queryConfig.pagination?.skip || 0
   const take = req.queryConfig.pagination?.take || 10
-  const sellerId = filterableFields.seller_id as string
-  const salesChannelId = filterableFields.sales_channel_id as string | undefined
+  const sellerId = f.seller_id as string
+  const salesChannelId = f.sales_channel_id as string | undefined
 
   let baseQuery = knex("product")
     .distinct("product.id")
@@ -35,9 +54,62 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
       .where("product_sales_channel.sales_channel_id", salesChannelId)
   }
 
-  if (q && q.length >= 2) {
-    baseQuery = baseQuery.whereRaw("product.title ILIKE ?", [`%${q}%`])
+  if (f.q && f.q.length >= 2) {
+    const sanitized = `%${f.q.replace(/[%_\\]/g, "\\$&")}%`
+    baseQuery = baseQuery.where((builder: any) => {
+      builder
+        .whereRaw("product.title ILIKE ?", [sanitized])
+        .orWhereRaw("product.description ILIKE ?", [sanitized])
+    })
   }
+
+  if (f.type_id) {
+    const ids = Array.isArray(f.type_id) ? f.type_id : [f.type_id]
+    baseQuery = baseQuery.whereIn("product.type_id", ids)
+  }
+
+  if (f.collection_id) {
+    const ids = Array.isArray(f.collection_id) ? f.collection_id : [f.collection_id]
+    baseQuery = baseQuery.whereIn("product.collection_id", ids)
+  }
+
+  if (f.status) {
+    const arr = Array.isArray(f.status) ? f.status : [f.status]
+    baseQuery = baseQuery.whereIn("product.status", arr)
+  }
+
+  if (f.is_giftcard !== undefined && f.is_giftcard !== null) {
+    baseQuery = baseQuery.where("product.is_giftcard", f.is_giftcard)
+  }
+
+  // transformProductParams dönüşümü: tag_id → tags.id, category_id → categories.id
+  // req.query üzerinden de kontrol et (dönüşüm öncesi ham değer)
+  const rawTagId = (req.query as any).tag_id
+  const tagIds = rawTagId
+    ? (Array.isArray(rawTagId) ? rawTagId : [rawTagId])
+    : f.tags?.id
+      ? (Array.isArray(f.tags.id) ? f.tags.id : [f.tags.id])
+      : null
+  if (tagIds) {
+    baseQuery = baseQuery
+      .innerJoin("product_tags", "product.id", "product_tags.product_id")
+      .whereIn("product_tags.product_tag_id", tagIds)
+  }
+
+  const categoryIds = f.categories?.id
+  if (categoryIds) {
+    const ids = Array.isArray(categoryIds) ? categoryIds : [categoryIds]
+    baseQuery = baseQuery
+      .innerJoin(
+        "product_category_product",
+        "product.id",
+        "product_category_product.product_id"
+      )
+      .whereIn("product_category_product.product_category_id", ids)
+  }
+
+  baseQuery = applyOperatorFilter(baseQuery, "product.created_at", f.created_at)
+  baseQuery = applyOperatorFilter(baseQuery, "product.updated_at", f.updated_at)
 
   const countQuery = baseQuery.clone().clearSelect().count("product.id as count")
   const [{ count }] = await countQuery

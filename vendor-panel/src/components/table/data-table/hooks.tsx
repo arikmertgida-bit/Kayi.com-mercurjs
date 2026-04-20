@@ -34,7 +34,7 @@ export const useSelectedParams = ({
       newValue.delete(offsetKey)
 
       return newValue
-    })
+    }, { replace: true })
   }
 
   const deleteParam = (value?: string) => {
@@ -62,7 +62,7 @@ export const useSelectedParams = ({
       }
       prev.delete(offsetKey)
       return prev
-    })
+    }, { replace: true })
   }
 
   const get = () => {

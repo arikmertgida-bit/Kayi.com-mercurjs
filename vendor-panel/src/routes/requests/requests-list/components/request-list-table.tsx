@@ -13,27 +13,18 @@ export const RequestListTable = ({
   request_type: string
   customColumns?: any
 }) => {
-  const { q } = useQueryParams(["q"])
+  const { q, offset } = useQueryParams(["q", "offset"])
 
   const { requests, isPending, isError, error } = useRequests({
     fields: "+review",
+    q,
+    limit: PAGE_SIZE,
+    offset: offset ? Number(offset) : 0,
   })
 
-  const byType =
+  const data =
     requests?.filter(({ type }: { type: string }) => type === request_type) ??
     []
-
-  const data = q
-    ? byType.filter((row: any) => {
-        const lower = q.toLowerCase()
-        return (
-          row.id?.toLowerCase().includes(lower) ||
-          row.type?.toLowerCase().includes(lower) ||
-          row.status?.toLowerCase().includes(lower) ||
-          row.data?.review_id?.toLowerCase().includes(lower)
-        )
-      })
-    : byType
 
   const count = data?.length || 0
 

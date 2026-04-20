@@ -1,5 +1,5 @@
 import { Input } from "@medusajs/ui"
-import { ChangeEvent, useEffect, useRef } from "react"
+import { ChangeEvent, KeyboardEvent, useEffect, useRef } from "react"
 import { useTranslation } from "react-i18next"
 
 import { debounce } from "lodash"
@@ -49,6 +49,12 @@ export const DataTableSearch = ({
     debouncedSearch(e.target.value)
   }
 
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault()
+    }
+  }
+
   return (
     <Input
       autoComplete="off"
@@ -58,6 +64,7 @@ export const DataTableSearch = ({
       autoFocus={autofocus}
       defaultValue={query?.[0] || undefined}
       onChange={handleChange}
+      onKeyDown={handleKeyDown}
       placeholder={placeholderText}
     />
   )
