@@ -36,13 +36,7 @@ module.exports = defineConfig({
       resolve: '@mercurjs/commission',
       options: {}
     },
-    ...(process.env.ALGOLIA_API_KEY && process.env.ALGOLIA_APP_ID ? [{
-      resolve: '@mercurjs/algolia',
-      options: {
-        apiKey: process.env.ALGOLIA_API_KEY,
-        appId: process.env.ALGOLIA_APP_ID
-      }
-    }] : []),
+
     {
       resolve: '@mercurjs/reviews',
       options: {}
@@ -57,6 +51,14 @@ module.exports = defineConfig({
     }
   ],
   modules: [
+    ...(process.env.MEILISEARCH_HOST && process.env.MEILISEARCH_API_KEY ? [{
+      resolve: './src/modules/meilisearch',
+      options: {
+        host: process.env.MEILISEARCH_HOST,
+        apiKey: process.env.MEILISEARCH_API_KEY,
+        productIndexName: process.env.MEILISEARCH_PRODUCT_INDEX_NAME || 'products',
+      }
+    }] : []),
     {
       resolve: '@medusajs/medusa/file',
       options: {

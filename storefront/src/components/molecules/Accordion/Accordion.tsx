@@ -44,7 +44,7 @@ export const Accordion = ({
       <div
         className={cn("transition-all duration-300 overflow-hidden")}
         style={{
-          maxHeight: isOpen ? `${height}px` : "0px",
+          maxHeight: isOpen ? (height > 0 ? `${height}px` : "none") : "0px",
           opacity: isOpen ? 1 : 0,
           transition: "max-height 0.3s ease-in-out, opacity 0.2s ease-in-out",
         }}

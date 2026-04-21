@@ -25,9 +25,11 @@ import { decorateVariantsWithDefaultValues } from "../../../../utils"
 import { ProductCreateMediaSection } from "../product-create-details-media-section"
 import { generateVariantSku } from "../../../../../../../utils/generate-sku"
 
+type PriceColumn = { key: string; label: string }
+
 type ProductCreateVariantsSectionProps = {
   form: UseFormReturn<ProductCreateSchemaType>
-  currencyCodes?: string[]
+  priceColumns?: PriceColumn[]
 }
 
 const VariantColorImagePicker = ({
@@ -132,7 +134,7 @@ type ColorGroupProps = {
   colorName: string
   variants: VariantWithIndex[]
   form: UseFormReturn<ProductCreateSchemaType>
-  currencyCodes: string[]
+  priceColumns: PriceColumn[]
   isExpanded: boolean
   onToggle: () => void
 }
@@ -141,7 +143,7 @@ const ColorGroup = ({
   colorName,
   variants,
   form,
-  currencyCodes,
+  priceColumns,
   isExpanded,
   onToggle,
 }: ColorGroupProps) => {
@@ -217,12 +219,12 @@ const ColorGroup = ({
                 <th className="px-3 py-2 text-left font-medium text-ui-fg-subtle whitespace-nowrap">
                   Stok
                 </th>
-                {currencyCodes.map((cc) => (
+                {priceColumns.map((col) => (
                   <th
-                    key={"th-" + cc}
+                    key={"th-" + col.key}
                     className="px-3 py-2 text-left font-medium text-ui-fg-subtle whitespace-nowrap"
                   >
-                    Fiyat ({cc.toUpperCase()})
+                    Fiyat ({col.label})
                   </th>
                 ))}
               </tr>
@@ -301,11 +303,11 @@ const ColorGroup = ({
                         )}
                       />
                     </td>
-                    {currencyCodes.map((cc) => (
-                      <td key={"p-" + cc} className="px-3 py-2">
+                    {priceColumns.map((col) => (
+                      <td key={"p-" + col.key} className="px-3 py-2">
                         <Form.Field
                           control={form.control}
-                          name={`variants.${idx}.prices.${cc}` as any}
+                          name={`variants.${idx}.prices.${col.key}` as any}
                           render={({ field }) => (
                             <Form.Item>
                               <Form.Control>
@@ -337,12 +339,12 @@ const ColorGroup = ({
 
 /* ────────────────── BulkEditBar ─────────────────────────────────────────── */
 type BulkEditBarProps = {
-  currencyCodes: string[]
-  onApplyPrice: (cc: string, price: string) => void
+  priceColumns: PriceColumn[]
+  onApplyPrice: (key: string, price: string) => void
   onApplyStock: (stock: string) => void
 }
 
-const BulkEditBar = ({ currencyCodes, onApplyPrice, onApplyStock }: BulkEditBarProps) => {
+const BulkEditBar = ({ priceColumns, onApplyPrice, onApplyStock }: BulkEditBarProps) => {
   const [bulkPrice, setBulkPrice] = useState<Record<string, string>>({})
   const [bulkStock, setBulkStock] = useState("")
 
@@ -382,11 +384,11 @@ const BulkEditBar = ({ currencyCodes, onApplyPrice, onApplyStock }: BulkEditBarP
       </div>
 
       {/* Price per currency */}
-      {currencyCodes.map((cc) => (
-        <div key={cc} className="flex items-end gap-2">
+      {priceColumns.map((col) => (
+        <div key={col.key} className="flex items-end gap-2">
           <div className="flex flex-col gap-y-1">
             <Label size="xsmall" className="text-ui-fg-muted">
-              Fiyat ({cc.toUpperCase()})
+              Fiyat ({col.label})
             </Label>
             <Input
               size="small"
@@ -395,9 +397,9 @@ const BulkEditBar = ({ currencyCodes, onApplyPrice, onApplyStock }: BulkEditBarP
               step="0.01"
               placeholder="0.00"
               className="w-28"
-              value={bulkPrice[cc] ?? ""}
+              value={bulkPrice[col.key] ?? ""}
               onChange={(e) =>
-                setBulkPrice((prev) => ({ ...prev, [cc]: e.target.value }))
+                setBulkPrice((prev) => ({ ...prev, [col.key]: e.target.value }))
               }
             />
           </div>
@@ -406,8 +408,8 @@ const BulkEditBar = ({ currencyCodes, onApplyPrice, onApplyStock }: BulkEditBarP
             variant="secondary"
             type="button"
             onClick={() => {
-              onApplyPrice(cc, bulkPrice[cc] ?? "")
-              setBulkPrice((prev) => ({ ...prev, [cc]: "" }))
+              onApplyPrice(col.key, bulkPrice[col.key] ?? "")
+              setBulkPrice((prev) => ({ ...prev, [col.key]: "" }))
             }}
           >
             Uygula
@@ -420,7 +422,7 @@ const BulkEditBar = ({ currencyCodes, onApplyPrice, onApplyStock }: BulkEditBarP
 
 export const ProductCreateVariantsSection = ({
   form,
-  currencyCodes = [],
+  priceColumns = [],
 }: ProductCreateVariantsSectionProps) => {
   const { t } = useTranslation()
 
@@ -541,9 +543,9 @@ export const ProductCreateVariantsSection = ({
     })
   }
 
-  const applyBulkPrice = (cc: string, price: string) => {
+  const applyBulkPrice = (key: string, price: string) => {
     visibleVariants.forEach((v) => {
-      form.setValue(`variants.${v.originalIndex}.prices.${cc}` as any, price)
+      form.setValue(`variants.${v.originalIndex}.prices.${key}` as any, price)
     })
   }
 
@@ -657,7 +659,7 @@ export const ProductCreateVariantsSection = ({
 
               {/* Bulk edit bar */}
               <BulkEditBar
-                currencyCodes={currencyCodes}
+                priceColumns={priceColumns}
                 onApplyPrice={applyBulkPrice}
                 onApplyStock={applyBulkStock}
               />
@@ -671,7 +673,7 @@ export const ProductCreateVariantsSection = ({
                       colorName={color}
                       variants={variants}
                       form={form}
-                      currencyCodes={currencyCodes}
+                      priceColumns={priceColumns}
                       isExpanded={expandedColors.has(color)}
                       onToggle={() => toggleColor(color)}
                     />
@@ -682,7 +684,7 @@ export const ProductCreateVariantsSection = ({
                       colorName="Diger"
                       variants={noColorVariants}
                       form={form}
-                      currencyCodes={currencyCodes}
+                      priceColumns={priceColumns}
                       isExpanded={expandedColors.has("__no_color__")}
                       onToggle={() => toggleColor("__no_color__")}
                     />
@@ -706,12 +708,12 @@ export const ProductCreateVariantsSection = ({
                         <th className="px-3 py-2 text-left font-medium text-ui-fg-subtle whitespace-nowrap">
                           Stok
                         </th>
-                        {currencyCodes.map((cc) => (
+                        {priceColumns.map((col) => (
                           <th
-                            key={"ph-" + cc}
+                            key={"ph-" + col.key}
                             className="px-3 py-2 text-left font-medium text-ui-fg-subtle whitespace-nowrap"
                           >
-                            Fiyat ({cc.toUpperCase()})
+                            Fiyat ({col.label})
                           </th>
                         ))}
                       </tr>
@@ -788,11 +790,11 @@ export const ProductCreateVariantsSection = ({
                                 )}
                               />
                             </td>
-                            {currencyCodes.map((cc) => (
-                              <td key={"p-" + cc} className="px-3 py-2">
+                            {priceColumns.map((col) => (
+                              <td key={"p-" + col.key} className="px-3 py-2">
                                 <Form.Field
                                   control={form.control}
-                                  name={`variants.${idx}.prices.${cc}` as any}
+                                  name={`variants.${idx}.prices.${col.key}` as any}
                                   render={({ field }) => (
                                     <Form.Item>
                                       <Form.Control>
@@ -883,15 +885,15 @@ export const ProductCreateVariantsSection = ({
                   </Form.Item>
                 )}
               />
-              {currencyCodes.map((cc) => (
+              {priceColumns.map((col) => (
                 <Form.Field
-                  key={cc}
+                  key={col.key}
                   control={form.control}
-                  name={`variants.0.prices.${cc}` as any}
+                  name={`variants.0.prices.${col.key}` as any}
                   render={({ field }) => (
                     <Form.Item>
                       <Form.Label size="small">
-                        {t("fields.price", "Satis Fiyati")} ({cc.toUpperCase()})
+                        {t("fields.price", "Satis Fiyati")} ({col.label})
                       </Form.Label>
                       <Form.Control>
                         <Input

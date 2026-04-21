@@ -15,6 +15,7 @@ import {
 import { useCreateProduct } from "../../../../../hooks/api/products"
 import { useBatchInventoryItemsLocationLevels } from "../../../../../hooks/api/inventory"
 import { useStockLocations } from "../../../../../hooks/api/stock-locations"
+import { useRegions } from "../../../../../hooks/api/regions"
 import { uploadFilesQuery, fetchQuery } from "../../../../../lib/client"
 import {
   PRODUCT_CREATE_FORM_DEFAULTS,
@@ -100,6 +101,7 @@ export const ProductCreateForm = ({
   const { mutateAsync, isPending } = useCreateProduct()
   const { mutateAsync: batchUpdateStock } = useBatchInventoryItemsLocationLevels()
   const { stock_locations } = useStockLocations({ limit: 9999 })
+  const { regions } = useRegions({ limit: 9999 })
 
   const handleTypeSelect = (type: ProductType) => {
     form.setValue("enable_variants", type === "variant")
@@ -305,10 +307,17 @@ export const ProductCreateForm = ({
           metadata: variantThumbnailUrls[variantIdx]
             ? { thumbnail_url: variantThumbnailUrls[variantIdx] }
             : undefined,
-          prices: Object.keys(variant.prices || {}).map((key) => ({
-            currency_code: key,
-            amount: parseFloat(variant.prices?.[key] as string),
-          })),
+          prices: Object.keys(variant.prices || {}).flatMap((key) => {
+            const raw = variant.prices?.[key]
+            const amount = parseFloat(raw as string)
+            if (!raw || isNaN(amount)) return []
+            if (key.startsWith("reg_")) {
+              const region = (regions ?? []).find((r) => r.id === key)
+              if (!region) return []
+              return [{ currency_code: region.currency_code, amount, rules: { region_id: key } }]
+            }
+            return [{ currency_code: key, amount }]
+          }),
         })),
         options: payload.options.filter((o) => o.title && o.values.length > 0),
       },

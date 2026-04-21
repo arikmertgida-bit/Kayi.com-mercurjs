@@ -7,6 +7,14 @@ type SellerAddress = {
   postal_code?: string
 }
 
+export type SellerMember = {
+  id: string
+  name: string
+  email?: string
+  photo?: string
+  role: string
+}
+
 export type SellerProps = SellerAddress & {
   id: string
   name: string
@@ -19,4 +27,16 @@ export type SellerProps = SellerAddress & {
   products?: Product[]
   email?: string
   store_status?: "ACTIVE" | "SUSPENDED" | "INACTIVE"
+  followers_count?: number
+  rating_avg?: number
+  rating_count?: number
+  members?: SellerMember[]
+}
+
+export type FollowedSeller = {
+  id: string
+  name: string
+  handle: string
+  photo: string
+  followed_at: string
 }

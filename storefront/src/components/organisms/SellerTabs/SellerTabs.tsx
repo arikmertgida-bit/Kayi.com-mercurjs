@@ -1,55 +1,68 @@
 import { Suspense } from "react"
 import { ProductListingSkeleton } from "../ProductListingSkeleton/ProductListingSkeleton"
-import { AlgoliaProductsListing, ProductListing } from "@/components/sections"
-import { TabsContent, TabsList } from "@/components/molecules"
-import { SellerReviewTab } from "@/components/cells"
-import { getRegion } from "@/lib/data/regions"
+import { MeiliProductsListing, ProductListing } from "@/components/sections"
+import { SellerProps } from "@/types/seller"
+import { SellerTabsSwitcher } from "./SellerTabsSwitcher"
+import { SellerScore, SellerReviewList } from "@/components/molecules"
 
-const ALGOLIA_ID = process.env.NEXT_PUBLIC_ALGOLIA_ID
-const ALGOLIA_SEARCH_KEY = process.env.NEXT_PUBLIC_ALGOLIA_SEARCH_KEY
+const MEILISEARCH_HOST = process.env.NEXT_PUBLIC_MEILISEARCH_HOST
+const MEILISEARCH_SEARCH_KEY = process.env.NEXT_PUBLIC_MEILISEARCH_SEARCH_KEY
 
 export const SellerTabs = ({
-  tab,
   seller_handle,
   seller_id,
   locale,
   currency_code,
+  seller,
+  categories,
+  productCount,
 }: {
   tab: string
   seller_handle: string
   seller_id: string
   locale: string
   currency_code: string
+  seller: SellerProps
+  categories: { id: string; name: string; handle: string }[]
+  productCount: number
 }) => {
-  const tabsList = [
-    { label: "products", link: `/sellers/${seller_handle}/` },
-    {
-      label: "reviews",
-      link: `/sellers/${seller_handle}/reviews`,
-    },
-  ]
+  const filteredReviews = seller.reviews?.filter((r) => r !== null) ?? []
+  const reviewCount = filteredReviews.length
+  const rating =
+    reviewCount > 0
+      ? filteredReviews.reduce((sum, r) => sum + (r?.rating || 0), 0) / reviewCount
+      : 0
+
+  const productContent = (
+    <Suspense fallback={<ProductListingSkeleton />}>
+      {!MEILISEARCH_HOST || !MEILISEARCH_SEARCH_KEY ? (
+        <ProductListing seller_id={seller_id} />
+      ) : (
+        <MeiliProductsListing
+          locale={locale}
+          seller_handle={seller_handle}
+          currency_code={currency_code}
+        />
+      )}
+    </Suspense>
+  )
+
+  const reviewContent = (
+    <div className="grid grid-cols-1 lg:grid-cols-4 mt-8">
+      <div className="border rounded-sm p-4">
+        <SellerScore rate={rating} reviewCount={reviewCount} />
+      </div>
+      <div className="col-span-3 border rounded-sm p-4">
+        <h3 className="heading-sm uppercase border-b pb-4">Seller reviews</h3>
+        <SellerReviewList reviews={seller.reviews} />
+      </div>
+    </div>
+  )
 
   return (
-    <div className="mt-8">
-      <TabsList list={tabsList} activeTab={tab} />
-      <TabsContent value="products" activeTab={tab}>
-        <Suspense fallback={<ProductListingSkeleton />}>
-          {!ALGOLIA_ID || !ALGOLIA_SEARCH_KEY ? (
-            <ProductListing showSidebar seller_id={seller_id} />
-          ) : (
-            <AlgoliaProductsListing
-              locale={locale}
-              seller_handle={seller_handle}
-              currency_code={currency_code}
-            />
-          )}
-        </Suspense>
-      </TabsContent>
-      <TabsContent value="reviews" activeTab={tab}>
-        <Suspense>
-          <SellerReviewTab seller_handle={seller_handle} />
-        </Suspense>
-      </TabsContent>
-    </div>
+    <SellerTabsSwitcher
+      productContent={productContent}
+      reviewContent={reviewContent}
+    />
   )
 }

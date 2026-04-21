@@ -45,7 +45,7 @@ export default async function RootLayout({
 }>) {
   const { locale } = await params
 
-  const ALGOLIA_APP = process.env.NEXT_PUBLIC_ALGOLIA_ID
+  const MEILISEARCH_HOST = process.env.NEXT_PUBLIC_MEILISEARCH_HOST
   const htmlLang = locale || "en"
 
   return (
@@ -69,20 +69,14 @@ export default async function RootLayout({
           crossOrigin="anonymous"
         />
         <link rel="dns-prefetch" href="https://i.imgur.com" />
-        {ALGOLIA_APP && (
+        {MEILISEARCH_HOST && (
           <>
             <link
               rel="preconnect"
-              href="https://algolia.net"
+              href={MEILISEARCH_HOST}
               crossOrigin="anonymous"
             />
-            <link
-              rel="preconnect"
-              href="https://algolianet.com"
-              crossOrigin="anonymous"
-            />
-            <link rel="dns-prefetch" href="https://algolia.net" />
-            <link rel="dns-prefetch" href="https://algolianet.com" />
+            <link rel="dns-prefetch" href={MEILISEARCH_HOST} />
           </>
         )}
         {/* Image origins for faster LCP */}

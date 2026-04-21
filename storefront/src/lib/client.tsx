@@ -1,7 +1,11 @@
-import { liteClient as algoliasearch } from "algoliasearch/lite"
+import { instantMeiliSearch } from "@meilisearch/instant-meilisearch"
 
-const algoliaId = process.env.NEXT_PUBLIC_ALGOLIA_ID || "supersecret"
-const algoliaSearchKey =
-  process.env.NEXT_PUBLIC_ALGOLIA_SEARCH_KEY || "supersecret"
+const meilisearchHost = process.env.NEXT_PUBLIC_MEILISEARCH_HOST || ""
+const meilisearchApiKey =
+  process.env.NEXT_PUBLIC_MEILISEARCH_SEARCH_KEY || ""
 
-export const client = algoliasearch(algoliaId, algoliaSearchKey)
+export const client = meilisearchHost
+  ? instantMeiliSearch(meilisearchHost, meilisearchApiKey, {
+      finitePagination: true,
+    }).searchClient
+  : null

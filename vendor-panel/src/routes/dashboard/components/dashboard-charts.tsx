@@ -18,7 +18,7 @@ import {
   Text,
 } from "@medusajs/ui"
 import { Link, useSearchParams } from "react-router-dom"
-import { useStatistics } from "../../../hooks/api"
+import { useFollowers, useStatistics } from "../../../hooks/api"
 import { ChartSkeleton } from "./chart-skeleton"
 import { useState } from "react"
 import { addDays, differenceInDays, format, subDays } from "date-fns"
@@ -96,6 +96,7 @@ export const DashboardCharts = ({
   const [filters, setFilters] = useState(["customers", "orders"])
 
   const unreadMessages = useUnreads()
+  const { count: followersCount } = useFollowers({ limit: 1 })
 
   const from = (searchParams.get("from") ||
     format(addDays(new Date(), -7), "yyyy-MM-dd")) as unknown as Date
@@ -150,7 +151,7 @@ export const DashboardCharts = ({
             </Text>
           </div>
         </div>
-        <div className="px-6 py-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="px-6 py-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
           <Link to="/orders?order_status=not_fulfilled">
             <Button
               variant="secondary"
@@ -194,6 +195,17 @@ export const DashboardCharts = ({
             >
               <div className="flex gap-4 items-center">
                 <Badge>{unreadMessages?.length || 0}</Badge>Unread messages
+              </div>
+              <TriangleRightMini color="grey" />
+            </Button>
+          </Link>
+          <Link to="/followers">
+            <Button
+              variant="secondary"
+              className="w-full justify-between py-4 h-full"
+            >
+              <div className="flex gap-4 items-center">
+                <Badge>{followersCount || 0}</Badge>Takipçiler
               </div>
               <TriangleRightMini color="grey" />
             </Button>

@@ -106,6 +106,10 @@ export const ProductDetailsHeader = ({
                   </span>
                 )}
               </>
+            ) : hasAnyPrice && hasVariants && !allOptionsSelected ? (
+              <span className="label-md text-secondary pt-2 pb-4">
+                Select options to see price
+              </span>
             ) : (
               <span className="label-md text-secondary pt-2 pb-4">
                 Not available in your region

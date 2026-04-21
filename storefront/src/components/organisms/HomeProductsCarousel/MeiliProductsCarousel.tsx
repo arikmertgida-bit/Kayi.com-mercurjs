@@ -10,7 +10,7 @@ import { listProducts } from "@/lib/data/products"
 import { useEffect, useState } from "react"
 import { getProductPrice } from "@/lib/helpers/get-product-price"
 
-export const AlgoliaProductsCarousel = ({
+export const MeiliProductsCarousel = ({
   locale,
   seller_handle,
   currency_code,
@@ -21,9 +21,9 @@ export const AlgoliaProductsCarousel = ({
 }) => {
   const filters = `${
     seller_handle
-      ? `NOT seller:null AND seller.handle:${seller_handle} AND `
-      : "NOT seller:null AND "
-  }NOT seller.store_status:SUSPENDED AND supported_countries:${locale} AND variants.prices.currency_code:${currency_code}`
+      ? `seller.handle = "${seller_handle}" AND `
+      : ""
+  }seller.store_status != SUSPENDED AND variants.prices.currency_code = "${currency_code}"`
 
   return (
     <InstantSearchNext searchClient={client} indexName="products">

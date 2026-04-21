@@ -19,7 +19,7 @@ const filters = [
   { label: "1", amount: 0 },
 ]
 
-export const AlgoliaProductSidebar = () => {
+export const MeiliProductSidebar = () => {
   const [isMobile, setIsMobile] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
 

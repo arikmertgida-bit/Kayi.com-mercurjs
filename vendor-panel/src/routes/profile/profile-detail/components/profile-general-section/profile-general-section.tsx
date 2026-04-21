@@ -42,15 +42,12 @@ export const ProfileGeneralSection = ({ user }: ProfileGeneralSectionProps) => {
         <Text size="small" leading="compact" weight="plus">
           Photo
         </Text>
-        <ImageAvatar src={photo || "/logo.svg"} size={8} rounded />
-      </div>
-      <div className="text-ui-fg-subtle grid grid-cols-2 items-center px-6 py-4">
-        <Text size="small" leading="compact" weight="plus">
-          {t("fields.name")}
-        </Text>
-        <Text size="small" leading="compact">
-          {name || "-"}
-        </Text>
+        <div className="flex items-center gap-x-3">
+          <ImageAvatar src={photo || "/logo.svg"} size={8} rounded />
+          <Text size="small" leading="compact">
+            {name || "-"}
+          </Text>
+        </div>
       </div>
       <div className="grid grid-cols-2 items-center px-6 py-4">
         <Text size="small" leading="compact" weight="plus">

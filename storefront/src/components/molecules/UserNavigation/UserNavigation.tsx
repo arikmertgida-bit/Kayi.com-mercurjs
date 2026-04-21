@@ -35,6 +35,10 @@ const navigationItems = [
     label: "Wishlist",
     href: "/user/wishlist",
   },
+  {
+    label: "Takip Edilen Satıcılar",
+    href: "/user/following",
+  },
 ]
 
 export const UserNavigation = () => {

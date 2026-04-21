@@ -10,6 +10,7 @@ import { useForm } from "react-hook-form"
 import { StocksAndPricesEditForm } from "./stocks-and-prices-edit-form.tsx"
 import { useUpdateProductVariantsBatch } from "../../../../hooks/api/products.tsx"
 import { useBatchInventoryItemsLocationLevels } from "../../../../hooks/api/inventory.tsx"
+import { useRegions } from "../../../../hooks/api/regions"
 import { InventoryItemWithLevels } from "../../../../types/inventory"
 import {
   UpdateVariantStocksSchemaType,
@@ -36,7 +37,9 @@ const createFormValues = (
     (acc: any[], variant: HttpTypes.AdminProductVariant) => {
       const prices =
         variant.prices?.reduce((acc: Record<string, number>, price) => {
-          acc[price.currency_code] = price.amount
+          // Use region_id as key when present (matches the DataGrid column key)
+          const key = (price.rules as any)?.region_id || price.currency_code
+          acc[key] = price.amount
           return acc
         }, {}) || {}
 
@@ -79,8 +82,13 @@ const createFormValues = (
   return { variants: data }
 }
 const getPricesPayload = (
-  variants: UpdateVariantStocksSchemaType["variants"]
+  variants: UpdateVariantStocksSchemaType["variants"],
+  regions: HttpTypes.AdminRegion[]
 ) => {
+  const regionsCurrencyMap = Object.fromEntries(
+    regions.map((r) => [r.id, r.currency_code])
+  )
+
   return variants
     .filter((variant) => Object.keys(variant.prices || {}).length)
     .map((variant) => {
@@ -89,10 +97,23 @@ const getPricesPayload = (
           ([_, amount]) =>
             amount !== null && amount !== undefined && amount !== ""
         )
-        .map(([currency_code, amount]) => ({
-          currency_code,
-          amount: typeof amount === "string" ? parseFloat(amount) : amount,
-        }))
+        .map(([key, amount]) => {
+          const numAmount = typeof amount === "string" ? parseFloat(amount) : amount
+          if (key.startsWith("reg_")) {
+            const currencyCode = regionsCurrencyMap[key]
+            if (!currencyCode) return null
+            return {
+              currency_code: currencyCode,
+              amount: numAmount,
+              rules: { region_id: key },
+            }
+          }
+          return {
+            currency_code: key,
+            amount: numAmount,
+          }
+        })
+        .filter((p): p is NonNullable<typeof p> => p !== null)
 
       return {
         id: variant.id,
@@ -162,10 +183,11 @@ export const StocksAndPricesEdit = ({
 
   const updateVariantsBatch = useUpdateProductVariantsBatch(productId)
   const updateInventoryLocationLevels = useBatchInventoryItemsLocationLevels()
+  const { regions = [] } = useRegions({ limit: 9999 })
 
   const handleSave = form.handleSubmit(async (data) => {
     try {
-      const pricesPayload = getPricesPayload(data.variants)
+      const pricesPayload = getPricesPayload(data.variants, regions)
       const inventoryPayload = getInventoryLocationLevelsPayload(data.variants)
 
       const promises = [

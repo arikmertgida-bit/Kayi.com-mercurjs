@@ -187,6 +187,11 @@ const useCoreRoutes = (): Omit<INavItem, "pathname">[] => {
       to: "/reviews",
     },
     {
+      icon: <Users />,
+      label: "Takipçiler",
+      to: "/followers",
+    },
+    {
       icon: <ChatBubbleLeftRight />,
       label: `Messages ${unreadMessages?.length && unreadMessages?.length > 0 ? `(${unreadMessages?.length})` : ""}`,
       to: "/messages",

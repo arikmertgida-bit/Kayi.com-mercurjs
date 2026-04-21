@@ -23,7 +23,7 @@
     "@stripe/stripe-js": "^7.1.0",
     "@talkjs/react": "^0.1.11",
     "@types/js-cookie": "^3.0.6",
-    "algoliasearch": "^5.20.3",
+    "@meilisearch/instant-meilisearch": "^0.25.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.5.2",

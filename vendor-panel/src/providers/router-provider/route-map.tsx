@@ -186,6 +186,19 @@ export const RouteMap: RouteObject[] = [
             lazy: () => import("../../routes/messages"),
           },
           {
+            path: "/followers",
+            errorElement: <ErrorBoundary />,
+            handle: {
+              breadcrumb: () => "Takipçiler",
+            },
+            children: [
+              {
+                path: "",
+                lazy: () => import("../../routes/followers/followers-list"),
+              },
+            ],
+          },
+          {
             path: "/reviews",
             errorElement: <ErrorBoundary />,
             handle: {
