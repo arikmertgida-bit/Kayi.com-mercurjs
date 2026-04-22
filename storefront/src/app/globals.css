@@ -148,7 +148,7 @@ button:disabled svg path {
   transform: translate3d(0, 0, 0);
   flex: 0 0 100%;
   min-width: 0;
-  padding-left: 0.75rem;
+  padding-left: 0.375rem;
 }
 @media (min-width: 640px) {
   .home-slider-slide { flex: 0 0 50%; }

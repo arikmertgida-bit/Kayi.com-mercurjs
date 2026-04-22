@@ -9,8 +9,8 @@ export const Navbar = ({
   megaMenuCategories: HttpTypes.StoreProductCategory[]
 }) => {
   return (
-    <div className="flex border py-3 justify-between px-6 items-center">
-      <div className="hidden md:flex items-center gap-6">
+    <div className="hidden lg:flex border py-3 justify-between px-6 items-center">
+      <div className="flex items-center gap-6">
         <MegaMenu categories={megaMenuCategories} />
         <LocalizedClientLink
           href="/categories"

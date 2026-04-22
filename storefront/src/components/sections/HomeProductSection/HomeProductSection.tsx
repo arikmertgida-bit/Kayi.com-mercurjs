@@ -15,7 +15,7 @@ export const HomeProductSection = async ({
   seller_handle?: string
 }) => {
   return (
-    <section className="py-8 w-full">
+    <section className="py-4 w-full">
       <HomeProductsCarousel
         heading={heading}
         locale={locale}

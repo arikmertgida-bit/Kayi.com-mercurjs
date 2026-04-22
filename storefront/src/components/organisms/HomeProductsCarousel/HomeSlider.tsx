@@ -103,8 +103,8 @@ export const HomeSlider = ({
   return (
     <div className="w-full">
       {/* Header row */}
-      <div className="flex items-center mb-6">
-        <h2 className="heading-lg font-bold tracking-tight uppercase">
+      <div className="flex items-center mb-3">
+        <h2 className="heading-md font-bold tracking-tight uppercase">
           {heading}
         </h2>
       </div>
@@ -129,7 +129,7 @@ export const HomeSlider = ({
             <ChevronRightIcon />
           </button>
         )}
-        <div className="overflow-hidden -ml-3" ref={emblaRef}>
+        <div className="overflow-hidden -ml-1.5" ref={emblaRef}>
           <div className="flex">
             {products.map((product, index) => (
             <div key={product.id} className="home-slider-slide flex-shrink-0">

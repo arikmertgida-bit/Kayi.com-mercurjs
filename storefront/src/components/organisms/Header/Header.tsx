@@ -43,11 +43,8 @@ export const Header = async () => {
     <>
       <header className="sticky top-0 z-50 bg-white shadow-sm">
         <div className="flex py-2 lg:px-8 px-4">
+          {/* Logo – always visible */}
           <div className="flex items-center shrink-0">
-            <MobileNavbar
-              parentCategories={parentCategories}
-              childrenCategories={categories}
-            />
             <LocalizedClientLink href="/" className="text-2xl font-bold">
               <Image
                 src="/Logo.png"
@@ -58,10 +55,12 @@ export const Header = async () => {
               />
             </LocalizedClientLink>
           </div>
-          <div className="flex flex-1 items-center justify-center px-4">
+          {/* Search – desktop only (centre) */}
+          <div className="hidden lg:flex flex-1 items-center justify-center px-4">
             <NavbarSearch />
           </div>
-          <div className="flex items-center justify-end gap-2 lg:gap-4 shrink-0 py-2">
+          {/* Right icons – always visible; MobileNavbar toggle appended for mobile */}
+          <div className="flex items-center justify-end gap-2 lg:gap-4 shrink-0 py-2 ml-auto lg:ml-0">
             <CountrySelector regions={regions} />
             {user && (
               <LocalizedClientLink href="/user/wishlist" className="relative">
@@ -75,9 +74,19 @@ export const Header = async () => {
             )}
             <CartDropdown />
             <UserDropdown user={user} />
+            {/* Toggle menu – only below lg */}
+            <MobileNavbar
+              parentCategories={parentCategories}
+              childrenCategories={categories}
+              menuCategories={megaMenuCategories}
+            />
           </div>
         </div>
       </header>
+      {/* Mobile search row – only below lg, full width */}
+      <div className="lg:hidden bg-white shadow-sm border-t px-4 py-2">
+        <NavbarSearch />
+      </div>
       <Navbar megaMenuCategories={megaMenuCategories} />
     </>
   )

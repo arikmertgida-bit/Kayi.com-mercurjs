@@ -122,7 +122,7 @@ export default async function Home({
     "Mercur B2C Demo - Marketplace Storefront"
 
   return (
-    <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start text-primary">
+    <main className="flex flex-col gap-4 row-start-2 items-center sm:items-start text-primary">
       {/* Organization JSON-LD */}
       <Script
         id="ld-org"
@@ -153,10 +153,10 @@ export default async function Home({
       />
 
       <HeroSlider />
-      <div className="px-4 lg:px-8 w-full">
+      <div className="px-4 lg:px-6 w-full">
         <HomeProductSection heading="Yeni Gelen Ürünler" locale={locale} home />
       </div>
-      <div className="px-4 lg:px-8 w-full">
+      <div className="px-4 lg:px-6 w-full">
         <CollectionProductSection
           heading="İndirimli Ürünler"
           collectionHandle="firsat-urunleri"
@@ -164,7 +164,7 @@ export default async function Home({
           allProductsHref="/collections/firsat-urunleri"
         />
       </div>
-      <div className="px-4 lg:px-8 w-full">
+      <div className="px-4 lg:px-6 w-full">
         <CollectionProductSection
           heading="Sezonluk Ürünler"
           collectionHandle="yeni-sezon"
@@ -172,7 +172,7 @@ export default async function Home({
           allProductsHref="/collections/yeni-sezon"
         />
       </div>
-      <div className="px-4 lg:px-8 w-full">
+      <div className="px-4 lg:px-6 w-full">
         <HomeCategories heading="SHOP BY CATEGORY" />
       </div>
       <BlogSection />

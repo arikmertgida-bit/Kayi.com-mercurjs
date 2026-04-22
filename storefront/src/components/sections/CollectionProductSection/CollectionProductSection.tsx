@@ -29,7 +29,7 @@ export const CollectionProductSection = async ({
   if (!products.length) return null
 
   return (
-    <section className="py-8 w-full">
+    <section className="py-4 w-full">
       <HomeSlider
         heading={heading}
         initialProducts={products as HttpTypes.StoreProduct[]}
