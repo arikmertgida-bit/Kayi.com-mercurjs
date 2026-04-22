@@ -2,76 +2,100 @@
 
 import { Button } from "@/components/atoms"
 import { HeartFilledIcon, HeartIcon } from "@/icons"
-import { addWishlistItem, removeWishlistItem } from "@/lib/data/wishlist"
-import { Wishlist } from "@/types/wishlist"
+import { Modal } from "@/components/molecules/Modal/Modal"
+import LocalizedClientLink from "@/components/molecules/LocalizedLink/LocalizedLink"
+import { useWishlistContext } from "@/providers/WishlistProvider"
 import { useEffect, useState } from "react"
-import { HttpTypes } from "@medusajs/types"
 
 export const WishlistButton = ({
   productId,
-  wishlist,
-  user,
+  onRemove,
 }: {
   productId: string
-  wishlist?: Wishlist[]
-  user?: HttpTypes.StoreCustomer | null
+  onRemove?: () => void
 }) => {
+  const { user, isProductWishlisted, addToWishlist, removeFromWishlist } =
+    useWishlistContext()
+
   const [isWishlistAdding, setIsWishlistAdding] = useState(false)
   const [isWishlisted, setIsWishlisted] = useState(
-    wishlist?.[0]?.products?.some((item) => item.id === productId)
+    isProductWishlisted(productId)
   )
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
 
   useEffect(() => {
-    setIsWishlisted(
-      wishlist?.[0]?.products?.some((item) => item.id === productId)
-    )
-  }, [wishlist, productId])
+    setIsWishlisted(isProductWishlisted(productId))
+  }, [productId, isProductWishlisted])
 
-  if (!user) {
-    return null
-  }
+  const handleClick = async () => {
+    if (!user) {
+      setIsLoginModalOpen(true)
+      return
+    }
 
-  const handleAddToWishlist = async () => {
     try {
       setIsWishlistAdding(true)
-      await addWishlistItem({
-        reference_id: productId,
-        reference: "product",
-      })
-    } catch (error) {
-      console.error(error)
-    } finally {
-      setIsWishlistAdding(false)
-    }
-  }
-
-  const handleRemoveFromWishlist = async () => {
-    try {
-      setIsWishlistAdding(true)
-
-      await removeWishlistItem({
-        wishlist_id: wishlist?.[0].id!,
-        product_id: productId,
-      })
-    } catch (error) {
-      console.error(error)
-    } finally {
-      setIsWishlistAdding(false)
-    }
-  }
-  return (
-    <Button
-      onClick={
-        isWishlisted
-          ? () => handleRemoveFromWishlist()
-          : () => handleAddToWishlist()
+      if (isWishlisted) {
+        setIsWishlisted(false)
+        await removeFromWishlist(productId)
+        onRemove?.()
+      } else {
+        setIsWishlisted(true)
+        await addToWishlist(productId)
       }
-      variant="tonal"
-      className="w-10 h-10 p-0 flex items-center justify-center"
-      loading={isWishlistAdding}
-      disabled={isWishlistAdding}
-    >
-      {isWishlisted ? <HeartFilledIcon size={20} /> : <HeartIcon size={20} />}
-    </Button>
+    } catch (error) {
+      // Revert optimistic update on error
+      setIsWishlisted((prev) => !prev)
+      console.error(error)
+    } finally {
+      setIsWishlistAdding(false)
+    }
+  }
+
+  return (
+    <>
+      <Button
+        onClick={handleClick}
+        variant="tonal"
+        className="w-10 h-10 p-0 flex items-center justify-center"
+        loading={isWishlistAdding}
+        disabled={isWishlistAdding}
+      >
+        {isWishlisted ? <HeartFilledIcon size={20} /> : <HeartIcon size={20} />}
+      </Button>
+
+      {isLoginModalOpen && (
+        <Modal
+          heading="Giriş Yapın"
+          onClose={() => setIsLoginModalOpen(false)}
+          className="bg-[#fbfbfb] max-w-[480px]"
+        >
+          <div className="px-4 pb-4 flex flex-col gap-6">
+            <p className="text-secondary text-center">
+              İstek listesine ekleyebilmeniz için giriş yapmanız gerekmektedir.
+            </p>
+            <div className="flex flex-col gap-3">
+              <LocalizedClientLink href="/user">
+                <Button
+                  className="w-full"
+                  onClick={() => setIsLoginModalOpen(false)}
+                >
+                  Giriş Yap
+                </Button>
+              </LocalizedClientLink>
+              <LocalizedClientLink href="/user/register">
+                <Button
+                  variant="tonal"
+                  className="w-full"
+                  onClick={() => setIsLoginModalOpen(false)}
+                >
+                  Kayıt Ol
+                </Button>
+              </LocalizedClientLink>
+            </div>
+          </div>
+        </Modal>
+      )}
+    </>
   )
 }

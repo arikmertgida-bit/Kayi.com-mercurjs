@@ -10,7 +10,12 @@ export const SellerInfo = ({
   seller: SellerProps
   header?: boolean
 }) => {
-  const { photo, name, reviews } = seller
+  const ownerMember =
+    seller.members?.find((m) => m.role === "owner" || m.role === "admin") ??
+    seller.members?.[0]
+
+  const memberPhoto = ownerMember?.photo ?? seller.photo
+  const { name, reviews } = seller
 
   const reviewCount = reviews
     ? reviews?.filter((rev) => rev !== null).length
@@ -20,13 +25,13 @@ export const SellerInfo = ({
     reviews && reviews.length > 0
       ? reviews
           .filter((rev) => rev !== null)
-          .reduce((sum, r) => sum + r?.rating || 0, 0) / reviewCount
+          .reduce((sum, r) => sum + (r?.rating || 0), 0) / reviewCount
       : 0
 
   return (
     <div className="flex gap-4 w-full">
-      <div className="relative h-12 w-12 overflow-hidden rounded-sm">
-        <SellerAvatar photo={photo} size={56} alt={name} />
+      <div className="relative h-14 w-14 overflow-hidden rounded-sm">
+        <SellerAvatar photo={memberPhoto} size={56} alt={name} />
       </div>
       <div className="w-[90%]">
         <h3 className="heading-sm text-primary">{name}</h3>

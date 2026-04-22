@@ -6,21 +6,22 @@ export const HomeProductSection = async ({
   locale = process.env.NEXT_PUBLIC_DEFAULT_REGION || "pl",
   products = [],
   home = false,
+  seller_handle,
 }: {
   heading: string
   locale?: string
   products?: Product[]
   home?: boolean
+  seller_handle?: string
 }) => {
   return (
     <section className="py-8 w-full">
-      <h2 className="mb-6 heading-lg font-bold tracking-tight uppercase">
-        {heading}
-      </h2>
       <HomeProductsCarousel
+        heading={heading}
         locale={locale}
-        sellerProducts={products.slice(0, 4)}
+        sellerProducts={products.slice(0, 10)}
         home={home}
+        seller_handle={seller_handle}
       />
     </section>
   )

@@ -143,6 +143,36 @@ button:disabled svg path {
   min-width: 0;
 }
 
+/* Home Product Slider — responsive slide widths (CSS-only, zero CLS) */
+.home-slider-slide {
+  transform: translate3d(0, 0, 0);
+  flex: 0 0 100%;
+  min-width: 0;
+  padding-left: 0.75rem;
+}
+@media (min-width: 640px) {
+  .home-slider-slide { flex: 0 0 50%; }
+}
+@media (min-width: 768px) {
+  .home-slider-slide { flex: 0 0 33.3333%; }
+}
+@media (min-width: 1024px) {
+  .home-slider-slide { flex: 0 0 25%; }
+}
+@media (min-width: 1280px) {
+  .home-slider-slide { flex: 0 0 20%; }
+}
+@media (min-width: 1536px) {
+  .home-slider-slide { flex: 0 0 16.6666%; }
+}
+
+/* All Products overlay — vertical text */
+.all-products-text {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+}
+
 .no-arrows-number-input::-webkit-inner-spin-button,
 .no-arrows-number-input::-webkit-outer-spin-button {
   -webkit-appearance: none;

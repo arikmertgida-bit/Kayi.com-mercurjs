@@ -2,7 +2,11 @@
 import { Card } from "@/components/atoms"
 import { CollapseIcon } from "@/icons"
 import { cn } from "@/lib/utils"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
+
+// Use useLayoutEffect on the client (avoids SSR warning while measuring synchronously)
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect
 
 export const Accordion = ({
   children,
@@ -14,15 +18,24 @@ export const Accordion = ({
   defaultOpen?: boolean
 }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen)
-  const [height, setHeight] = useState(0)
+  const [height, setHeight] = useState<number | null>(null)
   const contentRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    setTimeout(() => {
+  // Measure synchronously after layout so there's no frame delay
+  useIsomorphicLayoutEffect(() => {
+    if (!contentRef.current) return
+
+    // Initial measurement
+    setHeight(contentRef.current.scrollHeight)
+
+    // Keep height in sync when children change (e.g. filter list updates)
+    const observer = new ResizeObserver(() => {
       if (contentRef.current) {
         setHeight(contentRef.current.scrollHeight)
       }
-    }, 100)
+    })
+    observer.observe(contentRef.current)
+    return () => observer.disconnect()
   }, [children])
 
   const openHandler = () => {
@@ -44,7 +57,7 @@ export const Accordion = ({
       <div
         className={cn("transition-all duration-300 overflow-hidden")}
         style={{
-          maxHeight: isOpen ? (height > 0 ? `${height}px` : "none") : "0px",
+          maxHeight: isOpen ? (height !== null ? `${height}px` : "none") : "0px",
           opacity: isOpen ? 1 : 0,
           transition: "max-height 0.3s ease-in-out, opacity 0.2s ease-in-out",
         }}

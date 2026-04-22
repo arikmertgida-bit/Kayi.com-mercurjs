@@ -35,14 +35,10 @@ export const getFacedFilters = (filters: ReadonlyURLSearchParams): string => {
       let values = ""
       const splittedSize = value.split(",")
       if (splittedSize.length > 1) {
-        splittedSize.map(
-          (value, index) =>
-            (values += `${getOption(key)} = "${value}" ${
-              index + 1 < splittedSize.length ? "OR " : ""
-            }`)
-        )
+        const parts = splittedSize.map((v) => `${getOption(key)} = "${v}"`)
+        values = `(${parts.join(" OR ")})`
       } else {
-        values += `${getOption(key)} = "${splittedSize[0]}"`
+        values = `${getOption(key)} = "${splittedSize[0]}"`
       }
       facet += ` AND ${values}`
     } else {

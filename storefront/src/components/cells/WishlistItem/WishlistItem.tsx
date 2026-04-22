@@ -1,24 +1,24 @@
+"use client"
+
 import LocalizedClientLink from "@/components/molecules/LocalizedLink/LocalizedLink"
 import Image from "next/image"
 import { HttpTypes } from "@medusajs/types"
 import { WishlistButton } from "../WishlistButton/WishlistButton"
-import { Wishlist } from "@/types/wishlist"
 import { convertToLocale } from "@/lib/helpers/money"
 import { Button } from "@/components/atoms"
 import clsx from "clsx"
+import { useRouter } from "next/navigation"
 
 export const WishlistItem = ({
   product,
-  wishlist,
-  user,
 }: {
   product: HttpTypes.StoreProduct & {
     calculated_amount: number
     currency_code: string
   }
-  wishlist: Wishlist[]
-  user?: HttpTypes.StoreCustomer | null
 }) => {
+  const router = useRouter()
+
   const price = convertToLocale({
     amount: product.calculated_amount,
     currency_code: product.currency_code,
@@ -34,8 +34,7 @@ export const WishlistItem = ({
         <div className="absolute right-3 top-3 z-10 cursor-pointer">
           <WishlistButton
             productId={product.id}
-            wishlist={wishlist}
-            user={user}
+            onRemove={() => router.refresh()}
           />
         </div>
         <LocalizedClientLink href={`/products/${product.handle}`}>

@@ -1,4 +1,5 @@
 import { CategoryNavbar } from "./CategoryNavbar/CategoryNavbar"
+import { MegaMenu } from "./MegaMenu/MegaMenu"
 import { PrimeCategoryNavbar } from "./PrimeCategoryNavbar/PrimeCategoryNavbar"
 import { SelectField } from "./SelectField/SelectField"
 import { Accordion } from "./Accordion/Accordion"
@@ -36,6 +37,7 @@ import { ProfileDetails } from "./ProfileDetails/ProfileDetails"
 export {
   PrimeCategoryNavbar,
   CategoryNavbar,
+  MegaMenu,
   SelectField,
   Accordion,
   FilterCheckboxOption,

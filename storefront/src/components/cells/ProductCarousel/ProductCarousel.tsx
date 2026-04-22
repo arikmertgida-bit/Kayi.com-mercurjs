@@ -32,7 +32,7 @@ export const ProductCarousel = ({
           {(slides || []).map((slide, idx) => (
             <div
               key={slide.id}
-              className="embla__slide min-w-0 h-[350px] lg:h-fit"
+              className="embla__slide min-w-0 h-[350px] lg:h-[698px]"
             >
               <Image
                 priority={idx === 0}
@@ -43,7 +43,7 @@ export const ProductCarousel = ({
                 height={700}
                 quality={idx === 0 ? 85 : 70}
                 sizes="(min-width: 1024px) 50vw, 100vw"
-                className="max-h-[700px] w-full h-auto aspect-square object-cover object-center object-center"
+                className="w-full h-full object-cover object-center"
               />
             </div>
           ))}

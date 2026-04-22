@@ -5,6 +5,7 @@ import {
   CategoryNavbar,
   HeaderCategoryNavbar,
 } from '@/components/molecules';
+import LocalizedClientLink from '@/components/molecules/LocalizedLink/LocalizedLink';
 import { CloseIcon, HamburgerMenuIcon } from '@/icons';
 import { useState } from 'react';
 
@@ -43,6 +44,22 @@ export const MobileNavbar = ({
                 onClose={closeMenuHandler}
                 categories={childrenCategories}
               />
+            </div>
+            <div className='border-t pt-3 pb-2 flex flex-col gap-1 px-4'>
+              <LocalizedClientLink
+                href='/collections/firsat-urunleri'
+                onClick={closeMenuHandler}
+                className='block py-2 text-sm font-semibold uppercase text-red-600 tracking-wide'
+              >
+                İndirimli Ürünler
+              </LocalizedClientLink>
+              <LocalizedClientLink
+                href='/collections/yeni-sezon'
+                onClick={closeMenuHandler}
+                className='block py-2 text-sm font-medium uppercase tracking-wide'
+              >
+                Sezonluk Ürünler
+              </LocalizedClientLink>
             </div>
           </div>
         </div>

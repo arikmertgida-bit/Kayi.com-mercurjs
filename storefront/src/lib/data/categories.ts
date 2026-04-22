@@ -42,6 +42,23 @@ export const listCategories = async ({
   }
 }
 
+export const listMegaMenuCategories = async () => {
+  const { product_categories } = await sdk.client.fetch<{
+    product_categories: HttpTypes.StoreProductCategory[]
+  }>("/store/product-categories", {
+    query: {
+      fields: "id,handle,name,rank,parent_category_id,thumbnail,+metadata,*category_children,category_children.id,category_children.handle,category_children.name",
+      limit: 100,
+    },
+    cache: "force-cache",
+    next: { revalidate: 3600 },
+  })
+
+  return product_categories
+    .filter((c) => !c.parent_category_id)
+    .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0))
+}
+
 export const getCategoryByHandle = async (categoryHandle: string[]) => {
   const handle = `${categoryHandle.join("/")}`
 

@@ -1,11 +1,12 @@
 import { Hero } from "./Hero/Hero"
+import { HeroSlider } from "./HeroSlider/HeroSlider"
 import { HomeProductSection } from "./HomeProductSection/HomeProductSection"
+import { CollectionProductSection } from "./CollectionProductSection/CollectionProductSection"
 import { HomeCategories } from "./HomeCategories/HomeCategories"
-import { BannerSection } from "./BannerSection/BannerSection"
-import { ShopByStyleSection } from "./ShopByStyle/ShopByStyleSection"
 import { BlogSection } from "./BlogSection/BlogSection"
 import { ProductListing } from "./ProductListing/ProductListing"
 import { SellerPageHeader } from "./SellerPageHeader/SellerPageHeader"
+import { CustomerProfileHeader } from "./CustomerProfileHeader/CustomerProfileHeader"
 import { Cart } from "./Cart/Cart"
 import { WishlistPage } from "./WishlistPage/WishlistPage"
 import { ProductDetailsPage } from "./ProductDetailsPage/ProductDetailsPage"
@@ -14,13 +15,14 @@ import { OrdersPagination } from "../organisms/OrdersPagination/OrdersPagination
 
 export {
   Hero,
+  HeroSlider,
   HomeProductSection,
+  CollectionProductSection,
   HomeCategories,
-  BannerSection,
-  ShopByStyleSection,
   BlogSection,
   ProductListing,
   SellerPageHeader,
+  CustomerProfileHeader,
   Cart,
   WishlistPage,
   ProductDetailsPage,

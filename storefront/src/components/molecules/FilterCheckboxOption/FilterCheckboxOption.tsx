@@ -20,7 +20,13 @@ export const FilterCheckboxOption = ({
         'flex gap-4 items-center cursor-pointer',
         disabled && '!cursor-default'
       )}
-      onClick={() => (disabled ? null : onCheck(label))}
+      onClick={(e) => {
+        // Prevent the label from forwarding a synthetic click to the inner
+        // <input type="checkbox">, which would bubble back up and fire this
+        // handler a second time — causing toggle → un-toggle = no net change.
+        e.preventDefault()
+        if (!disabled) onCheck(label)
+      }}
     >
       <Checkbox checked={checked} disabled={disabled} />
       <p

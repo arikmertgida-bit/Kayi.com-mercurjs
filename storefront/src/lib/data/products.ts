@@ -80,6 +80,7 @@ export const listProducts = async ({
         fields:
           "*variants.calculated_price,+variants.inventory_quantity,*seller,*variants,*variants.options,*options," +
           "*seller.products,*seller.reviews,*seller.reviews.customer,*seller.reviews.seller," +
+          "*seller.members," +
           "*seller.products.variants,*attribute_values,*attribute_values.attribute",
         ...queryParams,
       },

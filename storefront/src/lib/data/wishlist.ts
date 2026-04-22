@@ -48,7 +48,7 @@ export const addWishlistItem = async ({
       }),
     }
   ).then(() => {
-    revalidatePath("/wishlist")
+    revalidatePath("/user/wishlist")
   })
 }
 
@@ -73,6 +73,6 @@ export const removeWishlistItem = async ({
       method: "DELETE",
     }
   ).then(() => {
-    revalidatePath("/wishlist")
+    revalidatePath("/user/wishlist")
   })
 }

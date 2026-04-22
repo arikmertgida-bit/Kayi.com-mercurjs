@@ -69,6 +69,7 @@ export const SellerPageHeader = ({
                 alt={profileName || seller.name}
                 width={AVATAR}
                 height={AVATAR}
+                priority
                 className="object-cover w-full h-full"
               />
             ) : (

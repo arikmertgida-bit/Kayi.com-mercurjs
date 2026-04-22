@@ -1,8 +1,10 @@
+"use client"
+
 import { TabsContent, TabsList } from "@/components/molecules"
 import { Suspense } from "react"
-// import { ProductsList } from "../ProductsList/ProductsList"
-import { ProductsPagination } from "../ProductsPagination/ProductsPagination"
-// import { listProducts } from "@/lib/data/products"
+import { useWishlistContext } from "@/providers/WishlistProvider"
+import { WishlistItem } from "@/components/cells"
+import { HttpTypes } from "@medusajs/types"
 
 export const wishlistTabs = [
   { label: "All", link: "/wishlist" },
@@ -10,40 +12,48 @@ export const wishlistTabs = [
   { label: "Collections", link: "/wishlist/collections" },
 ]
 
-export const WishlistTabs = async ({ tab }: { tab: string }) => {
-  // const DEFAULT_REGION = process.env.NEXT_PUBLIC_DEFAULT_REGION || "gb"
+export const WishlistTabs = ({ tab }: { tab: string }) => {
+  const { wishlist } = useWishlistContext()
+  const products = wishlist?.[0]?.products ?? []
 
-  // const { response } = await listProducts({
-  //   countryCode: DEFAULT_REGION,
-  // })
-  // const { products } = await response
+  const ProductGrid = () =>
+    products.length === 0 ? (
+      <p className="text-secondary text-center py-8">
+        İstek listeniz boş.
+      </p>
+    ) : (
+      <div className="flex flex-wrap max-md:justify-center gap-4 mt-8">
+        {products.map((product) => (
+          <WishlistItem
+            key={product.id}
+            product={
+              product as HttpTypes.StoreProduct & {
+                calculated_amount: number
+                currency_code: string
+              }
+            }
+          />
+        ))}
+      </div>
+    )
 
   return (
     <div>
       <TabsList list={wishlistTabs} activeTab={tab} />
       <TabsContent value="all" activeTab={tab}>
-        <Suspense fallback={<>Loading...</>}>
-          <div className="grid sm:grid-cols-2 xl:grid-cols-4 mt-8">
-            {/* <ProductsList products={products} /> */}
-          </div>
-          <ProductsPagination pages={2} />
+        <Suspense fallback={<p>Yükleniyor...</p>}>
+          <ProductGrid />
         </Suspense>
       </TabsContent>
       <TabsContent value="products" activeTab={tab}>
-        <Suspense fallback={<>Loading...</>}>
-          <div className="grid sm:grid-cols-2 xl:grid-cols-4 mt-8">
-            {/* <ProductsList products={products} /> */}
-          </div>
-          <ProductsPagination pages={2} />
+        <Suspense fallback={<p>Yükleniyor...</p>}>
+          <ProductGrid />
         </Suspense>
       </TabsContent>
       <TabsContent value="collections" activeTab={tab}>
-        <Suspense fallback={<>Loading...</>}>
-          <div className="grid sm:grid-cols-2 xl:grid-cols-4 mt-8">
-            {/* <ProductsList products={products} /> */}
-          </div>
-          <ProductsPagination pages={2} />
-        </Suspense>
+        <div className="mt-8 text-center text-secondary py-8">
+          Koleksiyon istek listesi yakında.
+        </div>
       </TabsContent>
     </div>
   )

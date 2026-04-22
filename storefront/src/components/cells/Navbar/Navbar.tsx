@@ -1,16 +1,35 @@
 import { HttpTypes } from "@medusajs/types"
-import { CategoryNavbar } from "@/components/molecules"
+import { MegaMenu } from "@/components/molecules"
 import { SellNowButton } from "@/components/cells/SellNowButton/SellNowButton"
+import LocalizedClientLink from "@/components/molecules/LocalizedLink/LocalizedLink"
 
 export const Navbar = ({
-  categories,
+  megaMenuCategories,
 }: {
-  categories: HttpTypes.StoreProductCategory[]
+  megaMenuCategories: HttpTypes.StoreProductCategory[]
 }) => {
   return (
-    <div className="flex border py-4 justify-between px-6">
-      <div className="hidden md:flex items-center">
-        <CategoryNavbar categories={categories} />
+    <div className="flex border py-3 justify-between px-6 items-center">
+      <div className="hidden md:flex items-center gap-6">
+        <MegaMenu categories={megaMenuCategories} />
+        <LocalizedClientLink
+          href="/categories"
+          className="label-md uppercase px-4"
+        >
+          All Products
+        </LocalizedClientLink>
+        <LocalizedClientLink
+          href="/collections/firsat-urunleri"
+          className="label-md uppercase px-4 text-red-600 font-semibold"
+        >
+          İndirimli Ürünler
+        </LocalizedClientLink>
+        <LocalizedClientLink
+          href="/collections/yeni-sezon"
+          className="label-md uppercase px-4"
+        >
+          Sezonluk Ürünler
+        </LocalizedClientLink>
       </div>
 
       <SellNowButton />

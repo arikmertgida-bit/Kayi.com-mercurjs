@@ -12,6 +12,7 @@ import { ProfileIcon } from "@/icons"
 import { HttpTypes } from "@medusajs/types"
 import { useUnreads } from "@talkjs/react"
 import { useState } from "react"
+import Image from "next/image"
 
 export const UserDropdown = ({
   user,
@@ -22,6 +23,11 @@ export const UserDropdown = ({
 
   const unreads = useUnreads()
 
+  const avatarSrc = user
+    ? ((user.metadata as any)?.avatar_url ||
+        "/images/customer-default-avatar.jpg")
+    : null
+
   return (
     <div
       className="relative"
@@ -31,10 +37,23 @@ export const UserDropdown = ({
     >
       <LocalizedClientLink
         href="/user"
-        className="relative"
+        className="relative flex items-center"
         aria-label="Go to user profile"
       >
-        <ProfileIcon size={20} />
+        {avatarSrc ? (
+          <div className="w-7 h-7 rounded-full overflow-hidden border border-gray-200 flex-shrink-0">
+            <Image
+              src={avatarSrc}
+              alt="Profil"
+              width={28}
+              height={28}
+              className="object-cover w-full h-full"
+              unoptimized
+            />
+          </div>
+        ) : (
+          <ProfileIcon size={20} />
+        )}
       </LocalizedClientLink>
       <Dropdown show={open}>
         {user ? (

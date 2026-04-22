@@ -3,7 +3,7 @@ import { HttpTypes } from "@medusajs/types"
 
 import { CartDropdown, MobileNavbar, Navbar } from "@/components/cells"
 import { HeartIcon } from "@/icons"
-import { listCategories } from "@/lib/data/categories"
+import { listCategories, listMegaMenuCategories } from "@/lib/data/categories"
 import { PARENT_CATEGORIES } from "@/const"
 import { UserDropdown } from "@/components/cells/UserDropdown/UserDropdown"
 import { retrieveCustomer } from "@/lib/data/customer"
@@ -18,10 +18,11 @@ import { NavbarSearch } from "@/components/molecules"
 export const Header = async () => {
   // Parallelise all independent data fetches — eliminates a ~3-request waterfall
   // and reduces total server-side blocking time to that of the slowest single fetch.
-  const [user, regions, categoriesResult] = await Promise.all([
+  const [user, regions, categoriesResult, megaMenuCategories] = await Promise.all([
     retrieveCustomer(),
     listRegions(),
     listCategories({ headingCategories: PARENT_CATEGORIES }),
+    listMegaMenuCategories(),
   ])
 
   // Wishlist depends on user — only fetch when needed
@@ -62,7 +63,6 @@ export const Header = async () => {
           </div>
           <div className="flex items-center justify-end gap-2 lg:gap-4 shrink-0 py-2">
             <CountrySelector regions={regions} />
-            <UserDropdown user={user} />
             {user && (
               <LocalizedClientLink href="/user/wishlist" className="relative">
                 <HeartIcon size={20} />
@@ -74,10 +74,11 @@ export const Header = async () => {
               </LocalizedClientLink>
             )}
             <CartDropdown />
+            <UserDropdown user={user} />
           </div>
         </div>
       </header>
-      <Navbar categories={categories} />
+      <Navbar megaMenuCategories={megaMenuCategories} />
     </>
   )
 }

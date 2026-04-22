@@ -32,7 +32,7 @@ export const retrieveCustomer =
       .fetch<{ customer: HttpTypes.StoreCustomer }>(`/store/customers/me`, {
         method: "GET",
         query: {
-          fields: "*orders",
+          fields: "*orders,+metadata",
         },
         headers,
         next,
@@ -294,4 +294,44 @@ export const sendResetPasswordEmail = async (email: string) => {
     })
 
   return res
+}
+
+export const uploadCustomerFile = async (
+  formData: FormData
+): Promise<string | null> => {
+  const authHeaders = await getAuthHeaders()
+  if (!authHeaders) return null
+
+  const BACKEND_URL =
+    process.env.MEDUSA_BACKEND_URL || "http://localhost:9000"
+  const PUBLISHABLE_KEY =
+    process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ""
+
+  const res = await fetch(`${BACKEND_URL}/store/customer/upload`, {
+    method: "POST",
+    headers: {
+      "x-publishable-api-key": PUBLISHABLE_KEY,
+      ...(authHeaders as Record<string, string>),
+    },
+    body: formData,
+  })
+
+  if (!res.ok) return null
+  const data = await res.json()
+  return data.files?.[0]?.url ?? null
+}
+
+export const updateCustomerPhoto = async (
+  type: "avatar" | "cover",
+  url: string
+) => {
+  const existing = await retrieveCustomer()
+  const meta = ((existing?.metadata as Record<string, any>) || {})
+
+  return updateCustomer({
+    metadata: {
+      ...meta,
+      ...(type === "avatar" ? { avatar_url: url } : { cover_url: url }),
+    },
+  } as any)
 }

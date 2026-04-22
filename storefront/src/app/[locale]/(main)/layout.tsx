@@ -3,6 +3,7 @@ import { retrieveCustomer } from "@/lib/data/customer"
 import { checkRegion } from "@/lib/helpers/check-region"
 import { SessionWrapper } from "@/components/molecules/MessageButton/SessionWrapper"
 import { redirect } from "next/navigation"
+import { WishlistProvider } from "@/providers/WishlistProvider"
 
 export default async function RootLayout({
   children,
@@ -26,7 +27,7 @@ export default async function RootLayout({
   }
 
   return (
-    <>
+    <WishlistProvider user={user}>
       <Header />
       {/* TalkJS Session is now scoped only to MessageButton, not the entire
           layout. This means Header, children and Footer hydrate instantly
@@ -34,6 +35,6 @@ export default async function RootLayout({
       {user && APP_ID && <SessionWrapper appId={APP_ID} userId={user.id} />}
       {children}
       <Footer />
-    </>
+    </WishlistProvider>
   )
 }

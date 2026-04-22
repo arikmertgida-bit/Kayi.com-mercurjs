@@ -57,8 +57,6 @@ export default async function Wishlist() {
                         currency_code: string
                       }
                     }
-                    wishlist={wishlist}
-                    user={user}
                   />
                 ))}
               </div>

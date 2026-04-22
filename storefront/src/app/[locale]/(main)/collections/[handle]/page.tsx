@@ -5,6 +5,7 @@ import { MeiliProductsListing, ProductListing } from "@/components/sections"
 import { getCollectionByHandle } from "@/lib/data/collections"
 import { getRegion } from "@/lib/data/regions"
 import isBot from "@/lib/helpers/isBot"
+import { headers } from "next/headers"
 import { Suspense } from "react"
 
 const MEILISEARCH_HOST = process.env.NEXT_PUBLIC_MEILISEARCH_HOST
@@ -17,7 +18,8 @@ const SingleCollectionsPage = async ({
 }) => {
   const { handle, locale } = await params
 
-  const bot = isBot(navigator.userAgent)
+  const ua = (await headers()).get("user-agent") || ""
+  const bot = isBot(ua)
   const collection = await getCollectionByHandle(handle)
 
   if (!collection) return <NotFound />

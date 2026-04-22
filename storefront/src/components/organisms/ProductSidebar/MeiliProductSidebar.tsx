@@ -6,10 +6,11 @@ import useFilters from "@/hooks/useFilters"
 import useUpdateSearchParams from "@/hooks/useUpdateSearchParams"
 import { cn } from "@/lib/utils"
 import { useSearchParams } from "next/navigation"
-import React, { useEffect, useState } from "react"
+import React, { useContext, useEffect, useState } from "react"
 import { useRefinementList } from "react-instantsearch"
 import { ProductListingActiveFilters } from "../ProductListingActiveFilters/ProductListingActiveFilters"
 import useGetAllSearchParams from "@/hooks/useGetAllSearchParams"
+import { FiltersContext } from "@/providers/FiltersProvider"
 
 const filters = [
   { label: "5", amount: 40 },
@@ -78,7 +79,7 @@ function ConditionFilter({ defaultOpen = true }: { defaultOpen?: boolean }) {
   }
   return (
     <Accordion heading="Condition" defaultOpen={defaultOpen}>
-      <ul className="px-4">
+      <ul className="px-4 min-h-[24px]">
         {items.map(({ label, count }) => (
           <li key={label} className="mb-4">
             <FilterCheckboxOption
@@ -109,7 +110,7 @@ function ColorFilter({ defaultOpen = true }: { defaultOpen?: boolean }) {
   }
   return (
     <Accordion heading="Color" defaultOpen={defaultOpen}>
-      <ul className="px-4">
+      <ul className="px-4 min-h-[24px]">
         {items.map(({ label, count }) => (
           <li key={label} className="mb-4 flex items-center justify-between">
             <FilterCheckboxOption
@@ -146,7 +147,7 @@ function SizeFilter({ defaultOpen = true }: { defaultOpen?: boolean }) {
 
   return (
     <Accordion heading="Size" defaultOpen={defaultOpen}>
-      <ul className="grid grid-cols-4 mt-2 gap-2">
+      <ul className="grid grid-cols-4 mt-2 gap-2 min-h-[24px]">
         {items.map(({ label }) => (
           <li key={label} className="mb-4">
             <Chip
@@ -163,63 +164,56 @@ function SizeFilter({ defaultOpen = true }: { defaultOpen?: boolean }) {
 }
 
 function PriceFilter({ defaultOpen = true }: { defaultOpen?: boolean }) {
-  const [min, setMin] = useState("")
-  const [max, setMax] = useState("")
-
-  const updateSearchParams = useUpdateSearchParams()
+  const ctx          = useContext(FiltersContext)
   const searchParams = useSearchParams()
+  const updateSearchParams = useUpdateSearchParams()
 
+  const [min, setMin] = useState(
+    () => ctx ? (ctx.paramMap["min_price"] || "") : (searchParams.get("min_price") || "")
+  )
+  const [max, setMax] = useState(
+    () => ctx ? (ctx.paramMap["max_price"] || "") : (searchParams.get("max_price") || "")
+  )
+
+  // Sync when context values change (e.g. clearAllFilters)
   useEffect(() => {
+    if (!ctx) return
+    setMin(ctx.paramMap["min_price"] || "")
+    setMax(ctx.paramMap["max_price"] || "")
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ctx?.paramMap["min_price"], ctx?.paramMap["max_price"]])
+
+  // Fallback: sync from URL on non-Meili pages
+  useEffect(() => {
+    if (ctx) return
     setMin(searchParams.get("min_price") || "")
     setMax(searchParams.get("max_price") || "")
-  }, [searchParams])
+  }, [searchParams, ctx])
 
-  const updateMinPriceHandler = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    updateSearchParams("min_price", min)
-  }
+  const applyMin = () => updateSearchParams("min_price", min || null)
+  const applyMax = () => updateSearchParams("max_price", max || null)
 
-  const updateMaxPriceHandler = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    updateSearchParams("max_price", max)
-  }
   return (
     <Accordion heading="Price" defaultOpen={defaultOpen}>
       <div className="flex gap-2 mb-4">
-        <form method="POST" onSubmit={updateMinPriceHandler}>
-          <Input
-            placeholder="Min"
-            onChange={(e) => setMin(e.target.value)}
-            value={min}
-            onBlur={(e) => {
-              setTimeout(() => {
-                updateMinPriceHandler(
-                  e as unknown as React.FormEvent<HTMLFormElement>
-                )
-              }, 500)
-            }}
-            type="number"
-            className="no-arrows-number-input"
-          />
-          <input type="submit" className="hidden" />
-        </form>
-        <form method="POST" onSubmit={updateMaxPriceHandler}>
-          <Input
-            placeholder="Max"
-            onChange={(e) => setMax(e.target.value)}
-            onBlur={(e) => {
-              setTimeout(() => {
-                updateMaxPriceHandler(
-                  e as unknown as React.FormEvent<HTMLFormElement>
-                )
-              }, 500)
-            }}
-            value={max}
-            type="number"
-            className="no-arrows-number-input"
-          />
-          <input type="submit" className="hidden" />
-        </form>
+        <Input
+          placeholder="Min"
+          onChange={(e) => setMin(e.target.value)}
+          onBlur={applyMin}
+          onKeyDown={(e: React.KeyboardEvent) => e.key === "Enter" && applyMin()}
+          value={min}
+          type="number"
+          className="no-arrows-number-input"
+        />
+        <Input
+          placeholder="Max"
+          onChange={(e) => setMax(e.target.value)}
+          onBlur={applyMax}
+          onKeyDown={(e: React.KeyboardEvent) => e.key === "Enter" && applyMax()}
+          value={max}
+          type="number"
+          className="no-arrows-number-input"
+        />
       </div>
     </Accordion>
   )

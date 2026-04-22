@@ -33,6 +33,8 @@ export const syncProductsWorkflow = createWorkflow(
         "variants.id",
         "variants.title",
         "variants.sku",
+        "variants.options.value",
+        "variants.options.option.title",
         "variants.prices.currency_code",
         "variants.prices.amount",
         "collection.id",
@@ -56,11 +58,36 @@ export const syncProductsWorkflow = createWorkflow(
         const publishedProducts: SyncProductsStepInput["products"] = []
         const unpublishedProductsToDelete: string[] = []
 
+        const OPTION_FIELD_MAP: Record<string, string> = {
+          // Color
+          color: "color", renk: "color", colour: "color",
+          // Size
+          size: "size", numara: "size", beden: "size", boyut: "size",
+          // Condition
+          condition: "condition", durum: "condition",
+        }
+
         data.products.forEach((product: any) => {
           if (product.status === "published") {
             const { status, ...rest } = product
+            const mappedVariants = (rest.variants || []).map((variant: any) => {
+              const optionMap: Record<string, string> = {}
+              ;(variant.options || []).forEach((opt: any) => {
+                const rawTitle: string | undefined = opt.option?.title
+                if (rawTitle && opt.value) {
+                  const fieldKey = OPTION_FIELD_MAP[rawTitle.toLowerCase().trim()]
+                  if (fieldKey) optionMap[fieldKey] = opt.value
+                }
+              })
+              return {
+                ...variant,
+                ...(optionMap.color !== undefined && { color: optionMap.color }),
+                ...(optionMap.size !== undefined && { size: optionMap.size }),
+                ...(optionMap.condition !== undefined && { condition: optionMap.condition }),
+              }
+            })
             publishedProducts.push(
-              rest as SyncProductsStepInput["products"][0]
+              { ...rest, variants: mappedVariants } as SyncProductsStepInput["products"][0]
             )
           } else {
             unpublishedProductsToDelete.push(product.id)

@@ -1,20 +1,31 @@
+import { useContext } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { FiltersContext } from '@/providers/FiltersProvider';
 
 function useGetAllSearchParams() {
+  const ctx          = useContext(FiltersContext);
   const searchParams = useSearchParams();
 
-  // Get all search params without sortby and page
-  const allSearchParams: { [anyProp: string]: string } = {};
+  const allSearchParams: { [key: string]: string } = {};
 
-  searchParams.forEach((value, key) => {
-    if (key !== 'sortBy' && key !== 'page')
-      allSearchParams[key] = value;
-  });
+  if (ctx) {
+    // Read from context (live, no router navigation needed)
+    Object.entries(ctx.filterMap).forEach(([key, values]) => {
+      if (values.length) allSearchParams[key] = values.join(',');
+    });
+    Object.entries(ctx.paramMap).forEach(([key, value]) => {
+      if (value) allSearchParams[key] = value;
+    });
+  } else {
+    // Fallback: read from URL
+    searchParams.forEach((value, key) => {
+      if (key !== 'sortBy' && key !== 'page') allSearchParams[key] = value;
+    });
+  }
 
-  // Get all filter params count
   const count = Object.keys(allSearchParams)
     .map((key) => allSearchParams[key].split(',').length)
-    .reduce((partialSum, a) => partialSum + a, 0);
+    .reduce((sum, a) => sum + a, 0);
 
   return { allSearchParams, count };
 }

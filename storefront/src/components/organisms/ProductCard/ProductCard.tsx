@@ -7,13 +7,18 @@ import { BaseHit, Hit } from "instantsearch.js"
 import clsx from "clsx"
 import LocalizedClientLink from "@/components/molecules/LocalizedLink/LocalizedLink"
 import { getProductPrice } from "@/lib/helpers/get-product-price"
+import { WishlistButton } from "@/components/cells/WishlistButton/WishlistButton"
 
 export const ProductCard = ({
   product,
   api_product,
+  isEager = false,
+  sliderCard = false,
 }: {
   product: Hit<HttpTypes.StoreProduct> | Partial<Hit<BaseHit>>
   api_product?: HttpTypes.StoreProduct | null
+  isEager?: boolean
+  sliderCard?: boolean
 }) => {
   if (!api_product) {
     return null
@@ -28,10 +33,16 @@ export const ProductCard = ({
   return (
     <div
       className={clsx(
-        "relative group border rounded-sm flex flex-col justify-between p-1 w-full lg:w-[calc(25%-1rem)] min-w-[250px]"
+        "relative group border rounded-sm flex flex-col justify-between p-1",
+        sliderCard
+          ? "w-full"
+          : "w-full lg:w-[calc(25%-1rem)] min-w-[250px]"
       )}
     >
-      <div className="relative w-full h-full bg-primary aspect-square">
+      <div className="relative w-full bg-primary aspect-square">
+        <div className="absolute top-2 right-2 z-10">
+          <WishlistButton productId={api_product.id} />
+        </div>
         <LocalizedClientLink
           href={`/products/${product.handle}`}
           aria-label={`View ${productName}`}
@@ -40,24 +51,26 @@ export const ProductCard = ({
           <div className="overflow-hidden rounded-sm w-full h-full flex justify-center align-center ">
             {product.thumbnail ? (
               <Image
-                priority
-                fetchPriority="high"
+                priority={isEager}
+                fetchPriority={isEager ? "high" : "auto"}
+                loading={isEager ? "eager" : "lazy"}
                 src={decodeURIComponent(product.thumbnail)}
                 alt={`${productName} image`}
                 width={100}
                 height={100}
-                sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                sizes="(min-width: 1536px) 16vw, (min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
                 className="object-cover aspect-square w-full object-center h-full lg:group-hover:-mt-14 transition-all duration-300 rounded-xs"
               />
             ) : (
               <Image
-                priority
-                fetchPriority="high"
+                priority={isEager}
+                fetchPriority={isEager ? "high" : "auto"}
+                loading={isEager ? "eager" : "lazy"}
                 src="/images/placeholder.svg"
                 alt={`${productName} image placeholder`}
                 width={100}
                 height={100}
-                sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                sizes="(min-width: 1536px) 16vw, (min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
               />
             )}
           </div>
