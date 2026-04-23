@@ -51,6 +51,7 @@ export const Header = async () => {
                 width={126}
                 height={40}
                 alt="Logo"
+                className="object-contain"
                 priority
               />
             </LocalizedClientLink>

@@ -155,8 +155,8 @@ services:
       NEXT_PUBLIC_DEFAULT_REGION: tr
       NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: pk_fe7220c20ab9f3cc9b0fbb86f6c2e126e621d17f7c176584cbdd7fe8b04c67af
       REVALIDATE_SECRET: supersecret
-      NEXT_PUBLIC_SITE_NAME: "Kayı Marketplace"
-      NEXT_PUBLIC_SITE_DESCRIPTION: "Kayı Multi-Vendor Marketplace"
+      NEXT_PUBLIC_SITE_NAME: "Kayı | Güvenle Al, Güvenle Sat"
+      NEXT_PUBLIC_SITE_DESCRIPTION: "Kayı | Güvenle Al, Güvenle Sat"
       NEXT_PUBLIC_VENDOR_URL: http://localhost:7001
       NEXT_PUBLIC_MEILISEARCH_HOST: http://localhost:7700
       NEXT_PUBLIC_MEILISEARCH_SEARCH_KEY: masterKey_kayicom
