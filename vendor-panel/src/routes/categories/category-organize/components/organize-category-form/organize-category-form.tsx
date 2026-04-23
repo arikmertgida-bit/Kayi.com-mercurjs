@@ -121,7 +121,7 @@ export const OrganizeCategoryForm = () => {
       </RouteFocusModal.Header>
       <RouteFocusModal.Body className="bg-ui-bg-subtle flex flex-1 flex-col overflow-y-auto">
         <CategoryTree
-          renderValue={(item) => item.name}
+          renderValue={(item) => item?.name ?? ""}
           value={loading ? snapshot : product_categories || []}
           onChange={handleRankChange}
         />

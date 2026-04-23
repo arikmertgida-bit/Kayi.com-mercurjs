@@ -6,7 +6,7 @@ export function getMissingLineItemIds(order: AdminOrder, changes: AdminOrderChan
   }
 
   const retIds = new Set<string>()
-  const existingItemsMap = new Map(order.items.map((item) => [item.id, true]))
+  const existingItemsMap = new Map((order.items || []).map((item) => [item.id, true]))
 
   changes.forEach((change) => {
     change.actions.forEach((action) => {

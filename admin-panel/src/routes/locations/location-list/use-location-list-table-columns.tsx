@@ -150,7 +150,7 @@ export const useLocationListTableColumns = () => {
               <ListSummary
                 inline
                 n={1}
-                list={salesChannels.map((s) => s.name)}
+                list={salesChannels.map((s) => s?.name ?? "")}
               />
             </div>
           )

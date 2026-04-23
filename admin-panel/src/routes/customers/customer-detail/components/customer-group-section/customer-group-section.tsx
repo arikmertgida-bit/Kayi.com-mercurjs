@@ -87,7 +87,7 @@ export const CustomerGroupSection = ({
       description: t("customers.groups.removeMany", {
         groups: customer_groups
           ?.filter((g) => customerGroupIds.includes(g.id))
-          .map((g) => g.name)
+          .map((g) => g?.name ?? "")
           .join(","),
       }),
       confirmText: t("actions.remove"),

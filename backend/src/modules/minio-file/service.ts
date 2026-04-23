@@ -176,7 +176,7 @@ class MinioFileProviderService extends AbstractFileProviderService {
         .substring(0, 60)
       const safeExt = parsedFilename.ext.replace(/[^a-zA-Z0-9.]/g, '').toLowerCase()
       const fileKey = `${safeName}-${ulid()}${safeExt}`
-      const content = Buffer.from(file.content, 'binary')
+      const content = Buffer.from(file.content, 'base64')
 
       // Upload file (MinIO does not support x-amz-acl or custom x-amz-meta-* headers in signature)
       await this.client.putObject(

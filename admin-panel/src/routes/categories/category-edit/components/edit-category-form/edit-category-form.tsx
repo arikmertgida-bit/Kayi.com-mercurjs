@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Button, Input, Select, Textarea, toast } from "@medusajs/ui"
+import { Button, Checkbox, Input, Label, Select, Textarea, toast } from "@medusajs/ui"
 import { useEffect, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -23,6 +23,7 @@ const EditCategorySchema = z.object({
   status: z.enum(["active", "inactive"]),
   visibility: z.enum(["public", "internal"]),
   thumbnail: z.instanceof(File).optional(),
+  is_adult: z.boolean().default(false),
 })
 
 type EditCategoryFormProps = {
@@ -43,6 +44,7 @@ export const EditCategoryForm = ({ category }: EditCategoryFormProps) => {
       description: category.description || "",
       status: category.is_active ? "active" : "inactive",
       visibility: category.is_internal ? "internal" : "public",
+      is_adult: !!(category.metadata?.is_adult),
     },
     resolver: zodResolver(EditCategorySchema),
   })
@@ -82,7 +84,11 @@ export const EditCategoryForm = ({ category }: EditCategoryFormProps) => {
         handle: data.handle,
         is_active: data.status === "active",
         is_internal: data.visibility === "internal",
-        ...(isRootCategory ? { metadata: { thumbnail: thumbnailUrl ?? null } } : {}),
+        metadata: {
+          ...(category.metadata || {}),
+          ...(isRootCategory ? { thumbnail: thumbnailUrl ?? null } : {}),
+          is_adult: data.is_adult,
+        },
       },
       {
         onSuccess: () => {
@@ -225,6 +231,30 @@ export const EditCategoryForm = ({ category }: EditCategoryFormProps) => {
                 }}
               />
             </div>
+            <Form.Field
+              control={form.control}
+              name="is_adult"
+              render={({ field }) => (
+                <Form.Item>
+                  <div className="flex items-center gap-x-3 rounded-lg border border-ui-border-base bg-ui-bg-subtle p-4">
+                    <Checkbox
+                      id="is_adult_checkbox"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                    <div className="flex flex-col gap-y-0.5">
+                      <Label htmlFor="is_adult_checkbox" className="font-medium text-ui-fg-base cursor-pointer">
+                        +18 İçerik (Yaş Doğrulaması Gerektirir)
+                      </Label>
+                      <p className="text-ui-fg-subtle text-xs">
+                        Bu kategori işaretlendiğinde, ürünler ana sayfada/aramada gizlenir ve görüntülemek için yaş onayı istenir.
+                      </p>
+                    </div>
+                  </div>
+                  <Form.ErrorMessage />
+                </Form.Item>
+              )}
+            />
             {isRootCategory && (
               <Form.Field
                 control={form.control}

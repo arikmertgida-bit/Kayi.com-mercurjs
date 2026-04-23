@@ -15,7 +15,7 @@ export const CategoryCell = ({ categories }: CategoryCellProps) => {
   return (
     <div className="flex h-full w-full items-center overflow-hidden">
       <span className="truncate">
-        {categories.map((category) => category.name).join(", ")}
+        {categories.map((category) => category?.name ?? "").filter(Boolean).join(", ")}
       </span>
     </div>
   )

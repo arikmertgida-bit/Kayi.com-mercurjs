@@ -1,5 +1,5 @@
 import { Navigate } from "react-router-dom"
 
 export const Home = () => {
-  return <Navigate to="/orders" replace />
+  return <Navigate to="/dashboard" replace />
 }

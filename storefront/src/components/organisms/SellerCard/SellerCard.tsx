@@ -25,11 +25,13 @@ export function SellerCard({ name, handle, photo, locale = "tr" }: SellerCardPro
             sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-purple-400 to-indigo-500 flex items-center justify-center">
-            <span className="text-white text-4xl font-bold">
-              {name?.charAt(0)?.toUpperCase() || "M"}
-            </span>
-          </div>
+          <Image
+            src="/images/vendor/default-store-banner.jpeg"
+            alt={name}
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+          />
         )}
       </div>
       <h3 className="text-sm font-semibold text-center text-primary line-clamp-2">

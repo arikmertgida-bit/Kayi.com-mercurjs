@@ -1,7 +1,8 @@
 "use client"
 
 import Image from "next/image"
-import { useState, useRef, useTransition } from "react"
+import { useState, useRef } from "react"
+import { useRouter } from "next/navigation"
 import { HttpTypes } from "@medusajs/types"
 import { uploadCustomerFile, updateCustomerPhoto } from "@/lib/data/customer"
 
@@ -14,6 +15,7 @@ export const CustomerProfileHeader = ({
   user: HttpTypes.StoreCustomer
 }) => {
   const meta = (user.metadata as Record<string, any>) || {}
+  const router = useRouter()
 
   const [avatarUrl, setAvatarUrl] = useState<string>(
     meta.avatar_url || "/images/customer-default-avatar.jpg"
@@ -21,26 +23,35 @@ export const CustomerProfileHeader = ({
   const [coverUrl, setCoverUrl] = useState<string>(
     meta.cover_url || "/images/customer-default-banner.jpeg"
   )
-  const [isPending, startTransition] = useTransition()
+  const [isUploading, setIsUploading] = useState(false)
 
   const avatarRef = useRef<HTMLInputElement>(null)
   const coverRef = useRef<HTMLInputElement>(null)
 
-  const handleUpload = (file: File, type: "avatar" | "cover") => {
+  const handleUpload = async (file: File, type: "avatar" | "cover") => {
+    // Optimistic local preview — hemen göster
     const localPreview = URL.createObjectURL(file)
     if (type === "avatar") setAvatarUrl(localPreview)
     else setCoverUrl(localPreview)
 
-    const formData = new FormData()
-    formData.append("files", file)
-
-    startTransition(async () => {
+    setIsUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append("files", file)
       const url = await uploadCustomerFile(formData)
       if (!url) return
       await updateCustomerPhoto(type, url)
       if (type === "avatar") setAvatarUrl(url)
       else setCoverUrl(url)
-    })
+      // Sunucu verisini arka planda güncelle, UI bloklanmaz
+      router.refresh()
+    } catch {
+      // Hata durumunda önceki URL'ye geri dön
+      if (type === "avatar") setAvatarUrl(meta.avatar_url || "/images/customer-default-avatar.jpg")
+      else setCoverUrl(meta.cover_url || "/images/customer-default-banner.jpeg")
+    } finally {
+      setIsUploading(false)
+    }
   }
 
   const fullName =
@@ -51,7 +62,7 @@ export const CustomerProfileHeader = ({
       {/* Banner — tamamı tıklanabilir, responsive yükseklik */}
       <div
         className="relative w-full overflow-hidden cursor-pointer h-28 sm:h-40 md:h-52 lg:h-64 xl:h-[400px]"
-        onClick={() => !isPending && coverRef.current?.click()}
+        onClick={() => !isUploading && coverRef.current?.click()}
         title="Kapak fotoğrafını değiştir"
       >
         <Image
@@ -106,15 +117,15 @@ export const CustomerProfileHeader = ({
         {/* Avatar */}
         <div className="relative flex-shrink-0">
           <div
-            className="rounded-full border-4 border-white shadow-xl overflow-hidden bg-white z-10"
+            className="relative rounded-full ring-4 ring-white shadow-xl overflow-hidden z-10"
             style={{ width: AVATAR, height: AVATAR }}
           >
             <Image
               src={avatarUrl}
               alt={fullName}
-              width={AVATAR}
-              height={AVATAR}
-              className="object-cover w-full h-full"
+              fill
+              className="object-cover"
+              sizes={`${AVATAR}px`}
               priority
               unoptimized
             />
@@ -123,7 +134,7 @@ export const CustomerProfileHeader = ({
           {/* Avatar edit button — sağ alt köşe */}
           <button
             type="button"
-            disabled={isPending}
+            disabled={isUploading}
             onClick={() => avatarRef.current?.click()}
             className="absolute bottom-0 right-0 bg-black/50 hover:bg-black/70 disabled:opacity-50 text-white rounded-full p-1.5 border-2 border-white transition-colors z-20"
             title="Profil fotoğrafını değiştir"
@@ -165,7 +176,7 @@ export const CustomerProfileHeader = ({
         </div>
 
         {/* Loading indicator */}
-        {isPending && (
+        {isUploading && (
           <div className="absolute top-2 right-4 text-xs text-gray-600 bg-white/90 px-3 py-1.5 rounded-full shadow-sm border">
             Yükleniyor...
           </div>

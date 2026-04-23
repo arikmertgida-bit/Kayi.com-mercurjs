@@ -100,7 +100,7 @@ function VariantSection({ form, variant, index }: VariantSectionProps) {
                     <Form.Control>
                       <Combobox
                         {...field}
-                        options={items.options.map((o) => ({
+                        options={(items.options || []).map((o) => ({
                           ...o,
                           disabled: isItemOptionDisabled(o, inventoryIndex),
                         }))}

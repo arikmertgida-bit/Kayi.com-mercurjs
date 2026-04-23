@@ -97,6 +97,8 @@ services:
       MEILISEARCH_HOST: http://meilisearch:7700
       MEILISEARCH_API_KEY: masterKey_kayicom
       MEILISEARCH_PRODUCT_INDEX_NAME: products
+      STRIPE_SECRET_API_KEY: sk_e77a523a69ef743cc97744cf1ab78d57265dd93a23742234b6106daea1206bf8
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_placeholder}
       NODE_OPTIONS: "--max-old-space-size=512"
     mem_limit: 1g
     healthcheck:
@@ -160,6 +162,7 @@ services:
       NEXT_PUBLIC_VENDOR_URL: http://localhost:7001
       NEXT_PUBLIC_MEILISEARCH_HOST: http://localhost:7700
       NEXT_PUBLIC_MEILISEARCH_SEARCH_KEY: masterKey_kayicom
+      NEXT_PUBLIC_SEARCH_API_KEY: masterKey_kayicom
       NODE_OPTIONS: "--max-old-space-size=1536"
       NEXT_TELEMETRY_DISABLED: "1"
     mem_limit: 2g

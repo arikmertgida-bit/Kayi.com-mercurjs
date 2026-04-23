@@ -75,7 +75,7 @@ function DetailsTab({ form, product }: DetailsTabProps) {
                           onChange(v)
                         }}
                         {...field}
-                        options={option.values.map((v: any) => ({
+                        options={(option.values || []).map((v: any) => ({
                           label: v.value,
                           value: v.value,
                         }))}

@@ -9,6 +9,7 @@ export default defineMiddlewares({
       method: ["POST"],
       matcher: "/store/customer/upload",
       middlewares: [upload.array("files") as any],
+      bodyParser: false,
     },
   ],
 })

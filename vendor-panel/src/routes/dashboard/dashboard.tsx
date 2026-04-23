@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import { useOnboarding, useOrders } from "../../hooks/api"
 import { DashboardCharts } from "./components/dashboard-charts"
 import { DashboardOnboarding } from "./components/dashboard-onboarding"
@@ -6,13 +7,24 @@ import { ChartSkeleton } from "./components/chart-skeleton"
 import { useReviews } from "../../hooks/api/review"
 
 export const Dashboard = () => {
-  const [isClient, setIsClient] = useState(false)
-  useEffect(() => setIsClient(true), [])
+  const navigate = useNavigate()
 
   const { onboarding, isError, error, isPending } = useOnboarding()
-
   const { orders, isPending: isPendingOrders } = useOrders()
   const { reviews, isPending: isPendingReviews } = useReviews()
+
+  const isAuthError = (() => {
+    if (!isError) return false
+    const errStatus = (error as any)?.status ?? (error as any)?.statusCode
+    const errMsg = (error as any)?.message ?? ""
+    return errStatus === 401 || errMsg.toLowerCase().includes("unauthorized")
+  })()
+
+  useEffect(() => {
+    if (isAuthError) {
+      navigate("/login", { replace: true })
+    }
+  }, [isAuthError, navigate])
 
   const notFulfilledOrders =
     orders?.filter((order) => order.fulfillment_status === "not_fulfilled")
@@ -23,8 +35,6 @@ export const Dashboard = () => {
   const reviewsToReply =
     reviews?.filter((review: any) => !review?.seller_note).length || 0
 
-  if (!isClient) return null
-
   if (isPending || isPendingOrders || isPendingReviews) {
     return (
       <div>
@@ -33,8 +43,12 @@ export const Dashboard = () => {
     )
   }
 
+  if (isAuthError) {
+    return null
+  }
+
   if (isError) {
-    throw error
+    console.error("Dashboard onboarding error:", error)
   }
 
   if (

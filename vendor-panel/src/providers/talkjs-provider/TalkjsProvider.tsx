@@ -1,8 +1,24 @@
-import { useCallback } from "react"
+import { createContext, useCallback, useContext } from "react"
 import Talk from "talkjs"
-import { Session } from "@talkjs/react"
+import { Session, useUnreads } from "@talkjs/react"
 
 import { useMe } from "../../hooks/api"
+
+// Context that holds unread messages count — undefined when TalkJS is not active
+const TalkjsUnreadsContext = createContext<ReturnType<typeof useUnreads> | undefined>(undefined)
+
+/** Safe hook — returns undefined when TalkJS Session provider is not active */
+export const useTalkjsUnreads = () => useContext(TalkjsUnreadsContext)
+
+// Inner component that calls useUnreads() safely INSIDE <Session>
+const SessionUnreadsProvider = ({ children }: { children: React.ReactNode }) => {
+  const unreads = useUnreads()
+  return (
+    <TalkjsUnreadsContext.Provider value={unreads}>
+      {children}
+    </TalkjsUnreadsContext.Provider>
+  )
+}
 
 export const TalkjsProvider = ({ children }: { children: React.ReactNode }) => {
   const { seller, isPending } = useMe()
@@ -33,7 +49,9 @@ const ProviderContent = ({
 
   return (
     <Session appId={__TALK_JS_APP_ID__} syncUser={syncUser}>
-      {children}
+      <SessionUnreadsProvider>
+        {children}
+      </SessionUnreadsProvider>
     </Session>
   )
 }

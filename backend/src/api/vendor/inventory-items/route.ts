@@ -37,8 +37,8 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
     .clone()
     .clearSelect()
     .count("inventory_item.id as count")
-  const [{ count }] = await countQuery
-  const totalCount = parseInt(count as string, 10)
+  const countResult = await countQuery
+  const totalCount = parseInt((countResult[0]?.count ?? "0") as string, 10)
 
   const inventoryItemIds: string[] = await baseQuery
     .offset(skip)

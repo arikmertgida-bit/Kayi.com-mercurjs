@@ -101,9 +101,9 @@ export const useProductTableFilters = (
       category_children?: CategoryItem[]
     }
     const buildTreeOptions = (cats: CategoryItem[]): TreeOption[] =>
-      cats.map((c) => ({
-        label: c.name,
-        value: c.id,
+      cats.filter(Boolean).map((c) => ({
+        label: c?.name ?? "",
+        value: c?.id ?? "",
         children: c.category_children?.length
           ? buildTreeOptions(c.category_children)
           : undefined,
@@ -111,7 +111,7 @@ export const useProductTableFilters = (
 
     // Sadece root kategorileri al (parent_category_id olmayan)
     const rootCategories = (product_categories as CategoryItem[]).filter(
-      (c) => !c.parent_category_id
+      (c) => c && !c.parent_category_id
     )
 
     const categoryFilter: Filter = {

@@ -27,9 +27,9 @@ export const Algolia = () => {
     <Container>
       <div className="flex items-center justify-between px-6 py-4">
         <div>
-          <Heading>Algolia Search Engine</Heading>
+          <Heading>Meilisearch</Heading>
           <Text className="text-ui-fg-subtle" size="small">
-            Check Algolia Search Engine status
+            Check Meilisearch status
           </Text>
         </div>
         <Button onClick={handleTriggerSynchronization}>
@@ -40,11 +40,11 @@ export const Algolia = () => {
       <Table>
         <Table.Body>
           <Table.Row>
-            <Table.Cell>Application ID</Table.Cell>
+            <Table.Cell>Host</Table.Cell>
             <Table.Cell>{algolia?.appId}</Table.Cell>
           </Table.Row>
           <Table.Row>
-            <Table.Cell>ProductIndex</Table.Cell>
+            <Table.Cell>Product Index</Table.Cell>
             <Table.Cell>
               {algolia?.productIndex ? (
                 <StatusBadge color="green">Exists</StatusBadge>

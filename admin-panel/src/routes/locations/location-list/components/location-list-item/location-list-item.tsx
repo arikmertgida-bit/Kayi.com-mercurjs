@@ -35,7 +35,7 @@ function SalesChannels(props: SalesChannelsProps) {
               rounded
               inline
               n={3}
-              list={salesChannels.map((s) => s.name)}
+              list={salesChannels.map((s) => s?.name ?? "")}
             />
           ) : (
             "-"

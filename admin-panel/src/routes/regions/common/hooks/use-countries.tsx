@@ -28,7 +28,7 @@ export const useCountries = ({
     const key = order.replace("-", "")
 
     if (!acceptedOrderKeys.includes(key)) {
-      console.log("The key ${key} is not a valid order key")
+      console.log(`The key ${key} is not a valid order key`)
       throw json(`The key ${key} is not a valid order key`, 500)
     }
 

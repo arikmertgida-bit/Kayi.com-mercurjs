@@ -3222,7 +3222,7 @@
     "domain": "Product Catalog Settings"
   },
   "algolia": {
-    "domain": "Algolia Search Engine"
+    "domain": "Meilisearch"
   },
   "commission": {
     "domain": "Commission Settings"

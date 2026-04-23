@@ -11,4 +11,4 @@ COPY . .
 
 EXPOSE 9000
 
-CMD ["pnpm", "dev"]
+CMD ["sh", "-c", "npx medusa db:migrate && pnpm dev"]

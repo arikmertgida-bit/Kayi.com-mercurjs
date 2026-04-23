@@ -81,7 +81,8 @@ export const listProducts = async ({
           "*variants.calculated_price,+variants.inventory_quantity,*seller,*variants,*variants.options,*options," +
           "*seller.products,*seller.reviews,*seller.reviews.customer,*seller.reviews.seller," +
           "*seller.members," +
-          "*seller.products.variants,*attribute_values,*attribute_values.attribute",
+          "*seller.products.variants,*attribute_values,*attribute_values.attribute," +
+          "+categories,+categories.id,+categories.metadata",
         ...queryParams,
       },
       headers,
@@ -119,7 +120,8 @@ export const listProducts = async ({
         queryParams,
       }
     })
-    .catch(() => {
+    .catch((err: unknown) => {
+      console.error("[listProducts] fetch error:", err)
       return {
         response: {
           products: [],

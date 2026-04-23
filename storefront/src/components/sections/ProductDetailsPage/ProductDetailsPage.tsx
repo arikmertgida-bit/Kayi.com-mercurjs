@@ -1,5 +1,6 @@
 import { ProductDetails, ProductGallery } from "@/components/organisms"
 import { ProductGalleryClient } from "@/components/organisms/ProductGallery/ProductGalleryClient"
+import { AgeVerificationGate } from "@/components/organisms/AgeVerificationGate/AgeVerificationGate"
 import { StickyAddToCart } from "@/components/cells/StickyAddToCart/StickyAddToCart"
 import { ProductVariantProvider } from "@/components/providers/ProductVariant/ProductVariantProvider"
 import { listProducts } from "@/lib/data/products"
@@ -10,9 +11,11 @@ import { Suspense } from "react"
 export const ProductDetailsPage = async ({
   handle,
   locale,
+  serverVerified = false,
 }: {
   handle: string
   locale: string
+  serverVerified?: boolean
 }) => {
   const prod = await listProducts({
     countryCode: locale,
@@ -26,10 +29,15 @@ export const ProductDetailsPage = async ({
     return NotFound()
   }
 
+  const isAdultProduct = (prod as any).categories?.some(
+    (c: any) => c.metadata?.is_adult
+  )
+
   return (
     <ProductVariantProvider product={prod as any}>
       <div className="flex flex-col md:flex-row lg:gap-12">
-        <div className="md:w-1/2 md:px-2">
+        <div className="md:w-1/2 md:px-2 relative">
+          {isAdultProduct && <AgeVerificationGate serverVerified={serverVerified} />}
           <Suspense fallback={<ProductGallery images={prod?.images || []} />}>
             <ProductGalleryClient images={prod?.images || []} />
           </Suspense>

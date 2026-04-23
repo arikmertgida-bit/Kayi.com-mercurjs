@@ -165,7 +165,7 @@ export const EditStoreForm = ({ seller }: { seller: StoreVendor }) => {
                       </div>
                       <Form.Control>
                         <FileUpload
-                          uploadedImage={fields[0]?.url || ""}
+                          uploadedImage={fields[0]?.url || seller.photo || ""}
                           multiple={false}
                           label={t("products.media.uploadImagesLabel")}
                           hint={t("products.media.uploadImagesHint")}

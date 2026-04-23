@@ -8,6 +8,7 @@ import clsx from "clsx"
 import LocalizedClientLink from "@/components/molecules/LocalizedLink/LocalizedLink"
 import { getProductPrice } from "@/lib/helpers/get-product-price"
 import { WishlistButton } from "@/components/cells/WishlistButton/WishlistButton"
+import { useAgeVerification } from "@/providers/AgeVerificationProvider"
 
 export const ProductCard = ({
   product,
@@ -20,6 +21,8 @@ export const ProductCard = ({
   isEager?: boolean
   sliderCard?: boolean
 }) => {
+  const { isVerified } = useAgeVerification()
+
   if (!api_product) {
     return null
   }
@@ -29,6 +32,10 @@ export const ProductCard = ({
   })
 
   const productName = String(product.title || "Product")
+  const isAdult = (api_product as any).categories?.some(
+    (c: any) => c.metadata?.is_adult
+  )
+  const showBlur = isAdult && !isVerified
 
   return (
     <div
@@ -43,6 +50,15 @@ export const ProductCard = ({
         <div className="absolute top-2 right-2 z-10">
           <WishlistButton productId={api_product.id} />
         </div>
+        {/* +18 rozeti — position:absolute, layout'u etkilemez (CLS=0) */}
+        {isAdult && (
+          <span
+            className="absolute top-2 left-2 z-10 bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded pointer-events-none select-none"
+            aria-hidden="true"
+          >
+            +18
+          </span>
+        )}
         <LocalizedClientLink
           href={`/products/${product.handle}`}
           aria-label={`View ${productName}`}
@@ -59,7 +75,11 @@ export const ProductCard = ({
                 width={100}
                 height={100}
                 sizes="(min-width: 1536px) 16vw, (min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
-                className="object-cover aspect-square w-full object-center h-full lg:group-hover:-mt-14 transition-all duration-300 rounded-xs"
+                className={clsx(
+                  "object-cover aspect-square w-full object-center h-full lg:group-hover:-mt-14 transition-all duration-300 rounded-xs",
+                  showBlur && "blur-[12px] grayscale opacity-70"
+                )}
+                style={{ transition: "filter 0.3s ease, opacity 0.3s ease, margin-top 0.3s" }}
               />
             ) : (
               <Image
@@ -71,6 +91,8 @@ export const ProductCard = ({
                 width={100}
                 height={100}
                 sizes="(min-width: 1536px) 16vw, (min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
+                className={clsx(showBlur && "blur-[12px] grayscale opacity-70")}
+                style={{ transition: "filter 0.3s ease, opacity 0.3s ease" }}
               />
             )}
           </div>
@@ -108,3 +130,4 @@ export const ProductCard = ({
     </div>
   )
 }
+

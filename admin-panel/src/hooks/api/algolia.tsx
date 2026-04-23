@@ -9,7 +9,7 @@ export const algoliaQueryKeys = queryKeysFactory("algolia");
 export const useSyncAlgolia = () => {
   return useMutation({
     mutationFn: () =>
-      sdk.client.fetch("/admin/algolia", {
+      sdk.client.fetch("/admin/meilisearch", {
         method: "POST",
       }),
   });
@@ -18,6 +18,6 @@ export const useSyncAlgolia = () => {
 export const useAlgolia = () => {
   return useQuery<AlgoliaStatus>({
     queryKey: ["algolia"],
-    queryFn: () => sdk.client.fetch("/admin/algolia", { method: "GET" }),
+    queryFn: () => sdk.client.fetch("/admin/meilisearch", { method: "GET" }),
   });
 };

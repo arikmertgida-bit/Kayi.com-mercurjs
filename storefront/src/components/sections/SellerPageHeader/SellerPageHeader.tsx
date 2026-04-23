@@ -49,7 +49,13 @@ export const SellerPageHeader = ({
             priority
           />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-700" />
+          <Image
+            src="/images/vendor/default-store-banner.jpeg"
+            alt={seller.name}
+            fill
+            className="object-cover"
+            priority
+          />
         )}
         <div className="absolute inset-0 bg-black/20" />
       </div>
@@ -73,11 +79,14 @@ export const SellerPageHeader = ({
                 className="object-cover w-full h-full"
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-purple-400 to-indigo-500 flex items-center justify-center">
-                <span className="text-white font-bold" style={{ fontSize: AVATAR * 0.38 }}>
-                  {seller.name?.charAt(0)?.toUpperCase() || "M"}
-                </span>
-              </div>
+              <Image
+                src="/images/vendor/default-seller-avatar.png"
+                alt={profileName || seller.name}
+                width={AVATAR}
+                height={AVATAR}
+                priority
+                className="object-cover w-full h-full"
+              />
             )}
           </div>
 

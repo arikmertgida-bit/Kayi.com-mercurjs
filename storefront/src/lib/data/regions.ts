@@ -60,6 +60,7 @@ export const getRegion = async (countryCode: string) => {
     const regionMap = await getCachedRegionMap()
     return countryCode ? regionMap[countryCode] : regionMap["us"]
   } catch (e: any) {
+    console.error("[getRegion] error for countryCode:", countryCode, e)
     return null
   }
 }

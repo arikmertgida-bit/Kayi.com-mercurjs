@@ -112,8 +112,8 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   baseQuery = applyOperatorFilter(baseQuery, "product.updated_at", f.updated_at)
 
   const countQuery = baseQuery.clone().clearSelect().count("product.id as count")
-  const [{ count }] = await countQuery
-  const totalCount = parseInt(count as string, 10)
+  const countResult = await countQuery
+  const totalCount = parseInt((countResult[0]?.count ?? "0") as string, 10)
 
   const productIds: string[] = await baseQuery
     .offset(skip)

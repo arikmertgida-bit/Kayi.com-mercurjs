@@ -42,7 +42,7 @@ export const InventoryItemVariantsSection = ({
                     {variant.title}
                   </span>
                   <span className="text-ui-fg-subtle">
-                    {variant.options.map((o) => o.value).join(" ⋅ ")}
+                    {(variant.options || []).map((o) => o.value).join(" ⋅ ")}
                   </span>
                 </div>
                 <div className="size-7 flex items-center justify-center">

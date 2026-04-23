@@ -15,10 +15,10 @@ export const getSellerByHandle = async (handle: string) => {
     .fetch<{ seller: SellerProps }>(`/store/seller/${handle}`, {
       query: {
         fields:
-          "+created_at,+email,+members.name,+members.photo,+members.role,+reviews.seller.name,+reviews.rating,+reviews.customer_note,+reviews.seller_note,+reviews.created_at,+reviews.updated_at,+reviews.customer.first_name,+reviews.customer.last_name",
+          "+created_at,+email,+photo,+members.name,+members.photo,+members.role,+reviews.seller.name,+reviews.rating,+reviews.customer_note,+reviews.seller_note,+reviews.created_at,+reviews.updated_at,+reviews.customer.first_name,+reviews.customer.last_name",
       },
-      next: { revalidate: 300 },
-      cache: "force-cache",
+      next: { revalidate: 0 },
+      cache: "no-store",
     })
     .then(({ seller }) => {
       const response = {

@@ -23,7 +23,7 @@ export const SalesChannelsCell = ({
         <span className="truncate">
           {salesChannels
             .slice(0, 2)
-            .map((sc) => sc.name)
+            .map((sc) => sc?.name ?? "")
             .join(", ")}
         </span>
         <Tooltip
@@ -45,7 +45,7 @@ export const SalesChannelsCell = ({
     )
   }
 
-  const channels = salesChannels.map((sc) => sc.name).join(", ")
+  const channels = salesChannels.map((sc) => sc?.name ?? "").join(", ")
 
   return (
     <div className="flex h-full w-full items-center overflow-hidden max-w-[250px]">

@@ -103,7 +103,8 @@ export const CustomerGroupSection = ({
       description: t("customers.groups.removeMany", {
         groups: flatCustomerGroups
           ?.filter((g) => selectedIds.includes(g.id))
-          .map((g) => g.name)
+          .map((g) => g?.name ?? "")
+          .filter(Boolean)
           .join(","),
       }),
       confirmText: t("actions.remove"),
@@ -126,7 +127,7 @@ export const CustomerGroupSection = ({
             t("customers.groups.removed.success", {
               groups: flatCustomerGroups
                 ?.filter((g) => selectedIds.includes(g.id))
-                .map((g) => g.name),
+                .map((g) => g?.name ?? "").filter(Boolean),
             })
           )
         },

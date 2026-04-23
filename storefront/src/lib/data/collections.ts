@@ -56,4 +56,8 @@ export const getCollectionByHandle = async (
       cache: "force-cache",
     })
     .then(({ collections }) => collections[0])
+    .catch((err: unknown) => {
+      console.error("[getCollectionByHandle] fetch error for handle:", handle, err)
+      return undefined as any
+    })
 }

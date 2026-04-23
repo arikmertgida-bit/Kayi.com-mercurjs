@@ -65,7 +65,7 @@ export const fetchQuery = async (
     headers?: { [key: string]: string }
   }
 ) => {
-  const bearer = (await window.localStorage.getItem("medusa_auth_token")) || ""
+  const bearer = window.localStorage.getItem("medusa_auth_token") || ""
   const cleanQuery: Record<string, any> = {}
   for (const [k, v] of Object.entries(query || {})) {
     if (v === null || v === undefined || v === "") continue
@@ -85,8 +85,14 @@ export const fetchQuery = async (
   })
 
   if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.message || "Nieznany błąd serwera")
+    let message = "An unexpected error occurred"
+    try {
+      const errorData = await response.json()
+      message = errorData.message || errorData.error || message
+    } catch {
+      // Response body was not JSON (e.g. HTML error page from proxy)
+    }
+    throw new Error(message)
   }
 
   return response.json()

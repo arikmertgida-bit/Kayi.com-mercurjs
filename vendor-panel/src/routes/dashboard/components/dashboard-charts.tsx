@@ -23,7 +23,7 @@ import { ChartSkeleton } from "./chart-skeleton"
 import { useState } from "react"
 import { addDays, differenceInDays, format, subDays } from "date-fns"
 import { Calendar } from "../../../components/common/calendar/calendar"
-import { useUnreads } from "@talkjs/react"
+import { useTalkjsUnreads } from "../../../providers/talkjs-provider"
 
 const colorPicker = (line: string) => {
   switch (line) {
@@ -60,7 +60,7 @@ const generateChartData = ({
     orders: parseInt(
       orders?.find(
         (item) =>
-          format(item.date, "yyyy-MM-dd") ===
+          format(new Date(item.date), "yyyy-MM-dd") ===
           format(
             subDays(range?.from || addDays(new Date(), index), -index),
             "yyyy-MM-dd"
@@ -70,7 +70,7 @@ const generateChartData = ({
     customers: parseInt(
       customers?.find(
         (item) =>
-          format(item.date, "yyyy-MM-dd") ===
+          format(new Date(item.date), "yyyy-MM-dd") ===
           format(
             subDays(range?.from || addDays(new Date(), index), -index),
             "yyyy-MM-dd"
@@ -89,31 +89,31 @@ export const DashboardCharts = ({
 }: {
   notFulfilledOrders: number
   fulfilledOrders: number
-  reviewsToReply: any[]
+  reviewsToReply: number
 }) => {
   const [searchParams, setSearchParams] = useSearchParams()
 
   const [filters, setFilters] = useState(["customers", "orders"])
 
-  const unreadMessages = useUnreads()
+  const unreadMessages = useTalkjsUnreads()
   const { count: followersCount } = useFollowers({ limit: 1 })
 
-  const from = (searchParams.get("from") ||
-    format(addDays(new Date(), -7), "yyyy-MM-dd")) as unknown as Date
-  const to = (searchParams.get("to") ||
-    format(new Date(), "yyyy-MM-dd")) as unknown as Date
+  const fromStr = searchParams.get("from") || format(addDays(new Date(), -7), "yyyy-MM-dd")
+  const toStr = searchParams.get("to") || format(new Date(), "yyyy-MM-dd")
+  const from = new Date(fromStr)
+  const to = new Date(toStr)
 
   const updateDateRange = async (newFrom: string, newTo: string) => {
     const newSearchParams = new URLSearchParams(searchParams)
-    newSearchParams.set("from", format(newFrom, "yyyy-MM-dd"))
-    newSearchParams.set("to", format(newTo, "yyyy-MM-dd"))
+    newSearchParams.set("from", format(new Date(newFrom), "yyyy-MM-dd"))
+    newSearchParams.set("to", format(new Date(newTo), "yyyy-MM-dd"))
     await setSearchParams(newSearchParams)
     refetch()
   }
 
   const { customers, orders, isPending, refetch } = useStatistics({
-    from: `${from}`,
-    to: `${to}`,
+    from: fromStr,
+    to: toStr,
   })
 
   const chartData = generateChartData({
@@ -256,13 +256,15 @@ export const DashboardCharts = ({
           <div className="col-span-3 relative h-[150px] md:h-[300px] w-[calc(100%-2rem)]">
             {isPending ? (
               <ChartSkeleton />
+            ) : chartData.length === 0 ? (
+              <div className="flex items-center justify-center h-full text-ui-fg-muted">No data available</div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
                   <XAxis dataKey="date" />
                   <YAxis />
                   <CartesianGrid stroke="#333" vertical={false} />
-                  <Tooltip content={<CustomTooltip />} />
+                  <Tooltip content={CustomTooltip} />
                   {filters.map((item) => (
                     <Line
                       key={item}
