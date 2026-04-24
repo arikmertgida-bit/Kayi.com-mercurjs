@@ -728,6 +728,15 @@ export function getRouteMap({
               ],
             },
             {
+              path: "/reported-images",
+              errorElement: <ErrorBoundary />,
+              handle: {
+                breadcrumb: () => "Reported Images",
+              },
+              lazy: () =>
+                import("../../routes/reported-images/reported-image-list"),
+            },
+            {
               path: "/customers",
               errorElement: <ErrorBoundary />,
               handle: {

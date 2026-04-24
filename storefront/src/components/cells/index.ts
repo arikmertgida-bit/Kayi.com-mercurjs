@@ -30,6 +30,7 @@ import { OrderProductListItem } from "./OrderProductListItem/OrderProductListIte
 import { OrderTimeline } from "./OrderTimeline/OrderTimeline"
 import { WishlistItem } from "./WishlistItem/WishlistItem"
 import { ProductAdditionalAttributes } from "./ProductAdditionalAttributes/ProductAdditionalAttributes"
+import { SortFilter } from "./SortFilter/SortFilter"
 import { StickyAddToCart } from "./StickyAddToCart/StickyAddToCart"
 
 export {
@@ -66,4 +67,5 @@ export {
   WishlistItem,
   ProductAdditionalAttributes,
   StickyAddToCart,
+  SortFilter,
 }

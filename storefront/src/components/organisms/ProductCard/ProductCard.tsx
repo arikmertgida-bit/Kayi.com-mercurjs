@@ -21,7 +21,7 @@ export const ProductCard = ({
   isEager?: boolean
   sliderCard?: boolean
 }) => {
-  const { isVerified } = useAgeVerification()
+  const { isVerified, verify } = useAgeVerification()
 
   if (!api_product) {
     return null
@@ -50,8 +50,8 @@ export const ProductCard = ({
         <div className="absolute top-2 right-2 z-10">
           <WishlistButton productId={api_product.id} />
         </div>
-        {/* +18 rozeti — position:absolute, layout'u etkilemez (CLS=0) */}
-        {isAdult && (
+        {/* +18 rozeti — sadece doğrulanmış kullanıcılara gösterilir */}
+        {isAdult && isVerified && (
           <span
             className="absolute top-2 left-2 z-10 bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded pointer-events-none select-none"
             aria-hidden="true"
@@ -97,6 +97,28 @@ export const ProductCard = ({
             )}
           </div>
         </LocalizedClientLink>
+        {/* +18 inline doğrulama overlay'i — sadece yaş doğrulaması yapılmamışsa gösterilir */}
+        {showBlur && (
+          <div
+            className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 rounded-sm px-4 text-center"
+            style={{ background: "rgba(255,255,255,0.75)", backdropFilter: "blur(4px)" }}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
+          >
+            <span className="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full select-none">
+              +18
+            </span>
+            <p className="text-xs font-medium text-gray-800 leading-tight select-none">
+              Bu ürünü görebilmek için 18 yaşından büyük olduğunuzu onaylamanız gereklidir.
+            </p>
+            <button
+              type="button"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); verify() }}
+              className="bg-red-600 hover:bg-red-700 active:bg-red-800 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow-md transition-colors select-none cursor-pointer"
+            >
+              Yaşımı Onayla
+            </button>
+          </div>
+        )}
         <LocalizedClientLink
           href={`/products/${product.handle}`}
           aria-label={`See more about ${productName}`}

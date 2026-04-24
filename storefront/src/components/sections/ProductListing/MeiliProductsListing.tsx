@@ -14,6 +14,8 @@ import { PRODUCT_LIMIT } from "@/const"
 import { ProductListingSkeleton } from "@/components/organisms/ProductListingSkeleton/ProductListingSkeleton"
 import { useEffect, useState } from "react"
 import { listProducts } from "@/lib/data/products"
+import { sortProducts } from "@/lib/helpers/sort-products"
+import { SortOptions } from "@/types/product"
 import { FiltersProvider, useFiltersContext } from "@/providers/FiltersProvider"
 
 // ─── Build Meilisearch facet filter string from context state ─────────────────
@@ -59,12 +61,14 @@ export const MeiliProductsListing = ({
   seller_handle,
   locale = process.env.NEXT_PUBLIC_DEFAULT_REGION,
   currency_code,
+  sidebarContent,
 }: {
   category_id?: string | string[]
   collection_id?: string
   locale?: string
   seller_handle?: string
   currency_code: string
+  sidebarContent?: React.ReactNode
 }) => {
   const searchParams = useSearchParams()
 
@@ -79,6 +83,7 @@ export const MeiliProductsListing = ({
           collection_id={collection_id}
           locale={locale}
           currency_code={currency_code}
+          sidebarContent={sidebarContent}
         />
       </InstantSearchNext>
     </FiltersProvider>
@@ -93,12 +98,14 @@ const FilteredProductsContent = ({
   collection_id,
   locale,
   currency_code,
+  sidebarContent,
 }: {
   seller_handle?: string
   category_id?: string | string[]
   collection_id?: string
   locale?: string
   currency_code: string
+  sidebarContent?: React.ReactNode
 }) => {
   const { filterMap, paramMap } = useFiltersContext()
 
@@ -115,10 +122,14 @@ const FilteredProductsContent = ({
     .join(" AND ")
   const priceFilterStr = priceFilter ? ` AND ${priceFilter}` : ""
 
-  const categoryFilter = category_id
-    ? Array.isArray(category_id)
-      ? `(${category_id.map((id) => `categories.id = "${id}"`).join(" OR ")})`
-      : `categories.id = "${category_id}"`
+  // Support dynamic category filtering from sidebar (e.g. SellerSidebar)
+  const activeCategoryId = paramMap["category_id"] || null
+  const resolvedCategoryId = category_id || activeCategoryId || null
+
+  const categoryFilter = resolvedCategoryId
+    ? Array.isArray(resolvedCategoryId)
+      ? `(${resolvedCategoryId.map((id) => `categories.id = "${id}"`).join(" OR ")})`
+      : `categories.id = "${resolvedCategoryId}"`
     : null
 
   const collectionFilter =
@@ -133,7 +144,7 @@ const FilteredProductsContent = ({
   return (
     <>
       <Configure query={query} filters={filters} />
-      <ProductsListing locale={locale} currency_code={currency_code} />
+      <ProductsListing locale={locale} currency_code={currency_code} sidebarContent={sidebarContent} />
     </>
   )
 }
@@ -143,9 +154,11 @@ const FilteredProductsContent = ({
 const ProductsListing = ({
   locale,
   currency_code,
+  sidebarContent,
 }: {
   locale?: string
   currency_code: string
+  sidebarContent?: React.ReactNode
 }) => {
   const { paramMap } = useFiltersContext()
   const [apiProducts, setApiProducts] = useState<HttpTypes.StoreProduct[] | null>(null)
@@ -177,9 +190,15 @@ const ProductsListing = ({
 
   if (results === undefined) return <ProductListingSkeleton />
 
-  const page      = +(paramMap["page"] || 1)
-  const pagedItems = items.slice((page - 1) * PRODUCT_LIMIT, page * PRODUCT_LIMIT)
+  const sortBy = (paramMap["sortBy"] || "created_at") as SortOptions
+  const sortedApiProducts = apiProducts ? sortProducts([...apiProducts], sortBy) : null
+
   const count      = items.length || 0
+  const page       = +(paramMap["page"] || 1)
+  const pagedItems = items.slice((page - 1) * PRODUCT_LIMIT, page * PRODUCT_LIMIT)
+  const pagedApiProducts = sortedApiProducts
+    ? sortedApiProducts.slice((page - 1) * PRODUCT_LIMIT, page * PRODUCT_LIMIT)
+    : null
   const pages      = Math.ceil(count / PRODUCT_LIMIT) || 1
 
   return (
@@ -188,8 +207,8 @@ const ProductsListing = ({
         <div className="my-4 label-md">{`${count} listings`}</div>
       </div>
       <div className="md:flex gap-4">
-        <div className="w-[280px] flex-shrink-0 hidden md:block">
-          <MeiliProductSidebar />
+        <div className="w-[280px] flex-shrink-0 hidden md:block" style={{ backgroundColor: 'rgb(240, 225, 243)', borderRadius: '8px', padding: '8px' }}>
+          {sidebarContent ?? <MeiliProductSidebar />}
         </div>
         <div className="w-full">
           {!items.length ? (
@@ -199,7 +218,7 @@ const ProductsListing = ({
                 Sorry, we can&apos;t find any results for your criteria
               </p>
             </div>
-          ) : apiProducts === null ? (
+          ) : pagedApiProducts === null ? (
             <div className="flex flex-wrap gap-4">
               {pagedItems.map((_, i) => (
                 <div key={i} className="w-full lg:w-[calc(25%-1rem)] min-w-[250px] rounded-sm border overflow-hidden">
@@ -214,15 +233,15 @@ const ProductsListing = ({
           ) : (
             <div className="w-full">
               <ul className="flex flex-wrap gap-4">
-                {pagedItems.map((hit, i) => {
-                  const apiProduct = apiProducts.find(
-                    (p: any) => p.id === hit.objectID || p.handle === hit.handle
+                {pagedApiProducts.map((apiProduct: any, i: number) => {
+                  const hit = items.find(
+                    (h: any) => h.objectID === apiProduct.id || h.handle === apiProduct.handle
                   )
-                  if (!apiProduct) return null
+                  if (!hit) return null
                   return (
                     <ProductCard
                       api_product={apiProduct}
-                      key={String(hit.objectID || hit.handle)}
+                      key={String(apiProduct.id || apiProduct.handle)}
                       product={hit}
                       isEager={i < 4}
                     />

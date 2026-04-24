@@ -49,5 +49,14 @@ export function sortProducts(
     });
   }
 
+  if (sortBy === 'created_at_asc') {
+    sortedProducts.sort((a, b) => {
+      return (
+        new Date(a.created_at!).getTime() -
+        new Date(b.created_at!).getTime()
+      );
+    });
+  }
+
   return sortedProducts;
 }

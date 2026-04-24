@@ -45,6 +45,7 @@ export default async function autoApproveSellerRequestHandler({
       reviewer_id: "system",
       reviewer_note: "Automatically approved",
       status: "accepted",
+      data: {},
     },
     throwOnError: true,
   });

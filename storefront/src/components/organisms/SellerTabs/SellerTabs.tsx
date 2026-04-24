@@ -4,6 +4,7 @@ import { MeiliProductsListing, ProductListing } from "@/components/sections"
 import { SellerProps } from "@/types/seller"
 import { SellerTabsSwitcher } from "./SellerTabsSwitcher"
 import { SellerScore, SellerReviewList } from "@/components/molecules"
+import { SellerSidebar } from "../SellerSidebar/SellerSidebar"
 
 const MEILISEARCH_HOST = process.env.NEXT_PUBLIC_MEILISEARCH_HOST
 const MEILISEARCH_SEARCH_KEY = process.env.NEXT_PUBLIC_MEILISEARCH_SEARCH_KEY
@@ -42,6 +43,13 @@ export const SellerTabs = ({
           locale={locale}
           seller_handle={seller_handle}
           currency_code={currency_code}
+          sidebarContent={
+            <SellerSidebar
+              seller={seller}
+              categories={categories}
+              productCount={productCount}
+            />
+          }
         />
       )}
     </Suspense>

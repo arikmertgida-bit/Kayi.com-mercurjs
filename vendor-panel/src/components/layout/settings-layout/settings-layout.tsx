@@ -85,8 +85,8 @@ const SettingsSidebar = () => {
   const { t } = useTranslation()
 
   return (
-    <aside className="relative flex flex-1 flex-col justify-between overflow-y-auto">
-      <div className="bg-ui-bg-subtle sticky top-0">
+    <aside className="relative flex flex-1 flex-col justify-between overflow-y-auto bg-transparent text-[#6c1b47]">
+      <div className="sticky top-0 bg-white/55 backdrop-blur">
         <Header />
         <div className="flex items-center justify-center px-3">
           <Divider variant="dashed" />
@@ -125,7 +125,7 @@ const SettingsSidebar = () => {
             </Fragment>
           )}
         </div>
-        <div className="bg-ui-bg-subtle sticky bottom-0">
+        <div className="sticky bottom-0 bg-white/55 backdrop-blur">
           <UserSection />
         </div>
       </div>
@@ -146,13 +146,13 @@ const Header = () => {
   }, [location])
 
   return (
-    <div className="bg-ui-bg-subtle p-3">
+    <div className="bg-white/55 p-3 backdrop-blur">
       <Link
         to={from}
         replace
         className={clx(
-          "bg-ui-bg-subtle transition-fg flex items-center rounded-md outline-none",
-          "hover:bg-ui-bg-subtle-hover",
+          "flex items-center rounded-xl bg-white/75 outline-none transition-fg",
+          "hover:bg-white",
           "focus-visible:shadow-borders-focus"
         )}
       >

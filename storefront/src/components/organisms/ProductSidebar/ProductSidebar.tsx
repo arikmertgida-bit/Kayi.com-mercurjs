@@ -3,8 +3,8 @@ import { Button } from "@/components/atoms"
 import {
   ColorFilter,
   ConditionFilter,
-  PriceFilter,
   SizeFilter,
+  SortFilter,
 } from "@/components/cells"
 import { CloseIcon } from "@/icons"
 import { cn } from "@/lib/utils"
@@ -18,10 +18,10 @@ export const ProductSidebar = () => {
   const { clearAllFilters } = useFilters("")
 
   return (
-    <aside className="w-full relative">
+    <aside className="relative w-full">
       <div
         className={cn(
-          "md:relative w-full h-full bg-primary top-0 left-0 transition-opacity duration-100",
+          "top-0 left-0 h-full w-full rounded-[28px] border border-white/70 bg-[linear-gradient(180deg,_rgba(255,247,251,0.96),_rgba(255,240,232,0.98))] p-3 shadow-[0_18px_44px_rgba(221,42,123,0.10)] transition-opacity duration-100 md:relative",
           filterModal
             ? "opacity-1 z-20"
             : "opacity-0 -z-10 md:opacity-100 md:z-10"
@@ -29,8 +29,8 @@ export const ProductSidebar = () => {
       >
         {filterModal && (
           <div className="md:hidden">
-            <div className="p-4 border-y flex items-center justify-between mb-4">
-              <h3 className="uppercase heading-md">Filters</h3>
+            <div className="mb-4 flex items-center justify-between border-y border-[#f1cada] p-4">
+              <h3 className="heading-md uppercase text-[#8a1d54]">Filters</h3>
               <div
                 onClick={() => setFilterModal(false)}
                 className="cursor-pointer"
@@ -44,22 +44,22 @@ export const ProductSidebar = () => {
           </div>
         )}
 
-        <div className="px-2 md:px-0 overflow-y-scroll md:overflow-y-auto h-[calc(100vh-200px)] md:h-full no-scrollbar">
-          <PriceFilter />
+        <div className="no-scrollbar h-[calc(100vh-200px)] overflow-y-scroll px-2 md:h-full md:overflow-y-auto md:px-0">
+          <SortFilter />
           <SizeFilter />
           <ColorFilter />
           <ConditionFilter />
         </div>
-        <div className="bg-primary md:hidden absolute bottom-0 left-0 w-full px-4 flex items-center py-4 border-y gap-2">
+        <div className="absolute bottom-0 left-0 flex w-full items-center gap-2 border-y border-[#f1cada] bg-[linear-gradient(90deg,_#f58529,_#dd2a7b,_#8134af)] px-4 py-4 md:hidden">
           <Button
-            className="w-1/2 uppercase label-sm"
+            className="label-sm w-1/2 rounded-full bg-white/20 uppercase text-white backdrop-blur hover:bg-white/25"
             variant="tonal"
             onClick={() => clearAllFilters()}
           >
             Clear all
           </Button>
           <Button
-            className="w-1/2 uppercase label-sm"
+            className="label-sm w-1/2 rounded-full border border-white/30 bg-white text-[#c13584] uppercase hover:bg-white/90"
             onClick={() => setFilterModal(false)}
           >
             View 222 listings

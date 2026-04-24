@@ -23,7 +23,6 @@ export const SellerPageHeader = ({
   const profileName = ownerMember?.name ?? null
 
   const AVATAR = 96
-  const HALF = AVATAR / 2
 
   const filteredReviews = seller.reviews?.filter((r) => r !== null) ?? []
   const reviewCount = filteredReviews.length
@@ -37,37 +36,25 @@ export const SellerPageHeader = ({
   return (
     <div className="w-full overflow-x-hidden">
       <div
-        className="relative w-full rounded-t-[10px] overflow-hidden"
-        style={{ height: 400 }}
+        className="relative w-full overflow-hidden h-28 sm:h-40 md:h-52 lg:h-64 xl:h-[400px] rounded-[8px]"
       >
-        {seller.photo ? (
-          <Image
-            src={decodeURIComponent(seller.photo)}
-            alt={seller.name}
-            fill
-            className="object-cover"
-            priority
-          />
-        ) : (
-          <Image
-            src="/images/vendor/default-store-banner.jpeg"
-            alt={seller.name}
-            fill
-            className="object-cover"
-            priority
-          />
-        )}
+        <Image
+          src={seller.photo ? decodeURIComponent(seller.photo) : "/images/vendor/default-store-banner.jpeg"}
+          alt={seller.name}
+          fill
+          className="object-cover"
+          priority
+          unoptimized
+        />
         <div className="absolute inset-0 bg-black/20" />
       </div>
 
       <div
-        className="relative flex items-start px-4 md:px-8"
-        style={{ marginTop: -HALF }}
+        className="relative flex items-start px-4 md:px-8 -mt-10 md:-mt-12"
       >
         <div className="flex items-start">
           <div
-            className="flex-shrink-0 rounded-full border-4 border-white shadow-xl overflow-hidden bg-white z-10"
-            style={{ width: AVATAR, height: AVATAR }}
+            className="flex-shrink-0 rounded-full border-4 border-white shadow-xl overflow-hidden bg-white z-10 w-20 h-20 md:w-24 md:h-24"
           >
             {profilePhoto ? (
               <Image
@@ -90,9 +77,9 @@ export const SellerPageHeader = ({
             )}
           </div>
 
-          <div style={{ width: 10 }} />
+          <div className="w-2.5" />
 
-          <div style={{ marginTop: HALF + 5 }}>
+          <div className="mt-[45px] md:mt-[53px]">
             <span className="text-sm md:text-base font-semibold text-gray-800 leading-tight">
               {profileName || seller.name}
             </span>
@@ -100,8 +87,7 @@ export const SellerPageHeader = ({
         </div>
 
         <div
-          className="hidden min-[900px]:block absolute left-1/2 -translate-x-1/2 text-center"
-          style={{ marginTop: HALF + 5 }}
+          className="hidden min-[900px]:block absolute left-1/2 -translate-x-1/2 text-center mt-[45px] md:mt-[53px]"
         >
           <div className="flex items-center gap-2 justify-center">
             <h1 className="text-xl md:text-3xl font-black uppercase text-gray-900 leading-tight whitespace-nowrap">
@@ -133,8 +119,7 @@ export const SellerPageHeader = ({
         </div>
 
         <div
-          className="hidden min-[900px]:block flex-shrink-0 ml-auto"
-          style={{ marginTop: HALF + 5 }}
+          className="hidden min-[900px]:block flex-shrink-0 ml-auto mt-[45px] md:mt-[53px]"
         >
           <FollowButton
             handle={seller.handle}

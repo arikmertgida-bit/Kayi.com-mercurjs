@@ -47,9 +47,14 @@ export const addWishlistItem = async ({
         reference_id,
       }),
     }
-  ).then(() => {
-    revalidatePath("/user/wishlist")
-  })
+  )
+
+  if (!response.ok) {
+    const error = await response.text()
+    throw new Error(`Failed to add wishlist item: ${response.status} ${error}`)
+  }
+
+  revalidatePath("/user/wishlist")
 }
 
 export const removeWishlistItem = async ({
@@ -66,13 +71,20 @@ export const removeWishlistItem = async ({
       .NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY as string,
   }
 
+  // b2c-core v1.5.3: DELETE /store/wishlist/product/{product_id}
+  // (wishlist_id is resolved server-side from the authenticated customer)
   const response = await fetch(
-    `${process.env.MEDUSA_BACKEND_URL}/store/wishlist/${wishlist_id}/product/${product_id}`,
+    `${process.env.MEDUSA_BACKEND_URL}/store/wishlist/product/${product_id}`,
     {
       headers,
       method: "DELETE",
     }
-  ).then(() => {
-    revalidatePath("/user/wishlist")
-  })
+  )
+
+  if (!response.ok) {
+    const error = await response.text()
+    throw new Error(`Failed to remove wishlist item: ${response.status} ${error}`)
+  }
+
+  revalidatePath("/user/wishlist")
 }

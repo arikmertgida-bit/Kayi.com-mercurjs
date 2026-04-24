@@ -4,10 +4,31 @@ import Image from "next/image"
 import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { HttpTypes } from "@medusajs/types"
+import { toast } from "@medusajs/ui"
 import { uploadCustomerFile, updateCustomerPhoto } from "@/lib/data/customer"
 
 const AVATAR = 96
 const HALF = AVATAR / 2
+
+const ALLOWED_FORMATS = ["image/jpeg", "image/jpg", "image/png"]
+const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
+const UPLOAD_HINTS: Record<"avatar" | "cover", string> = {
+  avatar: "1:1 oran önerilir (kare) • Maks. 2MB • JPG, JPEG, PNG",
+  cover: "İdeal boyut: 1920×400 px • Maks. 2MB • JPG, JPEG, PNG",
+}
+
+function validateFile(
+  file: File,
+  type: "avatar" | "cover"
+): { valid: true } | { valid: false; error: string } {
+  if (!ALLOWED_FORMATS.includes(file.type)) {
+    return { valid: false, error: "Sadece JPG, JPEG ve PNG formatları desteklenir." }
+  }
+  if (file.size > MAX_FILE_SIZE) {
+    return { valid: false, error: "Dosya boyutu 2MB'ı geçemez." }
+  }
+  return { valid: true }
+}
 
 export const CustomerProfileHeader = ({
   user,
@@ -29,26 +50,32 @@ export const CustomerProfileHeader = ({
   const coverRef = useRef<HTMLInputElement>(null)
 
   const handleUpload = async (file: File, type: "avatar" | "cover") => {
-    // Optimistic local preview — hemen göster
-    const localPreview = URL.createObjectURL(file)
-    if (type === "avatar") setAvatarUrl(localPreview)
-    else setCoverUrl(localPreview)
+    const validation = validateFile(file, type)
+    if (!validation.valid) {
+      toast.error(validation.error)
+      return
+    }
+
+    toast.info(UPLOAD_HINTS[type])
 
     setIsUploading(true)
     try {
       const formData = new FormData()
       formData.append("files", file)
       const url = await uploadCustomerFile(formData)
-      if (!url) return
+      if (!url) throw new Error("Dosya yüklenemedi. Lütfen tekrar deneyin.")
       await updateCustomerPhoto(type, url)
-      if (type === "avatar") setAvatarUrl(url)
-      else setCoverUrl(url)
-      // Sunucu verisini arka planda güncelle, UI bloklanmaz
+      // Cache busting: sayfayı yenileyince tarayıcı eski görseli göstermesin
+      const finalUrl = `${url}?t=${Date.now()}`
+      if (type === "avatar") setAvatarUrl(finalUrl)
+      else setCoverUrl(finalUrl)
+      toast.success("Fotoğraf başarıyla güncellendi.")
       router.refresh()
-    } catch {
-      // Hata durumunda önceki URL'ye geri dön
-      if (type === "avatar") setAvatarUrl(meta.avatar_url || "/images/customer-default-avatar.jpg")
-      else setCoverUrl(meta.cover_url || "/images/customer-default-banner.jpeg")
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Yükleme başarısız. Lütfen tekrar deneyin."
+      toast.error(message)
+      // State değişmez — mevcut görsel korunur
     } finally {
       setIsUploading(false)
     }
@@ -61,9 +88,9 @@ export const CustomerProfileHeader = ({
     <div className="w-full overflow-x-hidden">
       {/* Banner — tamamı tıklanabilir, responsive yükseklik */}
       <div
-        className="relative w-full overflow-hidden cursor-pointer h-28 sm:h-40 md:h-52 lg:h-64 xl:h-[400px]"
+        className="relative w-full overflow-hidden cursor-pointer h-28 sm:h-40 md:h-52 lg:h-64 xl:h-[400px] rounded-[8px]"
         onClick={() => !isUploading && coverRef.current?.click()}
-        title="Kapak fotoğrafını değiştir"
+        title={UPLOAD_HINTS.cover}
       >
         <Image
           src={coverUrl}
@@ -100,7 +127,7 @@ export const CustomerProfileHeader = ({
       <input
         ref={coverRef}
         type="file"
-        accept="image/*"
+        accept=".jpg,.jpeg,.png"
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0]
@@ -137,7 +164,7 @@ export const CustomerProfileHeader = ({
             disabled={isUploading}
             onClick={() => avatarRef.current?.click()}
             className="absolute bottom-0 right-0 bg-black/50 hover:bg-black/70 disabled:opacity-50 text-white rounded-full p-1.5 border-2 border-white transition-colors z-20"
-            title="Profil fotoğrafını değiştir"
+            title={UPLOAD_HINTS.avatar}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -157,7 +184,7 @@ export const CustomerProfileHeader = ({
           <input
             ref={avatarRef}
             type="file"
-            accept="image/*"
+            accept=".jpg,.jpeg,.png"
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0]

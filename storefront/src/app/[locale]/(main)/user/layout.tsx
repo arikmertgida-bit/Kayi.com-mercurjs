@@ -1,5 +1,6 @@
 import { retrieveCustomer } from "@/lib/data/customer"
 import { CustomerProfileHeader } from "@/components/sections"
+import { UserNavigation } from "@/components/molecules"
 
 export default async function UserLayout({
   children,
@@ -11,6 +12,7 @@ export default async function UserLayout({
   return (
     <div>
       {user && <CustomerProfileHeader user={user} />}
+      {user && <UserNavigation />}
       <div className="mt-4">{children}</div>
     </div>
   )

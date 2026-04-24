@@ -38,5 +38,6 @@ export type FollowedSeller = {
   name: string
   handle: string
   photo: string
+  member_photo?: string
   followed_at: string
 }

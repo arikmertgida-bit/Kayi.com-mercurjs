@@ -37,7 +37,7 @@ export const Shell = ({ children }: PropsWithChildren) => {
             Your store is <b>suspended</b>. Please contact support.
           </div>
         )}
-        <div className="relative flex flex-1 h-full items-start overflow-hidden lg:flex-row">
+        <div className="relative flex h-full flex-1 items-start overflow-hidden bg-[linear-gradient(180deg,_#fff8fb_0%,_#fff5ef_100%)] lg:flex-row">
           <NavigationBar loading={loading} />
           <div className="h-full">
             <MobileSidebarContainer>{children}</MobileSidebarContainer>
@@ -200,7 +200,7 @@ const ToggleSidebar = () => {
 
 const Topbar = () => {
   return (
-    <div className="grid w-full grid-cols-2 border-b p-3">
+    <div className="grid w-full grid-cols-2 border-b border-[#f2d3df] bg-white/75 p-3 backdrop-blur">
       <div className="flex items-center gap-x-1.5">
         <ToggleSidebar />
         <Breadcrumbs />
@@ -218,7 +218,7 @@ const DesktopSidebarContainer = ({ children }: PropsWithChildren) => {
 
   return (
     <div
-      className={clx("hidden h-full w-[220px] border-r", {
+      className={clx("hidden h-full w-[220px] border-r border-[#f2d3df] bg-[linear-gradient(180deg,_#fff8fb_0%,_#fff0e8_100%)] shadow-[12px_0_36px_rgba(221,42,123,0.08)]", {
         "lg:flex": desktop,
       })}
     >
@@ -242,7 +242,7 @@ const MobileSidebarContainer = ({ children }: PropsWithChildren) => {
         />
         <RadixDialog.Content
           className={clx(
-            "bg-ui-bg-subtle shadow-elevation-modal fixed inset-y-2 left-2 flex w-full max-w-[304px] flex-col overflow-hidden rounded-lg border-r",
+            "fixed inset-y-2 left-2 flex w-full max-w-[304px] flex-col overflow-hidden rounded-[24px] border border-[#f2d3df] bg-[linear-gradient(180deg,_#fff8fb_0%,_#fff0e8_100%)] shadow-[0_20px_50px_rgba(221,42,123,0.18)]",
             "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-out-to-left-1/2 data-[state=open]:slide-in-from-left-1/2 duration-200"
           )}
         >

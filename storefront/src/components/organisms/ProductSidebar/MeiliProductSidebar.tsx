@@ -5,12 +5,17 @@ import { Accordion, FilterCheckboxOption, Modal } from "@/components/molecules"
 import useFilters from "@/hooks/useFilters"
 import useUpdateSearchParams from "@/hooks/useUpdateSearchParams"
 import { cn } from "@/lib/utils"
-import { useSearchParams } from "next/navigation"
+import { usePathname, useSearchParams } from "next/navigation"
+import Link from "next/link"
 import React, { useContext, useEffect, useState } from "react"
 import { useRefinementList } from "react-instantsearch"
 import { ProductListingActiveFilters } from "../ProductListingActiveFilters/ProductListingActiveFilters"
 import useGetAllSearchParams from "@/hooks/useGetAllSearchParams"
 import { FiltersContext } from "@/providers/FiltersProvider"
+import { listMegaMenuCategories } from "@/lib/data/categories"
+import { HttpTypes } from "@medusajs/types"
+import { CollapseIcon } from "@/icons"
+import { SortFilter } from "@/components/cells"
 
 const filters = [
   { label: "5", amount: 40 },
@@ -36,18 +41,18 @@ export const MeiliProductSidebar = () => {
 
   return isMobile ? (
     <>
-      <Button onClick={() => setIsOpen(true)} className="w-full uppercase mb-4">
+      <Button
+        onClick={() => setIsOpen(true)}
+        className="mb-4 w-full rounded-full border-0 bg-gradient-to-r from-[#f58529] via-[#dd2a7b] to-[#8134af] uppercase text-white shadow-[0_14px_28px_rgba(221,42,123,0.24)]"
+      >
         Filters
       </Button>
       {isOpen && (
         <Modal heading="Filters" onClose={() => setIsOpen(false)}>
           <div className="px-4">
             <ProductListingActiveFilters />
-            <PriceFilter
-              defaultOpen={Boolean(
-                allSearchParams.min_price || allSearchParams.max_price
-              )}
-            />
+            <CategoryFilter />
+            <SortFilter />
             <SizeFilter defaultOpen={Boolean(allSearchParams.size)} />
             <ColorFilter defaultOpen={Boolean(allSearchParams.color)} />
             <ConditionFilter defaultOpen={Boolean(allSearchParams.condition)} />
@@ -56,13 +61,97 @@ export const MeiliProductSidebar = () => {
       )}
     </>
   ) : (
-    <div>
-      <PriceFilter />
+    <div className="rounded-[28px] border border-white/70 bg-[linear-gradient(180deg,_rgba(255,247,251,0.96),_rgba(255,240,232,0.98))] p-3 shadow-[0_18px_44px_rgba(221,42,123,0.10)]">
+      <CategoryFilter />
+      <SortFilter />
       <SizeFilter />
       <ColorFilter />
       <ConditionFilter />
       {/* <RatingFilter /> */}
     </div>
+  )
+}
+
+function CategoryAccordion({ category }: { category: HttpTypes.StoreProductCategory }) {
+  const [isOpen, setIsOpen] = useState(false)
+  const children = (category.category_children ?? []) as HttpTypes.StoreProductCategory[]
+  const hasChildren = children.length > 0
+
+  return (
+    <div className="border-b border-gray-100 last:border-0">
+      <div className="flex items-center justify-between py-2">
+        <Link
+          href={`/categories/${category.handle}`}
+          className="text-sm text-primary hover:underline flex-1"
+        >
+          {category.name}
+        </Link>
+        {hasChildren && (
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="p-1 ml-1 cursor-pointer"
+            aria-expanded={isOpen}
+          >
+            <CollapseIcon
+              size={16}
+              className={cn(
+                "transition-all duration-300",
+                isOpen ? "rotate-0" : "-rotate-90"
+              )}
+            />
+          </button>
+        )}
+      </div>
+      {hasChildren && (
+        <div
+          className={cn(
+            "overflow-hidden transition-all duration-300",
+            isOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
+          )}
+        >
+          <ul className="pl-3 pb-2">
+            {children.map((child) => (
+              <li key={child.id} className="py-1">
+                <Link
+                  href={`/categories/${child.handle}`}
+                  className="text-sm text-secondary hover:text-primary hover:underline"
+                >
+                  {child.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function CategoryFilter() {
+  const pathname = usePathname()
+  const [categories, setCategories] = useState<HttpTypes.StoreProductCategory[]>([])
+
+  const isOnCategoriesPage = pathname?.includes("/categories")
+
+  useEffect(() => {
+    if (!isOnCategoriesPage) return
+    listMegaMenuCategories().then((cats) => {
+      setCategories(cats)
+    }).catch(() => {})
+  }, [isOnCategoriesPage])
+
+  if (!isOnCategoriesPage) return null
+
+  return (
+    <Accordion heading="Tüm Kategoriler" defaultOpen={true}>
+      <ul className="px-2 min-h-[24px]">
+        {categories.map((cat) => (
+          <li key={cat.id}>
+            <CategoryAccordion category={cat} />
+          </li>
+        ))}
+      </ul>
+    </Accordion>
   )
 }
 

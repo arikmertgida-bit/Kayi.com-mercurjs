@@ -19,10 +19,19 @@ export const WishlistItem = ({
 }) => {
   const router = useRouter()
 
-  const price = convertToLocale({
-    amount: product.calculated_amount,
-    currency_code: product.currency_code,
-  })
+  // calculated_amount may come from variants[0].calculated_price or directly
+  const calculatedAmount =
+    product.calculated_amount ??
+    (product as any).variants?.[0]?.calculated_price?.calculated_amount
+  const currencyCode =
+    product.currency_code ??
+    (product as any).variants?.[0]?.calculated_price?.currency_code ??
+    (product as any).variants?.[0]?.prices?.[0]?.currency_code
+
+  const price =
+    calculatedAmount != null && currencyCode
+      ? convertToLocale({ amount: calculatedAmount, currency_code: currencyCode })
+      : null
 
   return (
     <div

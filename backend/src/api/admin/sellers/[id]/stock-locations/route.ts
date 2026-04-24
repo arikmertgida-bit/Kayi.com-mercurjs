@@ -25,7 +25,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   }
 
   const stockLocationService = req.scope.resolve(Modules.STOCK_LOCATION);
-  const { data: stockLocations } = await stockLocationService.listStockLocations(
+  const stockLocations = await stockLocationService.listStockLocations(
     { id: locationIds },
     { take: 9999 }
   );

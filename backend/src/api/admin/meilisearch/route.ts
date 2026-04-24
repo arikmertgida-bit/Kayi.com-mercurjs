@@ -1,10 +1,11 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { MedusaContainer } from "@medusajs/framework"
 import { MEILISEARCH_MODULE } from "../../../modules/meilisearch"
+import MeilisearchModuleService from "../../../modules/meilisearch/service"
 import { syncProductsWorkflow } from "../../../workflows/sync-products"
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
-  const meilisearchService = req.scope.resolve(MEILISEARCH_MODULE)
+  const meilisearchService = req.scope.resolve<MeilisearchModuleService>(MEILISEARCH_MODULE)
 
   let productIndexExists = false
   try {

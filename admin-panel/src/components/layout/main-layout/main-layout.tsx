@@ -8,6 +8,7 @@ import {
   CogSixTooth,
   CurrencyDollar,
   EllipsisHorizontal,
+  ExclamationCircle,
   MagnifyingGlass,
   MinusMini,
   OpenRectArrowOut,
@@ -45,9 +46,9 @@ export const MainLayout = () => {
 
 const MainSidebar = () => {
   return (
-    <aside className="flex flex-1 flex-col justify-between overflow-y-auto">
+    <aside className="flex flex-1 flex-col justify-between overflow-y-auto bg-transparent text-[#6c1b47]">
       <div className="flex flex-1 flex-col">
-        <div className="bg-ui-bg-subtle sticky top-0">
+        <div className="sticky top-0 bg-white/55 backdrop-blur">
           <Header />
           <div className="px-3">
             <Divider variant="dashed" />
@@ -60,7 +61,7 @@ const MainSidebar = () => {
           </div>
           <UtilitySection />
         </div>
-        <div className="bg-ui-bg-subtle sticky bottom-0">
+        <div className="sticky bottom-0 bg-white/55 backdrop-blur">
           <UserSection />
         </div>
       </div>
@@ -311,6 +312,11 @@ const useCoreRoutes = (): Omit<INavItem, "pathname">[] => {
       icon: <ChatBubble />,
       label: t("messages.domain"),
       to: "/messages",
+    },
+    {
+      icon: <ExclamationCircle />,
+      label: "Reported Images",
+      to: "/reported-images",
     },
   ];
 };

@@ -25,6 +25,7 @@ import { ReviewsToWrite } from "./Reviews/ReviewsToWrite"
 import { ReviewsWritten } from "./Reviews/ReviewsWritten"
 import { CartEmpty } from "./CartEmpty/CartEmpty"
 import { ProductLightbox } from "./ProductLightbox/ProductLightbox"
+import { ProductReviews } from "./ProductReviews/ProductReviews"
 
 export {
   ProductCard,
@@ -54,4 +55,5 @@ export {
   ReviewsWritten,
   CartEmpty,
   ProductLightbox,
+  ProductReviews,
 }

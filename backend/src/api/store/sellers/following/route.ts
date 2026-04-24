@@ -19,13 +19,19 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 
   const rows = await knex("seller_follower")
     .join("seller", "seller.id", "seller_follower.seller_id")
+    .leftJoin("member", function () {
+      this.on("member.seller_id", "=", "seller.id")
+        .andOnIn("member.role", ["owner", "admin"])
+        .andOnNull("member.deleted_at")
+    })
     .where({ "seller_follower.customer_id": customerId, "seller.deleted_at": null })
     .select(
       "seller.id",
       "seller.name",
       "seller.handle",
       "seller.photo",
-      "seller_follower.created_at as followed_at"
+      "seller_follower.created_at as followed_at",
+      "member.photo as member_photo"
     )
     .orderBy("seller_follower.created_at", "desc")
     .limit(limit)

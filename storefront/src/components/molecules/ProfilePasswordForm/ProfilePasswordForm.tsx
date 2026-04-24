@@ -118,12 +118,14 @@ const Form = ({
         label="Current password"
         type="password"
         error={errors.currentPassword as FieldError}
+        autoComplete="current-password"
         {...register("currentPassword")}
       />
       <LabeledInput
         label="New password"
         type="password"
         error={errors.newPassword as FieldError}
+        autoComplete="new-password"
         {...register("newPassword")}
       />
       <PasswordValidator
@@ -134,6 +136,7 @@ const Form = ({
         label="Confirm new password"
         type="password"
         error={confirmPasswordError as FieldError}
+        autoComplete="new-password"
         {...register("confirmPassword")}
       />
       <Button className="w-full my-4">Change password</Button>

@@ -32,8 +32,9 @@ export default async function SellerPage({
   const tab = "products"
 
   return (
-    <main className="container">
+    <>
       <SellerPageHeader seller={seller} user={user} followStatus={followStatus} />
+      <main className="container">
       <SellerTabs
         tab={tab}
         seller_id={seller.id}
@@ -44,6 +45,7 @@ export default async function SellerPage({
         categories={categories}
         productCount={productCount}
       />
-    </main>
+      </main>
+    </>
   )
 }

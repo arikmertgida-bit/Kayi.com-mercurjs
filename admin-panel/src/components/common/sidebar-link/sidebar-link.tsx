@@ -21,18 +21,14 @@ export const SidebarLink = ({
   return (
     <Link to={to} className="group outline-none">
       <div className="flex flex-col gap-2 px-2 pb-2">
-        <div className="shadow-elevation-card-rest bg-ui-bg-component transition-fg hover:bg-ui-bg-component-hover active:bg-ui-bg-component-pressed group-focus-visible:shadow-borders-interactive-with-active rounded-md px-4 py-2">
+        <div className="rounded-[18px] border border-white/80 bg-[linear-gradient(180deg,_rgba(255,248,251,0.96),_rgba(255,241,232,0.98))] px-4 py-3 shadow-[0_12px_24px_rgba(221,42,123,0.10)] transition-fg group-focus-visible:shadow-borders-interactive-with-active hover:bg-[linear-gradient(180deg,_rgba(255,243,248,1),_rgba(255,236,227,1))]">
           <div className="flex items-center gap-4">
             <IconAvatar>{icon}</IconAvatar>
             <div className="flex flex-1 flex-col">
               <Text size="small" leading="compact" weight="plus">
                 {labelKey}
               </Text>
-              <Text
-                size="small"
-                leading="compact"
-                className="text-ui-fg-subtle"
-              >
+              <Text size="small" leading="compact" className="text-[#8a1d54]/70">
                 {descriptionKey}
               </Text>
             </div>

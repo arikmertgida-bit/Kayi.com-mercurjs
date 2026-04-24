@@ -7,12 +7,11 @@ import { Breadcrumbs } from "@/components/atoms"
 import { MeiliProductsListing, ProductListing } from "@/components/sections"
 import { notFound } from "next/navigation"
 import isBot from "@/lib/helpers/isBot"
-import { cookies, headers } from "next/headers"
+import { headers } from "next/headers"
 import Script from "next/script"
 import { getRegion, listRegions } from "@/lib/data/regions"
 import { listProducts } from "@/lib/data/products"
 import { toHreflang } from "@/lib/helpers/hreflang"
-import { AgeVerificationGate } from "@/components/organisms/AgeVerificationGate/AgeVerificationGate"
 
 export const revalidate = 60
 
@@ -107,11 +106,6 @@ async function Category({
   }
 
   const allCategoryIds = getAllCategoryIds(category)
-  const isAdultCategory = !!(category as any).metadata?.is_adult
-
-  // SSR yaş doğrulama cookie kontrolü
-  const cookieStore = await cookies()
-  const serverVerified = cookieStore.get("kayi_age_verified")?.value === "1"
 
   const currency_code = (await getRegion(locale))?.currency_code || "usd"
   const ua = (await headers()).get("user-agent") || ""
@@ -181,9 +175,7 @@ async function Category({
 
       <h1 className="heading-xl uppercase">{category.name}</h1>
 
-      {/* +18 kategori: listing overlay ile kaplanır — position:relative parent, CLS=0 */}
-      <div className={isAdultCategory ? "relative" : undefined}>
-        {isAdultCategory && <AgeVerificationGate serverVerified={serverVerified} />}
+      <div>
         <Suspense fallback={<ProductListingSkeleton />}>
           {bot || !MEILISEARCH_HOST || !MEILISEARCH_SEARCH_KEY ? (
             <ProductListing category_id={allCategoryIds} showSidebar />

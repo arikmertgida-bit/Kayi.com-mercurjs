@@ -65,6 +65,7 @@ const Form = () => {
             label="E-mail"
             placeholder="Your e-mail address"
             error={errors.email as FieldError}
+            autoComplete="email"
             {...register("email")}
           />
           <LabeledInput
@@ -72,6 +73,7 @@ const Form = () => {
             placeholder="Your password"
             type="password"
             error={errors.password as FieldError}
+            autoComplete="current-password"
             {...register("password")}
           />
           {error && <p className="label-md text-negative">{error}</p>}

@@ -20,8 +20,9 @@ export default async function SellerReviewsPage({
   const tab = "reviews"
 
   return (
-    <main className="container">
+    <>
       <SellerPageHeader header seller={seller} user={user} />
+      <main className="container">
       <SellerTabs
         tab={tab}
         seller_id={seller.id}
@@ -29,6 +30,7 @@ export default async function SellerReviewsPage({
         locale={locale}
         currency_code={currency_code}
       />
-    </main>
+      </main>
+    </>
   )
 }

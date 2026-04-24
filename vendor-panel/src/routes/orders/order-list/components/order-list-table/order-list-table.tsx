@@ -16,10 +16,18 @@ export const OrderListTable = () => {
     pageSize: PAGE_SIZE,
   })
 
-  const { orders, count, isError, error, isLoading } = useOrders({
-    ...searchParams,
-    fields: "*customer,+payment_status,*split_order_payment",
-  })
+  const { orders, count, isError, error, isLoading } = useOrders(
+    {
+      ...searchParams,
+      q: undefined, // client-side only – do not send to API
+      fields: "*customer,+payment_status,*split_order_payment",
+    },
+    undefined,
+    {
+      order_status: raw.order_status,
+      q: raw.q,
+    }
+  )
 
   const columns = useOrderTableColumns({})
   const filters = useOrderTableFilters()

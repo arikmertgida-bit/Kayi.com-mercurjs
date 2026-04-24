@@ -32,20 +32,15 @@ const EditProfileSchema = zod.object({
 const SUPPORTED_FORMATS = [
   "image/jpeg",
   "image/png",
-  "image/gif",
-  "image/webp",
-  "image/heic",
-  "image/svg+xml",
 ]
 
 const SUPPORTED_FORMATS_FILE_EXTENSIONS = [
   ".jpeg",
+  ".jpg",
   ".png",
-  ".gif",
-  ".webp",
-  ".heic",
-  ".svg",
 ]
+
+const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
 
 export const EditProfileForm = ({ user }: EditProfileProps) => {
   const { t } = useTranslation()
@@ -114,19 +109,27 @@ export const EditProfileForm = ({ user }: EditProfileProps) => {
 
   const hasInvalidFiles = useCallback(
     (fileList: FileType[]) => {
-      const invalidFile = fileList.find(
+      const invalidFormatFile = fileList.find(
         (f) => !SUPPORTED_FORMATS.includes(f.file.type)
       )
 
-      if (invalidFile) {
+      if (invalidFormatFile) {
         form.setError("media", {
           type: "invalid_file",
           message: t("products.media.invalidFileType", {
-            name: invalidFile.file.name,
+            name: invalidFormatFile.file.name,
             types: SUPPORTED_FORMATS_FILE_EXTENSIONS.join(", "),
           }),
         })
+        return true
+      }
 
+      const oversizedFile = fileList.find((f) => f.file.size > MAX_FILE_SIZE)
+      if (oversizedFile) {
+        form.setError("media", {
+          type: "too_large",
+          message: `"${oversizedFile.file.name}" dosya boyutu 2MB’ı geçemez.`,
+        })
         return true
       }
 
@@ -167,7 +170,7 @@ export const EditProfileForm = ({ user }: EditProfileProps) => {
                           uploadedImage={fields[0]?.url || user.photo || ""}
                           multiple={false}
                           label={t("products.media.uploadImagesLabel")}
-                          hint={t("products.media.uploadImagesHint")}
+                          hint="JPG, JPEG veya PNG • Maks. 2MB • 1:1 oran önerilir"
                           hasError={!!form.formState.errors.media}
                           formats={SUPPORTED_FORMATS}
                           onUploaded={onUploaded}

@@ -44,7 +44,7 @@ export default async function assignStockLocationsOnSellerAccepted({
     return;
   }
 
-  const { data: stockLocations } =
+  const stockLocations =
     await stockLocationService.listStockLocations({}, { take: 9999 });
 
   if (!stockLocations || stockLocations.length === 0) {

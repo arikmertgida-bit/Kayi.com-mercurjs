@@ -47,7 +47,7 @@ const sortOrders = (
 
 export const filterOrders = (
   orders?: HttpTypes.AdminOrder[],
-  filters?: Record<string, Record<string, string | Date>>,
+  filters?: Record<string, any>,
   sort?: string
 ) => {
   if (!orders || !filters) return orders
@@ -55,6 +55,8 @@ export const filterOrders = (
   let filteredOrders = orders.filter((order) => {
     return Object.keys(filters).every((key: string) => {
       if (!filters[key]) return true
+
+      if (key === "q") return true // handled separately below
 
       const orderValue = order[key as keyof HttpTypes.AdminOrder]
 
@@ -67,6 +69,35 @@ export const filterOrders = (
       return true
     })
   })
+
+  const q = filters.q
+  if (q && typeof q === "string" && q.length >= 2) {
+    const term = q.toLowerCase()
+    filteredOrders = filteredOrders.filter((order) => {
+      const displayId = String(order.display_id ?? "").toLowerCase()
+      const displayIdHash = `#${displayId}`
+      const email = (order.email ?? "").toLowerCase()
+      const customerEmail = (order.customer?.email ?? "").toLowerCase()
+      const firstName = (order.customer?.first_name ?? "").toLowerCase()
+      const lastName = (order.customer?.last_name ?? "").toLowerCase()
+      const fullName = `${firstName} ${lastName}`.trim()
+      const fullNameReverse = `${lastName} ${firstName}`.trim()
+      const itemTitles = (order.items ?? [])
+        .map((i) => (i.title ?? "").toLowerCase())
+        .join(" ")
+      return (
+        displayId.includes(term) ||
+        displayIdHash.includes(term) ||
+        email.includes(term) ||
+        customerEmail.includes(term) ||
+        firstName.includes(term) ||
+        lastName.includes(term) ||
+        fullName.includes(term) ||
+        fullNameReverse.includes(term) ||
+        itemTitles.includes(term)
+      )
+    })
+  }
 
   if (sort) {
     const isDescending = sort.startsWith("-")

@@ -77,6 +77,7 @@ const Form = () => {
               label="First name"
               placeholder="Your first name"
               error={errors.firstName as FieldError}
+              autoComplete="given-name"
               {...register("firstName")}
             />
             <LabeledInput
@@ -84,6 +85,7 @@ const Form = () => {
               label="Last name"
               placeholder="Your last name"
               error={errors.lastName as FieldError}
+              autoComplete="family-name"
               {...register("lastName")}
             />
           </div>
@@ -93,6 +95,7 @@ const Form = () => {
               label="E-mail"
               placeholder="Your e-mail address"
               error={errors.email as FieldError}
+              autoComplete="email"
               {...register("email")}
             />
             <LabeledInput
@@ -100,6 +103,7 @@ const Form = () => {
               label="Phone"
               placeholder="Your phone number"
               error={errors.phone as FieldError}
+              autoComplete="tel"
               {...register("phone")}
             />
           </div>
@@ -110,6 +114,7 @@ const Form = () => {
               placeholder="Your password"
               type="password"
               error={errors.password as FieldError}
+              autoComplete="new-password"
               {...register("password")}
             />
             <PasswordValidator

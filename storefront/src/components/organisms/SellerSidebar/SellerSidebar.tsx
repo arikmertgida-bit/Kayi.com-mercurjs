@@ -59,13 +59,13 @@ export function SellerSidebar({ seller, categories, productCount }: SellerSideba
   ]
 
   return (
-    <aside className="hidden md:block w-full">
+    <aside className="hidden w-full md:block rounded-[28px] border border-white/70 bg-[linear-gradient(180deg,_rgba(255,247,251,0.96),_rgba(255,240,232,0.98))] p-3 shadow-[0_18px_44px_rgba(221,42,123,0.10)]">
       {/* Store Info Card */}
-      <div className="border rounded-sm p-4 mb-4">
+      <div className="mb-4 rounded-[22px] border border-white/80 bg-white/85 p-4 shadow-[0_12px_30px_rgba(221,42,123,0.08)]">
         <div className="flex items-center gap-2 mb-2">
           <span className="text-sm font-semibold text-primary">Mağaza Bilgileri</span>
           {isActive && (
-            <span className="flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+            <span className="flex items-center gap-1 rounded-full bg-[linear-gradient(90deg,_rgba(245,133,41,0.14),_rgba(221,42,123,0.12))] px-2 py-0.5 text-xs text-[#c13584]">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3">
                 <path fillRule="evenodd" d="M19.916 4.626a.75.75 0 0 1 .208 1.04l-9 13.5a.75.75 0 0 1-1.154.114l-6-6a.75.75 0 0 1 1.06-1.06l5.353 5.353 8.493-12.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" />
               </svg>
@@ -91,8 +91,8 @@ export function SellerSidebar({ seller, categories, productCount }: SellerSideba
                 }}
                 className={`w-full text-left text-sm px-2 py-1.5 rounded-sm transition-colors ${
                   activeSort === opt.value
-                    ? "bg-action text-action-on-primary"
-                    : "hover:bg-gray-100 text-primary"
+                    ? "bg-gradient-to-r from-[#f58529] via-[#dd2a7b] to-[#8134af] text-white shadow-[0_10px_20px_rgba(221,42,123,0.20)]"
+                    : "text-primary hover:bg-[#fff2f7]"
                 }`}
               >
                 {opt.label}
@@ -114,8 +114,8 @@ export function SellerSidebar({ seller, categories, productCount }: SellerSideba
                 }}
                 className={`w-full text-left text-sm px-2 py-1.5 rounded-sm transition-colors ${
                   !activeCategory
-                    ? "bg-action text-action-on-primary"
-                    : "hover:bg-gray-100 text-primary"
+                    ? "bg-gradient-to-r from-[#f58529] via-[#dd2a7b] to-[#8134af] text-white shadow-[0_10px_20px_rgba(221,42,123,0.20)]"
+                    : "text-primary hover:bg-[#fff2f7]"
                 }`}
               >
                 Tümü
@@ -131,8 +131,8 @@ export function SellerSidebar({ seller, categories, productCount }: SellerSideba
                   }}
                   className={`w-full text-left text-sm px-2 py-1.5 rounded-sm transition-colors ${
                     activeCategory === cat.id
-                      ? "bg-action text-action-on-primary"
-                      : "hover:bg-gray-100 text-primary"
+                      ? "bg-gradient-to-r from-[#f58529] via-[#dd2a7b] to-[#8134af] text-white shadow-[0_10px_20px_rgba(221,42,123,0.20)]"
+                      : "text-primary hover:bg-[#fff2f7]"
                   }`}
                 >
                   {cat.name}

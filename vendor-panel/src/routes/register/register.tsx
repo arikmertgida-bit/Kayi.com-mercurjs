@@ -139,6 +139,7 @@ export const Register = () => {
                             {...field}
                             className="bg-ui-bg-field-component mb-2"
                             placeholder="Company name"
+                            autoComplete="organization"
                           />
                         </Form.Control>
                       </Form.Item>
@@ -156,6 +157,7 @@ export const Register = () => {
                             {...field}
                             className="bg-ui-bg-field-component"
                             placeholder={t("fields.email")}
+                            autoComplete="email"
                           />
                         </Form.Control>
                       </Form.Item>
@@ -175,6 +177,7 @@ export const Register = () => {
                             {...field}
                             className="bg-ui-bg-field-component"
                             placeholder={t("fields.password")}
+                            autoComplete="new-password"
                           />
                         </Form.Control>
                       </Form.Item>
@@ -194,6 +197,7 @@ export const Register = () => {
                             {...field}
                             className="bg-ui-bg-field-component"
                             placeholder="Confirm Password"
+                            autoComplete="new-password"
                           />
                         </Form.Control>
                       </Form.Item>
