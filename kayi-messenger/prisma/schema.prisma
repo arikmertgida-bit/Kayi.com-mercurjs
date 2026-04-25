@@ -1,0 +1,82 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ConversationType {
+  DIRECT
+  ADMIN_SUPPORT
+}
+
+enum UserType {
+  CUSTOMER
+  SELLER
+  ADMIN
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  NOTIFICATION
+}
+
+model Conversation {
+  id           String                    @id @default(uuid())
+  type         ConversationType          @default(DIRECT)
+  subject      String?
+  productId    String?
+  orderId      String?
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@index([productId])
+  @@index([orderId])
+}
+
+model ConversationParticipant {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  userType       UserType
+  unreadCount    Int          @default(0)
+  lastReadAt     DateTime?
+  joinedAt       DateTime     @default(now())
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+  @@index([conversationId])
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  senderType     UserType
+  content        String
+  messageType    MessageType  @default(TEXT)
+  imageUrl       String?
+  readAt         DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
+}
+
+model UserProfile {
+  userId      String   @id
+  displayName String
+  userType    UserType
+  updatedAt   DateTime @updatedAt
+}

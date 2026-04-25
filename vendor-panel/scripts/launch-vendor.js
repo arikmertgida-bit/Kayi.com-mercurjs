@@ -1,4 +1,4 @@
-const { execSync } = require('child_process');
+const { execSync, spawnSync } = require('child_process');
 const https = require('https');
 const http = require('http');
 
@@ -75,12 +75,16 @@ async function launch() {
 
   const port = process.env.PORT || '7001';
   console.log(`Starting Vite preview server on port ${port}...\n`);
-  try {
-    execSync(`./node_modules/.bin/vite preview --host --port ${port}`, { stdio: 'inherit', env: process.env });
-  } catch (error) {
-    console.error('Error starting preview server:', error.message);
+  const result = spawnSync(
+    './node_modules/.bin/vite',
+    ['preview', '--host', '--port', port],
+    { stdio: 'inherit', env: process.env }
+  );
+  if (result.error) {
+    console.error('Error starting preview server:', result.error.message);
     process.exit(1);
   }
+  process.exit(result.status ?? 0);
 }
 
 launch();

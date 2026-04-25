@@ -2,6 +2,7 @@ import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 import { REVIEW_REPLY_MODULE } from "../../../../../../../modules/review-replies"
 import ReviewReplyService from "../../../../../../../modules/review-replies/service"
+import { notifyMessengerUser } from "../../../../../../../lib/messenger"
 
 // Helper: resolve seller from vendor auth
 async function resolveSeller(req: MedusaRequest) {
@@ -88,6 +89,32 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     seller_name: seller.name,
     content,
   } as any)
+
+  // Find the review's customer_id to send notification (fire-and-forget)
+  const query2 = req.scope.resolve(ContainerRegistrationKeys.QUERY)
+  query2
+    .graph({
+      entity: "customer_review",
+      fields: ["customer_id"],
+      filters: { review_id: reviewId },
+    })
+    .then(({ data: relations }: { data: any[] }) => {
+      const customerId = relations?.[0]?.customer_id
+      if (customerId) {
+        notifyMessengerUser({
+          targetUserId: customerId,
+          targetUserType: "CUSTOMER",
+          senderName: seller.name ?? "Satıcı",
+          preview: `${seller.name ?? "Satıcı"} yorumunuza yanıt verdi.`,
+          sourceUserId: seller.id,
+          sourceUserType: "SELLER",
+          subject: "Yorum Yanıtı Bildirimi",
+        })
+      }
+    })
+    .catch((err: Error) => {
+      console.warn("[review-reply] Could not resolve customer for notification:", err.message)
+    })
 
   return res.status(201).json({
     reply: {

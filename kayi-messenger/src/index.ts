@@ -1,0 +1,120 @@
+import "dotenv/config"
+import express from "express"
+import cors from "cors"
+import { createServer } from "http"
+import { Server as SocketServer } from "socket.io"
+import { decodeToken, resolveIdentity } from "./middleware/auth"
+import { registerSocketHandlers } from "./socket/handlers"
+import { setDisplayName } from "./lib/user-cache"
+import conversationRoutes from "./routes/conversations"
+import { createMessageRouter } from "./routes/messages"
+import { createUploadRouter } from "./routes/upload"
+import { createInternalRouter } from "./routes/internal"
+import { ensureBucket } from "./lib/minio"
+import prisma from "./lib/prisma"
+
+const PORT = parseInt(process.env.PORT || "4000", 10)
+
+const CORS_ORIGINS = (process.env.CORS_ORIGINS || "http://localhost:3000,http://localhost:7001")
+  .split(",")
+  .map((o) => o.trim())
+
+// ── Express ────────────────────────────────────────────────────────────────
+const app = express()
+
+app.use(
+  cors({
+    origin: CORS_ORIGINS,
+    credentials: true,
+  })
+)
+
+app.use(express.json({ limit: "1mb" }))
+
+// Health check — no auth required
+app.get("/health", (_req, res) => {
+  res.json({ status: "ok", service: "kayi-messenger" })
+})
+
+// API routes (conversations doesn't need io)
+app.use("/api/conversations", conversationRoutes)
+
+// ── HTTP + Socket.io ───────────────────────────────────────────────────────
+const httpServer = createServer(app)
+
+const io = new SocketServer(httpServer, {
+  cors: {
+    origin: CORS_ORIGINS,
+    credentials: true,
+  },
+  // Use both polling and WebSocket transports for reliability
+  transports: ["polling", "websocket"],
+})
+
+// JWT authentication for Socket.io handshake
+io.use((socket, next) => {
+  const token =
+    socket.handshake.auth?.token ||
+    (socket.handshake.headers.authorization as string | undefined)?.replace("Bearer ", "")
+
+  if (!token) {
+    return next(new Error("Authentication required"))
+  }
+
+  const payload = decodeToken(token)
+
+  if (!payload) {
+    return next(new Error("Invalid token"))
+  }
+
+  const identity = resolveIdentity(payload)
+  socket.data.userId = identity.userId
+  socket.data.userType = identity.userType
+
+  // Persist the display name sent from the client during handshake
+  const displayName = socket.handshake.auth?.displayName
+  if (displayName && typeof displayName === "string") {
+    socket.data.displayName = displayName
+    // Persist to DB asynchronously so cache survives server restarts
+    setDisplayName(identity.userId, displayName, identity.userType as any).catch((err) => {
+      console.error(`[socket] Failed to persist displayName for ${identity.userId}:`, err)
+    })
+  }
+
+  next()
+})
+
+io.on("connection", (socket) => {
+  registerSocketHandlers(io, socket)
+})
+
+// Internal server-to-server routes (registered after io is ready)
+app.use("/api/internal", createInternalRouter(io))
+
+// Message and upload routes need io for real-time broadcasting
+app.use("/api/conversations", createMessageRouter(io))
+app.use("/api/upload", createUploadRouter(io))
+
+// ── Startup ────────────────────────────────────────────────────────────────
+async function main() {
+  // Verify DB connection
+  await prisma.$connect()
+  console.log("[db] Connected to PostgreSQL (kayi_messenger)")
+
+  // Ensure MinIO bucket exists
+  try {
+    await ensureBucket()
+  } catch (err) {
+    console.warn("[minio] Could not verify bucket (continuing):", (err as Error).message)
+  }
+
+  httpServer.listen(PORT, () => {
+    console.log(`[kayi-messenger] Listening on port ${PORT}`)
+    console.log(`[kayi-messenger] CORS origins: ${CORS_ORIGINS.join(", ")}`)
+  })
+}
+
+main().catch((err) => {
+  console.error("[kayi-messenger] Startup error:", err)
+  process.exit(1)
+})

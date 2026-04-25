@@ -3,7 +3,7 @@ import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { StarRating } from "@/components/atoms"
-import { Review, ReviewReply, reportReviewImage, getReviewReplies, createReviewReply, likeReviewReply } from "@/lib/data/reviews"
+import { Review, ReviewReply, reportReviewImage, getReviewReplies, createReviewReply, likeReviewReply, isAuthenticated } from "@/lib/data/reviews"
 import { likeReview } from "@/lib/data/review-likes"
 import { formatDistanceToNow } from "date-fns"
 import { tr } from "date-fns/locale"
@@ -152,6 +152,7 @@ const ReplyCard = ({
   const [likesCount, setLikesCount] = useState(reply.likes_count ?? 0)
   const [likeLoading, setLikeLoading] = useState(false)
   const [authErr, setAuthErr] = useState(false)
+  const [replyAuthErr, setReplyAuthErr] = useState(false)
 
   const name = `${reply.customer?.first_name ?? ""} ${reply.customer?.last_name ?? ""}`.trim() || "Kullanıcı"
   const initials = `${reply.customer?.first_name?.[0] ?? ""}${reply.customer?.last_name?.[0] ?? ""}`.toUpperCase() || "?"
@@ -226,13 +227,22 @@ const ReplyCard = ({
             <span className="text-xs">{liked ? "❤️" : "🤍"}</span>
             {likesCount > 0 ? likesCount : "Beğen"}
           </button>
-          {authErr && <span className="text-[10px] text-red-400">Giriş yapınız</span>}
+          {authErr && <span className="text-[10px] text-red-400">Beğenmek için giriş yapmalısınız.</span>}
           <button
-            onClick={() => onMention(name)}
+            onClick={async () => {
+              const loggedIn = await isAuthenticated()
+              if (!loggedIn) {
+                setReplyAuthErr(true)
+                setTimeout(() => setReplyAuthErr(false), 3000)
+                return
+              }
+              onMention(name)
+            }}
             className="text-[10px] font-medium text-secondary hover:text-[#8134af] transition-colors"
           >
             Yanıtla
           </button>
+          {replyAuthErr && <span className="text-[10px] text-red-400">Yanıtlamak için giriş yapmalısınız.</span>}
         </div>
       </div>
     </div>
@@ -255,6 +265,7 @@ const SellerReplyCard = ({
 }) => {
   const [liked, setLiked] = useState(false)
   const [likesCount, setLikesCount] = useState(0)
+  const [replyAuthErr, setReplyAuthErr] = useState(false)
 
   const initials = sellerName
     .split(" ")
@@ -320,11 +331,20 @@ const SellerReplyCard = ({
             {likesCount > 0 ? likesCount : "Beğen"}
           </button>
           <button
-            onClick={() => onMention(sellerName)}
+            onClick={async () => {
+              const loggedIn = await isAuthenticated()
+              if (!loggedIn) {
+                setReplyAuthErr(true)
+                setTimeout(() => setReplyAuthErr(false), 3000)
+                return
+              }
+              onMention(sellerName)
+            }}
             className="text-[10px] font-medium text-secondary hover:text-[#8134af] transition-colors"
           >
             Yanıtla
           </button>
+          {replyAuthErr && <span className="text-[10px] text-red-400">Yanıtlamak için giriş yapmalısınız.</span>}
         </div>
       </div>
     </div>

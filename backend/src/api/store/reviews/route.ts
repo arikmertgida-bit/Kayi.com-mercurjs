@@ -1,5 +1,6 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys, MedusaError, Modules } from "@medusajs/framework/utils"
+import { notifyMessengerUser } from "../../../lib/messenger"
 
 const DEV_BYPASS_EMAIL = "cyclo@gmail.com"
 const DEV_BYPASS_ORDER_ID = "__dev_bypass_order__"
@@ -204,6 +205,25 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     fields: DEFAULT_FIELDS,
     filters: { id: review.id },
   })
+
+  // Notify seller about the new review (fire-and-forget)
+  const sellerToNotify =
+    reference === "seller" ? referenceId : linkedSellerId
+  if (sellerToNotify) {
+    const customerName =
+      customer
+        ? `${(customer as any).first_name ?? ""} ${(customer as any).last_name ?? ""}`.trim() || "Müşteri"
+        : "Müşteri"
+    notifyMessengerUser({
+      targetUserId: sellerToNotify,
+      targetUserType: "SELLER",
+      senderName: customerName,
+      preview: `${customerName} ürününüze yeni bir yorum bıraktı.`,
+      sourceUserId: customerId,
+      sourceUserType: "CUSTOMER",
+      subject: "Yeni Yorum Bildirimi",
+    })
+  }
 
   return res.status(201).json({ review: data[0] ?? review })
 }

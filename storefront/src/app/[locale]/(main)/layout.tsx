@@ -1,9 +1,10 @@
 import { Footer, Header } from "@/components/organisms"
 import { retrieveCustomer } from "@/lib/data/customer"
 import { checkRegion } from "@/lib/helpers/check-region"
-import { SessionWrapper } from "@/components/molecules/MessageButton/SessionWrapper"
 import { redirect } from "next/navigation"
 import { WishlistProvider } from "@/providers/WishlistProvider"
+import { MessengerProvider } from "@/providers/MessengerProvider"
+import { getAuthToken } from "@/lib/data/cookies"
 
 export default async function RootLayout({
   children,
@@ -12,29 +13,31 @@ export default async function RootLayout({
   children: React.ReactNode
   params: Promise<{ locale: string }>
 }>) {
-  const APP_ID = process.env.NEXT_PUBLIC_TALKJS_APP_ID
   const { locale } = await params
 
   // Parallelise independent server fetches — eliminates waterfall (~2 serial
   // round-trips become 1, shaving hundreds of ms from TTFB).
-  const [user, regionCheck] = await Promise.all([
+  const [user, regionCheck, authToken] = await Promise.all([
     retrieveCustomer(),
     checkRegion(locale),
+    getAuthToken(),
   ])
 
   if (!regionCheck) {
     return redirect("/")
   }
 
+  const userName = user
+    ? [user.first_name, user.last_name].filter(Boolean).join(" ") || user.email || null
+    : null
+
   return (
     <WishlistProvider user={user}>
-      <Header />
-      {/* TalkJS Session is now scoped only to MessageButton, not the entire
-          layout. This means Header, children and Footer hydrate instantly
-          without waiting for TalkJS to initialise. */}
-      {user && APP_ID && <SessionWrapper appId={APP_ID} userId={user.id} />}
-      {children}
-      <Footer />
+      <MessengerProvider userId={user?.id ?? null} authToken={authToken} userName={userName}>
+        <Header />
+        {children}
+        <Footer />
+      </MessengerProvider>
     </WishlistProvider>
   )
 }

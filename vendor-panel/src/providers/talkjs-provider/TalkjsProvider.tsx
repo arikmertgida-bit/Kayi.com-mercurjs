@@ -1,57 +1,12 @@
-import { createContext, useCallback, useContext } from "react"
-import Talk from "talkjs"
-import { Session, useUnreads } from "@talkjs/react"
+// TalkjsProvider.tsx � TalkJS removed
+// MessengerProvider in providers/messenger-provider/ replaces this.
+import React, { createContext, useContext } from "react"
 
-import { useMe } from "../../hooks/api"
+const TalkjsUnreadsContext = createContext<undefined>(undefined)
 
-// Context that holds unread messages count — undefined when TalkJS is not active
-const TalkjsUnreadsContext = createContext<ReturnType<typeof useUnreads> | undefined>(undefined)
-
-/** Safe hook — returns undefined when TalkJS Session provider is not active */
+/** @deprecated Use useMessengerUnreads from messenger-provider instead */
 export const useTalkjsUnreads = () => useContext(TalkjsUnreadsContext)
 
-// Inner component that calls useUnreads() safely INSIDE <Session>
-const SessionUnreadsProvider = ({ children }: { children: React.ReactNode }) => {
-  const unreads = useUnreads()
-  return (
-    <TalkjsUnreadsContext.Provider value={unreads}>
-      {children}
-    </TalkjsUnreadsContext.Provider>
-  )
-}
-
 export const TalkjsProvider = ({ children }: { children: React.ReactNode }) => {
-  const { seller, isPending } = useMe()
-
-  if (isPending)
-    return <div className="flex justify-center items-center h-screen" />
-
-  return <ProviderContent seller={seller}>{children}</ProviderContent>
-}
-
-const ProviderContent = ({
-  children,
-  seller,
-}: {
-  children: React.ReactNode
-  seller: any
-}) => {
-  const syncUser = useCallback(() => {
-    return new Talk.User({
-      id: seller?.id || "",
-      name: seller?.name || "",
-      email: seller?.email || null,
-      photoUrl: seller?.photo || "/talkjs-placeholder.jpg",
-    })
-  }, [seller])
-
-  if (!__TALK_JS_APP_ID__ || !seller) return <>{children}</>
-
-  return (
-    <Session appId={__TALK_JS_APP_ID__} syncUser={syncUser}>
-      <SessionUnreadsProvider>
-        {children}
-      </SessionUnreadsProvider>
-    </Session>
-  )
+  return <TalkjsUnreadsContext.Provider value={undefined}>{children}</TalkjsUnreadsContext.Provider>
 }

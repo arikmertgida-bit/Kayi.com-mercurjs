@@ -220,3 +220,8 @@ const likeReviewReply = async (replyId: string): Promise<{ liked: boolean; likes
 
 export { getReviews, createReview, getProductReviews, uploadReviewImages, reportReviewImage, getReviewReplies, createReviewReply, likeReviewReply }
 
+export const isAuthenticated = async (): Promise<boolean> => {
+  const headers = await getAuthHeaders()
+  return "authorization" in headers
+}
+

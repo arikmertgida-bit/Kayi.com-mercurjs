@@ -3,17 +3,17 @@
 import { Badge } from "@/components/atoms"
 import { MessageIcon } from "@/icons"
 import LocalizedClientLink from "../LocalizedLink/LocalizedLink"
-import { useUnreads } from "@talkjs/react"
+import { useMessengerUnreadCount } from "@/providers/MessengerProvider"
 
 export const MessageButton = () => {
-  const unreads = useUnreads()
+  const count = useMessengerUnreadCount()
 
   return (
     <LocalizedClientLink href="/user/messages" className="relative">
       <MessageIcon size={20} />
-      {Boolean(unreads?.length) && (
+      {count > 0 && (
         <Badge className="absolute -top-2 -right-2 w-4 h-4 p-0">
-          {unreads?.length}
+          {count}
         </Badge>
       )}
     </LocalizedClientLink>

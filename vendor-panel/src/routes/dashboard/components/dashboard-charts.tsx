@@ -23,7 +23,7 @@ import { ChartSkeleton } from "./chart-skeleton"
 import { useState } from "react"
 import { addDays, differenceInDays, format, subDays } from "date-fns"
 import { Calendar } from "../../../components/common/calendar/calendar"
-import { useTalkjsUnreads } from "../../../providers/talkjs-provider"
+import { useMessengerUnreads } from "../../../providers/messenger-provider/MessengerProvider"
 
 const colorPicker = (line: string) => {
   switch (line) {
@@ -95,7 +95,7 @@ export const DashboardCharts = ({
 
   const [filters, setFilters] = useState(["customers", "orders"])
 
-  const unreadMessages = useTalkjsUnreads()
+  const unreadMessages = useMessengerUnreads()
   const { count: followersCount } = useFollowers({ limit: 1 })
 
   const fromStr = searchParams.get("from") || format(addDays(new Date(), -7), "yyyy-MM-dd")

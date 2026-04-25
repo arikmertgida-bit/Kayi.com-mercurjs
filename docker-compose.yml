@@ -11,6 +11,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -119,6 +120,8 @@ services:
       MEILISEARCH_PRODUCT_INDEX_NAME: products
       STRIPE_SECRET_API_KEY: sk_e77a523a69ef743cc97744cf1ab78d57265dd93a23742234b6106daea1206bf8
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_placeholder}
+      MESSENGER_INTERNAL_URL: http://kayi-messenger:4000
+      MESSENGER_INTERNAL_SECRET: kayi-internal-secret
       NODE_OPTIONS: "--max-old-space-size=512"
     mem_limit: 1g
     healthcheck:
@@ -195,6 +198,7 @@ services:
       NEXT_PUBLIC_SITE_NAME: "Kayı | Güvenle Al, Güvenle Sat"
       NEXT_PUBLIC_SITE_DESCRIPTION: "Kayı | Güvenle Al, Güvenle Sat"
       NEXT_PUBLIC_VENDOR_URL: http://localhost:7001
+      NEXT_PUBLIC_MESSENGER_URL: http://localhost:4000
       NEXT_PUBLIC_MEILISEARCH_HOST: http://localhost:7700
       NEXT_PUBLIC_MEILISEARCH_SEARCH_KEY: masterKey_kayicom
       NEXT_PUBLIC_SEARCH_API_KEY: masterKey_kayicom
@@ -207,6 +211,45 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  kayi-messenger:
+    build:
+      context: ./kayi-messenger
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/kayi_messenger
+      JWT_SECRET: supersecret
+      PORT: "4000"
+      NODE_ENV: production
+      CORS_ORIGINS: http://localhost:3000,http://localhost:7001
+      BACKEND_URL: http://backend:9000
+      MESSENGER_INTERNAL_SECRET: kayi-internal-secret
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: "9000"
+      MINIO_USE_SSL: "false"
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin123
+      MINIO_BUCKET: medusa-media
+      MINIO_PUBLIC_URL: http://localhost:9002
+      INTERNAL_SECRET: kayi-internal-secret
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:4000/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     logging:
       driver: "json-file"
       options:

@@ -8,10 +8,15 @@ export default async function MessagesPage() {
 
   if (!user) return <LoginForm />
 
+  const currentUserName =
+    [user.first_name, user.last_name].filter(Boolean).join(" ") ||
+    user.email ||
+    "Ben"
+
   return (
     <main className="container">
       <div className="mt-6 space-y-8">
-        <UserMessagesSection />
+        <UserMessagesSection currentUserId={user.id} currentUserName={currentUserName} />
       </div>
     </main>
   )

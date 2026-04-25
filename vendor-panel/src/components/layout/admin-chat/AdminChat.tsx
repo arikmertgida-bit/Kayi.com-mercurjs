@@ -1,45 +1,20 @@
 import { ChatBubble } from "@medusajs/icons"
 import { Drawer, Heading, IconButton } from "@medusajs/ui"
-import { Chatbox } from "@talkjs/react"
-import { useCallback, useState } from "react"
+import { useState } from "react"
 import { useMe } from "../../../hooks/api"
-import Talk from "talkjs"
+import { MessengerChat } from "../messenger-chat/MessengerChat"
 
 export const AdminChat = () => {
   const [open, setOpen] = useState(false)
-
   const { seller, isPending } = useMe()
 
   if (isPending)
     return <div className="flex justify-center items-center h-screen" />
 
-  const handleOnOpen = (shouldOpen: boolean) => {
-    if (shouldOpen) {
-      setOpen(true)
-    } else {
-      setOpen(false)
-    }
-  }
-
-  const syncConversation = useCallback((session: any) => {
-    const conversation = session.getOrCreateConversation(
-      `admin-vendor-${seller?.id}`
-    )
-
-    const other = new Talk.User({
-      id: "admin",
-      name: "Admin",
-      welcomeMessage: "Hey, how can I help?",
-    })
-
-    conversation.setParticipant(other)
-    conversation.setParticipant(session.me)
-
-    return conversation
-  }, [])
+  if (!seller) return null
 
   return (
-    <Drawer open={open} onOpenChange={handleOnOpen}>
+    <Drawer open={open} onOpenChange={setOpen}>
       <Drawer.Trigger asChild>
         <IconButton
           variant="transparent"
@@ -54,11 +29,8 @@ export const AdminChat = () => {
             <Heading>Chat with admin</Heading>
           </Drawer.Title>
         </Drawer.Header>
-        <Drawer.Body className="overflow-y-auto px-4">
-          <Chatbox
-            syncConversation={syncConversation}
-            style={{ width: "100%", height: "100%" }}
-          />
+        <Drawer.Body className="overflow-y-auto p-0">
+          <MessengerChat currentUserId={seller.id ?? ""} />
         </Drawer.Body>
       </Drawer.Content>
     </Drawer>

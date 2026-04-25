@@ -29,7 +29,7 @@ import { useSearch } from "../../../providers/search-provider"
 import { UserMenu } from "../user-menu"
 import { StripeIcon } from "../../../assets/icons/Stripe"
 import { ImageAvatar } from "../../common/image-avatar"
-import { useTalkjsUnreads } from "../../../providers/talkjs-provider"
+import { useMessengerUnreads } from "../../../providers/messenger-provider/MessengerProvider"
 
 export const MainLayout = () => {
   return (
@@ -100,7 +100,7 @@ const Header = () => {
 const useCoreRoutes = (): Omit<INavItem, "pathname">[] => {
   const { t } = useTranslation()
 
-  const unreadMessages = useTalkjsUnreads()
+  const unreadMessages = useMessengerUnreads()
 
   return [
     {

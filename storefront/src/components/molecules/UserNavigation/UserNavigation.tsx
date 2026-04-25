@@ -2,7 +2,7 @@
 import { LogoutButton } from "@/components/atoms"
 import LocalizedClientLink from "@/components/molecules/LocalizedLink/LocalizedLink"
 import { cn } from "@/lib/utils"
-import { useUnreads } from "@talkjs/react"
+import { useMessengerUnreadCount } from "@/providers/MessengerProvider"
 import { useParams, usePathname } from "next/navigation"
 
 const navigationItems = [
@@ -17,7 +17,7 @@ const navigationItems = [
 ]
 
 export const UserNavigation = () => {
-  const unreads = useUnreads()
+  const count = useMessengerUnreadCount()
   const path = usePathname()
   const { locale } = useParams()
 
@@ -41,9 +41,9 @@ export const UserNavigation = () => {
                 )}
               >
                 {item.label}
-                {item.label === "Messages" && Boolean(unreads?.length) && (
+                {item.label === "Messages" && count > 0 && (
                   <span className="inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold bg-white text-black rounded-full">
-                    {unreads?.length}
+                    {count}
                   </span>
                 )}
               </LocalizedClientLink>

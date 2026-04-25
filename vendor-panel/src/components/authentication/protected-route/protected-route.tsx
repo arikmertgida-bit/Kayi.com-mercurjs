@@ -3,7 +3,7 @@ import { Navigate, Outlet, useLocation } from "react-router-dom"
 import { useMe } from "../../../hooks/api/users"
 import { SearchProvider } from "../../../providers/search-provider"
 import { SidebarProvider } from "../../../providers/sidebar-provider"
-import { TalkjsProvider } from "../../../providers/talkjs-provider"
+import { MessengerProvider } from "../../../providers/messenger-provider/MessengerProvider"
 
 export const ProtectedRoute = () => {
   const { seller, isPending, error } = useMe()
@@ -42,12 +42,12 @@ export const ProtectedRoute = () => {
   }
 
   return (
-    <TalkjsProvider>
+    <MessengerProvider sellerId={seller.id ?? null} sellerName={seller.name}>
       <SidebarProvider>
         <SearchProvider>
           <Outlet />
         </SearchProvider>
       </SidebarProvider>
-    </TalkjsProvider>
+    </MessengerProvider>
   )
 }

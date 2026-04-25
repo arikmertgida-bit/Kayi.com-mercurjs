@@ -1,5 +1,6 @@
 import { SellerTabs } from "@/components/organisms"
 import { SellerPageHeader } from "@/components/sections"
+import { SellerMessengerWidget } from "@/components/cells/SellerMessengerWidget/SellerMessengerWidget"
 import { retrieveCustomer } from "@/lib/data/customer"
 import { getRegion } from "@/lib/data/regions"
 import { getSellerByHandle, getFollowStatus, getSellerCategories } from "@/lib/data/seller"
@@ -76,6 +77,14 @@ export default async function SellerPage({
         productMap={productMap}
       />
       </main>
+      <SellerMessengerWidget
+        seller={seller}
+        currentUserId={user?.id ?? null}
+        currentUser={user ? {
+          id: user.id,
+          name: [user.first_name, user.last_name].filter(Boolean).join(" ") || user.email || "Müşteri",
+        } : null}
+      />
     </>
   )
 }

@@ -1,29 +1,16 @@
 "use client"
 
-import { Inbox } from "@talkjs/react"
-import { useCallback } from "react"
-import Talk from "talkjs"
+import { MessengerInbox } from "@/components/sections/MessengerInbox/MessengerInbox"
 
-export const UserMessagesSection = () => {
-  const syncConversation = useCallback((session: Talk.Session) => {
-    const conversation = session.getOrCreateConversation(
-      "my_conversations" + session.me.id
-    )
-    conversation.setParticipant(session.me)
-    return conversation
-  }, [])
+interface UserMessagesSectionProps {
+  currentUserId: string
+  currentUserName: string
+}
 
+export const UserMessagesSection = ({ currentUserId, currentUserName }: UserMessagesSectionProps) => {
   return (
     <div className="max-w-full h-[655px]">
-      <Inbox
-        loadingComponent={
-          <div className="h-96 w-full flex items-center justify-center">
-            Loading..
-          </div>
-        }
-        syncConversation={syncConversation}
-        className="h-full max-w-[760px] w-full"
-      />
+      <MessengerInbox currentUserId={currentUserId} currentUserName={currentUserName} />
     </div>
   )
 }

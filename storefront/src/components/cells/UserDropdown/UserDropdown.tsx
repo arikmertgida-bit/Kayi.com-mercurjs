@@ -10,7 +10,7 @@ import { Dropdown } from "@/components/molecules"
 import LocalizedClientLink from "@/components/molecules/LocalizedLink/LocalizedLink"
 import { ProfileIcon } from "@/icons"
 import { HttpTypes } from "@medusajs/types"
-import { useUnreads } from "@talkjs/react"
+import { useMessengerUnreadCount } from "@/providers/MessengerProvider"
 import { useState } from "react"
 import Image from "next/image"
 
@@ -21,7 +21,7 @@ export const UserDropdown = ({
 }) => {
   const [open, setOpen] = useState(false)
 
-  const unreads = useUnreads()
+  const unreadCount = useMessengerUnreadCount()
 
   const avatarSrc = user
     ? ((user.metadata as any)?.avatar_url ||
@@ -66,9 +66,9 @@ export const UserDropdown = ({
             <NavigationItem href="/user/orders">Orders</NavigationItem>
             <NavigationItem href="/user/messages" className="relative">
               Messages
-              {Boolean(unreads?.length) && (
+              {unreadCount > 0 && (
                 <Badge className="absolute top-3 left-24 w-4 h-4 p-0">
-                  {unreads?.length}
+                  {unreadCount}
                 </Badge>
               )}
             </NavigationItem>

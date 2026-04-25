@@ -82,6 +82,7 @@
     "react-jwt": "^1.2.0",
     "react-router-dom": "6.20.1",
     "recharts": "^2.15.1",
+    "socket.io-client": "^4.8.3",
     "talkjs": "^0.35.0",
     "zod": "3.22.4"
   },

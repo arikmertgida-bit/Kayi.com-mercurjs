@@ -85,3 +85,12 @@ export const removeCartId = async () => {
     maxAge: -1,
   });
 };
+
+/**
+ * Returns the raw JWT string for passing to client components that need
+ * to authenticate with external services like kayi-messenger.
+ */
+export const getAuthToken = async (): Promise<string | null> => {
+  const cookies = await nextCookies();
+  return cookies.get('_medusa_jwt')?.value ?? null;
+};
