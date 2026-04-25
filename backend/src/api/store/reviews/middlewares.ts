@@ -85,6 +85,11 @@ export const storeReviewMiddlewares = [
   },
   {
     method: ["GET"],
+    matcher: "/store/reviews/:id/replies",
+    middlewares: [],
+  },
+  {
+    method: ["GET"],
     matcher: "/store/reviews/:id",
     middlewares: [
       validateAndTransformQuery(StoreGetReviewsParams, storeReviewQueryConfig.retrieve),

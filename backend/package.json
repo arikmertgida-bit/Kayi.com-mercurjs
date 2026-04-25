@@ -36,10 +36,11 @@
     "@mercurjs/requests": "^1.5.3",
     "@mercurjs/resend": "^1.5.3",
     "@mercurjs/reviews": "^1.5.3",
-    "meilisearch": "^0.47.0",
     "medusajs-launch-utils": "^0.0.18",
+    "meilisearch": "^0.47.0",
     "minio": "^8.0.3",
     "multer": "^1.4.5-lts.2",
+    "pg": "^8.20.0",
     "ulid": "^2.3.0"
   },
   "devDependencies": {

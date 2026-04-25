@@ -11,4 +11,4 @@ COPY . .
 
 EXPOSE 9000
 
-CMD ["sh", "-c", "npx medusa db:migrate && pnpm dev"]
+CMD ["sh", "-c", "npx medusa db:generate reviewLike reviewImage reviewImageReport reviewReply && npx medusa db:migrate && npx tsx src/scripts/ensure-columns.ts && pnpm dev"]

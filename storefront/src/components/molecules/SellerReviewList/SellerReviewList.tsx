@@ -6,7 +6,13 @@ import { useSearchParams } from "next/navigation"
 
 const LIMIT = 10
 
-export const SellerReviewList = ({ reviews }: { reviews?: any[] }) => {
+export const SellerReviewList = ({
+  reviews,
+  productMap = {},
+}: {
+  reviews?: any[]
+  productMap?: Record<string, { title: string; thumbnail: string | null }>
+}) => {
   const searchParams = useSearchParams()
   const page = searchParams.get("page") || 1
 
@@ -19,7 +25,7 @@ export const SellerReviewList = ({ reviews }: { reviews?: any[] }) => {
   return (
     <div className="mt-4">
       {filteredReviews?.map((review) => (
-        <SellerReview key={review.id} review={review} />
+        <SellerReview key={review.id} review={review} productMap={productMap} />
       ))}
 
       <OrdersPagination pages={pages} />

@@ -89,3 +89,37 @@ export const useUpdateReview = (
     ...options,
   })
 }
+
+export const useReviewReplies = (
+  reviewId: string,
+  options?: Omit<UseQueryOptions<any, FetchError, any, QueryKey>, "queryFn" | "queryKey">
+) => {
+  const { data, ...rest } = useQuery({
+    queryKey: [...reviewsQueryKeys.detail(reviewId), "replies"],
+    queryFn: () =>
+      fetchQuery(`/vendor/sellers/me/reviews/${reviewId}/replies`, { method: "GET" }),
+    enabled: !!reviewId,
+    ...options,
+  })
+  return { replies: (data?.replies ?? []) as any[], ...rest }
+}
+
+export const useCreateReviewReply = (
+  reviewId: string,
+  options?: UseMutationOptions<any, FetchError, { content: string }>
+) => {
+  return useMutation({
+    mutationFn: (payload) =>
+      fetchQuery(`/vendor/sellers/me/reviews/${reviewId}/replies`, {
+        method: "POST",
+        body: payload,
+      }),
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({
+        queryKey: [...reviewsQueryKeys.detail(reviewId), "replies"],
+      })
+      options?.onSuccess?.(data, variables, context)
+    },
+    ...options,
+  })
+}

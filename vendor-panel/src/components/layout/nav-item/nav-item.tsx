@@ -30,10 +30,10 @@ export type INavItem = {
 }
 
 const BASE_NAV_LINK_CLASSES =
-  "flex items-center gap-x-2 rounded-xl py-1 pl-2 pr-2 outline-none transition-fg [&>svg]:text-[#8a1d54] text-[#8a1d54]/80 hover:bg-[#fff0f6] focus-visible:shadow-borders-focus"
+  "flex items-center gap-x-2 rounded-xl py-1 pl-2 pr-2 outline-none transition-fg text-ui-fg-subtle hover:bg-ui-bg-base-hover focus-visible:shadow-borders-focus"
 const ACTIVE_NAV_LINK_CLASSES =
-  "bg-gradient-to-r from-[#f58529] via-[#dd2a7b] to-[#8134af] text-white shadow-[0_14px_28px_rgba(221,42,123,0.22)] hover:opacity-95 [&>svg]:text-white"
-const NESTED_NAV_LINK_CLASSES = "w-full pl-[34px] pr-2 py-1 text-[#8a1d54]/75"
+  "bg-ui-bg-base-pressed text-ui-fg-base"
+const NESTED_NAV_LINK_CLASSES = "w-full pl-[34px] pr-2 py-1 text-ui-fg-subtle"
 const SETTING_NAV_LINK_CLASSES = "pl-2 py-1"
 
 const getIsOpen = (
@@ -165,7 +165,7 @@ export const NavItem = ({
         <RadixCollapsible.Root open={open} onOpenChange={setOpen}>
           <RadixCollapsible.Trigger
             className={clx(
-              "flex w-full items-center gap-x-2 rounded-xl py-1 pl-2 pr-2 outline-none transition-fg hover:bg-[#fff0f6] hover:text-[#8a1d54] lg:hidden",
+              "flex w-full items-center gap-x-2 rounded-xl py-1 pl-2 pr-2 outline-none transition-fg hover:bg-ui-bg-base-hover lg:hidden",
               { "pl-2": isSetting }
             )}
           >
@@ -242,7 +242,7 @@ const Icon = ({ icon, type }: { icon?: ReactNode; type: ItemType }) => {
   }
 
   return type === "extension" ? (
-    <div className="flex h-5 w-5 items-center justify-center rounded-[6px] bg-white/85 shadow-[0_4px_10px_rgba(221,42,123,0.12)]">
+    <div className="flex h-5 w-5 items-center justify-center rounded-[6px] bg-ui-bg-base shadow-elevation-card-rest">
       <div className="h-[15px] w-[15px] overflow-hidden rounded-sm">{icon}</div>
     </div>
   ) : (

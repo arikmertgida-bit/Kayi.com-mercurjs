@@ -1,11 +1,9 @@
 import { StarRating } from "@/components/atoms"
 import { SellerAvatar } from "@/components/cells/SellerAvatar/SellerAvatar"
 import { SellerProps } from "@/types/seller"
-import { SellerReview } from "../SellerReview/SellerReview"
 
 export const SellerInfo = ({
   seller,
-  header = false,
 }: {
   seller: SellerProps
   header?: boolean
@@ -35,18 +33,9 @@ export const SellerInfo = ({
       </div>
       <div className="w-[90%]">
         <h3 className="heading-sm text-primary">{name}</h3>
-        <div className="flex items-center gap-2 border-b pb-4">
+        <div className="flex items-center gap-2 pb-4">
           <StarRating starSize={16} rate={rating || 0} />
           <span className="text-md text-secondary">{reviewCount} reviews</span>
-        </div>
-        <div className="mt-4">
-          {!header &&
-            reviews
-              ?.filter((rev) => rev !== null)
-              .slice(-3)
-              .map((review) => (
-                <SellerReview key={review.id} review={review} />
-              ))}
         </div>
       </div>
     </div>

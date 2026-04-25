@@ -5,6 +5,7 @@ import { StarRating } from "@/components/atoms"
 import { HttpTypes } from "@medusajs/types"
 import { ProductReviewCard } from "./ProductReviewCard"
 import { ProductReviewFormSection } from "./ProductReviewFormSection"
+import { ReviewsShareButton } from "./ReviewsShareButton"
 
 interface Props {
   product: HttpTypes.StoreProduct & { seller?: any }
@@ -51,7 +52,16 @@ export const ProductReviews = async ({ product, locale }: Props) => {
       id="product-reviews"
       className="my-10 overflow-hidden rounded-[28px] border border-white/70 bg-[radial-gradient(circle_at_top_left,_rgba(245,133,41,0.18),_transparent_24%),radial-gradient(circle_at_top_right,_rgba(221,42,123,0.16),_transparent_22%),linear-gradient(135deg,_#fff7ed_0%,_#fff7fb_52%,_#fff1f2_100%)] p-5 md:p-8"
     >
-      <h2 className="heading-md mb-6 uppercase text-[#8a1d54]">Reviews ({count})</h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="heading-md uppercase text-[#8a1d54]">Reviews ({count})</h2>
+        {count > 0 && (
+          <ReviewsShareButton
+            productTitle={product.title ?? "Ürün"}
+            averageRating={average_rating}
+            reviewCount={count}
+          />
+        )}
+      </div>
 
       {count > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">

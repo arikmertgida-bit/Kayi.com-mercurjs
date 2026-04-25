@@ -8,17 +8,15 @@ import { useDataTable } from "../../../../hooks/use-data-table"
 import { useReviewTableColumns } from "../../../../hooks/table/columns/use-review-table-columns"
 import { useReviewTableQuery } from "../../../../hooks/table/query/use-review-table-query"
 import { StarsRating } from "../../../../components/common/stars-rating/stars-rating"
-import { useSearchParams } from "react-router-dom"
 
 const PAGE_SIZE = 20
 
 export const ReviewListTable = () => {
-  const { searchParams, raw } = useReviewTableQuery({
+  const { searchParams, raw, clientQ } = useReviewTableQuery({
     pageSize: PAGE_SIZE,
   })
 
-  const [params] = useSearchParams()
-  const sellerNote = params.get("seller_note") === "false"
+  const sellerNote = raw.seller_note === "false"
 
   const { reviews, isLoading, isError, error } = useReviews(
     {
@@ -35,10 +33,9 @@ export const ReviewListTable = () => {
     ? filtered.filter((review: any) => !review.seller_note)
     : filtered
 
-  const q = searchParams.q as string | undefined
-  const displayedReviews = q
+  const displayedReviews = clientQ
     ? filteredReviews.filter((review: any) => {
-        const lower = q.toLowerCase()
+        const lower = clientQ.toLowerCase()
         return (
           review.id?.toLowerCase().includes(lower) ||
           review.title?.toLowerCase().includes(lower) ||

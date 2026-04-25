@@ -41,9 +41,9 @@ export const MainLayout = () => {
 
 const MainSidebar = () => {
   return (
-    <aside className="flex flex-1 flex-col justify-between overflow-y-auto bg-transparent text-[#6c1b47]">
+    <aside className="flex flex-1 flex-col justify-between overflow-y-auto bg-transparent">
       <div className="flex flex-1 flex-col">
-        <div className="sticky top-0 bg-white/55 backdrop-blur">
+        <div className="sticky top-0 bg-ui-bg-subtle">
           <Header />
           <div className="px-3">
             <Divider variant="dashed" />
@@ -56,7 +56,7 @@ const MainSidebar = () => {
           </div>
           <UtilitySection />
         </div>
-        <div className="sticky bottom-0 bg-white/55 backdrop-blur">
+        <div className="sticky bottom-0 bg-ui-bg-subtle">
           <UserSection />
         </div>
       </div>
@@ -71,7 +71,7 @@ const Header = () => {
   const fallback = seller?.photo || "M"
 
   return (
-    <div className="grid w-full grid-cols-[24px_1fr_15px] items-center gap-x-3 bg-white/55 p-3 p-0.5 pr-2 backdrop-blur">
+    <div className="grid w-full grid-cols-[24px_1fr_15px] items-center gap-x-3 bg-ui-bg-subtle p-3 p-0.5 pr-2">
       {fallback ? (
         <div className="w-7 h-7">
           <ImageAvatar src={seller?.photo || "/logo.svg"} size={7} rounded />

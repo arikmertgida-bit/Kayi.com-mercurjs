@@ -1,8 +1,9 @@
 "use client"
 import { useState } from "react"
 import Image from "next/image"
+import Link from "next/link"
 import { StarRating } from "@/components/atoms"
-import { Review, reportReviewImage } from "@/lib/data/reviews"
+import { Review, ReviewReply, reportReviewImage, getReviewReplies, createReviewReply, likeReviewReply } from "@/lib/data/reviews"
 import { likeReview } from "@/lib/data/review-likes"
 import { formatDistanceToNow } from "date-fns"
 import { tr } from "date-fns/locale"
@@ -138,13 +139,216 @@ const PhotoLightbox = ({
 }
 
 // ─── Main Card ─────────────────────────────────────────────────────────────────
+
+// ─── Reply Card ────────────────────────────────────────────────────────────────
+const ReplyCard = ({
+  reply,
+  onMention,
+}: {
+  reply: ReviewReply
+  onMention: (name: string) => void
+}) => {
+  const [liked, setLiked] = useState(reply.is_liked_by_me ?? false)
+  const [likesCount, setLikesCount] = useState(reply.likes_count ?? 0)
+  const [likeLoading, setLikeLoading] = useState(false)
+  const [authErr, setAuthErr] = useState(false)
+
+  const name = `${reply.customer?.first_name ?? ""} ${reply.customer?.last_name ?? ""}`.trim() || "Kullanıcı"
+  const initials = `${reply.customer?.first_name?.[0] ?? ""}${reply.customer?.last_name?.[0] ?? ""}`.toUpperCase() || "?"
+  const timeAgo = (() => {
+    try { return formatDistanceToNow(new Date(reply.created_at), { addSuffix: true, locale: tr }) }
+    catch { return "" }
+  })()
+
+  const handleLike = async () => {
+    if (likeLoading) return
+    const wasLiked = liked
+    const prevCount = likesCount
+    setLiked(!liked)
+    setLikesCount(liked ? Math.max(0, likesCount - 1) : likesCount + 1)
+    setLikeLoading(true)
+    try {
+      const res = await likeReviewReply(reply.id)
+      if (res.error === "auth") {
+        setLiked(wasLiked)
+        setLikesCount(prevCount)
+        setAuthErr(true)
+        setTimeout(() => setAuthErr(false), 3000)
+      } else if (res.error) {
+        setLiked(wasLiked)
+        setLikesCount(prevCount)
+      } else {
+        setLiked(res.liked)
+        setLikesCount(res.likes_count)
+      }
+    } catch {
+      setLiked(wasLiked)
+      setLikesCount(prevCount)
+    } finally {
+      setLikeLoading(false)
+    }
+  }
+
+  return (
+    <div className="flex gap-2.5">
+      {/* Avatar */}
+      {reply.customer?.avatar_url ? (
+        <Image
+          src={reply.customer.avatar_url}
+          alt={name}
+          width={28}
+          height={28}
+          unoptimized
+          className="rounded-full size-7 object-cover border border-[#efbdd1] shrink-0"
+        />
+      ) : (
+        <div className="size-7 rounded-full bg-gradient-to-br from-[#8134af] via-[#dd2a7b] to-[#f58529] flex items-center justify-center text-white text-[10px] font-bold shrink-0">
+          {initials}
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <div className="rounded-2xl bg-white/80 border border-[#f5d8e6] px-3 py-2">
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <span className="text-xs font-semibold text-primary">{name}</span>
+            <span className="text-[10px] text-secondary shrink-0">{timeAgo}</span>
+          </div>
+          <p className="text-xs text-primary/90 leading-relaxed whitespace-pre-line">{reply.content}</p>
+        </div>
+        {/* Reply like + mention row */}
+        <div className="flex items-center gap-3 mt-1 pl-1">
+          <button
+            onClick={handleLike}
+            disabled={likeLoading}
+            className={`flex items-center gap-1 text-[10px] font-medium transition-colors ${
+              liked ? "text-[#dd2a7b]" : "text-secondary hover:text-[#dd2a7b]"
+            }`}
+          >
+            <span className="text-xs">{liked ? "❤️" : "🤍"}</span>
+            {likesCount > 0 ? likesCount : "Beğen"}
+          </button>
+          {authErr && <span className="text-[10px] text-red-400">Giriş yapınız</span>}
+          <button
+            onClick={() => onMention(name)}
+            className="text-[10px] font-medium text-secondary hover:text-[#8134af] transition-colors"
+          >
+            Yanıtla
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Seller Reply Card ─────────────────────────────────────────────────────────
+const SellerReplyCard = ({
+  sellerName,
+  sellerPhoto,
+  sellerHandle,
+  note,
+  onMention,
+}: {
+  sellerName: string
+  sellerPhoto?: string
+  sellerHandle: string
+  note: string
+  onMention: (name: string) => void
+}) => {
+  const [liked, setLiked] = useState(false)
+  const [likesCount, setLikesCount] = useState(0)
+
+  const initials = sellerName
+    .split(" ")
+    .map((w) => w[0] ?? "")
+    .slice(0, 2)
+    .join("")
+    .toUpperCase()
+
+  return (
+    <div className="flex gap-2.5 mb-1">
+      {/* Seller logo */}
+      <Link href={`/sellers/${sellerHandle}`} className="shrink-0 block">
+        {sellerPhoto ? (
+          <Image
+            src={sellerPhoto}
+            alt={sellerName}
+            width={32}
+            height={32}
+            unoptimized
+            className="rounded-lg size-8 object-cover border border-[#f5d8e6] hover:opacity-80 transition-opacity"
+          />
+        ) : (
+          <div className="size-8 rounded-lg bg-gradient-to-br from-[#dd2a7b] to-[#8134af] flex items-center justify-center text-white text-[11px] font-bold">
+            {initials}
+          </div>
+        )}
+      </Link>
+
+      <div className="flex-1 min-w-0">
+        <div className="rounded-2xl bg-gradient-to-br from-[#fff1f8] to-[#fdf4ff] border border-[#e8c0d8] px-3 py-2 relative">
+          {/* Badge */}
+          <div className="absolute -top-2.5 left-3">
+            <span className="bg-gradient-to-r from-[#dd2a7b] to-[#8134af] text-white text-[9px] font-bold px-2 py-0.5 rounded-full tracking-wide shadow-sm">
+              🏪 Mağaza Yanıtı
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-2 mt-1 mb-1">
+            <Link
+              href={`/sellers/${sellerHandle}`}
+              className="text-xs font-semibold text-[#8134af] hover:underline flex items-center gap-1"
+            >
+              {sellerName}
+              {/* Arrow icon */}
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" className="shrink-0">
+                <path fillRule="evenodd" clipRule="evenodd" d="M5.46967 8.46967C5.76256 8.17678 6.23744 8.17678 6.53033 8.46967L12 13.9393L17.4697 8.46967C17.7626 8.17678 18.2374 8.17678 18.5303 8.46967C18.8232 8.76256 18.8232 9.23744 18.5303 9.53033L12.5303 15.5303C12.2374 15.8232 11.7626 15.8232 11.4697 15.5303L5.46967 9.53033C5.17678 9.23744 5.17678 8.76256 5.46967 8.46967Z" fill="currentColor" style={{ transform: "rotate(-90deg)", transformOrigin: "center" }} />
+              </svg>
+            </Link>
+          </div>
+          <p className="text-xs text-primary/90 leading-relaxed whitespace-pre-line">{note}</p>
+        </div>
+        {/* Like + Reply row */}
+        <div className="flex items-center gap-3 mt-1 pl-1">
+          <button
+            onClick={() => {
+              setLiked((prev) => !prev)
+              setLikesCount((prev) => liked ? Math.max(0, prev - 1) : prev + 1)
+            }}
+            className={`flex items-center gap-1 text-[10px] font-medium transition-colors ${
+              liked ? "text-[#dd2a7b]" : "text-secondary hover:text-[#dd2a7b]"
+            }`}
+          >
+            <span className="text-xs">{liked ? "❤️" : "🤍"}</span>
+            {likesCount > 0 ? likesCount : "Beğen"}
+          </button>
+          <button
+            onClick={() => onMention(sellerName)}
+            className="text-[10px] font-medium text-secondary hover:text-[#8134af] transition-colors"
+          >
+            Yanıtla
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Main Card ─────────────────────────────────────────────────────────────────
 export const ProductReviewCard = ({ review }: Props) => {
   const [reportingImageId, setReportingImageId] = useState<string | null>(null)
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const [liked, setLiked] = useState(review.is_liked_by_me ?? false)
   const [likesCount, setLikesCount] = useState(review.likes_count ?? 0)
   const [likeLoading, setLikeLoading] = useState(false)
+  const [likeError, setLikeError] = useState<string | null>(null)
   const [shareMsg, setShareMsg] = useState<string | null>(null)
+
+  // Reply thread state
+  const [replies, setReplies] = useState<ReviewReply[]>([])
+  const [repliesLoaded, setRepliesLoaded] = useState(false)
+  const [repliesLoading, setRepliesLoading] = useState(false)
+  const [replyOpen, setReplyOpen] = useState(false)
+  const [replyText, setReplyText] = useState("")
+  const [replySubmitting, setReplySubmitting] = useState(false)
+  const [replyError, setReplyError] = useState<string | null>(null)
 
   const customerName = review.customer
     ? `${review.customer.first_name} ${review.customer.last_name}`
@@ -162,12 +366,30 @@ export const ProductReviewCard = ({ review }: Props) => {
 
   const handleLike = async () => {
     if (likeLoading) return
+    // Optimistic update
+    const wasLiked = liked
+    const prevCount = likesCount
+    setLiked(!liked)
+    setLikesCount(liked ? Math.max(0, likesCount - 1) : likesCount + 1)
     setLikeLoading(true)
     try {
       const result = await likeReview(review.id)
-      setLiked(result.liked)
-      setLikesCount(result.likes_count)
-    } catch { /* silent */ } finally {
+      if (result.error === "auth") {
+        setLiked(wasLiked)
+        setLikesCount(prevCount)
+        setLikeError("Beğenmek için giriş yapmalısınız.")
+        setTimeout(() => setLikeError(null), 3000)
+      } else if (result.error) {
+        setLiked(wasLiked)
+        setLikesCount(prevCount)
+      } else {
+        setLiked(result.liked)
+        setLikesCount(result.likes_count)
+      }
+    } catch {
+      setLiked(wasLiked)
+      setLikesCount(prevCount)
+    } finally {
       setLikeLoading(false)
     }
   }
@@ -186,8 +408,34 @@ export const ProductReviewCard = ({ review }: Props) => {
     setTimeout(() => setShareMsg(null), 2000)
   }
 
-  const handleComment = () => {
-    document.getElementById("write-review-section")?.scrollIntoView({ behavior: "smooth" })
+  const handleReplyToggle = async () => {
+    // Load replies on first open
+    if (!repliesLoaded && !repliesLoading) {
+      setRepliesLoading(true)
+      try {
+        const loaded = await getReviewReplies(review.id)
+        setReplies(loaded)
+        setRepliesLoaded(true)
+      } catch { /* silent */ } finally {
+        setRepliesLoading(false)
+      }
+    }
+    setReplyOpen((prev) => !prev)
+  }
+
+  const handleReplySubmit = async () => {
+    if (!replyText.trim() || replySubmitting) return
+    setReplySubmitting(true)
+    setReplyError(null)
+    try {
+      const newReply = await createReviewReply(review.id, replyText.trim())
+      setReplies((prev) => [...prev, newReply])
+      setReplyText("")
+    } catch (err: any) {
+      setReplyError(err?.message ?? "Yanıt gönderilemedi.")
+    } finally {
+      setReplySubmitting(false)
+    }
   }
 
   return (
@@ -213,6 +461,7 @@ export const ProductReviewCard = ({ review }: Props) => {
               alt={customerName}
               width={44}
               height={44}
+              unoptimized
               className="rounded-full size-11 object-cover border-2 border-base-primary shrink-0"
             />
           ) : (
@@ -269,10 +518,15 @@ export const ProductReviewCard = ({ review }: Props) => {
           </div>
         )}
 
-        {/* Likes count */}
-        {likesCount > 0 && (
-          <div className="px-4 pb-2">
-            <span className="text-xs font-medium text-[#9f275f]">❤️ {likesCount} kişi beğendi</span>
+        {/* Likes count + auth error */}
+        {(likesCount > 0 || likeError) && (
+          <div className="px-4 pb-2 flex items-center gap-3">
+            {likesCount > 0 && (
+              <span className="text-xs font-medium text-[#9f275f]">❤️ {likesCount} kişi beğendi</span>
+            )}
+            {likeError && (
+              <span className="text-xs font-medium text-red-500">{likeError}</span>
+            )}
           </div>
         )}
 
@@ -284,20 +538,32 @@ export const ProductReviewCard = ({ review }: Props) => {
           <button
             onClick={handleLike}
             disabled={likeLoading}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-colors ${
-              liked ? "text-[#dd2a7b] hover:bg-[#fff0f6]" : "text-secondary hover:bg-[#fff3f7] hover:text-[#c13584]"
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              liked ? "text-[#dd2a7b] hover:bg-[#fff0f6] scale-105" : "text-secondary hover:bg-[#fff3f7] hover:text-[#c13584]"
             }`}
           >
-            <span className="text-base">{liked ? "❤️" : "🤍"}</span>
-            <span>Beğen</span>
+            <span className={`text-base transition-transform duration-200 ${liked ? "scale-125" : "scale-100"}`}>
+              {liked ? "❤️" : "🤍"}
+            </span>
+            <span>{liked && likesCount > 0 ? `Beğenildi (${likesCount})` : "Beğen"}</span>
           </button>
 
           <button
-            onClick={handleComment}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium text-secondary transition-colors hover:bg-[#fff3f7] hover:text-[#c13584]"
+            onClick={handleReplyToggle}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-colors ${
+              replyOpen ? "text-[#dd2a7b] bg-[#fff0f6]" : "text-secondary hover:bg-[#fff3f7] hover:text-[#c13584]"
+            }`}
           >
-            <span className="text-base">💬</span>
-            <span>Yorum</span>
+            {repliesLoading ? (
+              <span className="text-base animate-spin">⏳</span>
+            ) : (
+              <span className="text-base">💬</span>
+            )}
+            <span>
+              {replies.length > 0 || review.seller_note
+                ? `Yanıtlar (${replies.length + (review.seller_note ? 1 : 0)})`
+                : "Yanıtla"}
+            </span>
           </button>
 
           <button
@@ -310,6 +576,104 @@ export const ProductReviewCard = ({ review }: Props) => {
             <span>{shareMsg ?? "Paylaş"}</span>
           </button>
         </div>
+
+        {/* Reply thread */}
+        {replyOpen && (
+          <div className="border-t border-[#f5d8e6] bg-[#fff8fb]/60 px-4 py-3 space-y-3">
+            {/* Seller reply — always pinned at top if exists */}
+            {review.seller_note && (
+              <SellerReplyCard
+                sellerName={review.seller.name}
+                sellerPhoto={
+                  (
+                    review.seller.members?.find(m => m.role === "owner" || m.role === "admin")
+                    ?? review.seller.members?.[0]
+                  )?.photo
+                }
+                sellerHandle={review.seller.handle}
+                note={review.seller_note}
+                onMention={(name) => {
+                  const prefix = `@${name} `
+                  setReplyText((prev) =>
+                    prev.startsWith(prefix) ? prev : prefix + prev.replace(/^@\S+ /, "")
+                  )
+                }}
+              />
+            )}
+
+            {/* Customer & seller replies */}
+            {replies.length > 0 && (
+              <div className="space-y-2.5">
+                {replies.map((reply) =>
+                  reply.is_seller_reply ? (
+                    <SellerReplyCard
+                      key={reply.id}
+                      sellerName={reply.seller_name ?? review.seller.name}
+                      sellerPhoto={
+                        (
+                          review.seller.members?.find(m => m.role === "owner" || m.role === "admin")
+                          ?? review.seller.members?.[0]
+                        )?.photo
+                      }
+                      sellerHandle={review.seller.handle}
+                      note={reply.content}
+                      onMention={(name) => {
+                        const prefix = `@${name} `
+                        setReplyText((prev) =>
+                          prev.startsWith(prefix) ? prev : prefix + prev.replace(/^@\S+ /, "")
+                        )
+                      }}
+                    />
+                  ) : (
+                    <ReplyCard
+                      key={reply.id}
+                      reply={reply}
+                      onMention={(name) => {
+                        const prefix = `@${name} `
+                        setReplyText((prev) =>
+                          prev.startsWith(prefix) ? prev : prefix + prev.replace(/^@\S+ /, "")
+                        )
+                      }}
+                    />
+                  )
+                )}
+              </div>
+            )}
+
+            {replies.length === 0 && repliesLoaded && !review.seller_note && (
+              <p className="text-xs text-secondary text-center py-1">Henüz yanıt yok. İlk yanıtı sen yaz!</p>
+            )}
+
+            {/* Reply input */}
+            <div className="flex gap-2 items-end">
+              <textarea
+                className="flex-1 border border-[#efbdd1] rounded-xl px-3 py-2 text-xs resize-none focus:outline-none focus:border-[#dd2a7b] bg-white/90 placeholder:text-secondary/60 min-h-[36px] max-h-[80px]"
+                placeholder="Yanıtınızı yazın... (max 300 karakter)"
+                value={replyText}
+                maxLength={300}
+                rows={1}
+                onChange={(e) => setReplyText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault()
+                    handleReplySubmit()
+                  }
+                }}
+              />
+              <button
+                onClick={handleReplySubmit}
+                disabled={!replyText.trim() || replySubmitting}
+                className="shrink-0 rounded-xl bg-gradient-to-r from-[#dd2a7b] to-[#8134af] px-3 py-2 text-xs font-semibold text-white disabled:opacity-40 hover:opacity-90 transition-opacity"
+              >
+                {replySubmitting ? "..." : "Gönder"}
+              </button>
+            </div>
+
+            {replyError && (
+              <p className="text-xs text-red-500">{replyError}</p>
+            )}
+          </div>
+        )}
       </div>
     </>
   )

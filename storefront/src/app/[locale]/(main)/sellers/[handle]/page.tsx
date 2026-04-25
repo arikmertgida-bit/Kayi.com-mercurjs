@@ -3,6 +3,7 @@ import { SellerPageHeader } from "@/components/sections"
 import { retrieveCustomer } from "@/lib/data/customer"
 import { getRegion } from "@/lib/data/regions"
 import { getSellerByHandle, getFollowStatus, getSellerCategories } from "@/lib/data/seller"
+import { sdk } from "@/lib/config"
 import { SellerProps } from "@/types/seller"
 
 export default async function SellerPage({
@@ -31,6 +32,34 @@ export default async function SellerPage({
   const productCount = seller.products?.length || 0
   const tab = "products"
 
+  // Build a map of product_id -> { title, thumbnail } for reviews that reference a product
+  const productReviewIds = (seller.reviews ?? [])
+    .filter((r) => r !== null && r.reference === "product" && r.reference_id)
+    .map((r) => r.reference_id as string)
+
+  const uniqueProductIds = [...new Set(productReviewIds)]
+
+  let productMap: Record<string, { title: string; thumbnail: string | null }> = {}
+
+  if (uniqueProductIds.length > 0) {
+    try {
+      const { products } = await sdk.client.fetch<{ products: { id: string; title: string; thumbnail: string | null }[] }>(
+        "/store/products",
+        {
+          method: "GET",
+          query: {
+            id: uniqueProductIds,
+            fields: "id,title,thumbnail",
+            limit: uniqueProductIds.length,
+          },
+        }
+      )
+      productMap = Object.fromEntries(products.map((p) => [p.id, { title: p.title, thumbnail: p.thumbnail ?? null }]))
+    } catch {
+      // productMap stays empty — reviews will just show without product info
+    }
+  }
+
   return (
     <>
       <SellerPageHeader seller={seller} user={user} followStatus={followStatus} />
@@ -44,6 +73,7 @@ export default async function SellerPage({
         seller={seller}
         categories={categories}
         productCount={productCount}
+        productMap={productMap}
       />
       </main>
     </>

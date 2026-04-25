@@ -17,6 +17,7 @@ export const SellerTabs = ({
   seller,
   categories,
   productCount,
+  productMap = {},
 }: {
   tab: string
   seller_handle: string
@@ -26,6 +27,7 @@ export const SellerTabs = ({
   seller: SellerProps
   categories: { id: string; name: string; handle: string }[]
   productCount: number
+  productMap?: Record<string, { title: string; thumbnail: string | null }>
 }) => {
   const filteredReviews = seller.reviews?.filter((r) => r !== null) ?? []
   const reviewCount = filteredReviews.length
@@ -62,7 +64,7 @@ export const SellerTabs = ({
       </div>
       <div className="col-span-3 border rounded-sm p-4">
         <h3 className="heading-sm uppercase border-b pb-4">Seller reviews</h3>
-        <SellerReviewList reviews={seller.reviews} />
+        <SellerReviewList reviews={seller.reviews} productMap={productMap} />
       </div>
     </div>
   )

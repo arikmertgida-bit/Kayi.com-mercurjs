@@ -21,10 +21,16 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       "review.reference",
       "review.rating",
       "review.customer_note",
+      "review.seller_note",
       "review.customer.first_name",
       "review.customer.last_name",
+      "review.customer.metadata",
       "review.seller.id",
       "review.seller.name",
+      "review.seller.handle",
+      "review.seller.photo",
+      "review.seller.members.role",
+      "review.seller.members.photo",
       "review.created_at",
       "review.updated_at",
     ],
@@ -49,7 +55,11 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
         const is_liked_by_me = customerId
           ? allLikes.some((l: any) => l.customer_id === customerId)
           : false
-        return { ...review, images, likes_count, is_liked_by_me }
+        const avatar_url = (review.customer?.metadata as any)?.avatar_url ?? undefined
+        const enrichedCustomer = review.customer
+          ? { ...review.customer, avatar_url }
+          : review.customer
+        return { ...review, customer: enrichedCustomer, images, likes_count, is_liked_by_me }
       } catch {
         return { ...review, images: [], likes_count: 0, is_liked_by_me: false }
       }

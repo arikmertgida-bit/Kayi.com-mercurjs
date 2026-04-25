@@ -10,12 +10,32 @@ export type ReviewImage = {
   is_hidden: boolean
 }
 
+export type ReviewReply = {
+  id: string
+  review_id: string
+  customer_id: string | null
+  customer: {
+    first_name: string
+    last_name: string
+    avatar_url?: string
+  } | null
+  is_seller_reply?: boolean
+  seller_id?: string | null
+  seller_name?: string | null
+  content: string
+  created_at: string
+  likes_count: number
+  is_liked_by_me: boolean
+}
+
 export type Review = {
   id: string
   seller: {
     id: string
     name: string
-    photo: string
+    handle: string
+    photo?: string
+    members?: Array<{ role: string; photo?: string }>
   }
   customer?: {
     first_name: string
@@ -25,6 +45,7 @@ export type Review = {
   reference: string
   reference_id: string
   customer_note: string
+  seller_note?: string | null
   rating: number
   updated_at: string
   images?: ReviewImage[]
@@ -60,9 +81,9 @@ const getProductReviews = async (productId: string): Promise<{
     const res = await fetchQuery("/store/product-reviews", {
       method: "GET",
       query: { product_id: productId },
-      next: { revalidate: 60 },
+      cache: "no-store",
     })
-    const data = res as { reviews?: Review[]; count?: number; average_rating?: number }
+    const data = (res.data ?? {}) as { reviews?: Review[]; count?: number; average_rating?: number }
     return {
       reviews: data.reviews ?? [],
       count: data.count ?? 0,
@@ -132,5 +153,70 @@ const createReview = async (review: any) => {
   return response.json()
 }
 
-export { getReviews, createReview, getProductReviews, uploadReviewImages, reportReviewImage }
+const getReviewReplies = async (reviewId: string): Promise<ReviewReply[]> => {
+  try {
+    const authHeaders = await getAuthHeaders()
+    const res = await fetch(
+      `${process.env.MEDUSA_BACKEND_URL}/store/review-replies?review_id=${reviewId}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY as string,
+          ...(authHeaders as Record<string, string>),
+        },
+        cache: "no-store",
+      }
+    )
+    if (!res.ok) return []
+    const data = await res.json()
+    return data.replies ?? []
+  } catch {
+    return []
+  }
+}
+
+const createReviewReply = async (reviewId: string, content: string): Promise<ReviewReply> => {
+  const headers = {
+    ...(await getAuthHeaders()),
+    "Content-Type": "application/json",
+    "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY as string,
+  }
+
+  const res = await fetch(
+    `${process.env.MEDUSA_BACKEND_URL}/store/review-replies`,
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ review_id: reviewId, content }),
+    }
+  )
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err?.message || "Yanıt gönderilemedi.")
+  }
+
+  const data = await res.json()
+  return data.reply
+}
+
+const likeReviewReply = async (replyId: string): Promise<{ liked: boolean; likes_count: number; error?: string }> => {
+  const headers = {
+    ...(await getAuthHeaders()),
+    "Content-Type": "application/json",
+    "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY as string,
+  }
+
+  const res = await fetch(
+    `${process.env.MEDUSA_BACKEND_URL}/store/review-replies/${replyId}/like`,
+    { method: "POST", headers }
+  )
+
+  if (res.status === 401) return { liked: false, likes_count: 0, error: "auth" }
+  if (!res.ok) return { liked: false, likes_count: 0, error: "failed" }
+  return res.json()
+}
+
+export { getReviews, createReview, getProductReviews, uploadReviewImages, reportReviewImage, getReviewReplies, createReviewReply, likeReviewReply }
 

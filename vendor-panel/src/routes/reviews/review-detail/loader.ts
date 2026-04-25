@@ -8,7 +8,7 @@ const reviewDetailQuery = (id: string) => ({
   queryFn: async () =>
     fetchQuery(`/vendor/sellers/me/reviews/${id}`, {
       method: "GET",
-      query: { fields: "*customer, reference" },
+      query: { fields: "*customer, reference, *images" },
     }),
 })
 

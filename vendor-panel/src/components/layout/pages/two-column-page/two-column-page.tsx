@@ -128,7 +128,7 @@ const Sidebar = ({
   return (
     <div
       className={clx(
-        "flex w-full max-w-[100%] flex-col gap-y-3 rounded-[24px] border border-white/70 bg-[linear-gradient(180deg,_rgba(255,248,251,0.92),_rgba(255,241,232,0.96))] p-3 shadow-[0_16px_36px_rgba(221,42,123,0.08)] xl:mt-0 xl:max-w-[440px]",
+        "flex w-full flex-col gap-y-3 xl:mt-0 xl:max-w-[440px]",
         className
       )}
       {...props}

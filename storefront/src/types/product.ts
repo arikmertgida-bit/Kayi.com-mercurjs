@@ -42,6 +42,10 @@ export interface SingleProductReview {
   seller_note?: string
   updated_at: string
   seller: SellerProps
+  reference?: "product" | "seller"
+  reference_id?: string
+  product_title?: string
+  product_thumbnail?: string | null
 }
 
 export interface SingleProductSeller {
