@@ -3,7 +3,6 @@ import { decodeToken, resolveIdentity } from "../middleware/auth"
 import { MessageService } from "../services/message.service"
 import { ConversationService } from "../services/conversation.service"
 import { NotificationService } from "../services/notification.service"
-import { resolveDisplayName } from "../lib/user-cache"
 import prisma from "../lib/prisma"
 
 /** Map of conversationId → Set of typing userIds */
@@ -19,18 +18,23 @@ export function registerSocketHandlers(io: SocketServer, socket: Socket): void {
 
   // ── Join Conversation ──────────────────────────────────────────────────────
   socket.on("join_conversation", async (conversationId: string) => {
-    // Verify participation before joining room
-    const participant = await prisma.conversationParticipant.findUnique({
-      where: { conversationId_userId: { conversationId, userId } },
-    })
+    try {
+      // Verify participation before joining room
+      const participant = await prisma.conversationParticipant.findUnique({
+        where: { conversationId_userId: { conversationId, userId } },
+      })
 
-    if (!participant) {
-      socket.emit("error", { event: "join_conversation", message: "Forbidden" })
-      return
+      if (!participant) {
+        socket.emit("error", { event: "join_conversation", message: "Forbidden" })
+        return
+      }
+
+      socket.join(`conversation:${conversationId}`)
+      socket.emit("joined_conversation", { conversationId })
+    } catch (err) {
+      console.error("[socket] join_conversation error", err)
+      socket.emit("error", { event: "join_conversation", message: "Internal server error" })
     }
-
-    socket.join(`conversation:${conversationId}`)
-    socket.emit("joined_conversation", { conversationId })
   })
 
   // ── Leave Conversation ─────────────────────────────────────────────────────
@@ -45,13 +49,16 @@ export function registerSocketHandlers(io: SocketServer, socket: Socket): void {
     async (payload: {
       conversationId: string
       content: string
-      messageType?: "TEXT" | "IMAGE"
-      imageUrl?: string
     }) => {
       try {
-        const { conversationId, content, messageType, imageUrl } = payload
+        const { conversationId, content } = payload
 
         if (!content || !conversationId) return
+
+        if (typeof content !== "string" || content.trim().length > 10_000) {
+          socket.emit("error", { event: "send_message", message: "Message too long (max 10,000 characters)" })
+          return
+        }
 
         // Verify participation
         const participant = await prisma.conversationParticipant.findUnique({
@@ -68,36 +75,14 @@ export function registerSocketHandlers(io: SocketServer, socket: Socket): void {
           senderId: userId,
           senderType: userType as any,
           content,
-          messageType: messageType ?? "TEXT",
-          imageUrl,
+          messageType: "TEXT",  // IMAGE messages must go through /api/upload REST endpoint
         })
 
         // Broadcast to all participants in the room
         io.to(`conversation:${conversationId}`).emit("message_received", message)
 
         // Notify participants who are not in the room (offline/background)
-        const conversation = await prisma.conversation.findUnique({
-          where: { id: conversationId },
-          include: { participants: true },
-        })
-
-        const otherParticipants =
-          conversation?.participants.filter((p) => p.userId !== userId) ?? []
-
-        for (const other of otherParticipants) {
-          const roomSockets = await io.in(`conversation:${conversationId}`).fetchSockets()
-          const otherInRoom = roomSockets.some((s) => s.data.userId === other.userId)
-
-          if (!otherInRoom) {
-            const senderName = await resolveDisplayName(userId)
-            NotificationService.notifyUser(io, other.userId, {
-              type: "new_message",
-              conversationId,
-              senderName,
-              preview: messageType === "IMAGE" ? "📷 Fotoğraf" : content.slice(0, 60),
-            })
-          }
-        }
+        await NotificationService.notifyAbsentParticipants(io, conversationId, userId, content.slice(0, 60))
 
         // Stop typing indicator when message is sent
         _clearTyping(io, conversationId, userId)
@@ -126,6 +111,13 @@ export function registerSocketHandlers(io: SocketServer, socket: Socket): void {
   // ── Read Receipt ───────────────────────────────────────────────────────────
   socket.on("messages_read", async (conversationId: string) => {
     try {
+      const participant = await prisma.conversationParticipant.findUnique({
+        where: { conversationId_userId: { conversationId, userId } },
+      })
+      if (!participant) {
+        socket.emit("error", { event: "messages_read", message: "Forbidden" })
+        return
+      }
       await ConversationService.markAsRead(conversationId, userId)
       io.to(`conversation:${conversationId}`).emit("read_receipt", {
         conversationId,
@@ -144,6 +136,7 @@ export function registerSocketHandlers(io: SocketServer, socket: Socket): void {
     for (const [convId, users] of typingUsers.entries()) {
       if (users.has(userId)) {
         users.delete(userId)
+        if (users.size === 0) typingUsers.delete(convId)
         io.to(`conversation:${convId}`).emit("typing_update", {
           conversationId: convId,
           typingUserIds: [...users],
@@ -157,6 +150,7 @@ function _clearTyping(io: SocketServer, conversationId: string, userId: string):
   const users = typingUsers.get(conversationId)
   if (users?.has(userId)) {
     users.delete(userId)
+    if (users.size === 0) typingUsers.delete(conversationId)
     io.to(`conversation:${conversationId}`).emit("typing_update", {
       conversationId,
       typingUserIds: [...users],

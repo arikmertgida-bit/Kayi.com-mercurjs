@@ -6,8 +6,15 @@
 const MESSENGER_URL =
   process.env.MESSENGER_INTERNAL_URL || "http://kayi-messenger:4000"
 
+if (!process.env.MESSENGER_INTERNAL_SECRET) {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("[messenger] MESSENGER_INTERNAL_SECRET env variable must be set in production")
+  }
+  console.warn("[messenger] WARNING: MESSENGER_INTERNAL_SECRET is not set — using insecure default. Set it in your .env file.")
+}
+
 const INTERNAL_SECRET =
-  process.env.MESSENGER_INTERNAL_SECRET || "kayi-internal-secret"
+  process.env.MESSENGER_INTERNAL_SECRET ?? "kayi-internal-secret"
 
 interface NotifyParams {
   /** User id to deliver the notification to */

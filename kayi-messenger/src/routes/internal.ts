@@ -1,10 +1,31 @@
 import { Router, Request, Response } from "express"
+import { z } from "zod"
 import { Server as SocketServer } from "socket.io"
 import { ConversationService } from "../services/conversation.service"
 import { NotificationService } from "../services/notification.service"
 
+if (!process.env.MESSENGER_INTERNAL_SECRET) {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("[messenger] MESSENGER_INTERNAL_SECRET env variable must be set in production")
+  }
+  console.warn("[messenger] WARNING: MESSENGER_INTERNAL_SECRET is not set — using insecure default. Set it in your .env file.")
+}
+
 const INTERNAL_SECRET =
-  process.env.INTERNAL_SECRET || "kayi-internal-secret"
+  process.env.MESSENGER_INTERNAL_SECRET ?? "kayi-internal-secret"
+
+const userTypeEnum = z.enum(["CUSTOMER", "SELLER", "ADMIN"])
+
+const notifySchema = z.object({
+  targetUserId: z.string().min(1, "targetUserId is required"),
+  targetUserType: userTypeEnum,
+  senderName: z.string().max(100).optional(),
+  preview: z.string().min(1, "preview is required").max(200),
+  conversationId: z.string().optional(),
+  sourceUserId: z.string().optional(),
+  sourceUserType: userTypeEnum.optional(),
+  subject: z.string().max(255).optional(),
+})
 
 /**
  * Creates the internal server-to-server router.
@@ -41,6 +62,11 @@ export function createInternalRouter(io: SocketServer): Router {
    *   subject        — (optional) conversation subject when auto-creating
    */
   router.post("/notify", async (req: Request, res: Response) => {
+    const parsed = notifySchema.safeParse(req.body)
+    if (!parsed.success) {
+      res.status(400).json({ message: parsed.error.errors[0].message })
+      return
+    }
     const {
       targetUserId,
       targetUserType,
@@ -50,21 +76,7 @@ export function createInternalRouter(io: SocketServer): Router {
       sourceUserId,
       sourceUserType,
       subject,
-    } = req.body as {
-      targetUserId: string
-      targetUserType: string
-      senderName?: string
-      preview: string
-      conversationId?: string
-      sourceUserId?: string
-      sourceUserType?: string
-      subject?: string
-    }
-
-    if (!targetUserId || !preview) {
-      res.status(400).json({ message: "targetUserId and preview are required" })
-      return
-    }
+    } = parsed.data
 
     // Always emit real-time notification to user room
     NotificationService.notifyUser(io, targetUserId, {

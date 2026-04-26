@@ -11,6 +11,9 @@ import { RouteFocusModal } from "../../../components/modals"
 import { ProductStockForm } from "./components/product-stock-form"
 import { useProduct, useStockLocations } from "../../../hooks/api"
 
+// Fixed-length placeholder column array — defined once, not re-created on every render
+const SKELETON_COLUMNS: ColumnDef<any>[] = Array.from({ length: 10 }) as ColumnDef<any>[]
+
 export const ProductStock = () => {
   const { t } = useTranslation()
 
@@ -92,7 +95,7 @@ const ProductStockFallback = () => {
         </div>
         <div className="flex-1 overflow-auto">
           <DataGridSkeleton
-            columns={Array.from({ length: 10 }) as ColumnDef<any>[]}
+            columns={SKELETON_COLUMNS}
           />
         </div>
         <div className="bg-ui-bg-base flex items-center justify-end gap-x-2 p-4">

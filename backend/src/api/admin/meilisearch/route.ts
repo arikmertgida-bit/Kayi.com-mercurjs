@@ -5,6 +5,11 @@ import MeilisearchModuleService from "../../../modules/meilisearch/service"
 import { syncProductsWorkflow } from "../../../workflows/sync-products"
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
+  // Require admin (user) actor type
+  if ((req as any).auth_context?.actor_type !== "user") {
+    return res.status(403).json({ message: "Forbidden: admin access required" })
+  }
+
   const meilisearchService = req.scope.resolve<MeilisearchModuleService>(MEILISEARCH_MODULE)
 
   let productIndexExists = false
@@ -23,6 +28,11 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 }
 
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
+  // Require admin (user) actor type
+  if ((req as any).auth_context?.actor_type !== "user") {
+    return res.status(403).json({ message: "Forbidden: admin access required" })
+  }
+
   try {
     await syncProductsWorkflow(req.scope as unknown as MedusaContainer).run({
       input: {},

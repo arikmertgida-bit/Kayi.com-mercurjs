@@ -1,5 +1,9 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys, MedusaError, Modules } from "@medusajs/framework/utils"
+import { DEV_BYPASS_EMAIL, DEV_BYPASS_ORDER_ID } from "./store/reviews/constants"
+
+// @mercurjs/reviews plugin module key — confirmed from node_modules/.medusa/server/src/modules/reviews/index.js
+const REVIEW_MODULE_KEY = "review" as const
 
 async function checkOpenAIModeration(text: string): Promise<{ flagged: boolean; category?: string }> {
   const apiKey = process.env.OPENAI_API_KEY
@@ -30,9 +34,6 @@ async function checkOpenAIModeration(text: string): Promise<{ flagged: boolean; 
     return { flagged: false }
   }
 }
-
-const DEV_BYPASS_EMAIL = "cyclo@gmail.com"
-const DEV_BYPASS_ORDER_ID = "__dev_bypass_order__"
 
 export async function reviewValidationMiddleware(
   req: MedusaRequest,
@@ -108,7 +109,7 @@ export async function reviewValidationMiddleware(
 
   // Duplicate check
   try {
-    const reviewService = req.scope.resolve("reviewModuleService") as any
+    const reviewService = req.scope.resolve(REVIEW_MODULE_KEY) as any
     if (reviewService?.listReviews) {
       const existing = await reviewService.listReviews({
         order_id: orderId,

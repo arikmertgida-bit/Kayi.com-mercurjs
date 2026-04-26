@@ -3,6 +3,11 @@ import {
   ContainerRegistrationKeys,
   Modules,
 } from "@medusajs/framework/utils";
+import { z } from "zod"
+
+const assignStockLocationSchema = z.object({
+  stock_location_id: z.string().min(1, "stock_location_id must not be empty"),
+})
 
 /**
  * GET /admin/sellers/:id/stock-locations
@@ -40,11 +45,12 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
  */
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
   const { id } = req.params;
-  const { stock_location_id } = req.body as { stock_location_id: string };
 
-  if (!stock_location_id) {
-    return res.status(400).json({ message: "stock_location_id is required" });
+  const parsed = assignStockLocationSchema.safeParse(req.body)
+  if (!parsed.success) {
+    return res.status(400).json({ message: parsed.error.errors[0].message })
   }
+  const { stock_location_id } = parsed.data
 
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY);
   const remoteLink = req.scope.resolve(ContainerRegistrationKeys.REMOTE_LINK);

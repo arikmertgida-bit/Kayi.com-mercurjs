@@ -6,6 +6,11 @@ import ReviewImageReportService from "../../../../../modules/review-image-report
 import ReviewImageService from "../../../../../modules/review-images/service"
 
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
+  // Require admin (user) actor type
+  if ((req as any).auth_context?.actor_type !== "user") {
+    return res.status(403).json({ message: "Forbidden: admin access required" })
+  }
+
   const { id } = req.params
   const { action } = req.body as { action: "hide" | "publish" }
 

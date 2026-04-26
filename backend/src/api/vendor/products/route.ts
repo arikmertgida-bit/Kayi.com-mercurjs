@@ -1,5 +1,6 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework"
-import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
+import { ContainerRegistrationKeys, MedusaError } from "@medusajs/framework/utils"
+import { fetchSellerByAuthActorId } from "@mercurjs/b2c-core/shared/infra/http/utils/seller"
 
 function applyOperatorFilter(query: any, column: string, filter: any): any {
   if (filter === null || filter === undefined) return query
@@ -25,10 +26,17 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
   const knex = req.scope.resolve(ContainerRegistrationKeys.PG_CONNECTION)
 
+  // Ownership check: authenticated actor must own the queried seller
+  const authenticatedSeller = await fetchSellerByAuthActorId(
+    (req as any).auth_context.actor_id,
+    req.scope
+  )
+
   const f = req.filterableFields as Record<string, any>
   const skip = req.queryConfig.pagination?.skip || 0
   const take = req.queryConfig.pagination?.take || 10
-  const sellerId = f.seller_id as string
+  // Enforce: always use the authenticated seller's id, never trust user input
+  const sellerId = authenticatedSeller.id
   const salesChannelId = f.sales_channel_id as string | undefined
 
   let baseQuery = knex("product")

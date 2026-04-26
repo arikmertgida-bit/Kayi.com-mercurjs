@@ -83,13 +83,23 @@ export function ProductVariantProvider({
     }
   )
 
-  // Re-sync if the URL changes externally (back/forward navigation)
+  // Re-sync if the URL changes externally (back/forward navigation).
+  // Guard: skip setState when values are already identical to avoid the
+  // double-render that router.push() inside setOption would otherwise cause.
   useEffect(() => {
     const fromUrl: Record<string, string> = {}
     searchParams.forEach((value, key) => {
       if (key !== "sortBy" && key !== "page") fromUrl[key] = value
     })
-    setLocalOptions(fromUrl)
+    setLocalOptions((prev) => {
+      const prevKeys = Object.keys(prev)
+      const nextKeys = Object.keys(fromUrl)
+      if (prevKeys.length !== nextKeys.length) return fromUrl
+      for (const k of nextKeys) {
+        if (prev[k] !== fromUrl[k]) return fromUrl
+      }
+      return prev // same reference → no re-render
+    })
   }, [searchParams])
 
   // ── setOption — immediate local update + async URL push ──────────────────
@@ -104,6 +114,13 @@ export function ProductVariantProvider({
       router.push(`${pathname}?${params.toString()}`, { scroll: false })
     },
     [pathname, router, searchParams]
+  )
+
+  // ── Pre-computed option maps: avoid re-running getOptionMap inside every
+  //    derived callback (availableValuesForOption, isValueInStock, selectedVariant)
+  const variantOptionMaps = useMemo(
+    () => new Map(variants.map((v) => [v.id, getOptionMap(v.options)])),
+    [variants]
   )
 
   // ── Derived: selectedColor ────────────────────────────────────────────────
@@ -152,14 +169,14 @@ export function ProductVariantProvider({
       const candidateVariants =
         colorTitle && selectedColor
           ? variants.filter((v) => {
-              const map = getOptionMap(v.options)
+              const map = variantOptionMaps.get(v.id)!
               return map[colorTitle] === selectedColor
             })
           : variants
 
       const seen = new Set<string>()
       for (const v of candidateVariants) {
-        const map = getOptionMap(v.options)
+        const map = variantOptionMaps.get(v.id)!
         const val = map[optionTitle.toLowerCase()]
         if (val) seen.add(val)
       }
@@ -171,7 +188,7 @@ export function ProductVariantProvider({
         .map((ov) => ov.value)
         .filter((v) => seen.has(v))
     },
-    [variants, selectedColor, productOptions]
+    [variants, variantOptionMaps, selectedColor, productOptions]
   )
 
   // ── Derived: isValueInStock ───────────────────────────────────────────────
@@ -181,7 +198,7 @@ export function ProductVariantProvider({
       const colorTitle = colorOpt?.title.toLowerCase()
 
       const match = variants.find((v) => {
-        const map = getOptionMap(v.options)
+        const map = variantOptionMaps.get(v.id)!
         const colorMatches =
           !colorTitle || !selectedColor || map[colorTitle] === selectedColor
         const valueMatches = map[optionTitle.toLowerCase()] === value
@@ -190,7 +207,7 @@ export function ProductVariantProvider({
 
       return (match?.inventory_quantity ?? 0) > 0
     },
-    [variants, selectedColor, productOptions]
+    [variants, variantOptionMaps, selectedColor, productOptions]
   )
 
   // ── Derived: selectedVariant (exact match — ALL options must match) ───────
@@ -206,12 +223,12 @@ export function ProductVariantProvider({
     if (!allSelected) return undefined
 
     return variants.find((v) => {
-      const map = getOptionMap(v.options)
+      const map = variantOptionMaps.get(v.id)!
       return productOptions.every(
         (opt) => map[opt.title.toLowerCase()] === localOptions[opt.title.toLowerCase()]
       )
     })
-  }, [variants, localOptions, productOptions])
+  }, [variants, variantOptionMaps, localOptions, productOptions])
 
   // ── Derived: price & stock ────────────────────────────────────────────────
   const variantPrice = useMemo(
@@ -245,7 +262,7 @@ export function ProductVariantProvider({
     const seen = new Set<string>()
     const images: { id: string; url: string }[] = []
     for (const v of variants) {
-      const map = getOptionMap(v.options)
+      const map = variantOptionMaps.get(v.id)!
       if (map[colorTitle] !== selectedColor) continue
       const url = v.metadata?.thumbnail_url as string | undefined
       if (url && !seen.has(url)) {
@@ -254,28 +271,50 @@ export function ProductVariantProvider({
       }
     }
     return images
-  }, [variants, selectedColor, productOptions])
+  }, [variants, variantOptionMaps, selectedColor, productOptions])
+
+  // ── Memoize context value to prevent unnecessary consumer re-renders ─────
+  // Without this, every provider render creates a new object reference and
+  // all useProductVariants() consumers re-render even when nothing changed.
+  const ctxValue = useMemo(
+    () => ({
+      selectedOptions: localOptions,
+      selectedColor,
+      colorOptions,
+      nonColorOptionTitles,
+      availableValuesForOption,
+      isValueInStock,
+      selectedVariant,
+      variantPrice,
+      variantStock,
+      isOutOfStock,
+      hasAnyPrice,
+      allOptionsSelected,
+      hasVariants,
+      colorGalleryImages,
+      setOption,
+    }),
+    [
+      localOptions,
+      selectedColor,
+      colorOptions,
+      nonColorOptionTitles,
+      availableValuesForOption,
+      isValueInStock,
+      selectedVariant,
+      variantPrice,
+      variantStock,
+      isOutOfStock,
+      hasAnyPrice,
+      allOptionsSelected,
+      hasVariants,
+      colorGalleryImages,
+      setOption,
+    ]
+  )
 
   return (
-    <ProductVariantContext.Provider
-      value={{
-        selectedOptions: localOptions,
-        selectedColor,
-        colorOptions,
-        nonColorOptionTitles,
-        availableValuesForOption,
-        isValueInStock,
-        selectedVariant,
-        variantPrice,
-        variantStock,
-        isOutOfStock,
-        hasAnyPrice,
-        allOptionsSelected,
-        hasVariants,
-        colorGalleryImages,
-        setOption,
-      }}
-    >
+    <ProductVariantContext.Provider value={ctxValue}>
       {children}
     </ProductVariantContext.Provider>
   )

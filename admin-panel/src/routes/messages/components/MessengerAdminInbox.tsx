@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react"
+import { useEffect, useMemo, useRef, useState, useCallback } from "react"
 import { formatDistanceToNow } from "date-fns"
 import {
   connectSocket,
@@ -16,6 +16,7 @@ import {
   markConversationRead,
 } from "../../../lib/messenger/client"
 import type { Conversation, Message } from "../../../lib/messenger/types"
+import { useSellerMembers } from "../../../hooks/api/sellers"
 
 interface Props {
   adminId: string
@@ -32,37 +33,67 @@ export function MessengerAdminInbox({ adminId }: Props) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // ── Initial load ──────────────────────────────────────────────────────────
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Seller data for participant display Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+  const { members: sellerMembers } = useSellerMembers()
+
+  const sellerByMemberId = useMemo(() => {
+    const map = new Map<string, { name: string; photo: string | null }>()
+    sellerMembers?.forEach((m) => {
+      if (m.id && m.seller) {
+        const info = { name: m.seller.name ?? "Seller", photo: m.photo ?? null }
+        // Map by member ID (mem_...)
+        map.set(m.id, info)
+        // Map by seller ID (sel_...) as fallback for conversations using seller ID directly
+        if (m.seller.id && !map.has(m.seller.id)) {
+          map.set(m.seller.id, { name: m.seller.name ?? "Seller", photo: m.photo ?? (m.seller as any).photo ?? null })
+        }
+      }
+    })
+    return map
+  }, [sellerMembers])
+
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Initial load Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   useEffect(() => {
     getConversations()
-      .then(({ conversations: c }) => setConversations(c))
+      .then(({ conversations: c }) =>
+        setConversations(
+          [...c].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+        )
+      )
       .catch(() => {})
+
+    if (typeof window !== "undefined" && Notification.permission === "default") {
+      Notification.requestPermission().catch(() => {})
+    }
   }, [])
 
-  // ── Socket ────────────────────────────────────────────────────────────────
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Socket Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   useEffect(() => {
     const socket = connectSocket()
 
     socket.on("connect", () => setIsConnected(true))
     socket.on("disconnect", () => setIsConnected(false))
 
-    socket.on("new_message", (msg: Message) => {
+    // BUG-1 FIX: server emits "message_received", not "new_message"
+    socket.on("message_received", (msg: Message) => {
       setMessages((prev) =>
         prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]
       )
       setConversations((prev) =>
-        prev.map((c) =>
-          c.id === msg.conversationId
-            ? {
-                ...c,
-                messages: [msg],
-                updatedAt: msg.createdAt,
-                participants: c.participants.map((p) =>
-                  p.userId !== adminId ? { ...p, unreadCount: p.unreadCount + 1 } : p
-                ),
-              }
-            : c
-        ).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+        prev
+          .map((c) =>
+            c.id === msg.conversationId
+              ? {
+                  ...c,
+                  messages: [msg],
+                  updatedAt: msg.createdAt,
+                  participants: c.participants.map((p) =>
+                    p.userId !== adminId ? { ...p, unreadCount: p.unreadCount + 1 } : p
+                  ),
+                }
+              : c
+          )
+          .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
       )
     })
 
@@ -75,18 +106,50 @@ export function MessengerAdminInbox({ adminId }: Props) {
       }
     )
 
-    socket.on(`user:${adminId}`, () => {
-      getConversations()
-        .then(({ conversations: c }) => setConversations(c))
-        .catch(() => {})
-    })
+    // Read receipt: stamp readAt on our sent messages
+    socket.on(
+      "read_receipt",
+      ({ conversationId, readAt }: { conversationId: string; readAt: string }) => {
+        if (conversationId === selectedId) {
+          setMessages((prev) =>
+            prev.map((m) =>
+              !m.readAt && m.senderId === adminId ? { ...m, readAt } : m
+            )
+          )
+        }
+      }
+    )
+
+    // Notification: new message from absent conversation
+    socket.on(
+      "notification",
+      (payload: { senderName?: string; preview?: string }) => {
+        if (
+          typeof window !== "undefined" &&
+          document.visibilityState !== "visible" &&
+          Notification.permission === "granted"
+        ) {
+          new Notification(
+            payload.senderName ? `${payload.senderName} mesaj gönderdi` : "Yeni mesaj",
+            { body: payload.preview ?? "", icon: "/favicon.ico" }
+          )
+        }
+        getConversations()
+          .then(({ conversations: c }) =>
+            setConversations(
+              [...c].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+            )
+          )
+          .catch(() => {})
+      }
+    )
 
     return () => {
       disconnectSocket()
     }
   }, [adminId, selectedId])
 
-  // ── Select conversation ───────────────────────────────────────────────────
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Select conversation Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   const selectConversation = useCallback(
     async (conv: Conversation) => {
       if (selectedId) leaveConversation(selectedId)
@@ -96,7 +159,8 @@ export function MessengerAdminInbox({ adminId }: Props) {
       emitMessagesRead(conv.id)
       await markConversationRead(conv.id).catch(() => {})
       const { messages: msgs } = await getMessages(conv.id).catch(() => ({ messages: [] }))
-      setMessages(msgs)
+      // API returns newest-first; reverse for oldest-at-top display
+      setMessages([...msgs].reverse())
       setConversations((prev) =>
         prev.map((c) =>
           c.id === conv.id
@@ -113,12 +177,12 @@ export function MessengerAdminInbox({ adminId }: Props) {
     [selectedId, adminId]
   )
 
-  // ── Auto-scroll ───────────────────────────────────────────────────────────
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Auto-scroll Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  // ── Send message ──────────────────────────────────────────────────────────
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Send message Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   const handleSend = async () => {
     if (!input.trim() || !selectedId) return
     const text = input.trim()
@@ -141,38 +205,55 @@ export function MessengerAdminInbox({ adminId }: Props) {
     typingTimerRef.current = setTimeout(() => emitTypingStop(selectedId), 2000)
   }
 
-  const filtered = conversations.filter((c) => {
-    const q = search.toLowerCase()
-    return (
-      c.subject?.toLowerCase().includes(q) ||
-      c.participants.some((p) => p.userId.toLowerCase().includes(q))
-    )
-  })
-
-  const selectedConv = conversations.find((c) => c.id === selectedId)
-  const myUnread = (conv: Conversation) =>
-    conv.participants.find((p) => p.userId === adminId)?.unreadCount ?? 0
-
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Helpers Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   const otherParticipant = (conv: Conversation) =>
     conv.participants.find((p) => p.userId !== adminId)
 
+  const getParticipantInfo = useCallback(
+    (conv: Conversation): { name: string; photo: string | null } => {
+      const other = otherParticipant(conv)
+      if (!other) return { name: "Unknown", photo: null }
+      const sellerInfo = sellerByMemberId.get(other.userId)
+      if (sellerInfo) return sellerInfo
+      if (other.userType === "CUSTOMER") return { name: other.userId?.slice(0, 8) || "Customer", photo: null }
+      return { name: other.userId?.slice(0, 8) || other.userType, photo: null }
+    },
+    [sellerByMemberId]
+  )
+
+  const myUnread = (conv: Conversation) =>
+    conv.participants.find((p) => p.userId === adminId)?.unreadCount ?? 0
+
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Search (min 2 chars, by seller name or subject) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+  const filtered =
+    search.length < 2
+      ? conversations
+      : conversations.filter((c) => {
+          const q = search.toLowerCase()
+          const { name } = getParticipantInfo(c)
+          return name.toLowerCase().includes(q) || c.subject?.toLowerCase().includes(q)
+        })
+
+  const selectedConv = conversations.find((c) => c.id === selectedId)
+
   return (
     <div className="flex h-[700px] border border-ui-border-base rounded-lg overflow-hidden">
-      {/* ── Left: Conversation list ─────────────────────────────────────── */}
+      {/* Ã¢â€â‚¬Ã¢â€â‚¬ Left: Conversation list Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
       <div className="w-80 flex flex-col border-r border-ui-border-base bg-ui-bg-subtle">
         <div className="p-3 border-b border-ui-border-base">
           <div className="flex items-center justify-between mb-2">
             <span className="text-ui-fg-base font-semibold text-sm">Messages</span>
             <span
               className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-500" : "bg-ui-fg-muted"}`}
+              title={isConnected ? "Connected" : "Disconnected"}
             />
           </div>
           <input
             type="text"
-            placeholder="Search conversations..."
+            placeholder="Search by store name..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full px-2 py-1 text-sm rounded border border-ui-border-base bg-ui-bg-base text-ui-fg-base focus:outline-none"
+            className="w-full px-2 py-1 text-sm rounded border border-ui-border-base bg-ui-bg-base text-ui-fg-base focus:outline-none focus:border-ui-border-interactive"
           />
         </div>
         <div className="flex-1 overflow-y-auto">
@@ -180,7 +261,7 @@ export function MessengerAdminInbox({ adminId }: Props) {
             <p className="text-center text-ui-fg-muted text-sm mt-8">No conversations</p>
           )}
           {filtered.map((conv) => {
-            const other = otherParticipant(conv)
+            const { name, photo } = getParticipantInfo(conv)
             const unread = myUnread(conv)
             const lastMsg = conv.messages?.[0]
             const isActive = conv.id === selectedId
@@ -193,31 +274,36 @@ export function MessengerAdminInbox({ adminId }: Props) {
                 }`}
               >
                 <div className="flex items-start gap-2">
-                  <div className="w-8 h-8 rounded-full bg-ui-tag-blue-bg flex items-center justify-center text-xs font-medium text-ui-tag-blue-text flex-shrink-0">
-                    {(other?.userType ?? "?")[0]}
+                  <div className="relative flex-shrink-0">
+                    {photo ? (
+                      <img
+                        src={photo}
+                        alt={name}
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-ui-tag-blue-bg flex items-center justify-center text-xs font-medium text-ui-tag-blue-text">
+                        {name[0]?.toUpperCase() ?? "?"}
+                      </div>
+                    )}
+                    {unread > 0 && (
+                      <span className="absolute -top-1 -right-1 min-w-[16px] h-4 bg-ui-tag-blue-bg text-ui-tag-blue-text text-[10px] rounded-full flex items-center justify-center px-1 font-medium">
+                        {unread > 99 ? "99+" : unread}
+                      </span>
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-ui-fg-base truncate">
-                        {conv.subject || other?.userId?.slice(0, 8) || "Chat"}
+                        {name}
                       </span>
-                      {unread > 0 && (
-                        <span className="ml-1 bg-ui-tag-blue-bg text-ui-tag-blue-text text-xs rounded-full px-1.5 py-0.5 font-medium flex-shrink-0">
-                          {unread}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-between gap-1 mt-0.5">
-                      <p className="text-xs text-ui-fg-muted truncate">
-                        {lastMsg?.content ?? "No messages yet"}
-                      </p>
-                      <span className="text-xs text-ui-fg-muted flex-shrink-0">
+                      <span className="text-xs text-ui-fg-muted flex-shrink-0 ml-1">
                         {formatDistanceToNow(new Date(conv.updatedAt), { addSuffix: true })}
                       </span>
                     </div>
-                    <span className="text-xs text-ui-tag-orange-text mt-0.5 block">
-                      {other?.userType ?? ""}
-                    </span>
+                    <p className="text-xs text-ui-fg-muted truncate mt-0.5">
+                      {lastMsg?.content ?? conv.subject ?? "No messages yet"}
+                    </p>
                   </div>
                 </div>
               </button>
@@ -226,30 +312,48 @@ export function MessengerAdminInbox({ adminId }: Props) {
         </div>
       </div>
 
-      {/* ── Right: Chat area ────────────────────────────────────────────── */}
+      {/* Ã¢â€â‚¬Ã¢â€â‚¬ Right: Chat area Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
       {selectedConv ? (
         <div className="flex-1 flex flex-col">
           {/* Header */}
           <div className="p-3 border-b border-ui-border-base bg-ui-bg-base flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-ui-tag-blue-bg flex items-center justify-center text-xs font-medium text-ui-tag-blue-text">
-              {(otherParticipant(selectedConv)?.userType ?? "?")[0]}
-            </div>
-            <div>
-              <p className="text-sm font-medium text-ui-fg-base">
-                {selectedConv.subject || "Chat"}
-              </p>
-              <p className="text-xs text-ui-fg-muted">
-                {otherParticipant(selectedConv)?.userType}
-                {" · "}
-                {selectedConv.participants.length} participants
-              </p>
-            </div>
+            {(() => {
+              const { name, photo } = getParticipantInfo(selectedConv)
+              return (
+                <>
+                  {photo ? (
+                    <img src={photo} alt={name} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-ui-tag-blue-bg flex items-center justify-center text-xs font-medium text-ui-tag-blue-text flex-shrink-0">
+                      {name[0]?.toUpperCase() ?? "?"}
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm font-medium text-ui-fg-base">{name}</p>
+                    <p className="text-xs text-ui-fg-muted">
+                      {otherParticipant(selectedConv)?.userType}
+                      {" · "}
+                      {selectedConv.participants.length} participants
+                    </p>
+                  </div>
+                </>
+              )
+            })()}
           </div>
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-ui-bg-subtle">
             {messages.map((msg) => {
               const isMe = msg.senderId === adminId
+              if (msg.messageType === "NOTIFICATION") {
+                return (
+                  <div key={msg.id} className="flex justify-center">
+                    <span className="text-xs text-ui-fg-muted bg-ui-bg-base border border-ui-border-base rounded-full px-3 py-1">
+                      {msg.content}
+                    </span>
+                  </div>
+                )
+              }
               return (
                 <div
                   key={msg.id}
@@ -263,16 +367,10 @@ export function MessengerAdminInbox({ adminId }: Props) {
                     }`}
                   >
                     {!isMe && (
-                      <p className="text-xs font-medium mb-1 opacity-70">
-                        {msg.senderType}
-                      </p>
+                      <p className="text-xs font-medium mb-1 opacity-70">{msg.senderType}</p>
                     )}
                     {msg.messageType === "IMAGE" && msg.imageUrl ? (
-                      <img
-                        src={msg.imageUrl}
-                        alt="img"
-                        className="max-w-full rounded-lg mb-1"
-                      />
+                      <img src={msg.imageUrl} alt="img" className="max-w-full rounded-lg mb-1" />
                     ) : null}
                     <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                     <p
@@ -281,6 +379,7 @@ export function MessengerAdminInbox({ adminId }: Props) {
                       }`}
                     >
                       {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}
+                      {isMe && msg.readAt && <span className="ml-1">· Görüldü</span>}
                     </p>
                   </div>
                 </div>

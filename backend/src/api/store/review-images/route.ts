@@ -1,7 +1,16 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { MedusaError } from "@medusajs/framework/utils"
+import { z } from "zod"
 import { REVIEW_IMAGE_MODULE } from "../../../modules/review-images"
 import ReviewImageService from "../../../modules/review-images/service"
+
+const createReviewImagesSchema = z.object({
+  review_id: z.string().min(1),
+  urls: z
+    .array(z.string().url("Each URL must be a valid URL").max(2048, "URL too long"))
+    .min(1, "At least one URL is required")
+    .max(3, "Maximum 3 images allowed per review"),
+})
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const { review_id } = req.query as { review_id?: string }
@@ -26,15 +35,11 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     return res.status(401).json({ message: "Unauthorized" })
   }
 
-  const { review_id, urls } = req.body as { review_id: string; urls: string[] }
-
-  if (!review_id || !urls?.length) {
-    throw new MedusaError(MedusaError.Types.INVALID_DATA, "review_id and urls are required")
+  const parsed = createReviewImagesSchema.safeParse(req.body)
+  if (!parsed.success) {
+    throw new MedusaError(MedusaError.Types.INVALID_DATA, parsed.error.errors[0].message)
   }
-
-  if (urls.length > 3) {
-    throw new MedusaError(MedusaError.Types.INVALID_DATA, "Maximum 3 images allowed per review")
-  }
+  const { review_id, urls } = parsed.data
 
   const reviewImageService: ReviewImageService = req.scope.resolve(REVIEW_IMAGE_MODULE)
 

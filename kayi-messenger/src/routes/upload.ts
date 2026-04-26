@@ -1,12 +1,23 @@
 import { Router } from "express"
+import rateLimit from "express-rate-limit"
 import { Server as SocketServer } from "socket.io"
 import multer from "multer"
 import { v4 as uuidv4 } from "uuid"
 import { authMiddleware, AuthRequest, resolveIdentity } from "../middleware/auth"
+import { requireConversationParticipant } from "../middleware/conversation-participant"
 import { minioClient, BUCKET, objectUrl } from "../lib/minio"
 import { MessageService } from "../services/message.service"
 import { NotificationService } from "../services/notification.service"
-import prisma from "../lib/prisma"
+
+// 10 uploads per minute per authenticated user
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => (req as AuthRequest).auth?.sub ?? req.ip ?? "unknown",
+  message: { error: "Too many uploads. Please slow down." },
+})
 
 // Store file in memory; stream to MinIO
 const upload = multer({
@@ -33,7 +44,9 @@ export function createUploadRouter(io: SocketServer) {
   router.post(
     "/",
     authMiddleware,
+    uploadLimiter,
     upload.single("file"),
+    requireConversationParticipant,
     async (req: AuthRequest, res) => {
       try {
         if (!req.file) {
@@ -42,24 +55,16 @@ export function createUploadRouter(io: SocketServer) {
         }
 
         const { userId, userType } = resolveIdentity(req.auth!)
-        const { conversationId } = req.body
+        const conversationId = (req as any).conversationId as string
 
-        if (!conversationId) {
-          res.status(400).json({ error: "conversationId is required" })
-          return
+        // Derive extension from MIME type, never from user-controlled filename
+        const MIME_TO_EXT: Record<string, string> = {
+          "image/jpeg": "jpg",
+          "image/png": "png",
+          "image/gif": "gif",
+          "image/webp": "webp",
         }
-
-        // Verify participation
-        const participant = await prisma.conversationParticipant.findUnique({
-          where: { conversationId_userId: { conversationId, userId } },
-        })
-
-        if (!participant) {
-          res.status(403).json({ error: "Not a participant of this conversation" })
-          return
-        }
-
-        const ext = req.file.originalname.split(".").pop() ?? "jpg"
+        const ext = MIME_TO_EXT[req.file.mimetype] ?? "jpg"
         const key = `messenger/${conversationId}/${uuidv4()}.${ext}`
 
         await minioClient.putObject(BUCKET, key, req.file.buffer, req.file.size, {
@@ -81,27 +86,7 @@ export function createUploadRouter(io: SocketServer) {
         io.to(`conversation:${conversationId}`).emit("message_received", message)
 
         // Notify participants who are not in the room (offline/background)
-        const conversation = await prisma.conversation.findUnique({
-          where: { id: conversationId },
-          include: { participants: true },
-        })
-
-        const otherParticipants =
-          conversation?.participants.filter((p) => p.userId !== userId) ?? []
-
-        for (const other of otherParticipants) {
-          const roomSockets = await io.in(`conversation:${conversationId}`).fetchSockets()
-          const otherInRoom = roomSockets.some((s) => s.data.userId === other.userId)
-
-          if (!otherInRoom) {
-            NotificationService.notifyUser(io, other.userId, {
-              type: "new_message",
-              conversationId,
-              senderName: userId,
-              preview: "📷 Fotoğraf",
-            })
-          }
-        }
+        await NotificationService.notifyAbsentParticipants(io, conversationId, userId, "📷 Fotoğraf")
 
         res.status(201).json({ message, imageUrl })
       } catch (err) {

@@ -45,5 +45,5 @@ export function emitTypingStop(conversationId: string): void {
 }
 
 export function emitMessagesRead(conversationId: string): void {
-  socketInstance?.emit("messages_read", { conversationId })
+  socketInstance?.emit("messages_read", conversationId)
 }

@@ -22,19 +22,23 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     take: parseInt(limit),
   })
 
-  const count = await reportService.countReviewImageReports(filters)
+  const count = await (reportService as any).countReviewImageReports(filters)
 
-  // Attach image URL to each report
-  const reportsWithImages = await Promise.all(
-    reports.map(async (report: any) => {
-      try {
-        const [image] = await reviewImageService.listReviewImages({ id: report.review_image_id })
-        return { ...report, image }
-      } catch {
-        return { ...report, image: null }
-      }
-    })
-  )
+  // Batch fetch all images in a single query (eliminates N+1)
+  const imageIds = reports.map((r: any) => r.review_image_id).filter(Boolean)
+  const allImages = imageIds.length > 0
+    ? await reviewImageService.listReviewImages({ id: imageIds })
+    : []
+
+  const imagesById = (allImages as any[]).reduce((acc: Record<string, any>, img: any) => {
+    acc[img.id] = img
+    return acc
+  }, {})
+
+  const reportsWithImages = reports.map((report: any) => ({
+    ...report,
+    image: imagesById[report.review_image_id] ?? null,
+  }))
 
   res.json({ reports: reportsWithImages, count })
 }

@@ -1,9 +1,14 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { MedusaError } from "@medusajs/framework/utils"
+import { z } from "zod"
 import { REVIEW_IMAGE_MODULE } from "../../../../../modules/review-images"
 import { REVIEW_IMAGE_REPORT_MODULE } from "../../../../../modules/review-image-reports"
 import ReviewImageService from "../../../../../modules/review-images/service"
 import ReviewImageReportService from "../../../../../modules/review-image-reports/service"
+
+const reportImageSchema = z.object({
+  reason: z.string().trim().min(1, "reason is required").max(500, "reason must be 500 characters or fewer"),
+})
 
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
   const customerId = (req as any).auth_context?.actor_id
@@ -12,11 +17,11 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   }
 
   const { id } = req.params
-  const { reason } = req.body as { reason: string }
-
-  if (!reason?.trim()) {
-    throw new MedusaError(MedusaError.Types.INVALID_DATA, "reason is required")
+  const parsed = reportImageSchema.safeParse(req.body)
+  if (!parsed.success) {
+    throw new MedusaError(MedusaError.Types.INVALID_DATA, parsed.error.errors[0].message)
   }
+  const { reason } = parsed.data
 
   const reviewImageService: ReviewImageService = req.scope.resolve(REVIEW_IMAGE_MODULE)
   const reportService: ReviewImageReportService = req.scope.resolve(REVIEW_IMAGE_REPORT_MODULE)

@@ -118,6 +118,23 @@ const sortCustomerGroups = (customerGroups: any[], order: string) => {
   });
 };
 
+export interface SellerMemberRecord {
+  id: string
+  name?: string | null
+  photo?: string | null
+  seller?: { id: string; name: string; photo?: string | null } | null
+}
+
+export const useSellerMembers = () => {
+  const { data, ...rest } = useQuery<{ members: SellerMemberRecord[] }, Error>({
+    queryKey: ["seller-members"],
+    queryFn: () =>
+      sdk.client.fetch("/admin/seller-members", { method: "GET" }),
+    staleTime: 0,
+  })
+  return { members: data?.members ?? [], ...rest }
+}
+
 export const useSellers = (
   query?: Record<string, string | number | string[] | undefined>,
   options?: Omit<
@@ -163,6 +180,33 @@ export const useSeller = (id: string) => {
         },
       }),
   });
+};
+
+/**
+ * Fetch a seller by their URL handle (e.g., "test-magaza").
+ * Fetches all sellers and filters client-side by handle.
+ * (Backend AdminSellerParams does not support a handle filter param.)
+ */
+export const useSellerByHandle = (handle: string | undefined) => {
+  const { data: seller, ...rest } = useQuery<VendorSeller | null>({
+    queryKey: ["seller-by-handle", handle],
+    queryFn: async () => {
+      const res = await sdk.client.fetch<{ sellers: VendorSeller[] }>(
+        "/admin/sellers",
+        {
+          method: "GET",
+          query: {
+            fields:
+              "id,email,name,created_at,store_status,description,handle,phone,address_line,city,country_code,postal_code,tax_id,photo,*members",
+            limit: 200,
+          },
+        }
+      );
+      return res.sellers.find((s) => s.handle === handle) ?? null;
+    },
+    enabled: !!handle,
+  });
+  return { seller: seller ?? undefined, ...rest };
 };
 
 export const useSellerOrders = (

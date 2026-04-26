@@ -3,6 +3,7 @@ import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 import { REVIEW_REPLY_MODULE } from "../../../../../../../modules/review-replies"
 import ReviewReplyService from "../../../../../../../modules/review-replies/service"
 import { notifyMessengerUser } from "../../../../../../../lib/messenger"
+import { enrichRepliesWithCustomerData } from "../../../../../../utils/enrich-replies"
 
 // Helper: resolve seller from vendor auth
 async function resolveSeller(req: MedusaRequest) {
@@ -24,45 +25,13 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 
   const { id: reviewId } = req.params
   const replyService: ReviewReplyService = req.scope.resolve(REVIEW_REPLY_MODULE)
-  const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
 
   const replies = await replyService.listReviewReplies(
     { review_id: reviewId },
     { order: { created_at: "ASC" } }
   )
 
-  // Enrich customer replies with customer names
-  const customerIds = [
-    ...new Set(
-      (replies as any[])
-        .filter((r: any) => r.customer_id)
-        .map((r: any) => r.customer_id)
-    ),
-  ]
-  let customerMap: Record<string, { first_name: string; last_name: string }> = {}
-  if (customerIds.length > 0) {
-    try {
-      const { data: customers } = await query.graph({
-        entity: "customer",
-        fields: ["id", "first_name", "last_name"],
-        filters: { id: customerIds },
-      })
-      for (const c of customers as any[]) {
-        customerMap[c.id] = {
-          first_name: c.first_name || "",
-          last_name: c.last_name || "",
-        }
-      }
-    } catch { /* non-critical */ }
-  }
-
-  const enriched = (replies as any[]).map((r: any) => ({
-    ...r,
-    is_seller_reply: !!r.seller_id,
-    customer: r.customer_id
-      ? (customerMap[r.customer_id] ?? { first_name: "Kullanıcı", last_name: "" })
-      : null,
-  }))
+  const enriched = await enrichRepliesWithCustomerData(replies, req)
 
   return res.json({ replies: enriched, count: enriched.length })
 }

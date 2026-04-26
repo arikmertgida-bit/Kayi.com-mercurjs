@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { ChatBubbleLeftRight, XMark } from "@medusajs/icons"
 import { useMessenger } from "../../../providers/messenger-provider/MessengerProvider"
+import { fetchQuery } from "../../../lib/client"
 import type { Message } from "../../../lib/messenger/types"
 
 function formatTime(iso: string): string {
@@ -40,67 +40,64 @@ function TypingDots() {
 interface MessengerChatProps {
   /** Seller's own id */
   currentUserId: string
-  /** Admin conversation id to connect to on mount */
-  adminConversationId?: string
   /** Optional: override the other party's display name */
   otherName?: string
 }
 
 /**
- * Floating chat drawer for vendor panel.
- * Replaces AdminChat.tsx (TalkJS version).
- * Connects to the admin support conversation for the seller.
+ * Chat panel rendered inside the "Support" drawer in the vendor panel header.
+ * On mount it fetches the real admin user ID from the backend and opens (or creates)
+ * the admin-support conversation automatically.
+ * The floating bottom-right button has been removed — the Drawer handles visibility.
  */
 export function MessengerChat({
   currentUserId,
-  adminConversationId,
   otherName = "Destek",
 }: MessengerChatProps) {
   const {
     messages,
     typingUserIds,
     isLoadingMessages,
-    unreadCount,
     sendMessage,
     uploadImage,
     startTyping,
     stopTyping,
     openConversation,
-    closeConversation,
     startConversation,
   } = useMessenger()
 
-  const [isOpen, setIsOpen] = useState(false)
-  const [convId, setConvId] = useState<string | null>(adminConversationId ?? null)
   const [text, setText] = useState("")
   const [isSending, setIsSending] = useState(false)
+  const [isInitializing, setIsInitializing] = useState(true)
   const bottomRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const initializedRef = useRef(false)
   void typingTimerRef
 
-  // Open / close
-  const handleOpen = useCallback(async () => {
-    setIsOpen(true)
-    let cid = convId
-    if (!cid) {
-      // Create admin-support conversation on first open
-      cid = await startConversation({
-        targetUserId: "admin",
-        targetUserType: "ADMIN",
-        subject: "Satıcı Destek",
+  // ── On mount: fetch real admin ID and open/create support conversation ──
+  useEffect(() => {
+    if (initializedRef.current || !currentUserId) return
+    initializedRef.current = true
+
+    fetchQuery("/vendor/support/admin-contact", { method: "GET" })
+      .then((data: any) => {
+        const adminUserId = data?.adminUserId
+        if (!adminUserId) throw new Error("No admin user found")
+        return startConversation({
+          targetUserId: adminUserId,
+          targetUserType: "ADMIN",
+          subject: "Satıcı Destek",
+        })
       })
-      setConvId(cid)
-    }
-    openConversation(cid)
-  }, [convId, openConversation, startConversation])
+      .then((cid) => {
+        if (cid) openConversation(cid)
+      })
+      .catch(console.error)
+      .finally(() => setIsInitializing(false))
+  }, [currentUserId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleClose = useCallback(() => {
-    setIsOpen(false)
-    closeConversation()
-  }, [closeConversation])
-
-  // Scroll to bottom
+  // ── Scroll to bottom ─────────────────────────────────────────────────────
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages, typingUserIds])
@@ -128,6 +125,8 @@ export function MessengerChat({
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setText(e.target.value)
     startTyping()
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
+    typingTimerRef.current = setTimeout(() => stopTyping(), 3000)
   }
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -144,159 +143,147 @@ export function MessengerChat({
   const myMessages = messages.filter((m: { senderId: string }) => m.senderId === currentUserId)
   const lastMyMessageId = myMessages[myMessages.length - 1]?.id
 
-  // Badge count (only when closed)
-  const badge = !isOpen && unreadCount > 0
+  if (isInitializing && messages.length === 0) {
+    return (
+      <div className="flex justify-center items-center h-full py-12">
+        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
 
   return (
-    <>
-      {/* ── Floating Button ───────────────────────────────────────────── */}
-      {!isOpen && (
-        <button
-          onClick={handleOpen}
-          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-blue-500 hover:bg-blue-600 active:scale-95 transition-all shadow-lg flex items-center justify-center text-white"
-          aria-label="Destek Mesajları"
-        >
-          <ChatBubbleLeftRight className="w-6 h-6" />
-          {badge && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
-              {unreadCount > 9 ? "9+" : unreadCount}
-            </span>
-          )}
-        </button>
-      )}
-
-      {/* ── Chat Drawer ───────────────────────────────────────────────── */}
-      {isOpen && (
-        <div className="fixed bottom-6 right-6 z-50 w-[360px] h-[500px] flex flex-col bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 bg-white">
-            <Avatar name={otherName} size={36} />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900">{otherName}</p>
-              <p className="text-xs text-gray-400">Kayı Destek Ekibi</p>
-            </div>
-            <button
-              onClick={handleClose}
-              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 transition-colors"
-              aria-label="Kapat"
-            >
-              <XMark className="w-4 h-4" />
-            </button>
+    <div className="flex flex-col h-full">
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1 scroll-smooth">
+        {isLoadingMessages ? (
+          <div className="flex justify-center items-center h-full">
+            <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
           </div>
+        ) : messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center py-6">
+            <p className="text-sm text-gray-400">
+              Destek ekibimizle mesajlaşabilirsiniz.
+            </p>
+          </div>
+        ) : (
+          messages.map((msg: Message) => {
+            const isMine = msg.senderId === currentUserId
+            const isNotification = msg.messageType === "NOTIFICATION"
+            const isLastMine = msg.id === lastMyMessageId
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1 scroll-smooth">
-            {isLoadingMessages ? (
-              <div className="flex justify-center items-center h-full">
-                <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-              </div>
-            ) : messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center py-6">
-                <p className="text-sm text-gray-400">
-                  Destek ekibimizle mesajlaşabilirsiniz.
-                </p>
-              </div>
-            ) : (
-              messages.map((msg: Message) => {
-                const isMine = msg.senderId === currentUserId
-                const isNotification = msg.messageType === "NOTIFICATION"
-                const isLastMine = msg.id === lastMyMessageId
+            if (isNotification) {
+              return (
+                <div key={msg.id} className="flex justify-center">
+                  <span className="text-xs text-gray-400 bg-gray-100 rounded-full px-3 py-1">
+                    {msg.content}
+                  </span>
+                </div>
+              )
+            }
 
-                if (isNotification) {
-                  return (
-                    <div key={msg.id} className="flex justify-center">
-                      <span className="text-xs text-gray-400 bg-gray-100 rounded-full px-3 py-1">
-                        {msg.content}
-                      </span>
+            return (
+              <div
+                key={msg.id}
+                className={`flex items-end gap-2 ${isMine ? "flex-row-reverse" : "flex-row"} group`}
+              >
+                {!isMine && <Avatar name={otherName} size={24} />}
+                <div className={`flex flex-col max-w-[72%] ${isMine ? "items-end" : "items-start"}`}>
+                  {msg.messageType === "IMAGE" && msg.imageUrl ? (
+                    <img
+                      src={msg.imageUrl}
+                      alt="Görsel"
+                      className={`rounded-2xl object-cover max-h-48 ${isMine ? "rounded-br-sm" : "rounded-bl-sm"}`}
+                    />
+                  ) : (
+                    <div
+                      className={`px-3.5 py-2 rounded-[20px] text-sm leading-relaxed break-words ${
+                        isMine
+                          ? "bg-blue-500 text-white rounded-br-sm"
+                          : "bg-gray-100 text-gray-900 rounded-bl-sm"
+                      }`}
+                    >
+                      {msg.content}
                     </div>
-                  )
-                }
-
-                return (
+                  )}
                   <div
-                    key={msg.id}
-                    className={`flex items-end gap-2 ${isMine ? "flex-row-reverse" : "flex-row"} group`}
+                    className={`flex items-center gap-1 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity ${
+                      isMine ? "flex-row-reverse" : "flex-row"
+                    }`}
                   >
-                    {!isMine && <Avatar name={otherName} size={24} />}
-                    <div className={`flex flex-col max-w-[72%] ${isMine ? "items-end" : "items-start"}`}>
-                      {msg.messageType === "IMAGE" && msg.imageUrl ? (
-                        <img
-                          src={msg.imageUrl}
-                          alt="Görsel"
-                          className={`rounded-2xl object-cover max-h-48 ${isMine ? "rounded-br-sm" : "rounded-bl-sm"}`}
-                        />
-                      ) : (
-                        <div
-                          className={`px-3.5 py-2 rounded-[20px] text-sm leading-relaxed break-words ${
-                            isMine
-                              ? "bg-blue-500 text-white rounded-br-sm"
-                              : "bg-gray-100 text-gray-900 rounded-bl-sm"
-                          }`}
-                        >
-                          {msg.content}
-                        </div>
-                      )}
-                      <div className={`flex items-center gap-1 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity ${isMine ? "flex-row-reverse" : "flex-row"}`}>
-                        <span className="text-[10px] text-gray-400">{formatTime(msg.createdAt)}</span>
-                        {isMine && isLastMine && (
-                          <span className="text-[10px] text-gray-400">
-                            {msg.readAt ? "Görüldü" : "İletildi"}
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                    <span className="text-[10px] text-gray-400">
+                      {new Date(msg.createdAt).toLocaleTimeString("tr-TR", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                    {isMine && isLastMine && (
+                      <span className="text-[10px] text-gray-400">
+                        {msg.readAt ? "Görüldü" : "İletildi"}
+                      </span>
+                    )}
                   </div>
-                )
-              })
-            )}
-
-            {isOtherTyping && (
-              <div className="flex items-end gap-2">
-                <Avatar name={otherName} size={24} />
-                <div className="bg-gray-100 rounded-[20px] rounded-bl-sm">
-                  <TypingDots />
                 </div>
               </div>
-            )}
-            <div ref={bottomRef} />
-          </div>
+            )
+          })
+        )}
 
-          {/* Input */}
-          <div className="px-3 py-2.5 border-t border-gray-100 bg-white">
-            <div className="flex items-end gap-2 bg-gray-50 rounded-[20px] px-3 py-2 border border-gray-200 focus-within:border-blue-400 transition-colors">
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:text-blue-500 transition-colors flex-shrink-0 mb-0.5"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-              </button>
-              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-              <textarea
-                value={text}
-                onChange={handleTextChange}
-                onKeyDown={handleKeyDown}
-                placeholder="Mesaj yaz..."
-                rows={1}
-                className="flex-1 bg-transparent text-sm text-gray-900 placeholder-gray-400 resize-none outline-none leading-5 max-h-20 overflow-y-auto"
-                style={{ minHeight: "20px" }}
-              />
-              <button
-                type="button"
-                onClick={handleSend}
-                disabled={!text.trim() || isSending}
-                className="w-7 h-7 flex items-center justify-center rounded-full flex-shrink-0 mb-0.5 transition-all disabled:text-gray-300 enabled:text-blue-500 enabled:hover:bg-blue-50"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-              </button>
+        {isOtherTyping && (
+          <div className="flex items-end gap-2">
+            <Avatar name={otherName} size={24} />
+            <div className="bg-gray-100 rounded-[20px] rounded-bl-sm">
+              <TypingDots />
             </div>
           </div>
+        )}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Input */}
+      <div className="px-3 py-2.5 border-t border-gray-100 bg-white">
+        <div className="flex items-end gap-2 bg-gray-50 rounded-[20px] px-3 py-2 border border-gray-200 focus-within:border-blue-400 transition-colors">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:text-blue-500 transition-colors flex-shrink-0 mb-0.5"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.8}
+                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+          <textarea
+            value={text}
+            onChange={handleTextChange}
+            onKeyDown={handleKeyDown}
+            placeholder="Mesaj yaz..."
+            rows={1}
+            className="flex-1 bg-transparent text-sm text-gray-900 placeholder-gray-400 resize-none outline-none leading-5 max-h-20 overflow-y-auto"
+            style={{ minHeight: "20px" }}
+          />
+          <button
+            type="button"
+            onClick={handleSend}
+            disabled={!text.trim() || isSending}
+            className="w-7 h-7 flex items-center justify-center rounded-full flex-shrink-0 mb-0.5 transition-all disabled:text-gray-300 enabled:text-blue-500 enabled:hover:bg-blue-50"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+            </svg>
+          </button>
         </div>
-      )}
-    </>
+      </div>
+    </div>
   )
 }

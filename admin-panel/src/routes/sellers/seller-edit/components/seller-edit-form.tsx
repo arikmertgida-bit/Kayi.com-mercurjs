@@ -1,6 +1,7 @@
-import { Button, Heading, Input, Textarea, toast } from "@medusajs/ui";
+import { Button, Heading, Input, Text, Textarea, toast } from "@medusajs/ui";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
@@ -13,12 +14,33 @@ import { KeyboundForm } from "@components/utilities/keybound-form";
 
 import { useUpdateSeller } from "@hooks/api/sellers";
 
+/** Convert a store name to a URL-safe handle. E.g. "Test Mağaza" → "test-magaza" */
+function toHandle(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    // Turkish-specific replacements before normalization
+    .replace(/ğ/g, "g")
+    .replace(/ü/g, "u")
+    .replace(/ş/g, "s")
+    .replace(/ı/g, "i")
+    .replace(/ö/g, "o")
+    .replace(/ç/g, "c")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/[\s_]+/g, "-")
+    .replace(/-{2,}/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
 type SellerEditFormProps = {
   seller: VendorSeller;
 };
 
 const SellerEditSchema = z.object({
   name: z.string().optional(),
+  handle: z.string().optional(),
   email: z.string().email("Invalid email address"),
   phone: z.string().optional(),
   description: z.string().optional(),
@@ -37,6 +59,7 @@ export const SellerEditForm = ({ seller }: SellerEditFormProps) => {
   const form = useForm<z.infer<typeof SellerEditSchema>>({
     defaultValues: {
       name: seller?.name,
+      handle: seller?.handle || (seller?.name ? toHandle(seller.name) : ""),
       email: seller?.email || "",
       phone: seller?.phone || undefined,
       description: seller?.description || undefined,
@@ -50,6 +73,14 @@ export const SellerEditForm = ({ seller }: SellerEditFormProps) => {
     resolver: zodResolver(SellerEditSchema),
   });
 
+  // Auto-generate handle when name changes
+  const watchedName = form.watch("name");
+  useEffect(() => {
+    if (watchedName) {
+      form.setValue("handle", toHandle(watchedName), { shouldDirty: true });
+    }
+  }, [watchedName, form]);
+
   const { mutateAsync, isPending } = useUpdateSeller();
 
   const handleSubmit = form.handleSubmit(async (data) => {
@@ -58,8 +89,8 @@ export const SellerEditForm = ({ seller }: SellerEditFormProps) => {
       {
         onSuccess: () => {
           toast.success(t("sellers.edit.successToast", { name: data.name ?? data.email }));
-
-          handleSuccess(`/sellers/${seller.id}`);
+          // Navigate using handle if available
+          handleSuccess(`/sellers/${data.handle || seller.handle || seller.id}`);
         },
         onError: (error) => {
           toast.error(error.message);
@@ -91,6 +122,30 @@ export const SellerEditForm = ({ seller }: SellerEditFormProps) => {
                       />
                     </Form.Control>
 
+                    <Form.ErrorMessage />
+                  </Form.Item>
+                );
+              }}
+            />
+
+            <Form.Field
+              control={form.control}
+              name="handle"
+              render={({ field }) => {
+                return (
+                  <Form.Item>
+                    <Form.Label optional>
+                      Handle{" "}
+                      <Text as="span" size="xsmall" className="text-ui-fg-muted">
+                        (URL: /sellers/{field.value || "…"})
+                      </Text>
+                    </Form.Label>
+                    <Form.Control>
+                      <Input
+                        placeholder="ornek-magaza"
+                        {...field}
+                      />
+                    </Form.Control>
                     <Form.ErrorMessage />
                   </Form.Item>
                 );

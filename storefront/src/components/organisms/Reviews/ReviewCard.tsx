@@ -4,6 +4,9 @@ import { Review } from "@/lib/data/reviews"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
 
+// Pre-built star arrays for ratings 0-5, avoiding repeated array allocation per render
+const STAR_ARRAYS: readonly number[][] = [[], [0], [0, 1], [0, 1, 2], [0, 1, 2, 3], [0, 1, 2, 3, 4]]
+
 export const ReviewCard = ({ review }: { review: Review }) => {
   return (
     <Card
@@ -29,7 +32,7 @@ export const ReviewCard = ({ review }: { review: Review }) => {
         >
           <div className="flex gap-3 items-center">
             <div className="flex gap-0.5">
-              {new Array(review.rating).fill("").map((_, index) => (
+              {(STAR_ARRAYS[review.rating] ?? STAR_ARRAYS[5]).map((index) => (
                 <StarIcon className="size-3.5" key={`${review.id}-${index}`} />
               ))}
             </div>

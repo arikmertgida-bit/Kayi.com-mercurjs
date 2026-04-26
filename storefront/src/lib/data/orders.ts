@@ -48,7 +48,18 @@ export const retrieveOrder = async (id: string) => {
     .catch((err) => medusaError(err))
 }
 
-export const createReturnRequest = async (data: any) => {
+export interface CreateReturnRequestInput {
+  order_id: string
+  customer_note?: string
+  shipping_option_id: string | null
+  line_items: Array<{
+    line_item_id: string
+    quantity: number
+    reason_id: string
+  }>
+}
+
+export const createReturnRequest = async (data: CreateReturnRequestInput) => {
   const headers = {
     ...(await getAuthHeaders()),
     "Content-Type": "application/json",

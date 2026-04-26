@@ -1,4 +1,5 @@
 import { Router } from "express"
+import { z } from "zod"
 import { authMiddleware, AuthRequest, resolveIdentity } from "../middleware/auth"
 import { ConversationService } from "../services/conversation.service"
 import { userNameCache } from "../lib/user-cache"
@@ -7,6 +8,16 @@ import prisma from "../lib/prisma"
 
 const router = Router()
 
+const createConversationSchema = z.object({
+  targetUserId: z.string().min(1, "targetUserId is required"),
+  targetUserType: z.enum(["CUSTOMER", "SELLER", "ADMIN"], {
+    errorMap: () => ({ message: "targetUserType must be CUSTOMER, SELLER or ADMIN" }),
+  }),
+  subject: z.string().max(255).optional(),
+  productId: z.string().optional(),
+  orderId: z.string().optional(),
+})
+
 /**
  * POST /api/conversations
  * Find or create a direct conversation between the authenticated user and another participant.
@@ -14,12 +25,13 @@ const router = Router()
 router.post("/", authMiddleware, async (req: AuthRequest, res) => {
   try {
     const { userId, userType } = resolveIdentity(req.auth!)
-    const { targetUserId, targetUserType, subject, productId, orderId } = req.body
 
-    if (!targetUserId || !targetUserType) {
-      res.status(400).json({ error: "targetUserId and targetUserType are required" })
+    const parsed = createConversationSchema.safeParse(req.body)
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.errors[0].message })
       return
     }
+    const { targetUserId, targetUserType, subject, productId, orderId } = parsed.data
 
     const conversation = await ConversationService.findOrCreate({
       participantAId: userId,
@@ -46,7 +58,9 @@ router.post("/", authMiddleware, async (req: AuthRequest, res) => {
 router.get("/", authMiddleware, async (req: AuthRequest, res) => {
   try {
     const { userId } = resolveIdentity(req.auth!)
-    const conversations = await ConversationService.listForUser(userId)
+    const limit = Math.min(parseInt((req.query.limit as string) || "20", 10), 100)
+    const offset = Math.max(parseInt((req.query.offset as string) || "0", 10), 0)
+    const conversations = await ConversationService.listForUser(userId, limit, offset)
     // Enrich each participant with a cached displayName
     const enriched = conversations.map((conv) => ({
       ...conv,
@@ -55,7 +69,7 @@ router.get("/", authMiddleware, async (req: AuthRequest, res) => {
         displayName: userNameCache.get(p.userId) ?? null,
       })),
     }))
-    res.json({ conversations: enriched })
+    res.json({ conversations: enriched, limit, offset })
   } catch (err) {
     console.error("[conversations] GET /", err)
     res.status(500).json({ error: "Internal server error" })
@@ -125,7 +139,7 @@ const TURKISH_HOLIDAYS = new Set([
   "2027-04-23",
   "2027-05-01",
   "2027-05-19",
-  "2027-05-17", "2027-05-18", "2027-05-19", "2027-05-20", // Kurban Bayramı
+  "2027-05-26", "2027-05-27", "2027-05-28", "2027-05-29", // Kurban Bayramı (approx.)
   "2027-07-15",
   "2027-08-30",
   "2027-10-29",
@@ -145,10 +159,10 @@ function turkeyDateKey(turkeyDate: Date): string {
 
 function isWorkingDay(utcDate: Date): boolean {
   const turkey = toTurkeyDate(utcDate)
-  const day = turkey.getUTCDay() // 0=Sunday
-  if (day === 0) return false // Sunday off
+  const day = turkey.getUTCDay() // 0=Sunday, 6=Saturday
+  if (day === 0 || day === 6) return false // Weekend off
   if (TURKISH_HOLIDAYS.has(turkeyDateKey(turkey))) return false
-  return true // Mon-Sat, not holiday
+  return true // Mon-Fri, not holiday
 }
 
 /** Minutes elapsed since midnight (Turkey time) */
@@ -237,12 +251,14 @@ router.get("/seller/:sellerId/response-time", async (req, res) => {
       return
     }
 
-    // Get messages from these conversations, ordered by time
+    // Get the 200 most recent messages; sufficient for response-time sampling
     const messages = await prisma.message.findMany({
       where: { conversationId: { in: conversationIds } },
-      orderBy: { createdAt: "asc" },
+      orderBy: { createdAt: "desc" },
+      take: 200,
       select: { id: true, conversationId: true, senderId: true, createdAt: true },
     })
+    messages.reverse() // restore chronological order for the algorithm
 
     // Group messages by conversation
     const byConversation = new Map<string, typeof messages>()

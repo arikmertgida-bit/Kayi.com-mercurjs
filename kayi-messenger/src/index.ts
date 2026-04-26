@@ -15,7 +15,7 @@ import prisma from "./lib/prisma"
 
 const PORT = parseInt(process.env.PORT || "4000", 10)
 
-const CORS_ORIGINS = (process.env.CORS_ORIGINS || "http://localhost:3000,http://localhost:7001")
+const CORS_ORIGINS = (process.env.CORS_ORIGINS || "http://localhost:3000,http://localhost:5173,http://localhost:7001")
   .split(",")
   .map((o) => o.trim())
 
@@ -30,6 +30,12 @@ app.use(
 )
 
 app.use(express.json({ limit: "1mb" }))
+
+// Ensure UTF-8 charset on all JSON responses
+app.use((_req, res, next) => {
+  res.setHeader("Content-Type", "application/json; charset=utf-8")
+  next()
+})
 
 // Health check — no auth required
 app.get("/health", (_req, res) => {
@@ -118,3 +124,24 @@ main().catch((err) => {
   console.error("[kayi-messenger] Startup error:", err)
   process.exit(1)
 })
+
+// ── Graceful Shutdown ──────────────────────────────────────────────────────
+async function shutdown(signal: string) {
+  console.log(`[kayi-messenger] Received ${signal}, shutting down gracefully…`)
+  try {
+    // Stop accepting new connections; let in-flight requests finish (30 s max)
+    await new Promise<void>((resolve, reject) => {
+      httpServer.close((err) => (err ? reject(err) : resolve()))
+      setTimeout(() => resolve(), 30_000)
+    })
+    await prisma.$disconnect()
+    console.log("[kayi-messenger] Shutdown complete")
+    process.exit(0)
+  } catch (err) {
+    console.error("[kayi-messenger] Error during shutdown:", err)
+    process.exit(1)
+  }
+}
+
+process.on("SIGTERM", () => shutdown("SIGTERM"))
+process.on("SIGINT", () => shutdown("SIGINT"))

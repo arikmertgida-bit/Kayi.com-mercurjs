@@ -1,9 +1,8 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys, MedusaError, Modules } from "@medusajs/framework/utils"
 import { notifyMessengerUser } from "../../../lib/messenger"
+import { DEV_BYPASS_EMAIL, DEV_BYPASS_ORDER_ID } from "./constants"
 
-const DEV_BYPASS_EMAIL = "cyclo@gmail.com"
-const DEV_BYPASS_ORDER_ID = "__dev_bypass_order__"
 const REVIEW_MODULE = "review"
 const SELLER_MODULE = "seller"
 const DEFAULT_FIELDS = [

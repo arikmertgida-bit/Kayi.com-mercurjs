@@ -43,28 +43,42 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const likeService: ReviewLikeService = req.scope.resolve(REVIEW_LIKE_MODULE)
   const customerId = (req as any).auth_context?.actor_id
 
+  // Batch fetch images and likes for all reviews in two queries (eliminates N+1)
+  const reviewIds = reviews.map((r: any) => r.id).filter(Boolean)
+
+  const [allImages, allLikes] = reviewIds.length > 0
+    ? await Promise.all([
+        reviewImageService.listReviewImages({ review_id: reviewIds, is_hidden: false }),
+        likeService.listReviewLikes({ review_id: reviewIds }),
+      ])
+    : [[], []]
+
+  const imagesByReview = (allImages as any[]).reduce((acc: Record<string, any[]>, img: any) => {
+    acc[img.review_id] = acc[img.review_id] ?? []
+    acc[img.review_id].push(img)
+    return acc
+  }, {})
+
+  const likesByReview = (allLikes as any[]).reduce((acc: Record<string, any[]>, like: any) => {
+    acc[like.review_id] = acc[like.review_id] ?? []
+    acc[like.review_id].push(like)
+    return acc
+  }, {})
+
   // Attach visible images + likes to each review
-  const reviewsWithImages = await Promise.all(
-    (reviews || []).map(async (review: any) => {
-      try {
-        const [images, allLikes] = await Promise.all([
-          reviewImageService.listReviewImages({ review_id: review.id, is_hidden: false }),
-          likeService.listReviewLikes({ review_id: review.id }),
-        ])
-        const likes_count = allLikes.length
-        const is_liked_by_me = customerId
-          ? allLikes.some((l: any) => l.customer_id === customerId)
-          : false
-        const avatar_url = (review.customer?.metadata as any)?.avatar_url ?? undefined
-        const enrichedCustomer = review.customer
-          ? { ...review.customer, avatar_url }
-          : review.customer
-        return { ...review, customer: enrichedCustomer, images, likes_count, is_liked_by_me }
-      } catch {
-        return { ...review, images: [], likes_count: 0, is_liked_by_me: false }
-      }
-    })
-  )
+  const reviewsWithImages = reviews.map((review: any) => {
+    const images = imagesByReview[review.id] ?? []
+    const reviewLikes = likesByReview[review.id] ?? []
+    const likes_count = reviewLikes.length
+    const is_liked_by_me = customerId
+      ? reviewLikes.some((l: any) => l.customer_id === customerId)
+      : false
+    const avatar_url = (review.customer?.metadata as any)?.avatar_url ?? undefined
+    const enrichedCustomer = review.customer
+      ? { ...review.customer, avatar_url }
+      : review.customer
+    return { ...review, customer: enrichedCustomer, images, likes_count, is_liked_by_me }
+  })
 
   const count = reviewsWithImages.length
   const average_rating =

@@ -124,7 +124,11 @@ export function MessengerProvider({ children, sellerId, sellerName }: MessengerP
 
     const onMessage = (msg: Message) => {
       if (msg.conversationId === activeConvRef.current) {
-        setMessages((prev) => [...prev, msg])
+        setMessages((prev) => {
+          // Deduplicate: skip if already present (e.g. from optimistic update)
+          if (prev.some((m) => m.id === msg.id)) return prev
+          return [...prev, msg]
+        })
         emitMessagesRead(msg.conversationId)
       } else {
         setUnreadCount((n) => n + 1)
@@ -231,7 +235,12 @@ export function MessengerProvider({ children, sellerId, sellerName }: MessengerP
 
   const sendMessage = useCallback(async (content: string) => {
     if (!activeConvRef.current) return
-    await apiSendMessage(activeConvRef.current, content)
+    const { message } = await apiSendMessage(activeConvRef.current, content)
+    // Optimistically add to UI — socket deduplication prevents duplicates
+    setMessages((prev) => {
+      if (prev.some((m) => m.id === message.id)) return prev
+      return [...prev, message]
+    })
   }, [])
 
   const uploadImage = useCallback(async (file: File) => {

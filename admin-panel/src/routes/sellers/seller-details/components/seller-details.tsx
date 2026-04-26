@@ -8,6 +8,7 @@ import type { VendorSeller } from "@custom-types/seller";
 
 import {
   useSeller,
+  useSellerByHandle,
   useSellerCustomerGroups,
   useSellerOrders,
   useSellerProducts,
@@ -26,7 +27,19 @@ const PRODUCT_PREFIX = "sp";
 const CUSTOMER_GROUP_PREFIX = "scg";
 
 export const SellerDetails = () => {
-  const { id } = useParams();
+  const { id: routeParam } = useParams();
+
+  // Detect whether the route param is a seller ID (sel_ prefix) or a handle
+  const isId = routeParam?.startsWith("sel_");
+  const id = isId ? routeParam : undefined;
+  const handle = isId ? undefined : routeParam;
+
+  // Fetch by handle when needed, then redirect to keep canonical URL as handle
+  const { seller: sellerByHandle, isLoading: handleLoading } =
+    useSellerByHandle(handle);
+
+  // Once we resolve handle → ID, use that ID for the rest of the queries
+  const resolvedId = id ?? sellerByHandle?.id ?? "";
 
   const { searchParams: orderSearchParams } = useSellerOrdersTableQuery({
     pageSize: PAGE_SIZE,
@@ -48,10 +61,10 @@ export const SellerDetails = () => {
     },
   );
 
-  const { data, isLoading } = useSeller(id!);
+  const { data, isLoading } = useSeller(resolvedId);
 
   const { data: orders, isLoading: ordersLoading } = useSellerOrders(
-    id!,
+    resolvedId,
     {
       fields:
         "id,display_id,created_at,updated_at,*customer,currency_code,total,fulfillment_status,payment_status,status,region_id,sales_channel_id",
@@ -64,7 +77,7 @@ export const SellerDetails = () => {
     isLoading: productsLoading,
     refetch: productsRefetch,
   } = useSellerProducts(
-    id!,
+    resolvedId,
     {
       fields:
         "*collection,+type_id,+tag_id,+sales_channel_id,+status,+created_at,+updated_at",
@@ -77,13 +90,24 @@ export const SellerDetails = () => {
     isLoading: customerGroupsLoading,
     refetch: customerGroupsRefetch,
   } = useSellerCustomerGroups(
-    id!,
+    resolvedId,
     {
       fields: "id,name,description,created_at,updated_at,*customers",
     },
     customerGroupSearchParams,
   );
 
+  // While handle is being resolved
+  if (handleLoading) {
+    return <div>Loading...</div>;
+  }
+
+  // Handle given but no seller found with that handle
+  if (handle && !resolvedId) {
+    return <div>Seller not found</div>;
+  }
+
+  // Data loading
   if (isLoading || ordersLoading || productsLoading || customerGroupsLoading) {
     return <div>Loading...</div>;
   }
@@ -102,7 +126,7 @@ export const SellerDetails = () => {
         }
         refetch={customerGroupsRefetch}
       />
-      <SellerStockLocationsSection sellerId={id!} />
+      <SellerStockLocationsSection sellerId={resolvedId} />
     </>
   );
 };

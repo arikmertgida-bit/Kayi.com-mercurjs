@@ -46,7 +46,7 @@ export const SellersList = () => {
 
   const { sellers, count, isLoading } = useSellers(
     {
-      fields: "id,email,name,created_at,store_status",
+      fields: "id,email,name,handle,created_at,store_status",
       ...searchParams,
     },
     {
@@ -135,7 +135,7 @@ export const SellersList = () => {
           queryObject={raw}
           search
           pagination
-          navigateTo={(row) => `/sellers/${row.id}`}
+          navigateTo={(row) => `/sellers/${row.original?.handle || row.id}`}
           orderBy={[
             { key: "email", label: "Email" },
             { key: "name", label: "Name" },
@@ -196,7 +196,7 @@ const useColumns = () => {
               actions={[
                 {
                   label: "Edit",
-                  onClick: () => navigate(`/sellers/${row.original.id}/edit`),
+                  onClick: () => navigate(`/sellers/${row.original.handle || row.original.id}/edit`),
                   icon: <PencilSquare />,
                 },
                 {

@@ -17,6 +17,8 @@ interface MessengerChatBoxProps {
   currentUserId: string
   /** Current authenticated user's display name */
   currentUserName: string
+  /** Current authenticated user's profile photo */
+  currentUserAvatarUrl?: string | null
   conversationId: string
   onClose: () => void
 }
@@ -78,6 +80,7 @@ function MessageBubble({
   isFirstMine,
   otherUser,
   currentUserName,
+  currentUserAvatarUrl,
 }: {
   message: Message
   isMine: boolean
@@ -87,6 +90,8 @@ function MessageBubble({
   isFirstMine: boolean
   otherUser: MessengerChatBoxProps["otherUser"]
   currentUserName: string
+  currentUserAvatarUrl?: string | null
+  currentUserAvatarUrl?: string | null
 }) {
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const isImage = message.messageType === "IMAGE"
@@ -119,7 +124,7 @@ function MessageBubble({
       {isMine && (
         <div className="mb-1 flex-shrink-0">
           {showAvatarMine ? (
-            <Avatar name={currentUserName} size={28} gradient="from-blue-400 to-indigo-500" />
+            <Avatar src={currentUserAvatarUrl} name={currentUserName} size={28} gradient="from-blue-400 to-indigo-500" />
           ) : (
             <div className="w-7" />
           )}
@@ -204,6 +209,7 @@ export function MessengerChatBox({
   otherUser,
   currentUserId,
   currentUserName,
+  currentUserAvatarUrl,
   conversationId,
   onClose,
 }: MessengerChatBoxProps) {
@@ -339,6 +345,7 @@ export function MessengerChatBox({
                 isFirstMine={isFirstInGroup && isMine}
                 otherUser={otherUser}
                 currentUserName={currentUserName}
+                currentUserAvatarUrl={currentUserAvatarUrl}
               />
             )
           })

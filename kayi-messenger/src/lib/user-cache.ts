@@ -4,7 +4,17 @@
  * Also persisted to UserProfile table for cross-restart durability.
  * Used for push notification enrichment and participant listing.
  */
+const MAX_DISPLAY_NAME_CACHE = 10_000
 export const userNameCache = new Map<string, string>()
+
+/** Bounded FIFO insertion — evicts oldest entry when the cache limit is reached */
+function cacheSet(userId: string, name: string): void {
+  if (userNameCache.size >= MAX_DISPLAY_NAME_CACHE) {
+    const firstKey = userNameCache.keys().next().value
+    if (firstKey !== undefined) userNameCache.delete(firstKey)
+  }
+  userNameCache.set(userId, name)
+}
 
 import prisma from "./prisma"
 import type { UserType } from "@prisma/client"
@@ -20,7 +30,7 @@ export async function setDisplayName(
   displayName: string,
   userType: UserType
 ): Promise<void> {
-  userNameCache.set(userId, displayName)
+  cacheSet(userId, displayName)
   try {
     await prisma.userProfile.upsert({
       where: { userId },
@@ -45,7 +55,7 @@ export async function resolveDisplayName(userId: string): Promise<string> {
   try {
     const profile = await prisma.userProfile.findUnique({ where: { userId } })
     if (profile?.displayName) {
-      userNameCache.set(userId, profile.displayName)
+      cacheSet(userId, profile.displayName)
       return profile.displayName
     }
   } catch {
@@ -64,7 +74,7 @@ export async function resolveDisplayName(userId: string): Promise<string> {
       const data = (await res.json()) as { userId: string; displayName: string }
       if (data.displayName && data.displayName !== userId) {
         // Persist to cache + DB so future lookups are instant
-        userNameCache.set(userId, data.displayName)
+        cacheSet(userId, data.displayName)
         try {
           const userType: UserType = userId.startsWith("cus_") ? "CUSTOMER" : "SELLER"
           await prisma.userProfile.upsert({

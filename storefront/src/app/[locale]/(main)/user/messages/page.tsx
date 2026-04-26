@@ -13,10 +13,12 @@ export default async function MessagesPage() {
     user.email ||
     "Ben"
 
+  const avatarUrl = ((user.metadata as any)?.avatar_url as string) ?? null
+
   return (
     <main className="container">
       <div className="mt-6 space-y-8">
-        <UserMessagesSection currentUserId={user.id} currentUserName={currentUserName} />
+        <UserMessagesSection currentUserId={user.id} currentUserName={currentUserName} currentUserAvatarUrl={avatarUrl} />
       </div>
     </main>
   )

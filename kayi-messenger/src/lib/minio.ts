@@ -4,12 +4,22 @@ const endpoint = process.env.MINIO_ENDPOINT || "localhost"
 const port = parseInt(process.env.MINIO_PORT || "9000", 10)
 const useSSL = process.env.MINIO_USE_SSL === "true"
 
+const accessKey = process.env.MINIO_ACCESS_KEY
+const secretKey = process.env.MINIO_SECRET_KEY
+
+if (!accessKey || !secretKey) {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("[minio] MINIO_ACCESS_KEY and MINIO_SECRET_KEY must be set in production")
+  }
+  console.warn("[minio] WARNING: MINIO_ACCESS_KEY / MINIO_SECRET_KEY not set — using dev defaults")
+}
+
 export const minioClient = new Minio.Client({
   endPoint: endpoint,
   port,
   useSSL,
-  accessKey: process.env.MINIO_ACCESS_KEY || "minioadmin",
-  secretKey: process.env.MINIO_SECRET_KEY || "minioadmin123",
+  accessKey: accessKey ?? "minioadmin",
+  secretKey: secretKey ?? "minioadmin123",
 })
 
 export const BUCKET = process.env.MINIO_BUCKET || "medusa-media"

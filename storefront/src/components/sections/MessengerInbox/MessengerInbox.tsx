@@ -24,13 +24,26 @@ function formatRelativeTime(iso: string): string {
   return `${days} g`
 }
 
-function Avatar({ name, size = 48 }: { name: string; size?: number }) {
+function Avatar({ src, name, size = 48 }: { src?: string | null; name: string; size?: number }) {
   const initials = name
     .split(" ")
     .map((n) => n[0])
     .join("")
     .toUpperCase()
     .slice(0, 2)
+
+  if (src) {
+    return (
+      <Image
+        src={src}
+        alt={name}
+        width={size}
+        height={size}
+        className="rounded-full object-cover flex-shrink-0"
+        style={{ width: size, height: size }}
+      />
+    )
+  }
 
   return (
     <div
@@ -101,9 +114,10 @@ function ConversationListItem({
 interface MessengerInboxProps {
   currentUserId: string
   currentUserName: string
+  currentUserAvatarUrl?: string | null
 }
 
-export function MessengerInbox({ currentUserId, currentUserName }: MessengerInboxProps) {
+export function MessengerInbox({ currentUserId, currentUserName, currentUserAvatarUrl }: MessengerInboxProps) {
   const {
     conversations,
     activeConversationId,
@@ -187,6 +201,7 @@ export function MessengerInbox({ currentUserId, currentUserName }: MessengerInbo
             conversationId={activeConversationId}
             currentUserId={currentUserId}
             currentUserName={currentUserName}
+            currentUserAvatarUrl={currentUserAvatarUrl}
             otherUser={{
               id: otherParticipant.userId,
               name: otherParticipant.displayName ?? otherParticipant.userId,

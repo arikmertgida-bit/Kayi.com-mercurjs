@@ -9,6 +9,15 @@ RUN pnpm install
 
 COPY . .
 
+# Build Medusa application at image build time (not at container start)
+RUN pnpm build
+
+# Run as non-root user
+# Ownership is set before switching; pnpm start needs write access to .medusa/
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup \
+    && chown -R appuser:appgroup /app
+USER appuser
+
 EXPOSE 9000
 
-CMD ["sh", "-c", "npx medusa db:generate reviewLike reviewImage reviewImageReport reviewReply && npx medusa db:migrate && npx tsx src/scripts/ensure-columns.ts && pnpm dev"]
+CMD ["sh", "-c", "npx medusa db:migrate && npx tsx src/scripts/ensure-columns.ts && pnpm start"]

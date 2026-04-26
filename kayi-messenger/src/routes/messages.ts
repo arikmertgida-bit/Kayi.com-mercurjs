@@ -1,9 +1,20 @@
 import { Router } from "express"
+import rateLimit from "express-rate-limit"
 import { Server as SocketServer } from "socket.io"
 import { authMiddleware, AuthRequest, resolveIdentity } from "../middleware/auth"
+import { requireConversationParticipant } from "../middleware/conversation-participant"
 import { MessageService } from "../services/message.service"
 import { NotificationService } from "../services/notification.service"
-import prisma from "../lib/prisma"
+
+// 30 messages per minute per authenticated user
+const messageSendLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => (req as AuthRequest).auth?.sub ?? req.ip ?? "unknown",
+  message: { error: "Too many messages. Please slow down." },
+})
 
 export function createMessageRouter(io: SocketServer) {
   const router = Router()
@@ -13,22 +24,12 @@ export function createMessageRouter(io: SocketServer) {
    * Returns paginated messages for a conversation.
    * Requires the user to be a participant.
    */
-  router.get("/:id/messages", authMiddleware, async (req: AuthRequest, res) => {
+  router.get("/:id/messages", authMiddleware, requireConversationParticipant, async (req: AuthRequest, res) => {
     try {
       const { userId } = resolveIdentity(req.auth!)
-      const { id: conversationId } = req.params
+      const conversationId = (req as any).conversationId as string
       const cursor = req.query.cursor as string | undefined
       const limit = Math.min(parseInt(req.query.limit as string || "30", 10), 100)
-
-      // Verify participation
-      const participant = await prisma.conversationParticipant.findUnique({
-        where: { conversationId_userId: { conversationId, userId } },
-      })
-
-      if (!participant) {
-        res.status(403).json({ error: "Not a participant of this conversation" })
-        return
-      }
 
       const messages = await MessageService.list(conversationId, cursor, limit)
       res.json({ messages })
@@ -42,10 +43,10 @@ export function createMessageRouter(io: SocketServer) {
    * POST /api/conversations/:id/messages
    * Send a text message. Image messages go through /api/upload instead.
    */
-  router.post("/:id/messages", authMiddleware, async (req: AuthRequest, res) => {
+  router.post("/:id/messages", authMiddleware, messageSendLimiter, requireConversationParticipant, async (req: AuthRequest, res) => {
     try {
       const { userId, userType } = resolveIdentity(req.auth!)
-      const { id: conversationId } = req.params
+      const conversationId = (req as any).conversationId as string
       const { content } = req.body
 
       if (!content || typeof content !== "string" || content.trim().length === 0) {
@@ -53,13 +54,8 @@ export function createMessageRouter(io: SocketServer) {
         return
       }
 
-      // Verify participation
-      const participant = await prisma.conversationParticipant.findUnique({
-        where: { conversationId_userId: { conversationId, userId } },
-      })
-
-      if (!participant) {
-        res.status(403).json({ error: "Not a participant of this conversation" })
+      if (content.trim().length > 10_000) {
+        res.status(400).json({ error: "Message too long (max 10,000 characters)" })
         return
       }
 
@@ -75,27 +71,7 @@ export function createMessageRouter(io: SocketServer) {
       io.to(`conversation:${conversationId}`).emit("message_received", message)
 
       // Notify participants who are not in the room (offline/background)
-      const conversation = await prisma.conversation.findUnique({
-        where: { id: conversationId },
-        include: { participants: true },
-      })
-
-      const otherParticipants =
-        conversation?.participants.filter((p) => p.userId !== userId) ?? []
-
-      for (const other of otherParticipants) {
-        const roomSockets = await io.in(`conversation:${conversationId}`).fetchSockets()
-        const otherInRoom = roomSockets.some((s) => s.data.userId === other.userId)
-
-        if (!otherInRoom) {
-          NotificationService.notifyUser(io, other.userId, {
-            type: "new_message",
-            conversationId,
-            senderName: userId,
-            preview: content.trim().slice(0, 60),
-          })
-        }
-      }
+      await NotificationService.notifyAbsentParticipants(io, conversationId, userId, content.trim().slice(0, 60))
 
       res.status(201).json({ message })
     } catch (err) {

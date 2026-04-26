@@ -15,32 +15,31 @@ export const MessageService = {
    * Creates a new message and increments unread counts for all other participants.
    */
   async create(input: CreateMessageInput) {
-    const message = await prisma.message.create({
-      data: {
-        conversationId: input.conversationId,
-        senderId: input.senderId,
-        senderType: input.senderType,
-        content: input.content,
-        messageType: input.messageType ?? MessageType.TEXT,
-        imageUrl: input.imageUrl,
-      },
-    })
-
-    // Bump conversation updatedAt
-    await prisma.conversation.update({
-      where: { id: input.conversationId },
-      data: { updatedAt: new Date() },
-    })
-
-    // Increment unread count for all OTHER participants
-    await prisma.conversationParticipant.updateMany({
-      where: {
-        conversationId: input.conversationId,
-        userId: { not: input.senderId },
-      },
-      data: { unreadCount: { increment: 1 } },
-    })
-
+    const [message] = await prisma.$transaction([
+      prisma.message.create({
+        data: {
+          conversationId: input.conversationId,
+          senderId: input.senderId,
+          senderType: input.senderType,
+          content: input.content,
+          messageType: input.messageType ?? MessageType.TEXT,
+          imageUrl: input.imageUrl,
+        },
+      }),
+      // Bump conversation updatedAt
+      prisma.conversation.update({
+        where: { id: input.conversationId },
+        data: { updatedAt: new Date() },
+      }),
+      // Increment unread count for all OTHER participants
+      prisma.conversationParticipant.updateMany({
+        where: {
+          conversationId: input.conversationId,
+          userId: { not: input.senderId },
+        },
+        data: { unreadCount: { increment: 1 } },
+      }),
+    ])
     return message
   },
 

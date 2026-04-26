@@ -1,8 +1,15 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 
+if (!process.env.MESSENGER_INTERNAL_SECRET) {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("[messenger-internal] MESSENGER_INTERNAL_SECRET env variable must be set in production")
+  }
+  console.warn("[messenger-internal] WARNING: MESSENGER_INTERNAL_SECRET is not set — using insecure default.")
+}
+
 const MESSENGER_INTERNAL_SECRET =
-  process.env.MESSENGER_INTERNAL_SECRET || "kayi-internal-secret"
+  process.env.MESSENGER_INTERNAL_SECRET ?? "kayi-internal-secret"
 
 /**
  * GET /store/messenger-internal/user-name/:userId

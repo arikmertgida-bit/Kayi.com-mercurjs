@@ -1,5 +1,5 @@
 import prisma from "../lib/prisma"
-import { ConversationType, UserType } from "@prisma/client"
+import { ConversationType, Prisma, UserType } from "@prisma/client"
 
 export interface FindOrCreateConversationInput {
   participantAId: string
@@ -20,56 +20,60 @@ export const ConversationService = {
   async findOrCreate(input: FindOrCreateConversationInput) {
     const { participantAId, participantAType, participantBId, participantBType, subject, productId, orderId, type } = input
 
-    // Try to find existing conversation with both participants
-    const existing = await prisma.conversation.findFirst({
-      where: {
-        type: type ?? ConversationType.DIRECT,
-        ...(productId ? { productId } : {}),
-        ...(orderId ? { orderId } : {}),
-        participants: {
-          every: {
-            userId: { in: [participantAId, participantBId] },
+    return prisma.$transaction(async (tx) => {
+      // Try to find existing conversation with both participants.
+      // Running inside a SERIALIZABLE transaction prevents a race condition
+      // where two concurrent requests both see no conversation and both insert.
+      const existing = await tx.conversation.findFirst({
+        where: {
+          type: type ?? ConversationType.DIRECT,
+          ...(productId ? { productId } : {}),
+          ...(orderId ? { orderId } : {}),
+          participants: {
+            every: {
+              userId: { in: [participantAId, participantBId] },
+            },
           },
         },
-      },
-      include: {
-        participants: true,
-        messages: {
-          orderBy: { createdAt: "desc" },
-          take: 1,
+        include: {
+          participants: true,
+          messages: {
+            orderBy: { createdAt: "desc" },
+            take: 1,
+          },
         },
-      },
-    })
+      })
 
-    if (existing && existing.participants.length === 2) {
-      return existing
-    }
+      if (existing && existing.participants.length === 2) {
+        return existing
+      }
 
-    // Create new conversation
-    return prisma.conversation.create({
-      data: {
-        type: type ?? ConversationType.DIRECT,
-        subject,
-        productId,
-        orderId,
-        participants: {
-          create: [
-            { userId: participantAId, userType: participantAType },
-            { userId: participantBId, userType: participantBType },
-          ],
+      return tx.conversation.create({
+        data: {
+          type: type ?? ConversationType.DIRECT,
+          subject,
+          productId,
+          orderId,
+          participants: {
+            create: [
+              { userId: participantAId, userType: participantAType },
+              { userId: participantBId, userType: participantBType },
+            ],
+          },
         },
-      },
-      include: {
-        participants: true,
-        messages: true,
-      },
-    })
+        include: {
+          participants: true,
+          messages: true,
+        },
+      })
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable })
   },
 
   /**
-   * Returns all conversations for a given user with last message and unread count.
+   * Returns conversations for a given user with last message and unread count.
+   * Supports pagination via limit/offset to prevent unbounded queries.
    */
-  async listForUser(userId: string) {
+  async listForUser(userId: string, limit = 20, offset = 0) {
     return prisma.conversation.findMany({
       where: {
         participants: {
@@ -84,6 +88,8 @@ export const ConversationService = {
         },
       },
       orderBy: { updatedAt: "desc" },
+      take: limit,
+      skip: offset,
     })
   },
 

@@ -2,6 +2,7 @@ import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 import { REVIEW_REPLY_MODULE } from "../../../modules/review-replies"
 import ReviewReplyService from "../../../modules/review-replies/service"
+import { enrichRepliesWithCustomerData } from "../../utils/enrich-replies"
 
 // GET /store/review-replies?review_id=xxx  — public
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
@@ -18,38 +19,9 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     { order: { created_at: "ASC" } }
   )
 
-  // Enrich with customer names
-  const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
-  const customerIds = [...new Set(replies.map((r: any) => r.customer_id).filter(Boolean))]
-
-  let customerMap: Record<string, { first_name: string; last_name: string }> = {}
-
-  if (customerIds.length > 0) {
-    try {
-      const { data: customers } = await query.graph({
-        entity: "customer",
-        fields: ["id", "first_name", "last_name", "metadata"],
-        filters: { id: customerIds },
-      })
-      for (const c of customers as any[]) {
-        customerMap[c.id] = {
-          first_name: c.first_name || "",
-          last_name: c.last_name || "",
-          avatar_url: (c.metadata as any)?.avatar_url ?? undefined,
-        }
-      }
-    } catch {
-      // Non-critical — return replies without names
-    }
-  }
-
   const customerId = (req as any).auth_context?.actor_id
-  const enriched = replies.map((r: any) => ({
+  const enriched = (await enrichRepliesWithCustomerData(replies, req)).map((r) => ({
     ...r,
-    is_seller_reply: !!r.seller_id,
-    customer: r.customer_id
-      ? (customerMap[r.customer_id] ?? { first_name: "Kullanıcı", last_name: "" })
-      : null,
     is_liked_by_me: customerId
       ? ((r.liked_by_ids as string[] | null) ?? []).includes(customerId)
       : false,
