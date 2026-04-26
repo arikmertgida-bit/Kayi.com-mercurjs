@@ -71,14 +71,14 @@ export const ConversationService = {
 
   /**
    * Returns conversations for a given user with last message and unread count.
+   * Filters out conversations the user has hidden.
    * Supports pagination via limit/offset to prevent unbounded queries.
    */
   async listForUser(userId: string, limit = 20, offset = 0) {
     return prisma.conversation.findMany({
       where: {
-        participants: {
-          some: { userId },
-        },
+        participants: { some: { userId } },
+        hides: { none: { userId } },
       },
       include: {
         participants: true,
@@ -91,6 +91,33 @@ export const ConversationService = {
       take: limit,
       skip: offset,
     })
+  },
+
+  /**
+   * Hides a conversation for a specific user (soft delete — "Sadece Benden Sil").
+   * The conversation still exists for other participants.
+   */
+  async hideForUser(conversationId: string, userId: string) {
+    await prisma.conversationHide.upsert({
+      where: { conversationId_userId: { conversationId, userId } },
+      create: { conversationId, userId },
+      update: {},
+    })
+  },
+
+  /**
+   * Hard-deletes a conversation and all its messages ("Herkesten Sil").
+   * Only the conversation owner / a participant can call this.
+   */
+  async deleteForAll(conversationId: string, requesterId: string) {
+    // Verify requester is a participant
+    const participant = await prisma.conversationParticipant.findFirst({
+      where: { conversationId, userId: requesterId },
+    })
+    if (!participant) {
+      throw new Error("NOT_PARTICIPANT")
+    }
+    await prisma.conversation.delete({ where: { id: conversationId } })
   },
 
   /**

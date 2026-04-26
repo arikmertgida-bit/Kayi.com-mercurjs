@@ -12,6 +12,10 @@ module.exports = defineConfig({
         min: 2,
         max: 10,
         idleTimeoutMillis: 30000,
+        // Bekleyen istek bir bağlantı edinemezse 30sn sonra fail-fast yap (sonsuz queue yerine)
+        acquireTimeoutMillis: 30000,
+        // Yeni bağlantı kurulumu 5sn içinde tamamlanmazsa hızla hata döndür
+        createTimeoutMillis: 5000,
       },
     },
     ...(process.env.REDIS_URL ? { redisUrl: process.env.REDIS_URL } : {}),

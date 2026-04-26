@@ -15,7 +15,7 @@ const nextConfig: NextConfig = {
     },
   },
   images: {
-    unoptimized: true,
+    unoptimized: process.env.NEXT_IMAGE_UNOPTIMIZED !== "false",
     remotePatterns: [
       {
         protocol: "https",

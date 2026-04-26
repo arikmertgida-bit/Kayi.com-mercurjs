@@ -92,6 +92,7 @@ export const MegaMenu = ({ categories }: { categories: Category[] }) => {
                   src={activeCategory.metadata.thumbnail as string}
                   alt={activeCategory.name}
                   fill
+                  sizes="600px"
                   className="object-cover object-top"
                 />
               </div>

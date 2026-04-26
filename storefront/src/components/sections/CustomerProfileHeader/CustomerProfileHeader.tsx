@@ -96,9 +96,9 @@ export const CustomerProfileHeader = ({
           src={coverUrl}
           alt="Profil kapak fotoğrafı"
           fill
+          sizes="100vw"
           className="object-cover"
           priority
-          unoptimized
         />
         <div className="absolute inset-0 bg-black/10 hover:bg-black/20 transition-colors" />
 
@@ -151,10 +151,9 @@ export const CustomerProfileHeader = ({
               src={avatarUrl}
               alt={fullName}
               fill
+              sizes="200px"
               className="object-cover"
-              sizes={`${AVATAR}px`}
               priority
-              unoptimized
             />
           </div>
 

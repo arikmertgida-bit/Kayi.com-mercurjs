@@ -53,8 +53,12 @@ const io = new SocketServer(httpServer, {
     origin: CORS_ORIGINS,
     credentials: true,
   },
-  // Use both polling and WebSocket transports for reliability
-  transports: ["polling", "websocket"],
+  // WebSocket önce denenir; yalnızca WebSocket desteklenmiyorsa polling'e düşülür.
+  // Eski sıra (polling-first) her bağlantıda gereksiz HTTP long-poll trafiği üretiyordu.
+  transports: ["websocket", "polling"],
+  // WebSocket keepalive: 25sn ping, 20sn timeout — bağlantı koparsa sessizce polling'e geçer
+  pingInterval: 25000,
+  pingTimeout: 20000,
 })
 
 // JWT authentication for Socket.io handshake

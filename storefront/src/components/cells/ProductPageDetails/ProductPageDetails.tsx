@@ -10,7 +10,7 @@ export const ProductPageDetails = ({ details }: { details: string }) => {
   })
 
   return (
-    <ProductPageAccordion heading="Product details" defaultOpen={false}>
+    <ProductPageAccordion heading="Ürün Detayları" defaultOpen={false}>
       <div
         className="product-details"
         dangerouslySetInnerHTML={{

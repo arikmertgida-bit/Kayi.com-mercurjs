@@ -108,6 +108,48 @@ export function registerSocketHandlers(io: SocketServer, socket: Socket): void {
     _clearTyping(io, conversationId, userId)
   })
 
+  // ── Delete Message ─────────────────────────────────────────────────────────
+  socket.on(
+    "delete_message",
+    async (payload: { messageId: string; conversationId: string; deleteForAll: boolean }) => {
+      try {
+        const { messageId, conversationId, deleteForAll } = payload
+        if (!messageId || !conversationId) return
+
+        // Verify participation
+        const participant = await prisma.conversationParticipant.findUnique({
+          where: { conversationId_userId: { conversationId, userId } },
+        })
+        if (!participant) {
+          socket.emit("error", { event: "delete_message", message: "Forbidden" })
+          return
+        }
+
+        await MessageService.deleteMessage(messageId, userId, deleteForAll)
+
+        if (deleteForAll) {
+          // Broadcast to all in room so everyone sees "[Bu mesaj silindi]"
+          io.to(`conversation:${conversationId}`).emit("message_deleted", {
+            messageId,
+            conversationId,
+            deleteForAll: true,
+            content: "[Bu mesaj silindi]",
+          })
+        } else {
+          // Only notify the requester's own socket (delete for me)
+          socket.emit("message_deleted", {
+            messageId,
+            conversationId,
+            deleteForAll: false,
+          })
+        }
+      } catch (err: any) {
+        console.error("[socket] delete_message error", err)
+        socket.emit("error", { event: "delete_message", message: err.message ?? "Internal error" })
+      }
+    }
+  )
+
   // ── Read Receipt ───────────────────────────────────────────────────────────
   socket.on("messages_read", async (conversationId: string) => {
     try {

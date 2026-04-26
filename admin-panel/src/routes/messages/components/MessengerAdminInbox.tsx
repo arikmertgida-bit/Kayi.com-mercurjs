@@ -8,12 +8,15 @@ import {
   emitTypingStart,
   emitTypingStop,
   emitMessagesRead,
+  emitDeleteMessage,
 } from "../../../lib/messenger/socket"
 import {
   getConversations,
   getMessages,
   sendMessage,
   markConversationRead,
+  deleteMessage as apiDeleteMessage,
+  deleteConversation as apiDeleteConversation,
 } from "../../../lib/messenger/client"
 import type { Conversation, Message } from "../../../lib/messenger/types"
 import { useSellerMembers } from "../../../hooks/api/sellers"
@@ -30,6 +33,8 @@ export function MessengerAdminInbox({ adminId }: Props) {
   const [search, setSearch] = useState("")
   const [isConnected, setIsConnected] = useState(false)
   const [typingIds, setTypingIds] = useState<string[]>([])
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+  const [convMenuId, setConvMenuId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -120,6 +125,24 @@ export function MessengerAdminInbox({ adminId }: Props) {
       }
     )
 
+    // Message deletion
+    socket.on(
+      "message_deleted",
+      (payload: { messageId: string; conversationId: string; deleteForAll: boolean; content?: string }) => {
+        if (payload.deleteForAll) {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === payload.messageId
+                ? { ...m, content: payload.content ?? "[Bu mesaj silindi]", deletedForAll: true, imageUrl: null }
+                : m
+            )
+          )
+        } else {
+          setMessages((prev) => prev.filter((m) => m.id !== payload.messageId))
+        }
+      }
+    )
+
     // Notification: new message from absent conversation
     socket.on(
       "notification",
@@ -143,6 +166,11 @@ export function MessengerAdminInbox({ adminId }: Props) {
           .catch(() => {})
       }
     )
+
+    socket.on("conversation_deleted", (payload: { conversationId: string }) => {
+      setConversations((prev) => prev.filter((c) => c.id !== payload.conversationId))
+      setSelectedId((prev) => prev === payload.conversationId ? null : prev)
+    })
 
     return () => {
       disconnectSocket()
@@ -205,6 +233,37 @@ export function MessengerAdminInbox({ adminId }: Props) {
     typingTimerRef.current = setTimeout(() => emitTypingStop(selectedId), 2000)
   }
 
+  const handleDeleteConversation = useCallback(async (conversationId: string, deleteForAll: boolean) => {
+    setConversations((prev) => prev.filter((c) => c.id !== conversationId))
+    if (selectedId === conversationId) {
+      setSelectedId(null)
+      setMessages([])
+    }
+    await apiDeleteConversation(conversationId, deleteForAll).catch((err) => {
+      console.error("[MessengerAdminInbox] deleteConversation error:", err)
+    })
+  }, [selectedId])
+
+  const handleDeleteMessage = useCallback(async (messageId: string, deleteForAll: boolean) => {
+    if (!selectedId) return
+    setDeleteTarget(null)
+    if (deleteForAll) {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === messageId
+            ? { ...m, content: "[Bu mesaj silindi]", deletedForAll: true, imageUrl: null }
+            : m
+        )
+      )
+    } else {
+      setMessages((prev) => prev.filter((m) => m.id !== messageId))
+    }
+    emitDeleteMessage(messageId, selectedId, deleteForAll)
+    await apiDeleteMessage(selectedId, messageId, deleteForAll).catch((err) => {
+      console.error("[MessengerAdminInbox] delete error:", err)
+    })
+  }, [selectedId])
+
   // Ã¢â€â‚¬Ã¢â€â‚¬ Helpers Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   const otherParticipant = (conv: Conversation) =>
     conv.participants.find((p) => p.userId !== adminId)
@@ -266,47 +325,77 @@ export function MessengerAdminInbox({ adminId }: Props) {
             const lastMsg = conv.messages?.[0]
             const isActive = conv.id === selectedId
             return (
-              <button
-                key={conv.id}
-                onClick={() => selectConversation(conv)}
-                className={`w-full text-left p-3 border-b border-ui-border-base transition-colors hover:bg-ui-bg-base-hover ${
-                  isActive ? "bg-ui-bg-base" : ""
-                }`}
-              >
-                <div className="flex items-start gap-2">
-                  <div className="relative flex-shrink-0">
-                    {photo ? (
-                      <img
-                        src={photo}
-                        alt={name}
-                        className="w-8 h-8 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-ui-tag-blue-bg flex items-center justify-center text-xs font-medium text-ui-tag-blue-text">
-                        {name[0]?.toUpperCase() ?? "?"}
-                      </div>
-                    )}
-                    {unread > 0 && (
-                      <span className="absolute -top-1 -right-1 min-w-[16px] h-4 bg-ui-tag-blue-bg text-ui-tag-blue-text text-[10px] rounded-full flex items-center justify-center px-1 font-medium">
-                        {unread > 99 ? "99+" : unread}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-ui-fg-base truncate">
-                        {name}
-                      </span>
-                      <span className="text-xs text-ui-fg-muted flex-shrink-0 ml-1">
-                        {formatDistanceToNow(new Date(conv.updatedAt), { addSuffix: true })}
-                      </span>
+              <div key={conv.id} className="relative group">
+                <button
+                  onClick={() => selectConversation(conv)}
+                  className={`w-full text-left p-3 border-b border-ui-border-base transition-colors hover:bg-ui-bg-base-hover ${
+                    isActive ? "bg-ui-bg-base" : ""
+                  }`}
+                >
+                  <div className="flex items-start gap-2">
+                    <div className="relative flex-shrink-0">
+                      {photo ? (
+                        <img
+                          src={photo}
+                          alt={name}
+                          className="w-8 h-8 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-ui-tag-blue-bg flex items-center justify-center text-xs font-medium text-ui-tag-blue-text">
+                          {name[0]?.toUpperCase() ?? "?"}
+                        </div>
+                      )}
+                      {unread > 0 && (
+                        <span className="absolute -top-1 -right-1 min-w-[16px] h-4 bg-ui-tag-blue-bg text-ui-tag-blue-text text-[10px] rounded-full flex items-center justify-center px-1 font-medium">
+                          {unread > 99 ? "99+" : unread}
+                        </span>
+                      )}
                     </div>
-                    <p className="text-xs text-ui-fg-muted truncate mt-0.5">
-                      {lastMsg?.content ?? conv.subject ?? "No messages yet"}
-                    </p>
+                    <div className="flex-1 min-w-0 pr-6">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-ui-fg-base truncate">
+                          {name}
+                        </span>
+                        <span className="text-xs text-ui-fg-muted flex-shrink-0 ml-1">
+                          {formatDistanceToNow(new Date(conv.updatedAt), { addSuffix: true })}
+                        </span>
+                      </div>
+                      <p className="text-xs text-ui-fg-muted truncate mt-0.5">
+                        {lastMsg?.content ?? conv.subject ?? "No messages yet"}
+                      </p>
+                    </div>
                   </div>
+                </button>
+
+                {/* 3-dot menu */}
+                <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setConvMenuId(convMenuId === conv.id ? null : conv.id) }}
+                    className="w-7 h-7 flex items-center justify-center rounded-full text-ui-fg-muted hover:text-ui-fg-base hover:bg-ui-bg-base-hover transition-all opacity-0 group-hover:opacity-100"
+                    aria-label="Sohbet seçenekleri"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                      <circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" />
+                    </svg>
+                  </button>
+                  {convMenuId === conv.id && (
+                    <div className="absolute z-50 right-0 top-9 w-52 bg-ui-bg-overlay rounded-xl shadow-lg border border-ui-border-base overflow-hidden text-sm">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setConvMenuId(null); handleDeleteConversation(conv.id, false) }}
+                        className="w-full text-left px-4 py-2.5 hover:bg-ui-bg-base-hover text-ui-fg-base transition-colors"
+                      >
+                        Sadece Benden Sil
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setConvMenuId(null); handleDeleteConversation(conv.id, true) }}
+                        className="w-full text-left px-4 py-2.5 hover:bg-ui-tag-red-bg text-ui-tag-red-text transition-colors"
+                      >
+                        Herkesten Sil
+                      </button>
+                    </div>
+                  )}
                 </div>
-              </button>
+              </div>
             )
           })}
         </div>
@@ -360,11 +449,11 @@ export function MessengerAdminInbox({ adminId }: Props) {
                   className={`flex ${isMe ? "justify-end" : "justify-start"}`}
                 >
                   <div
-                    className={`max-w-[70%] rounded-2xl px-3 py-2 text-sm ${
+                    className={`group relative max-w-[70%] rounded-2xl px-3 py-2 text-sm ${
                       isMe
                         ? "bg-ui-button-inverted text-ui-fg-on-inverted"
                         : "bg-ui-bg-base text-ui-fg-base border border-ui-border-base"
-                    }`}
+                    }${msg.deletedForAll ? " italic opacity-70" : ""}`}
                   >
                     {!isMe && (
                       <p className="text-xs font-medium mb-1 opacity-70">{msg.senderType}</p>
@@ -381,6 +470,40 @@ export function MessengerAdminInbox({ adminId }: Props) {
                       {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}
                       {isMe && msg.readAt && <span className="ml-1">· Görüldü</span>}
                     </p>
+
+                    {/* Trash icon + delete popup */}
+                    {!msg.deletedForAll && (
+                      <>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setDeleteTarget(deleteTarget === msg.id ? null : msg.id) }}
+                          className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 flex items-center justify-center rounded-full bg-white/80 shadow text-gray-400 hover:text-red-500"
+                        >
+                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                        {deleteTarget === msg.id && (
+                          <div
+                            className={`absolute z-50 top-8 bg-white rounded-xl shadow-lg border border-gray-200 p-1.5 flex flex-col gap-0.5 min-w-[160px] ${isMe ? "right-0" : "left-0"}`}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <button onClick={() => handleDeleteMessage(msg.id, false)} className="text-left text-sm px-3 py-1.5 rounded-lg hover:bg-gray-50 text-gray-700">
+                              Benden Sil
+                            </button>
+                            <button
+                              disabled={msg.senderId !== adminId}
+                              onClick={() => handleDeleteMessage(msg.id, true)}
+                              className="text-left text-sm px-3 py-1.5 rounded-lg hover:bg-red-50 text-red-600 disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                              Herkes İçin Sil
+                            </button>
+                            <button onClick={() => setDeleteTarget(null)} className="text-left text-xs px-3 py-1 text-gray-400 hover:text-gray-600">
+                              İptal
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
               )

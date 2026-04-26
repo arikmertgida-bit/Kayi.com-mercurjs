@@ -119,7 +119,7 @@ async function AllCategories({
               {
                 "@type": "ListItem",
                 position: 1,
-                name: "All Products",
+                name: "Tüm Ürünler",
                 item: `${baseUrl}/${locale}/categories`,
               },
             ],
@@ -141,7 +141,7 @@ async function AllCategories({
         <Breadcrumbs items={breadcrumbsItems} />
       </div>
 
-      <h1 className="heading-xl uppercase">All Products</h1>
+      <h1 className="heading-xl uppercase">Tüm Ürünler</h1>
 
       <Suspense fallback={<ProductListingSkeleton />}>
         {bot || !MEILISEARCH_HOST || !MEILISEARCH_SEARCH_KEY ? (

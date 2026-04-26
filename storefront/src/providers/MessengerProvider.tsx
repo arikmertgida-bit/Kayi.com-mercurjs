@@ -16,6 +16,7 @@ import {
   emitTypingStart,
   emitTypingStop,
   emitMessagesRead,
+  emitDeleteMessage,
 } from "@/lib/messenger/socket"
 import {
   getConversations,
@@ -25,6 +26,8 @@ import {
   markConversationRead,
   sendMessage as apiSendMessage,
   uploadImage as apiUploadImage,
+  deleteMessage as apiDeleteMessage,
+  deleteConversation as apiDeleteConversation,
   setMessengerAuthToken,
 } from "@/lib/messenger/client"
 import type {
@@ -60,6 +63,8 @@ interface MessengerContextValue {
   }) => Promise<string>
   sendMessage: (content: string) => Promise<void>
   uploadImage: (file: File) => Promise<void>
+  deleteMessage: (messageId: string, deleteForAll: boolean) => Promise<void>
+  deleteConversation: (conversationId: string, deleteForAll: boolean) => Promise<void>
   startTyping: () => void
   stopTyping: () => void
   markRead: (conversationId: string) => Promise<void>
@@ -166,6 +171,22 @@ export function MessengerProvider({ children, userId, authToken, userName }: Mes
       }
     }
 
+    const onMessageDeleted = (payload: { messageId: string; conversationId: string; deleteForAll: boolean; content?: string }) => {
+      if (payload.deleteForAll) {
+        // Update message content to "[Bu mesaj silindi]" for everyone
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === payload.messageId
+              ? { ...m, content: payload.content ?? "[Bu mesaj silindi]", deletedForAll: true, imageUrl: null }
+              : m
+          )
+        )
+      } else {
+        // "Delete for me": remove from local messages state
+        setMessages((prev) => prev.filter((m) => m.id !== payload.messageId))
+      }
+    }
+
     const onNotification = (payload: NotificationPayload) => {
       showBrowserNotification(payload)
       setUnreadCount((n) => n + 1)
@@ -176,7 +197,11 @@ export function MessengerProvider({ children, userId, authToken, userName }: Mes
     socket.on("message_received", onMessage)
     socket.on("typing_update", onTypingUpdate)
     socket.on("read_receipt", onReadReceipt)
+    socket.on("message_deleted", onMessageDeleted)
     socket.on("notification", onNotification)
+    socket.on("conversation_deleted", (payload: { conversationId: string }) => {
+      setConversations((prev) => prev.filter((c) => c.id !== payload.conversationId))
+    })
 
     // Initial data
     Promise.all([
@@ -195,6 +220,7 @@ export function MessengerProvider({ children, userId, authToken, userName }: Mes
       socket.off("message_received", onMessage)
       socket.off("typing_update", onTypingUpdate)
       socket.off("read_receipt", onReadReceipt)
+      socket.off("message_deleted", onMessageDeleted)
       socket.off("notification", onNotification)
       disconnectSocket()
     }
@@ -305,6 +331,42 @@ export function MessengerProvider({ children, userId, authToken, userName }: Mes
     )
   }, [])
 
+  const deleteMessage = useCallback(async (messageId: string, deleteForAll: boolean) => {
+    if (!activeConvRef.current) return
+    const convId = activeConvRef.current
+    // Optimistic update
+    if (deleteForAll) {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === messageId
+            ? { ...m, content: "[Bu mesaj silindi]", deletedForAll: true, imageUrl: null }
+            : m
+        )
+      )
+    } else {
+      setMessages((prev) => prev.filter((m) => m.id !== messageId))
+    }
+    // Socket emit (also hits REST via socket handler)
+    emitDeleteMessage(messageId, convId, deleteForAll)
+    // Also call REST to ensure persistence if socket is temporarily down
+    await apiDeleteMessage(convId, messageId, deleteForAll).catch((err) => {
+      console.error("[deleteMessage] REST fallback error", err)
+    })
+  }, [])
+
+  const deleteConversation = useCallback(async (conversationId: string, deleteForAll: boolean) => {
+    // Optimistically remove from list immediately
+    setConversations((prev) => prev.filter((c) => c.id !== conversationId))
+    if (activeConvRef.current === conversationId) {
+      setActiveConversationId(null)
+      activeConvRef.current = null
+      setMessages([])
+    }
+    await apiDeleteConversation(conversationId, deleteForAll).catch((err) => {
+      console.error("[deleteConversation] error", err)
+    })
+  }, [])
+
   const startTyping = useCallback(() => {
     if (!activeConvRef.current) return
     emitTypingStart(activeConvRef.current)
@@ -365,6 +427,8 @@ export function MessengerProvider({ children, userId, authToken, userName }: Mes
         startConversation,
         sendMessage,
         uploadImage,
+        deleteMessage,
+        deleteConversation,
         startTyping,
         stopTyping,
         markRead,

@@ -2962,5 +2962,17 @@
     "minutes_other": "Dakikalar",
     "seconds_one": "Saniye",
     "seconds_other": "Saniyeler"
+  },
+  "messenger": {
+    "supportTeam": "Destek Ekibi",
+    "unknown": "Bilinmiyor",
+    "imageMessage": "📷 Fotoğraf",
+    "noMessages": "Henüz mesaj yok",
+    "startConversation": "Konuşmayı başlatmak için mesaj gönderin.",
+    "seen": "Görüldü",
+    "image": "Görsel",
+    "close": "Kapat",
+    "noConversations": "Mesaj yok",
+    "participants": "katılımcı"
   }
 }

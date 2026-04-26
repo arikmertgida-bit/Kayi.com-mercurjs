@@ -55,7 +55,7 @@ export function createInternalRouter(io: SocketServer): Router {
    *   targetUserId   — recipient's user id
    *   targetUserType — "CUSTOMER" | "SELLER" | "ADMIN"
    *   senderName     — display name shown in the notification
-   *   preview        — notification text (e.g. "Yeni bir yorum aldınız")
+   *   preview        — notification text (e.g. "You have received a new review")
    *   conversationId — (optional) if provided, also persists a system message
    *   sourceUserId   — (optional) used to find/create a conversation if conversationId omitted
    *   sourceUserType — (optional) "CUSTOMER" | "SELLER" | "ADMIN"
@@ -81,7 +81,7 @@ export function createInternalRouter(io: SocketServer): Router {
     // Always emit real-time notification to user room
     NotificationService.notifyUser(io, targetUserId, {
       type: "review_notification",
-      senderName: senderName ?? "Kayı",
+      senderName: senderName ?? "System",
       preview,
       conversationId,
     })

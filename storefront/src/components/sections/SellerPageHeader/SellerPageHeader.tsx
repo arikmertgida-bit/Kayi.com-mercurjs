@@ -42,9 +42,9 @@ export const SellerPageHeader = ({
           src={seller.photo ? decodeURIComponent(seller.photo) : "/images/vendor/default-store-banner.jpeg"}
           alt={seller.name}
           fill
+          sizes="100vw"
           className="object-cover"
           priority
-          unoptimized
         />
         <div className="absolute inset-0 bg-black/20" />
       </div>

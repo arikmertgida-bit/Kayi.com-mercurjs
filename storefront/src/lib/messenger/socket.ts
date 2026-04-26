@@ -125,3 +125,11 @@ export function emitTypingStop(conversationId: string): void {
 export function emitMessagesRead(conversationId: string): void {
   socketInstance?.emit("messages_read", conversationId)
 }
+
+export function emitDeleteMessage(
+  messageId: string,
+  conversationId: string,
+  deleteForAll: boolean
+): void {
+  socketInstance?.emit("delete_message", { messageId, conversationId, deleteForAll })
+}

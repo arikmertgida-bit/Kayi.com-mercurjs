@@ -14,6 +14,7 @@ export function BrandCard({ brand }: BrandCardProps) {
           src={decodeURIComponent(brand.logo)}
           alt={brand.name}
           fill
+          sizes="(min-width: 1536px) 400px, 320px"
           className="object-contain brightness-0 invert"
         />
       </div>

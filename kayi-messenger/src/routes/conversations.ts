@@ -115,31 +115,31 @@ router.get("/unread-count", authMiddleware, async (req: AuthRequest, res) => {
 const TURKISH_HOLIDAYS = new Set([
   // 2025
   "2025-01-01",
-  "2025-03-30", "2025-03-31", "2025-04-01", // Ramazan Bayramı
+  "2025-03-30", "2025-03-31", "2025-04-01", // Eid al-Fitr
   "2025-04-23",
   "2025-05-01",
   "2025-05-19",
-  "2025-06-06", "2025-06-07", "2025-06-08", "2025-06-09", // Kurban Bayramı
+  "2025-06-06", "2025-06-07", "2025-06-08", "2025-06-09", // Eid al-Adha
   "2025-07-15",
   "2025-08-30",
   "2025-10-29",
   // 2026
   "2026-01-01",
-  "2026-03-20", "2026-03-21", "2026-03-22", // Ramazan Bayramı
+  "2026-03-20", "2026-03-21", "2026-03-22", // Eid al-Fitr
   "2026-04-23",
   "2026-05-01",
   "2026-05-19",
-  "2026-05-27", "2026-05-28", "2026-05-29", "2026-05-30", // Kurban Bayramı
+  "2026-05-27", "2026-05-28", "2026-05-29", "2026-05-30", // Eid al-Adha
   "2026-07-15",
   "2026-08-30",
   "2026-10-29",
   // 2027
   "2027-01-01",
-  "2027-03-10", "2027-03-11", "2027-03-12", // Ramazan Bayramı
+  "2027-03-10", "2027-03-11", "2027-03-12", // Eid al-Fitr
   "2027-04-23",
   "2027-05-01",
   "2027-05-19",
-  "2027-05-26", "2027-05-27", "2027-05-28", "2027-05-29", // Kurban Bayramı (approx.)
+  "2027-05-26", "2027-05-27", "2027-05-28", "2027-05-29", // Eid al-Adha (approx.)
   "2027-07-15",
   "2027-08-30",
   "2027-10-29",
@@ -301,6 +301,41 @@ router.get("/seller/:sellerId/response-time", async (req, res) => {
     res.json({ avgMinutes: avg, isWithinHours: isCurrentlyWithinWorkingHours() })
   } catch (err) {
     console.error("[conversations] GET /seller/:sellerId/response-time", err)
+    res.status(500).json({ error: "Internal server error" })
+  }
+})
+
+/**
+ * DELETE /api/conversations/:id
+ * Deletes or hides a conversation for the current user.
+ * Body: { deleteForAll: boolean }
+ *   deleteForAll=false → hide only for this user ("Sadece Benden Sil")
+ *   deleteForAll=true  → hard delete for everyone ("Herkesten Sil")
+ */
+router.delete("/:id", authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const { userId } = resolveIdentity(req.auth!)
+    const { deleteForAll } = req.body as { deleteForAll?: boolean }
+    const conversationId = req.params.id
+
+    if (deleteForAll) {
+      await ConversationService.deleteForAll(conversationId, userId)
+      // Broadcast to all sockets so every panel removes it from their list
+      const io = req.app.get("io")
+      if (io) {
+        io.to(conversationId).emit("conversation_deleted", { conversationId })
+      }
+      res.json({ success: true, deleted: true })
+    } else {
+      await ConversationService.hideForUser(conversationId, userId)
+      res.json({ success: true, hidden: true })
+    }
+  } catch (err: unknown) {
+    if (err instanceof Error && err.message === "NOT_PARTICIPANT") {
+      res.status(403).json({ error: "Forbidden" })
+      return
+    }
+    console.error("[conversations] DELETE /:id", err)
     res.status(500).json({ error: "Internal server error" })
   }
 })

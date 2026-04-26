@@ -31,10 +31,47 @@ export function createMessageRouter(io: SocketServer) {
       const cursor = req.query.cursor as string | undefined
       const limit = Math.min(parseInt(req.query.limit as string || "30", 10), 100)
 
-      const messages = await MessageService.list(conversationId, cursor, limit)
+      const messages = await MessageService.list(conversationId, userId, cursor, limit)
       res.json({ messages })
     } catch (err) {
       console.error("[messages] GET /:id/messages", err)
+      res.status(500).json({ error: "Internal server error" })
+    }
+  })
+
+  /**
+   * DELETE /api/conversations/:id/messages/:msgId
+   * Delete a message. Body: { deleteForAll: boolean }
+   */
+  router.delete("/:id/messages/:msgId", authMiddleware, requireConversationParticipant, async (req: AuthRequest, res) => {
+    try {
+      const { userId } = resolveIdentity(req.auth!)
+      const messageId = req.params.msgId
+      const deleteForAll = Boolean(req.body?.deleteForAll)
+
+      const message = await MessageService.deleteMessage(messageId, userId, deleteForAll)
+
+      if (deleteForAll) {
+        // Broadcast updated message to all participants in the room
+        io.to(`conversation:${(req as any).conversationId}`).emit("message_deleted", {
+          messageId,
+          conversationId: (req as any).conversationId,
+          deleteForAll: true,
+          content: "[Bu mesaj silindi]",
+        })
+      }
+
+      res.json({ message })
+    } catch (err: any) {
+      if (err.message === "Forbidden" || err.message === "Only the sender can delete for all") {
+        res.status(403).json({ error: err.message })
+        return
+      }
+      if (err.message === "Message not found") {
+        res.status(404).json({ error: err.message })
+        return
+      }
+      console.error("[messages] DELETE /:id/messages/:msgId", err)
       res.status(500).json({ error: "Internal server error" })
     }
   })

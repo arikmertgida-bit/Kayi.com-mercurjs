@@ -86,7 +86,7 @@ export function createUploadRouter(io: SocketServer) {
         io.to(`conversation:${conversationId}`).emit("message_received", message)
 
         // Notify participants who are not in the room (offline/background)
-        await NotificationService.notifyAbsentParticipants(io, conversationId, userId, "📷 Fotoğraf")
+        await NotificationService.notifyAbsentParticipants(io, conversationId, userId, "[image]")
 
         res.status(201).json({ message, imageUrl })
       } catch (err) {

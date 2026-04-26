@@ -13,9 +13,14 @@ export default async function handleCollectionChanges({
   event: { data },
   container,
 }: SubscriberArgs<{ id: string }>) {
-  // Koleksiyondaki tüm ürünleri yeniden senkronize et
+  // Yalnızca bu koleksiyona ait ürünleri sync et — tüm kataloğu değil.
+  // Bu olmadan her koleksiyon değişikliği 10K+ ürün için DB sorgusu + Meilisearch re-index tetikliyordu.
   await syncProductsWorkflow(container).run({
-    input: {},
+    input: {
+      filters: {
+        collection_id: data.id,
+      },
+    },
   })
 }
 

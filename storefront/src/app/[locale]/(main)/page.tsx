@@ -47,10 +47,10 @@ export async function generateMetadata({
     languages = { [toHreflang(locale)]: `${baseUrl}/${locale}` }
   }
 
-  const title = "Home"
+  const title = "Ana Sayfa"
   const description =
-    "Welcome to Mercur B2C Demo! Create a modern marketplace that you own and customize in every aspect with high-performance, fully customizable storefront."
-  const ogImage = "/B2C_Storefront_Open_Graph.png"
+    "Kayı.com | Güvenli Alşverişin Merkezi"
+  const ogImage = "/Logo.png"
   const canonical = `${baseUrl}/${locale}`
 
   return {
@@ -77,13 +77,13 @@ export async function generateMetadata({
     openGraph: {
       title: `${title} | ${
         process.env.NEXT_PUBLIC_SITE_NAME ||
-        "Mercur B2C Demo - Marketplace Storefront"
+        "Kayı.com | Aradığın Her Şey Burada!"
       }`,
       description,
       url: canonical,
       siteName:
         process.env.NEXT_PUBLIC_SITE_NAME ||
-        "Mercur B2C Demo - Marketplace Storefront",
+        "Kayı.com | Aradığın Her Şey Burada!",
       type: "website",
       images: [
         {
@@ -92,7 +92,7 @@ export async function generateMetadata({
           height: 630,
           alt:
             process.env.NEXT_PUBLIC_SITE_NAME ||
-            "Mercur B2C Demo - Marketplace Storefront",
+            "Kayı.com | Aradığın Her Şey Burada!",
         },
       ],
     },
@@ -119,7 +119,7 @@ export default async function Home({
 
   const siteName =
     process.env.NEXT_PUBLIC_SITE_NAME ||
-    "Mercur B2C Demo - Marketplace Storefront"
+    "Kayı.com | Aradığın Her Şey Burada!"
 
   return (
     <main className="flex flex-col gap-4 row-start-2 items-center sm:items-start text-primary">

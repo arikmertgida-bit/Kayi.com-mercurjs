@@ -100,3 +100,26 @@ export async function uploadImage(
 
   return res.json()
 }
+
+// ── Message Deletion ───────────────────────────────────────────────
+
+export async function deleteMessage(
+  conversationId: string,
+  messageId: string,
+  deleteForAll: boolean
+): Promise<void> {
+  await request(`/api/conversations/${conversationId}/messages/${messageId}`, {
+    method: "DELETE",
+    body: JSON.stringify({ deleteForAll }),
+  })
+}
+
+export async function deleteConversation(
+  conversationId: string,
+  deleteForAll: boolean
+): Promise<void> {
+  await request(`/api/conversations/${conversationId}`, {
+    method: "DELETE",
+    body: JSON.stringify({ deleteForAll }),
+  })
+}

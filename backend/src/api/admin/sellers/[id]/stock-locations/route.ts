@@ -32,7 +32,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const stockLocationService = req.scope.resolve(Modules.STOCK_LOCATION);
   const stockLocations = await stockLocationService.listStockLocations(
     { id: locationIds },
-    { take: 9999 }
+    { take: 500 }
   );
 
   res.json({ stock_locations: stockLocations ?? [] });

@@ -21,6 +21,8 @@ interface MessengerChatBoxProps {
   currentUserAvatarUrl?: string | null
   conversationId: string
   onClose: () => void
+  /** Called after the FIRST message in a new conversation is successfully sent */
+  onFirstMessageSent?: () => void
 }
 
 function formatTime(iso: string): string {
@@ -40,19 +42,21 @@ function TypingDots() {
   )
 }
 
-function Avatar({ src, name, size = 32, gradient = "from-purple-400 to-pink-400" }: { src?: string | null; name: string; size?: number; gradient?: string }) {
-  const initials = name
+function Avatar({ src, name, size = 32, gradient = "from-purple-400 to-pink-400" }: { src?: string | null; name?: string | null; size?: number; gradient?: string }) {
+  const safeName = name ?? ""
+  const initials = safeName
     .split(" ")
+    .filter(Boolean)
     .map((n) => n[0])
     .join("")
     .toUpperCase()
-    .slice(0, 2)
+    .slice(0, 2) || "?"
 
   if (src) {
     return (
       <Image
         src={src}
-        alt={name}
+        alt={safeName || "avatar"}
         width={size}
         height={size}
         className="rounded-full object-cover flex-shrink-0"
@@ -81,6 +85,11 @@ function MessageBubble({
   otherUser,
   currentUserName,
   currentUserAvatarUrl,
+  currentUserId,
+  isDeleteTarget,
+  onRequestDelete,
+  onConfirmDelete,
+  onCancelDelete,
 }: {
   message: Message
   isMine: boolean
@@ -89,9 +98,13 @@ function MessageBubble({
   isFirst: boolean
   isFirstMine: boolean
   otherUser: MessengerChatBoxProps["otherUser"]
-  currentUserName: string
+  currentUserName?: string | null
   currentUserAvatarUrl?: string | null
-  currentUserAvatarUrl?: string | null
+  currentUserId: string
+  isDeleteTarget: boolean
+  onRequestDelete: (id: string) => void
+  onConfirmDelete: (id: string, deleteForAll: boolean) => void
+  onCancelDelete: () => void
 }) {
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const isImage = message.messageType === "IMAGE"
@@ -177,9 +190,44 @@ function MessageBubble({
               isMine
                 ? "bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-br-sm"
                 : "bg-gray-100 text-gray-900 rounded-bl-sm"
-            }`}
+            }${message.deletedForAll ? " italic opacity-70" : ""}`}
           >
             {message.content}
+          </div>
+        )}
+
+        {/* Trash icon + delete popup */}
+        {!message.deletedForAll && (
+          <div className={`relative flex items-center ${isMine ? "justify-end" : "justify-start"}`}>
+            <button
+              onClick={(e) => { e.stopPropagation(); onRequestDelete(message.id) }}
+              className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 flex items-center justify-center rounded-full bg-white shadow border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 flex-shrink-0"
+              title="Mesajı Sil"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+            {isDeleteTarget && (
+              <div
+                className={`absolute z-50 bottom-8 bg-white rounded-xl shadow-lg border border-gray-200 p-1.5 flex flex-col gap-0.5 min-w-[160px] ${isMine ? "right-0" : "left-0"}`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button onClick={() => onConfirmDelete(message.id, false)} className="text-left text-sm px-3 py-1.5 rounded-lg hover:bg-gray-50 text-gray-700">
+                  Benden Sil
+                </button>
+                <button
+                  disabled={message.senderId !== currentUserId}
+                  onClick={() => onConfirmDelete(message.id, true)}
+                  className="text-left text-sm px-3 py-1.5 rounded-lg hover:bg-red-50 text-red-600 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Herkes İçin Sil
+                </button>
+                <button onClick={onCancelDelete} className="text-left text-xs px-3 py-1 text-gray-400 hover:text-gray-600">
+                  İptal
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -212,6 +260,7 @@ export function MessengerChatBox({
   currentUserAvatarUrl,
   conversationId,
   onClose,
+  onFirstMessageSent,
 }: MessengerChatBoxProps) {
   const {
     messages,
@@ -219,6 +268,7 @@ export function MessengerChatBox({
     isLoadingMessages,
     sendMessage,
     uploadImage,
+    deleteMessage,
     startTyping,
     stopTyping,
     openConversation,
@@ -227,7 +277,8 @@ export function MessengerChatBox({
 
   const [text, setText] = useState("")
   const [isSending, setIsSending] = useState(false)
-  const [isActive] = useState(true) // TODO: online presence
+  const [sendError, setSendError] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -245,15 +296,24 @@ export function MessengerChatBox({
   const handleSend = useCallback(async () => {
     const content = text.trim()
     if (!content || isSending) return
+    const isFirstMessage = messages.length === 0
     setIsSending(true)
+    setSendError(null)
     setText("")
     stopTyping()
     try {
       await sendMessage(content)
+      if (isFirstMessage && onFirstMessageSent) {
+        onFirstMessageSent()
+      }
+    } catch (err) {
+      console.error("[MessengerChatBox] send error:", err)
+      setText(content)
+      setSendError("Mesaj gönderilemedi. Tekrar deneyin.")
     } finally {
       setIsSending(false)
     }
-  }, [text, isSending, sendMessage, stopTyping])
+  }, [text, isSending, sendMessage, stopTyping, messages.length, onFirstMessageSent])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -266,6 +326,15 @@ export function MessengerChatBox({
     setText(e.target.value)
     startTyping()
   }
+
+  const handleDeleteMessage = useCallback(async (messageId: string, deleteForAll: boolean) => {
+    setDeleteTarget(null)
+    try {
+      await deleteMessage(messageId, deleteForAll)
+    } catch (err) {
+      console.error("[MessengerChatBox] delete error:", err)
+    }
+  }, [deleteMessage])
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -284,16 +353,14 @@ export function MessengerChatBox({
   return (
     <div className="flex flex-col h-full bg-white rounded-2xl overflow-hidden">
       {/* ── Header ──────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 bg-white">
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 bg-white">
         <div className="relative">
           <Avatar src={otherUser.avatarUrl} name={otherUser.name} size={40} />
-          {isActive && (
-            <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-white rounded-full" />
-          )}
+          <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-white rounded-full" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-gray-900 text-sm truncate">{otherUser.name}</p>
-          <p className="text-xs text-gray-400">{isActive ? "Aktif" : "Çevrimdışı"}</p>
+          <p className="text-xs text-gray-400">Mesaj bırakabilirsiniz</p>
         </div>
         <button
           onClick={onClose}
@@ -316,7 +383,7 @@ export function MessengerChatBox({
           <div className="flex flex-col items-center justify-center h-full text-center py-8">
             <Avatar src={otherUser.avatarUrl} name={otherUser.name} size={56} />
             <p className="mt-3 font-semibold text-gray-900">{otherUser.name}</p>
-            <p className="text-sm text-gray-400 mt-1">Henüz mesaj yok. Merhaba de!</p>
+            <p className="text-sm text-gray-400 mt-1">Mesaj göndererek sohbeti başlatın.</p>
           </div>
         ) : (
           messages.map((msg, idx) => {
@@ -346,6 +413,11 @@ export function MessengerChatBox({
                 otherUser={otherUser}
                 currentUserName={currentUserName}
                 currentUserAvatarUrl={currentUserAvatarUrl}
+                currentUserId={currentUserId}
+                isDeleteTarget={deleteTarget === msg.id}
+                onRequestDelete={(id) => setDeleteTarget(deleteTarget === id ? null : id)}
+                onConfirmDelete={handleDeleteMessage}
+                onCancelDelete={() => setDeleteTarget(null)}
               />
             )
           })
@@ -365,13 +437,16 @@ export function MessengerChatBox({
       </div>
 
       {/* ── Input Bar ───────────────────────────────────────────────────── */}
-      <div className="px-3 py-3 border-t border-gray-100 bg-white">
-        <div className="flex items-end gap-2 bg-gray-50 rounded-[24px] px-3 py-2 border border-gray-200 focus-within:border-blue-400 transition-colors">
+      <div className="px-3 py-3 border-t border-gray-200 bg-white">
+        {sendError && (
+          <p className="text-xs text-red-500 px-1 pb-1">{sendError}</p>
+        )}
+        <div className="flex items-end gap-2 bg-gray-50 rounded-[28px] px-3 py-2 border border-gray-300 focus-within:border-amber-400 transition-colors">
           {/* Image upload button */}
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-colors flex-shrink-0 mb-0.5"
+            className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-amber-500 hover:bg-amber-50 transition-colors flex-shrink-0 mb-0.5"
             aria-label="Fotoğraf gönder"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -393,10 +468,9 @@ export function MessengerChatBox({
             value={text}
             onChange={handleTextChange}
             onKeyDown={handleKeyDown}
-            placeholder="Mesaj yaz..."
+            placeholder="Mesaj yaz…"
             rows={1}
-            className="flex-1 bg-transparent text-sm text-gray-900 placeholder-gray-400 resize-none outline-none leading-5 max-h-24 overflow-y-auto"
-            style={{ minHeight: "20px" }}
+            className="flex-1 bg-transparent text-sm text-gray-900 placeholder-gray-400 resize-none outline-none py-1 leading-snug max-h-24 overflow-y-auto"
           />
 
           {/* Send button */}
@@ -404,9 +478,9 @@ export function MessengerChatBox({
             type="button"
             onClick={handleSend}
             disabled={!text.trim() || isSending}
-            className="w-8 h-8 flex items-center justify-center rounded-full flex-shrink-0 mb-0.5 transition-all
+            className="w-8 h-8 flex items-center justify-center rounded-full transition-all flex-shrink-0 mb-0.5
               disabled:text-gray-300 disabled:cursor-not-allowed
-              enabled:text-blue-500 enabled:hover:bg-blue-50"
+              enabled:text-amber-500 enabled:hover:bg-amber-50"
             aria-label="Gönder"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">

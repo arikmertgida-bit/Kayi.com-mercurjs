@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect, useRef, useCallback } from "react"
+import { useTranslation } from "react-i18next"
 import { formatDistanceToNow } from "date-fns"
 import { Heading } from "@medusajs/ui"
 import { useMessenger } from "../../../providers/messenger-provider/MessengerProvider"
@@ -63,14 +64,18 @@ function ConvRow({
   conv,
   isActive,
   onOpen,
+  onDelete,
 }: {
   conv: any
   isActive: boolean
   onOpen: (id: string) => void
+  onDelete: (id: string, deleteForAll: boolean) => void
 }) {
   const other = getOtherParticipant(conv.participants ?? [])
   const isAdmin = other?.userType === "ADMIN"
   const isCustomer = other?.userType === "CUSTOMER" || other?.userId?.startsWith("cus_")
+
+  const { t } = useTranslation()
 
   // Customer name lookup
   const { displayName: customerDisplayName, avatarUrl: customerAvatarUrl } = useCustomerInfo(
@@ -78,23 +83,38 @@ function ConvRow({
   )
 
   const name = isAdmin
-    ? "Destek Ekibi"
+    ? t("messenger.supportTeam")
     : isCustomer
     ? customerDisplayName ?? other?.displayName ?? other?.userId ?? "Customer"
-    : other?.displayName ?? other?.userId ?? "Bilinmiyor"
+    : other?.displayName ?? other?.userId ?? t("messenger.unknown")
 
   const initials = (name || "?")[0]?.toUpperCase() ?? "?"
   const lastMsg = conv.messages?.[0]
   // Unread count for the SELLER participant (me)
   const unread = conv.participants?.find((p: any) => p.userType === "SELLER")?.unreadCount ?? 0
 
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [menuOpen])
+
   return (
-    <button
-      onClick={() => onOpen(conv.id)}
-      className={`w-full text-left p-3 border-b border-ui-border-base transition-colors hover:bg-ui-bg-base-hover ${
-        isActive ? "bg-ui-bg-base" : ""
-      }`}
-    >
+    <div className="relative group">
+      <button
+        onClick={() => onOpen(conv.id)}
+        className={`w-full text-left p-3 border-b border-ui-border-base transition-colors hover:bg-ui-bg-base-hover ${
+          isActive ? "bg-ui-bg-base" : ""
+        }`}
+      >
       <div className="flex items-start gap-2">
         <div className="relative flex-shrink-0">
           {isCustomer ? (
@@ -120,23 +140,53 @@ function ConvRow({
             </span>
           )}
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-ui-fg-base truncate">{name}</span>
-            <span className="text-xs text-ui-fg-muted flex-shrink-0 ml-1">
-              {formatDistanceToNow(new Date(conv.updatedAt), { addSuffix: true })}
-            </span>
+<div className="flex-1 min-w-0 pr-6">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-ui-fg-base truncate">{name}</span>
+              <span className="text-xs text-ui-fg-muted flex-shrink-0 ml-1">
+                {formatDistanceToNow(new Date(conv.updatedAt), { addSuffix: true })}
+              </span>
+            </div>
+            <p className="text-xs text-ui-fg-muted truncate mt-0.5">
+              {lastMsg
+                ? lastMsg.messageType === "IMAGE"
+                  ? t("messenger.imageMessage")
+                  : lastMsg.content?.slice(0, 50)
+                : conv.subject ?? t("messenger.noMessages")}
+            </p>
           </div>
-          <p className="text-xs text-ui-fg-muted truncate mt-0.5">
-            {lastMsg
-              ? lastMsg.messageType === "IMAGE"
-                ? "📷 Fotoğraf"
-                : lastMsg.content?.slice(0, 50)
-              : conv.subject ?? "Henüz mesaj yok"}
-          </p>
         </div>
+      </button>
+
+      {/* 3-dot menu */}
+      <div ref={menuRef} className="absolute right-2 top-1/2 -translate-y-1/2">
+        <button
+          onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v) }}
+          className="w-7 h-7 flex items-center justify-center rounded-full text-ui-fg-muted hover:text-ui-fg-base hover:bg-ui-bg-base-hover transition-all opacity-0 group-hover:opacity-100"
+          aria-label="Sohbet seçenekleri"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" />
+          </svg>
+        </button>
+        {menuOpen && (
+          <div className="absolute z-50 right-0 top-9 w-52 bg-ui-bg-overlay rounded-xl shadow-lg border border-ui-border-base overflow-hidden text-sm">
+            <button
+              onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onDelete(conv.id, false) }}
+              className="w-full text-left px-4 py-2.5 hover:bg-ui-bg-base-hover text-ui-fg-base transition-colors"
+            >
+              Sadece Benden Sil
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onDelete(conv.id, true) }}
+              className="w-full text-left px-4 py-2.5 hover:bg-ui-tag-red-bg text-ui-tag-red-text transition-colors"
+            >
+              Herkesten Sil
+            </button>
+          </div>
+        )}
       </div>
-    </button>
+    </div>
   )
 }
 
@@ -159,13 +209,18 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
     closeConversation,
     sendMessage,
     uploadImage,
+    deleteMessage,
+    deleteConversation,
     startTyping,
     stopTyping,
   } = useMessenger()
 
+  const { t } = useTranslation()
+
   const [text, setText] = useState("")
   const [search, setSearch] = useState("")
   const [isSending, setIsSending] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -181,11 +236,21 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
     isOtherCustomer ? otherParticipant?.userId : undefined
   )
 
+  // Product context: fetch product info if conversation has a productId
+  const [productInfo, setProductInfo] = useState<{ title: string; thumbnail: string | null } | null>(null)
+  useEffect(() => {
+    const pid = activeConv?.productId
+    if (!pid) { setProductInfo(null); return }
+    fetchQuery<{ product: { title: string; thumbnail: string | null } }>(`/vendor/products/${pid}`, { method: "GET" })
+      .then(({ product }) => setProductInfo({ title: product.title, thumbnail: product.thumbnail }))
+      .catch(() => setProductInfo(null))
+  }, [activeConv?.productId])
+
   const otherName = isOtherAdmin
-    ? "Destek Ekibi"
+    ? t("messenger.supportTeam")
     : isOtherCustomer
     ? customerDisplayName ?? otherParticipant?.displayName ?? "Customer"
-    : otherParticipant?.displayName ?? "Bilinmiyor"
+    : otherParticipant?.displayName ?? t("messenger.unknown")
 
   const isOtherTyping = typingUserIds.length > 0
 
@@ -243,6 +308,15 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
     }
   }
 
+  const handleDeleteMessage = useCallback(async (messageId: string, deleteForAll: boolean) => {
+    setDeleteTarget(null)
+    try {
+      await deleteMessage(messageId, deleteForAll)
+    } catch (err) {
+      console.error("[MessengerVendorInbox] delete error:", err)
+    }
+  }, [deleteMessage])
+
   // â”€â”€ Search (min 2 chars) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const filtered =
     search.length < 2
@@ -291,6 +365,7 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
                 conv={conv}
                 isActive={conv.id === activeConversationId}
                 onOpen={openConversation}
+                onDelete={deleteConversation}
               />
             ))
           )}
@@ -323,20 +398,42 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
               <p className="text-sm font-medium text-ui-fg-base truncate">{otherName}</p>
               <p className="text-xs text-ui-fg-muted">
                 {otherParticipant?.userType}
-                {" Â· "}
-                {activeConv.participants?.length} participants
+                {" · "}
+                {activeConv.participants?.length} {t("messenger.participants")}
               </p>
             </div>
             <button
               onClick={closeConversation}
               className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-ui-bg-base-hover text-ui-fg-muted hover:text-ui-fg-subtle transition-colors flex-shrink-0"
-              aria-label="Kapat"
+              aria-label={t("messenger.close")}
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
+
+          {/* Product context banner */}
+          {productInfo && (
+            <div className="flex items-center gap-3 px-3 py-2 bg-ui-bg-base border-b border-ui-border-base">
+              <div className="w-10 h-10 rounded-lg overflow-hidden bg-ui-bg-subtle flex-shrink-0">
+                {productInfo.thumbnail ? (
+                  <img src={productInfo.thumbnail} alt={productInfo.title} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-ui-fg-muted">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-ui-fg-muted">Ürün hakkında soru</p>
+                <p className="text-sm font-medium text-ui-fg-base truncate">{productInfo.title}</p>
+              </div>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-ui-tag-blue-bg text-ui-tag-blue-text font-medium">Ürün</span>
+            </div>
+          )}
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-ui-bg-subtle">
@@ -356,7 +453,7 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
                   <span className="text-base font-bold">{(otherName[0] ?? "?").toUpperCase()}</span>
                 </div>
                 <p className="text-sm font-medium text-ui-fg-base">{otherName}</p>
-                <p className="text-xs text-ui-fg-muted mt-1">KonuÅŸmayÄ± baÅŸlatmak iÃ§in mesaj gÃ¶nderin.</p>
+                <p className="text-xs text-ui-fg-muted mt-1">{t("messenger.startConversation")}</p>
               </div>
             ) : (
               messages.map((msg: Message, idx: number) => {
@@ -384,17 +481,17 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
                     className={`flex ${isMe ? "justify-end" : "justify-start"}`}
                   >
                     <div
-                      className={`max-w-[70%] rounded-2xl px-3 py-2 text-sm ${
+                      className={`group relative max-w-[70%] rounded-2xl px-3 py-2 text-sm ${
                         isMe
                           ? "bg-ui-button-inverted text-ui-fg-on-inverted"
                           : "bg-ui-bg-base text-ui-fg-base border border-ui-border-base"
-                      }`}
+                      }${msg.deletedForAll ? " italic opacity-70" : ""}`}
                     >
                       {!isMe && (
                         <p className="text-xs font-medium mb-1 opacity-70">{msg.senderType}</p>
                       )}
                       {msg.messageType === "IMAGE" && msg.imageUrl ? (
-                        <img src={msg.imageUrl} alt="GÃ¶rsel" className="max-w-full rounded-lg mb-1" />
+                        <img src={msg.imageUrl} alt={t("messenger.image")} className="max-w-full rounded-lg mb-1" />
                       ) : null}
                       <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                       <p
@@ -404,9 +501,43 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
                       >
                         {formatTime(msg.createdAt)}
                         {isMe && isLastMine && msg.readAt && (
-                          <span className="ml-1">Â· GÃ¶rÃ¼ldÃ¼</span>
+                          <span className="ml-1">{" · "}{t("messenger.seen")}</span>
                         )}
                       </p>
+
+                      {/* Trash icon */}
+                      {!msg.deletedForAll && (
+                        <>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setDeleteTarget(deleteTarget === msg.id ? null : msg.id) }}
+                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 flex items-center justify-center rounded-full bg-white/80 shadow text-gray-400 hover:text-red-500"
+                          >
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                          {deleteTarget === msg.id && (
+                            <div
+                              className={`absolute z-50 top-8 bg-white rounded-xl shadow-lg border border-gray-200 p-1.5 flex flex-col gap-0.5 min-w-[160px] ${isMe ? "right-0" : "left-0"}`}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <button onClick={() => handleDeleteMessage(msg.id, false)} className="text-left text-sm px-3 py-1.5 rounded-lg hover:bg-gray-50 text-gray-700">
+                                Benden Sil
+                              </button>
+                              <button
+                                disabled={msg.senderId !== sellerId}
+                                onClick={() => handleDeleteMessage(msg.id, true)}
+                                className="text-left text-sm px-3 py-1.5 rounded-lg hover:bg-red-50 text-red-600 disabled:opacity-40 disabled:cursor-not-allowed"
+                              >
+                                Herkes İçin Sil
+                              </button>
+                              <button onClick={() => setDeleteTarget(null)} className="text-left text-xs px-3 py-1 text-gray-400 hover:text-gray-600">
+                                İptal
+                              </button>
+                            </div>
+                          )}
+                        </>
+                      )}
                     </div>
                   </div>
                 )

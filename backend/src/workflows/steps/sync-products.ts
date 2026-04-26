@@ -33,10 +33,9 @@ export const syncProductsStep = createStep(
       "product"
     )
 
-    const newProducts = products.filter(
-      (product) =>
-        !existingProducts.some((p: any) => p.id === product.id)
-    )
+    // O(n²) .some() yerine O(1) Set lookup — büyük kataloglarda önemli CPU tasarrufu sağlar
+    const existingIds = new Set(existingProducts.map((p: any) => p.id))
+    const newProducts = products.filter((product) => !existingIds.has(product.id))
 
     await meilisearchModuleService.indexData(
       products as unknown as Record<string, unknown>[],

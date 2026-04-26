@@ -11,21 +11,23 @@ const funnelDisplay = Funnel_Display({
   variable: "--font-funnel-sans",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600"],
+  display: "swap",
+  fallback: ["system-ui", "sans-serif"],
 })
 
 export const metadata: Metadata = {
   title: {
     template: `%s | ${
       process.env.NEXT_PUBLIC_SITE_NAME ||
-      "Mercur B2C Demo - Marketplace Storefront"
+      "Kayı.com | Aradığın Her Şey Burada!"
     }`,
     default:
       process.env.NEXT_PUBLIC_SITE_NAME ||
-      "Mercur B2C Demo - Marketplace Storefront",
+      "Kayı.com | Aradığın Her Şey Burada!",
   },
   description:
     process.env.NEXT_PUBLIC_SITE_DESCRIPTION ||
-    "Mercur B2C Demo - Marketplace Storefront",
+    "Kayı.com | Güvenli Alşverişin Merkezi",
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
   ),

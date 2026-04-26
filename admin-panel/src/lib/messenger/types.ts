@@ -22,6 +22,7 @@ export interface Message {
   imageUrl: string | null
   readAt: string | null
   createdAt: string
+  deletedForAll?: boolean
 }
 
 export interface Conversation {

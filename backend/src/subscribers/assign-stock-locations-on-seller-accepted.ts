@@ -44,12 +44,19 @@ export default async function assignStockLocationsOnSellerAccepted({
     return;
   }
 
+  const STOCK_LOCATION_LIMIT = 500;
   const stockLocations =
-    await stockLocationService.listStockLocations({}, { take: 9999 });
+    await stockLocationService.listStockLocations({}, { take: STOCK_LOCATION_LIMIT });
 
   if (!stockLocations || stockLocations.length === 0) {
     logger.warn("assign-stock-locations: no stock locations found");
     return;
+  }
+
+  if (stockLocations.length === STOCK_LOCATION_LIMIT) {
+    logger.warn(
+      `assign-stock-locations: result capped at ${STOCK_LOCATION_LIMIT} — some stock locations may not be linked to seller ${sellerId}. Increase STOCK_LOCATION_LIMIT if needed.`
+    );
   }
 
   const { data: existingLinks } = await query.graph({

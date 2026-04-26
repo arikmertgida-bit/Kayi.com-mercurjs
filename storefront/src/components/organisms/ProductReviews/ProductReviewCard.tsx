@@ -108,7 +108,7 @@ const PhotoLightbox = ({
           ✕
         </button>
         <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-black">
-          <Image src={img.url} alt="Yorum fotoğrafı" fill className="object-contain" />
+          <Image src={img.url} alt="Yorum fotoğrafı" fill sizes="(min-width: 1024px) 50vw, 100vw" className="object-contain" />
         </div>
         {images.length > 1 && (
           <div className="flex items-center justify-between mt-4 px-2">

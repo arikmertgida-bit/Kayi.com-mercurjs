@@ -45,10 +45,16 @@ export const MessageService = {
 
   /**
    * Returns paginated messages for a conversation (newest-first).
+   * Filters out messages deleted for the requesting user.
    */
-  async list(conversationId: string, cursor?: string, limit = 30) {
+  async list(conversationId: string, requesterId: string, cursor?: string, limit = 30) {
     return prisma.message.findMany({
-      where: { conversationId },
+      where: {
+        conversationId,
+        deletions: {
+          none: { userId: requesterId },
+        },
+      },
       orderBy: { createdAt: "desc" },
       take: limit,
       ...(cursor
@@ -58,5 +64,56 @@ export const MessageService = {
           }
         : {}),
     })
+  },
+
+  /**
+   * Deletes a message:
+   * - deleteForAll=true: marks content as deleted, visible to nobody (only sender can do this)
+   * - deleteForAll=false: creates a MessageDeletion record so the requester stops seeing it
+   */
+  async deleteMessage(
+    messageId: string,
+    requesterId: string,
+    deleteForAll: boolean
+  ) {
+    const message = await prisma.message.findUnique({
+      where: { id: messageId },
+      include: {
+        conversation: {
+          include: { participants: { select: { userId: true } } },
+        },
+      },
+    })
+
+    if (!message) throw new Error("Message not found")
+
+    // Check requester is a participant
+    const isParticipant = message.conversation.participants.some(
+      (p) => p.userId === requesterId
+    )
+    if (!isParticipant) throw new Error("Forbidden")
+
+    if (deleteForAll) {
+      // Only the original sender may delete for everyone
+      if (message.senderId !== requesterId) throw new Error("Only the sender can delete for all")
+
+      return prisma.message.update({
+        where: { id: messageId },
+        data: {
+          deletedForAll: true,
+          deletedAt: new Date(),
+          content: "[Bu mesaj silindi]",
+          imageUrl: null,
+        },
+      })
+    } else {
+      // "Delete for me" — upsert to handle duplicate calls gracefully
+      await prisma.messageDeletion.upsert({
+        where: { messageId_userId: { messageId, userId: requesterId } },
+        update: {},
+        create: { messageId, userId: requesterId },
+      })
+      return prisma.message.findUnique({ where: { id: messageId } })
+    }
   },
 }

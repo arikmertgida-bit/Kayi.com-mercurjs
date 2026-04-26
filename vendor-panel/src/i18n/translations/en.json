@@ -3005,5 +3005,17 @@
     "minutes_other": "Minutes",
     "seconds_one": "Second",
     "seconds_other": "Seconds"
+  },
+  "messenger": {
+    "supportTeam": "Support Team",
+    "unknown": "Unknown",
+    "imageMessage": "📷 Photo",
+    "noMessages": "No messages yet",
+    "startConversation": "Send a message to start the conversation.",
+    "seen": "Seen",
+    "image": "Image",
+    "close": "Close",
+    "noConversations": "No conversations",
+    "participants": "participants"
   }
 }

@@ -18,6 +18,8 @@ export const ReviewCard = ({ review }: { review: Review }) => {
           <Image
             alt="Seller photo"
             src={review.seller.photo}
+            width={32}
+            height={32}
             className="size-8 border border-base-primary rounded-xs"
           />
         ) : null}
