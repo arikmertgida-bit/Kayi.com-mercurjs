@@ -104,7 +104,8 @@ function SellerDirectChat({
 
     return () => {
       leaveConversation(conversationId);
-      disconnectSocket();
+      // Do NOT call disconnectSocket() here — the singleton socket is shared
+      // with MessengerAdminInbox and disconnecting it here would break notifications.
     };
   }, [conversationId, adminId]);
 

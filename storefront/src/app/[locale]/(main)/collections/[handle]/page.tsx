@@ -13,10 +13,14 @@ const MEILISEARCH_SEARCH_KEY = process.env.NEXT_PUBLIC_MEILISEARCH_SEARCH_KEY
 
 const SingleCollectionsPage = async ({
   params,
+  searchParams,
 }: {
   params: Promise<{ handle: string; locale: string }>
+  searchParams?: Promise<Record<string, string>>
 }) => {
   const { handle, locale } = await params
+  const sp = searchParams ? await searchParams : {}
+  const page = Math.max(1, parseInt(sp["page"] || "1", 10))
 
   const ua = (await headers()).get("user-agent") || ""
   const bot = isBot(ua)
@@ -43,7 +47,7 @@ const SingleCollectionsPage = async ({
 
       <Suspense fallback={<ProductListingSkeleton />}>
         {bot || !MEILISEARCH_HOST || !MEILISEARCH_SEARCH_KEY ? (
-          <ProductListing collection_id={collection.id} showSidebar />
+          <ProductListing collection_id={collection.id} showSidebar page={page} />
         ) : (
           <MeiliProductsListing
             collection_id={collection.id}

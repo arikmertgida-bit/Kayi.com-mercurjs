@@ -150,7 +150,7 @@ export const Login = () => {
                 </Alert>
               )}
               <Button className="w-full" type="submit" isLoading={isPending}>
-                Sign In
+                {t("login.signIn")}
               </Button>
             </form>
           </Form>
@@ -158,7 +158,7 @@ export const Login = () => {
             return <Component key={i} />
           })}
         </div>
-        <span className="text-ui-fg-muted txt-small my-6">
+        <span className="text-ui-fg-muted txt-small my-2">
           <Trans
             i18nKey="login.forgotPassword"
             components={[

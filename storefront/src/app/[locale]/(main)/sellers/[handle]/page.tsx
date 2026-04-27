@@ -9,10 +9,14 @@ import { SellerProps } from "@/types/seller"
 
 export default async function SellerPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ handle: string; locale: string }>
+  searchParams?: Promise<Record<string, string>>
 }) {
   const { handle, locale } = await params
+  const sp = searchParams ? await searchParams : {}
+  const page = Math.max(1, parseInt(sp["page"] || "1", 10))
 
   const seller = (await getSellerByHandle(handle)) as SellerProps
 
@@ -75,6 +79,7 @@ export default async function SellerPage({
         categories={categories}
         productCount={productCount}
         productMap={productMap}
+        page={page}
       />
       </main>
       <SellerMessengerWidget

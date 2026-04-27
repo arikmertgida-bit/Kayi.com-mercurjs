@@ -1890,6 +1890,10 @@ export const RouteMap: RouteObject[] = [
                 : undefined,
           },
           {
+            path: "/seller-agreement",
+            lazy: () => import("../../routes/seller-agreement"),
+          },
+          {
             path: "/reset-password",
             lazy: () => import("../../routes/reset-password"),
           },

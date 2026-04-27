@@ -87,13 +87,18 @@ export function MessengerChat({
         return startConversation({
           targetUserId: adminUserId,
           targetUserType: "ADMIN",
+          type: "ADMIN_SUPPORT",
           subject: "Satıcı Destek",
         })
       })
       .then((cid) => {
         if (cid) openConversation(cid)
       })
-      .catch(console.error)
+      .catch((err) => {
+        console.error(err)
+        // Allow retry on next drawer open
+        initializedRef.current = false
+      })
       .finally(() => setIsInitializing(false))
   }, [currentUserId]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -140,7 +145,7 @@ export function MessengerChat({
   }
 
   const isOtherTyping = typingUserIds.length > 0
-  const myMessages = messages.filter((m: { senderId: string }) => m.senderId === currentUserId)
+  const myMessages = messages.filter((m) => m.senderType === "SELLER")
   const lastMyMessageId = myMessages[myMessages.length - 1]?.id
 
   if (isInitializing && messages.length === 0) {
@@ -167,14 +172,14 @@ export function MessengerChat({
           </div>
         ) : (
           messages.map((msg: Message) => {
-            const isMine = msg.senderId === currentUserId
+            const isMine = msg.senderType === "SELLER"
             const isNotification = msg.messageType === "NOTIFICATION"
             const isLastMine = msg.id === lastMyMessageId
 
             if (isNotification) {
               return (
                 <div key={msg.id} className="flex justify-center">
-                  <span className="text-xs text-gray-400 bg-gray-100 rounded-full px-3 py-1">
+                  <span className="text-xs text-ui-fg-muted bg-ui-bg-base border border-ui-border-base rounded-full px-3 py-1">
                     {msg.content}
                   </span>
                 </div>
@@ -184,44 +189,32 @@ export function MessengerChat({
             return (
               <div
                 key={msg.id}
-                className={`flex items-end gap-2 ${isMine ? "flex-row-reverse" : "flex-row"} group`}
+                className={`flex ${isMine ? "justify-end" : "justify-start"}`}
               >
-                {!isMine && <Avatar name={otherName} size={24} />}
-                <div className={`flex flex-col max-w-[72%] ${isMine ? "items-end" : "items-start"}`}>
-                  {msg.messageType === "IMAGE" && msg.imageUrl ? (
-                    <img
-                      src={msg.imageUrl}
-                      alt="Görsel"
-                      className={`rounded-2xl object-cover max-h-48 ${isMine ? "rounded-br-sm" : "rounded-bl-sm"}`}
-                    />
-                  ) : (
-                    <div
-                      className={`px-3.5 py-2 rounded-[20px] text-sm leading-relaxed break-words ${
-                        isMine
-                          ? "bg-blue-500 text-white rounded-br-sm"
-                          : "bg-gray-100 text-gray-900 rounded-bl-sm"
-                      }`}
-                    >
-                      {msg.content}
-                    </div>
+                <div
+                  className={`group relative max-w-[70%] rounded-2xl px-3 py-2 text-sm ${
+                    isMine
+                      ? "bg-ui-button-inverted text-ui-fg-on-inverted"
+                      : "bg-ui-bg-base text-ui-fg-base border border-ui-border-base"
+                  }${msg.deletedForAll ? " italic opacity-70" : ""}`}
+                >
+                  {!isMine && (
+                    <p className="text-xs font-medium mb-1 opacity-70">{otherName}</p>
                   )}
-                  <div
-                    className={`flex items-center gap-1 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity ${
-                      isMine ? "flex-row-reverse" : "flex-row"
+                  {msg.messageType === "IMAGE" && msg.imageUrl ? (
+                    <img src={msg.imageUrl} alt="Görsel" className="max-w-full rounded-lg mb-1" />
+                  ) : null}
+                  <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                  <p
+                    className={`text-xs mt-1 opacity-60 text-right ${
+                      isMine ? "text-ui-fg-on-inverted" : "text-ui-fg-muted"
                     }`}
                   >
-                    <span className="text-[10px] text-gray-400">
-                      {new Date(msg.createdAt).toLocaleTimeString("tr-TR", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
-                    {isMine && isLastMine && (
-                      <span className="text-[10px] text-gray-400">
-                        {msg.readAt ? "Görüldü" : "İletildi"}
-                      </span>
+                    {formatTime(msg.createdAt)}
+                    {isMine && isLastMine && msg.readAt && (
+                      <span className="ml-1">· Görüldü</span>
                     )}
-                  </div>
+                  </p>
                 </div>
               </div>
             )
@@ -229,9 +222,8 @@ export function MessengerChat({
         )}
 
         {isOtherTyping && (
-          <div className="flex items-end gap-2">
-            <Avatar name={otherName} size={24} />
-            <div className="bg-gray-100 rounded-[20px] rounded-bl-sm">
+          <div className="flex justify-start">
+            <div className="bg-ui-bg-base border border-ui-border-base rounded-2xl px-3 py-2">
               <TypingDots />
             </div>
           </div>

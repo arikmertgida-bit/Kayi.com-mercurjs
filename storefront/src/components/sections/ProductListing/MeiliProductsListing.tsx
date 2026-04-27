@@ -219,9 +219,9 @@ const ProductsListing = ({
               </p>
             </div>
           ) : pagedApiProducts === null ? (
-            <div className="flex flex-wrap gap-4">
+            <div className="grid grid-cols-1 min-[425px]:grid-cols-2 lg:grid-cols-3 min-[1440px]:grid-cols-4 gap-4">
               {pagedItems.map((_, i) => (
-                <div key={i} className="w-full lg:w-[calc(25%-1rem)] min-w-[250px] rounded-sm border overflow-hidden">
+                <div key={i} className="w-full rounded-sm border overflow-hidden">
                   <div className="aspect-square animate-pulse bg-gray-200 w-full" />
                   <div className="p-2 space-y-2">
                     <div className="h-4 animate-pulse bg-gray-200 rounded-sm w-3/4" />
@@ -232,7 +232,7 @@ const ProductsListing = ({
             </div>
           ) : (
             <div className="w-full">
-              <ul className="flex flex-wrap gap-4">
+              <ul className="grid grid-cols-1 min-[425px]:grid-cols-2 lg:grid-cols-3 min-[1440px]:grid-cols-4 gap-4">
                 {pagedApiProducts.map((apiProduct: any, i: number) => {
                   const hit = items.find(
                     (h: any) => h.objectID === apiProduct.id || h.handle === apiProduct.handle

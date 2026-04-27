@@ -51,6 +51,7 @@ interface MessengerContextValue {
   startConversation: (params: {
     targetUserId: string
     targetUserType: string
+    type?: string
     subject?: string
     productId?: string
     orderId?: string
@@ -79,6 +80,26 @@ export function useMessengerUnreads(): Array<{ unreadMessageCount: number }> {
   return Array.from({ length: count }, () => ({ unreadMessageCount: 1 }))
 }
 
+/**
+ * Returns unread count only for ADMIN_SUPPORT conversations.
+ * Used by the Support button in the header so its badge reflects only
+ * admin-support messages, not customer traffic.
+ */
+export function useMessengerAdminUnreads(): Array<{ unreadMessageCount: number }> {
+  const ctx = useContext(MessengerContext)
+  if (!ctx) return []
+  const { conversations } = ctx
+  const count = conversations
+    .filter((c) => c.type === "ADMIN_SUPPORT")
+    .reduce((sum, c) => {
+      const selfParticipant = c.participants.find(
+        (p) => p.userType === "SELLER"
+      )
+      return sum + (selfParticipant?.unreadCount ?? 0)
+    }, 0)
+  return Array.from({ length: count }, () => ({ unreadMessageCount: 1 }))
+}
+
 export function useMessenger(): MessengerContextValue {
   const ctx = useContext(MessengerContext)
   if (!ctx) throw new Error("useMessenger must be used inside MessengerProvider")
@@ -104,8 +125,10 @@ export function MessengerProvider({ children, sellerId, sellerName }: MessengerP
   const [isLoadingMessages, setIsLoadingMessages] = useState(false)
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const activeConvRef = useRef<string | null>(null)
+  const conversationsRef = useRef<Conversation[]>([])
 
   activeConvRef.current = activeConversationId
+  conversationsRef.current = conversations
 
   // Browser notification
   const showBrowserNotification = useCallback((payload: NotificationPayload) => {
@@ -138,13 +161,24 @@ export function MessengerProvider({ children, sellerId, sellerName }: MessengerP
       } else {
         setUnreadCount((n) => n + 1)
       }
-      setConversations((prev) =>
-        prev.map((c) =>
+      setConversations((prev) => {
+        const exists = prev.some((c) => c.id === msg.conversationId)
+        if (!exists) {
+          // New conversation arrived (e.g. first customer message) — refresh list
+          getConversations()
+            .then((r) => {
+              setConversations(r.conversations)
+              setUnreadCount((n) => n + 1)
+            })
+            .catch(() => {})
+          return prev
+        }
+        return prev.map((c) =>
           c.id === msg.conversationId
             ? { ...c, messages: [msg], updatedAt: msg.createdAt }
             : c
         )
-      )
+      })
     }
 
     const onTypingUpdate = (payload: TypingUpdatePayload) => {
@@ -181,7 +215,21 @@ export function MessengerProvider({ children, sellerId, sellerName }: MessengerP
 
     const onNotification = (payload: NotificationPayload) => {
       showBrowserNotification(payload)
-      setUnreadCount((n) => n + 1)
+      // If the notification references a conversation we don't have yet,
+      // refresh the full list so new conversations (e.g. first customer message) appear
+      if (
+        payload.conversationId &&
+        !conversationsRef.current.some((c) => c.id === payload.conversationId)
+      ) {
+        getConversations()
+          .then((r) => {
+            setConversations(r.conversations)
+            getUnreadCount().then((r2) => setUnreadCount(r2.count)).catch(() => {})
+          })
+          .catch(() => {})
+      } else {
+        setUnreadCount((n) => n + 1)
+      }
     }
 
     socket.on("connect", onConnect)
@@ -245,11 +293,12 @@ export function MessengerProvider({ children, sellerId, sellerName }: MessengerP
   const startConversation = useCallback(async (params: {
     targetUserId: string
     targetUserType: string
+    type?: string
     subject?: string
     productId?: string
     orderId?: string
   }): Promise<string> => {
-    const { conversation } = await findOrCreateConversation(params)
+    const { conversation } = await findOrCreateConversation(params as any)
     setConversations((prev) => {
       const exists = prev.find((c) => c.id === conversation.id)
       return exists ? prev : [conversation, ...prev]

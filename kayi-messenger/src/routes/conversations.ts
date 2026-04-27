@@ -13,6 +13,7 @@ const createConversationSchema = z.object({
   targetUserType: z.enum(["CUSTOMER", "SELLER", "ADMIN"], {
     errorMap: () => ({ message: "targetUserType must be CUSTOMER, SELLER or ADMIN" }),
   }),
+  type: z.enum(["DIRECT", "ADMIN_SUPPORT"]).optional().default("DIRECT"),
   subject: z.string().max(255).optional(),
   productId: z.string().optional(),
   orderId: z.string().optional(),
@@ -31,7 +32,7 @@ router.post("/", authMiddleware, async (req: AuthRequest, res) => {
       res.status(400).json({ error: parsed.error.errors[0].message })
       return
     }
-    const { targetUserId, targetUserType, subject, productId, orderId } = parsed.data
+    const { targetUserId, targetUserType, type, subject, productId, orderId } = parsed.data
 
     const conversation = await ConversationService.findOrCreate({
       participantAId: userId,
@@ -41,7 +42,7 @@ router.post("/", authMiddleware, async (req: AuthRequest, res) => {
       subject,
       productId,
       orderId,
-      type: ConversationType.DIRECT,
+      type: type as ConversationType,
     })
 
     res.json({ conversation })

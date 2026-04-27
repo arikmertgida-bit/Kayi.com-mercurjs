@@ -38,6 +38,7 @@ export async function getConversations(): Promise<{ conversations: Conversation[
 export async function findOrCreateConversation(payload: {
   targetUserId: string
   targetUserType: string
+  type?: "DIRECT" | "ADMIN_SUPPORT"
   subject?: string
   productId?: string
   orderId?: string

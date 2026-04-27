@@ -91,13 +91,17 @@ function getAllCategoryIds(cat: {
 
 async function Category({
   params,
+  searchParams,
 }: {
   params: Promise<{
     category: string
     locale: string
   }>
+  searchParams?: Promise<Record<string, string>>
 }) {
   const { category: handle, locale } = await params
+  const sp = searchParams ? await searchParams : {}
+  const page = Math.max(1, parseInt(sp["page"] || "1", 10))
 
   const category = await getCategoryByHandle([handle])
 
@@ -178,7 +182,7 @@ async function Category({
       <div>
         <Suspense fallback={<ProductListingSkeleton />}>
           {bot || !MEILISEARCH_HOST || !MEILISEARCH_SEARCH_KEY ? (
-            <ProductListing category_id={allCategoryIds} showSidebar />
+            <ProductListing category_id={allCategoryIds} showSidebar page={page} />
           ) : (
             <MeiliProductsListing
               category_id={allCategoryIds}

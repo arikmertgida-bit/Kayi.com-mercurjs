@@ -4,6 +4,7 @@ import { formatDistanceToNow } from "date-fns"
 import { Heading } from "@medusajs/ui"
 import { useMessenger } from "../../../providers/messenger-provider/MessengerProvider"
 import { fetchQuery } from "../../../lib/client"
+import { MEDUSA_STOREFRONT_URL } from "../../../lib/storefront"
 import type { Message } from "../../../lib/messenger/types"
 
 // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -154,6 +155,17 @@ function ConvRow({
                   : lastMsg.content?.slice(0, 50)
                 : conv.subject ?? t("messenger.noMessages")}
             </p>
+            {conv.productId ? (
+              <span className="mt-1 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-ui-tag-orange-bg text-ui-tag-orange-text font-medium">
+                <svg className="w-2.5 h-2.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                Ürün sorusu
+              </span>
+            ) : (
+              <span className="mt-1 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-ui-tag-green-bg text-ui-tag-green-text font-medium">
+                <svg className="w-2.5 h-2.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                Mağaza
+              </span>
+            )}
           </div>
         </div>
       </button>
@@ -221,10 +233,12 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
   const [search, setSearch] = useState("")
   const [isSending, setIsSending] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+  const [mobileView, setMobileView] = useState<'list' | 'chat'>('list')
   const bottomRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isTypingRef = useRef(false)
 
   const activeConv = conversations.find((c) => c.id === activeConversationId)
   const otherParticipant = activeConv ? getOtherParticipant(activeConv.participants ?? []) : null
@@ -237,12 +251,12 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
   )
 
   // Product context: fetch product info if conversation has a productId
-  const [productInfo, setProductInfo] = useState<{ title: string; thumbnail: string | null } | null>(null)
+  const [productInfo, setProductInfo] = useState<{ title: string; thumbnail: string | null; handle: string | null } | null>(null)
   useEffect(() => {
     const pid = activeConv?.productId
     if (!pid) { setProductInfo(null); return }
-    fetchQuery<{ product: { title: string; thumbnail: string | null } }>(`/vendor/products/${pid}`, { method: "GET" })
-      .then(({ product }) => setProductInfo({ title: product.title, thumbnail: product.thumbnail }))
+    fetchQuery<{ product: { title: string; thumbnail: string | null; handle: string | null } }>(`/vendor/products/${pid}`, { method: "GET" })
+      .then(({ product }) => setProductInfo({ title: product.title, thumbnail: product.thumbnail, handle: product.handle ?? null }))
       .catch(() => setProductInfo(null))
   }, [activeConv?.productId])
 
@@ -258,14 +272,6 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages, typingUserIds])
-
-  // Auto-resize textarea
-  useEffect(() => {
-    const el = textareaRef.current
-    if (!el) return
-    el.style.height = "auto"
-    el.style.height = `${Math.min(el.scrollHeight, 96)}px`
-  }, [text])
 
   const handleSend = useCallback(async () => {
     const content = text.trim()
@@ -291,9 +297,20 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setText(e.target.value)
-    startTyping()
+    const el = e.target
+    requestAnimationFrame(() => {
+      el.style.height = "auto"
+      el.style.height = `${Math.min(el.scrollHeight, 96)}px`
+    })
+    if (!isTypingRef.current) {
+      isTypingRef.current = true
+      startTyping()
+    }
     if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
-    typingTimerRef.current = setTimeout(() => stopTyping(), 2000)
+    typingTimerRef.current = setTimeout(() => {
+      isTypingRef.current = false
+      stopTyping()
+    }, 2000)
   }
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -318,10 +335,17 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
   }, [deleteMessage])
 
   // â”€â”€ Search (min 2 chars) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Only show DIRECT conversations — ADMIN_SUPPORT traffic lives in the Support drawer
+  const directConversations = conversations.filter((c) => c.type === "DIRECT")
+  const handleOpenConversation = useCallback((id: string) => {
+    openConversation(id)
+    setMobileView('chat')
+  }, [openConversation])
+
   const filtered =
     search.length < 2
-      ? conversations
-      : conversations.filter((c) => {
+      ? directConversations
+      : directConversations.filter((c) => {
           const q = search.toLowerCase()
           return (
             c.subject?.toLowerCase().includes(q) ||
@@ -336,7 +360,7 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
   return (
     <div className="flex h-[700px] border border-ui-border-base rounded-lg overflow-hidden">
       {/* â”€â”€ Left: Conversation list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-      <div className="w-80 flex flex-col border-r border-ui-border-base bg-ui-bg-subtle flex-shrink-0">
+      <div className={`${mobileView === 'chat' ? 'hidden md:flex' : 'flex'} w-full md:w-80 flex-col border-r border-ui-border-base bg-ui-bg-subtle flex-shrink-0`}>
         <div className="p-3 border-b border-ui-border-base">
           <div className="flex items-center justify-between mb-2">
             <Heading level="h3" className="text-sm font-semibold text-ui-fg-base">
@@ -364,7 +388,7 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
                 key={conv.id}
                 conv={conv}
                 isActive={conv.id === activeConversationId}
-                onOpen={openConversation}
+                onOpen={handleOpenConversation}
                 onDelete={deleteConversation}
               />
             ))
@@ -374,9 +398,18 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
 
       {/* â”€â”€ Right: Chat panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {activeConv ? (
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className={`${mobileView === 'list' ? 'hidden md:flex' : 'flex'} flex-1 flex-col min-w-0`}>
           {/* Chat Header */}
           <div className="p-3 border-b border-ui-border-base bg-ui-bg-base flex items-center gap-2">
+            <button
+              onClick={() => setMobileView('list')}
+              className="md:hidden w-7 h-7 flex items-center justify-center rounded-full hover:bg-ui-bg-base-hover text-ui-fg-muted hover:text-ui-fg-subtle transition-colors flex-shrink-0"
+              aria-label="Geri"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
             {isOtherCustomer ? (
               <img
                 src={customerAvatarUrl ?? "/images/customer-default-avatar.jpg"}
@@ -403,7 +436,7 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
               </p>
             </div>
             <button
-              onClick={closeConversation}
+              onClick={() => { closeConversation(); setMobileView('list') }}
               className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-ui-bg-base-hover text-ui-fg-muted hover:text-ui-fg-subtle transition-colors flex-shrink-0"
               aria-label={t("messenger.close")}
             >
@@ -429,7 +462,18 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-ui-fg-muted">Ürün hakkında soru</p>
-                <p className="text-sm font-medium text-ui-fg-base truncate">{productInfo.title}</p>
+                {productInfo.handle ? (
+                  <a
+                    href={`${MEDUSA_STOREFRONT_URL}/tr/products/${productInfo.handle}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-medium text-ui-fg-base hover:text-ui-fg-interactive hover:underline truncate block transition-colors"
+                  >
+                    {productInfo.title} ↗
+                  </a>
+                ) : (
+                  <p className="text-sm font-medium text-ui-fg-base truncate">{productInfo.title}</p>
+                )}
               </div>
               <span className="text-xs px-2 py-0.5 rounded-full bg-ui-tag-blue-bg text-ui-tag-blue-text font-medium">Ürün</span>
             </div>
@@ -602,7 +646,7 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex flex-col items-center justify-center text-center px-8">
+        <div className={`${mobileView === 'list' ? 'hidden md:flex' : 'flex'} flex-1 flex-col items-center justify-center text-center px-8`}>
           <div className="w-12 h-12 rounded-full bg-ui-bg-base border border-ui-border-base flex items-center justify-center mb-3">
             <svg className="w-6 h-6 text-ui-fg-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}

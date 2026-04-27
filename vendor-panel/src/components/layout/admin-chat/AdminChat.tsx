@@ -2,11 +2,11 @@ import { ChatBubble } from "@medusajs/icons"
 import { Button, Drawer, Heading } from "@medusajs/ui"
 import { useMe } from "../../../hooks/api"
 import { MessengerChat } from "../messenger-chat/MessengerChat"
-import { useMessengerUnreads } from "../../../providers/messenger-provider/MessengerProvider"
+import { useMessengerAdminUnreads } from "../../../providers/messenger-provider/MessengerProvider"
 
 export const AdminChat = () => {
   const { seller, isPending } = useMe()
-  const unreads = useMessengerUnreads()
+  const unreads = useMessengerAdminUnreads()
   const unreadCount = unreads.length
 
   if (isPending)

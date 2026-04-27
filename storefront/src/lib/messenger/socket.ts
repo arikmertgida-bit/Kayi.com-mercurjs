@@ -40,11 +40,11 @@ export function connectSocket(tokenOverride?: string | null, displayName?: strin
   })
 
   socketInstance.on("connect", () => {
-    console.log("[messenger] Connected to socket server")
+    // connected
   })
 
-  socketInstance.on("disconnect", (reason) => {
-    console.log("[messenger] Disconnected:", reason)
+  socketInstance.on("disconnect", (_reason) => {
+    // disconnected
   })
 
   socketInstance.on("connect_error", (err) => {

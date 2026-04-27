@@ -43,6 +43,7 @@ const Form = () => {
     "8chars": false,
     symbolOrDigit: false,
   })
+  const [termsAccepted, setTermsAccepted] = useState(false)
   const [error, setError] = useState()
   const {
     handleSubmit,
@@ -123,17 +124,49 @@ const Form = () => {
             />
           </div>
 
+          {/* Terms & Conditions checkbox */}
+          <label className="flex items-start gap-3 mt-6 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={termsAccepted}
+              onChange={(e) => setTermsAccepted(e.target.checked)}
+              className="mt-1 w-4 h-4 shrink-0 accent-gray-900 cursor-pointer"
+            />
+            <span className="text-sm font-semibold text-gray-700 leading-relaxed">
+              <Link
+                href="/terms-and-conditions"
+                className="transition-colors"
+                style={{ color: "#30a17" }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#000000")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#30a17")}
+              >
+                Şartlar ve Koşullar
+              </Link>
+              {" ve "}
+              <Link
+                href="/privacy-policy"
+                className="transition-colors"
+                style={{ color: "#30a17" }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#000000")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#30a17")}
+              >
+                Gizlilik &amp; KVKK Politikası
+              </Link>
+              {" metnini okudum, onaylıyorum."}
+            </span>
+          </label>
+
           {error && <p className="label-md text-negative">{error}</p>}
           <Button
             className="w-full flex justify-center mt-8 uppercase"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !termsAccepted}
             loading={isSubmitting}
           >
             Create account
           </Button>
         </form>
       </Container>
-      <Container className="border max-w-xl mx-auto mt-8 p-4">
+      <Container className="border max-w-xl mx-auto p-4">
         <h1 className="heading-md text-primary uppercase mb-8">
           Already have an account?
         </h1>

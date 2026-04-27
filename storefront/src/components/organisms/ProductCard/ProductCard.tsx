@@ -43,7 +43,7 @@ export const ProductCard = ({
         "relative group border rounded-sm flex flex-col justify-between p-1",
         sliderCard
           ? "w-full"
-          : "w-full lg:w-[calc(25%-1rem)] min-w-[250px]"
+          : "w-full"
       )}
     >
       <div className="relative w-full bg-primary aspect-square">

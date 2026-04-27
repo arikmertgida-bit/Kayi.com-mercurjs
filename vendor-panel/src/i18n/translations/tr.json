@@ -2623,11 +2623,25 @@
   },
   "login": {
     "forgotPassword": "Şifrenizi mi unuttunuz? - <0>Sıfırla</0>",
-    "title": "Medusa'ya Hoş Geldiniz",
-    "hint": "Hesap alanına erişmek için oturum açın"
+    "title": "Kayı.com Satıcı Paneli",
+    "hint": "Hesap alanına erişmek için oturum açın",
+    "notSellerYet": "Henüz satıcı değil misiniz? - <0>Hesap oluştur</0>",
+    "signIn": "Giriş Yap"
+  },
+  "register": {
+    "title": "Kayı.com Ailesine Katıl",
+    "hint": "Satışa başlamak için kayıt olun",
+    "alreadySeller": "Zaten hesabınız var mı? - <0>Giriş Yap</0>",
+    "companyName": "Şirket Adı",
+    "confirmPassword": "Şifreyi Onayla",
+    "signUp": "Kaydol",
+    "passwordMismatch": "Şifreler uyuşmuyor",
+    "successTitle": "Kayıt Talebiniz Alındı!",
+    "successHint": "Giriş yapmadan önce yönetici onayı gerekebilir. Kısa süre içinde size bir onay e-postası gönderilecektir.",
+    "backToLogin": "Giriş sayfasına dön"
   },
   "invite": {
-    "title": "Medusa'ya Hoş Geldiniz",
+    "title": "Kayı.com Yönetim Paneli",
     "hint": "Aşağıda hesabınızı oluşturun",
     "backToLogin": "Girişe geri dön",
     "createAccount": "Hesap oluştur",
@@ -2635,8 +2649,8 @@
     "emailTooltip": "E-postanız değiştirilemez. Başka bir e-posta kullanmak istiyorsanız, yeni bir davet gönderilmelidir.",
     "invalidInvite": "Davet geçersiz veya süresi dolmuş.",
     "successTitle": "Hesabınız kaydedildi",
-    "successHint": "Hemen Medusa Yönetici ile başlayın.",
-    "successAction": "Medusa Yöneticiye Başla",
+    "successHint": "Kayı.com Satıcı Paneline hoş geldiniz.",
+    "successAction": "Panele Git",
     "invalidTokenTitle": "Davet tokeniniz geçersiz",
     "invalidTokenHint": "Yeni bir davet bağlantısı talep etmeyi deneyin.",
     "passwordMismatch": "Şifreler uyuşmuyor",

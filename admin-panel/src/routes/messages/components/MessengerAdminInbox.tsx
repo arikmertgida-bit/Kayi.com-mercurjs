@@ -35,8 +35,12 @@ export function MessengerAdminInbox({ adminId }: Props) {
   const [typingIds, setTypingIds] = useState<string[]>([])
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [convMenuId, setConvMenuId] = useState<string | null>(null)
+  const [mobileView, setMobileView] = useState<'list' | 'chat'>('list')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Ref to avoid stale closures in socket event handlers
+  const selectedIdRef = useRef<string | null>(null)
+  selectedIdRef.current = selectedId
 
   // Ã¢â€â‚¬Ã¢â€â‚¬ Seller data for participant display Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   const { members: sellerMembers } = useSellerMembers()
@@ -45,12 +49,14 @@ export function MessengerAdminInbox({ adminId }: Props) {
     const map = new Map<string, { name: string; photo: string | null }>()
     sellerMembers?.forEach((m) => {
       if (m.id && m.seller) {
-        const info = { name: m.seller.name ?? "Seller", photo: m.photo ?? null }
+        // Use member personal name if available, fall back to store name
+        // Always use member profile photo (never store photo)
+        const info = { name: m.name ?? m.seller.name ?? "Seller", photo: m.photo ?? null }
         // Map by member ID (mem_...)
         map.set(m.id, info)
-        // Map by seller ID (sel_...) as fallback for conversations using seller ID directly
+        // Map by seller ID (sel_...) as fallback
         if (m.seller.id && !map.has(m.seller.id)) {
-          map.set(m.seller.id, { name: m.seller.name ?? "Seller", photo: m.photo ?? (m.seller as any).photo ?? null })
+          map.set(m.seller.id, { name: m.name ?? m.seller.name ?? "Seller", photo: m.photo ?? null })
         }
       }
     })
@@ -84,8 +90,20 @@ export function MessengerAdminInbox({ adminId }: Props) {
       setMessages((prev) =>
         prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]
       )
-      setConversations((prev) =>
-        prev
+      setConversations((prev) => {
+        const exists = prev.some((c) => c.id === msg.conversationId)
+        if (!exists) {
+          // New conversation from a vendor — refresh list so it appears automatically
+          getConversations()
+            .then(({ conversations: c }) =>
+              setConversations(
+                [...c].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+              )
+            )
+            .catch(() => {})
+          return prev
+        }
+        return prev
           .map((c) =>
             c.id === msg.conversationId
               ? {
@@ -99,13 +117,13 @@ export function MessengerAdminInbox({ adminId }: Props) {
               : c
           )
           .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-      )
+      })
     })
 
     socket.on(
       "typing_update",
       ({ conversationId, typingUserIds }: { conversationId: string; typingUserIds: string[] }) => {
-        if (conversationId === selectedId) {
+        if (conversationId === selectedIdRef.current) {
           setTypingIds(typingUserIds.filter((id) => id !== adminId))
         }
       }
@@ -115,7 +133,7 @@ export function MessengerAdminInbox({ adminId }: Props) {
     socket.on(
       "read_receipt",
       ({ conversationId, readAt }: { conversationId: string; readAt: string }) => {
-        if (conversationId === selectedId) {
+        if (conversationId === selectedIdRef.current) {
           setMessages((prev) =>
             prev.map((m) =>
               !m.readAt && m.senderId === adminId ? { ...m, readAt } : m
@@ -175,15 +193,23 @@ export function MessengerAdminInbox({ adminId }: Props) {
     return () => {
       disconnectSocket()
     }
-  }, [adminId, selectedId])
+  }, [adminId])  // selectedId intentionally excluded — socket must stay alive across conversation changes
+
+  // ── Join / leave conversation rooms (separate from socket lifecycle) ────────
+  useEffect(() => {
+    if (!selectedId) return
+    joinConversation(selectedId)
+    return () => {
+      leaveConversation(selectedId)
+    }
+  }, [selectedId])
 
   // Ã¢â€â‚¬Ã¢â€â‚¬ Select conversation Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   const selectConversation = useCallback(
     async (conv: Conversation) => {
-      if (selectedId) leaveConversation(selectedId)
       setSelectedId(conv.id)
+      setMobileView('chat')
       setMessages([])
-      joinConversation(conv.id)
       emitMessagesRead(conv.id)
       await markConversationRead(conv.id).catch(() => {})
       const { messages: msgs } = await getMessages(conv.id).catch(() => ({ messages: [] }))
@@ -202,7 +228,7 @@ export function MessengerAdminInbox({ adminId }: Props) {
         )
       )
     },
-    [selectedId, adminId]
+    [adminId]
   )
 
   // Ã¢â€â‚¬Ã¢â€â‚¬ Auto-scroll Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
@@ -298,7 +324,7 @@ export function MessengerAdminInbox({ adminId }: Props) {
   return (
     <div className="flex h-[700px] border border-ui-border-base rounded-lg overflow-hidden">
       {/* Ã¢â€â‚¬Ã¢â€â‚¬ Left: Conversation list Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
-      <div className="w-80 flex flex-col border-r border-ui-border-base bg-ui-bg-subtle">
+      <div className={`${mobileView === 'chat' ? 'hidden md:flex' : 'flex'} w-full md:w-80 flex-col border-r border-ui-border-base bg-ui-bg-subtle`}>
         <div className="p-3 border-b border-ui-border-base">
           <div className="flex items-center justify-between mb-2">
             <span className="text-ui-fg-base font-semibold text-sm">Messages</span>
@@ -403,9 +429,18 @@ export function MessengerAdminInbox({ adminId }: Props) {
 
       {/* Ã¢â€â‚¬Ã¢â€â‚¬ Right: Chat area Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
       {selectedConv ? (
-        <div className="flex-1 flex flex-col">
+        <div className={`${mobileView === 'list' ? 'hidden md:flex' : 'flex'} flex-1 flex-col`}>
           {/* Header */}
           <div className="p-3 border-b border-ui-border-base bg-ui-bg-base flex items-center gap-2">
+            <button
+              onClick={() => setMobileView('list')}
+              className="md:hidden w-7 h-7 flex items-center justify-center rounded-full hover:bg-ui-bg-base-hover text-ui-fg-muted hover:text-ui-fg-subtle transition-colors flex-shrink-0"
+              aria-label="Geri"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
             {(() => {
               const { name, photo } = getParticipantInfo(selectedConv)
               return (
@@ -544,7 +579,7 @@ export function MessengerAdminInbox({ adminId }: Props) {
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex items-center justify-center text-ui-fg-muted text-sm">
+        <div className={`${mobileView === 'list' ? 'hidden md:flex' : 'flex'} flex-1 items-center justify-center text-ui-fg-muted text-sm`}>
           Select a conversation to start chatting
         </div>
       )}

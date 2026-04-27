@@ -70,10 +70,14 @@ const MEILISEARCH_SEARCH_KEY = process.env.NEXT_PUBLIC_MEILISEARCH_SEARCH_KEY
 
 async function AllCategories({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>
+  searchParams?: Promise<Record<string, string>>
 }) {
   const { locale } = await params
+  const sp = searchParams ? await searchParams : {}
+  const page = Math.max(1, parseInt(sp["page"] || "1", 10))
 
   const ua = (await headers()).get("user-agent") || ""
   const bot = isBot(ua)
@@ -145,7 +149,7 @@ async function AllCategories({
 
       <Suspense fallback={<ProductListingSkeleton />}>
         {bot || !MEILISEARCH_HOST || !MEILISEARCH_SEARCH_KEY ? (
-          <ProductListing showSidebar locale={locale} />
+          <ProductListing showSidebar locale={locale} page={page} />
         ) : (
           <MeiliProductsListing
             locale={locale}

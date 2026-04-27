@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import Image from "next/image"
+import { useParams } from "next/navigation"
 import { useMessenger } from "@/providers/MessengerProvider"
 import { MSG } from "@/lib/messenger/strings"
 import { useSellerAvatar } from "@/hooks/useSellerAvatar"
@@ -137,7 +138,7 @@ function ConvRow({
         <div className="flex items-center gap-3">
           <div className="relative flex-shrink-0">
             <Avatar
-              src={isSeller ? avatarUrl : null}
+              src={isSeller ? (avatarUrl ?? "/images/vendor/default-seller-avatar.png") : "/images/customer-default-avatar.jpg"}
               name={otherName}
               size={44}
             />
@@ -173,6 +174,17 @@ function ConvRow({
                   : lastMsg.content
                 : MSG.NO_MESSAGE_YET}
             </p>
+            {conv.productId ? (
+              <span className="mt-1 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600 font-medium border border-amber-100">
+                <svg className="w-2.5 h-2.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                Ürün sorusu
+              </span>
+            ) : isSeller ? (
+              <span className="mt-1 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 font-medium border border-blue-100">
+                <svg className="w-2.5 h-2.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                Mağaza
+              </span>
+            ) : null}
           </div>
         </div>
       </button>
@@ -244,10 +256,12 @@ export function MessengerInbox({
   const [isSending, setIsSending] = useState(false)
   const [sendError, setSendError] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+  const [mobileView, setMobileView] = useState<'list' | 'chat'>('list')
   const bottomRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isTypingRef = useRef(false)
 
   const activeConv = conversations.find((c) => c.id === activeConversationId)
   const otherParticipant = activeConv?.participants.find(
@@ -262,23 +276,24 @@ export function MessengerInbox({
   const { avatarUrl: sellerAvatarUrl } = useSellerAvatar(
     isSeller ? otherParticipant?.userId : undefined
   )
-  const otherAvatarUrl = isSeller ? sellerAvatarUrl : null
+  const otherAvatarUrl = isSeller
+    ? (sellerAvatarUrl ?? "/images/vendor/default-seller-avatar.png")
+    : "/images/customer-default-avatar.jpg"
   const isOtherTyping = typingUserIds.length > 0
 
   // Product context: fetch product info when conversation has productId
-  const [productInfo, setProductInfo] = useState<{ title: string; thumbnail: string | null } | null>(null)
+  const params = useParams()
+  const locale = (params?.locale as string) ?? "tr"
+
+  const [productInfo, setProductInfo] = useState<{ title: string; thumbnail: string | null; handle: string | null } | null>(null)
   useEffect(() => {
     const pid = activeConv?.productId
     if (!pid) { setProductInfo(null); return }
-    const apiBase = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || ""
-    const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ""
-    fetch(`${apiBase}/store/products/${pid}`, {
-      headers: { "x-publishable-api-key": publishableKey },
-    })
+    fetch(`/api/product/${encodeURIComponent(pid)}`, {})
       .then((r) => r.ok ? r.json() : null)
       .then((data) => {
         if (data?.product) {
-          setProductInfo({ title: data.product.title, thumbnail: data.product.thumbnail })
+          setProductInfo({ title: data.product.title, thumbnail: data.product.thumbnail, handle: data.product.handle ?? null })
         } else {
           setProductInfo(null)
         }
@@ -290,14 +305,6 @@ export function MessengerInbox({
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages, typingUserIds])
-
-  // Auto-resize textarea
-  useEffect(() => {
-    const el = textareaRef.current
-    if (!el) return
-    el.style.height = "auto"
-    el.style.height = `${Math.min(el.scrollHeight, 96)}px`
-  }, [text])
 
   // Reset send error when switching conversations
   useEffect(() => {
@@ -332,9 +339,20 @@ export function MessengerInbox({
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setText(e.target.value)
-    startTyping()
+    const el = e.target
+    requestAnimationFrame(() => {
+      el.style.height = "auto"
+      el.style.height = `${Math.min(el.scrollHeight, 96)}px`
+    })
+    if (!isTypingRef.current) {
+      isTypingRef.current = true
+      startTyping()
+    }
     if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
-    typingTimerRef.current = setTimeout(() => stopTyping(), 2000)
+    typingTimerRef.current = setTimeout(() => {
+      isTypingRef.current = false
+      stopTyping()
+    }, 2000)
   }
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -358,6 +376,11 @@ export function MessengerInbox({
     }
   }, [deleteMessage])
 
+  const handleOpenConversation = useCallback((id: string) => {
+    openConversation(id)
+    setMobileView('chat')
+  }, [openConversation])
+
   const filtered =
     searchQuery.length < 2
       ? conversations
@@ -374,9 +397,10 @@ export function MessengerInbox({
   return (
     <div className="flex h-[700px] border border-gray-300 rounded-2xl overflow-hidden shadow-sm bg-white">
       {/* ── Left: Conversation List ──────────────────────────────────────────── */}
-      <div className="w-80 flex-shrink-0 border-r border-gray-200 flex flex-col">
+      <div className={`${mobileView === 'chat' ? 'hidden md:flex' : 'flex'} w-full md:w-80 flex-shrink-0 border-r border-gray-200 flex-col`}>
         {/* Header */}
-        <div className="px-5 py-4 border-b border-gray-200">
+        <div className="px-5 py-4 border-b border-gray-200 flex items-center gap-2">
+          <Image src="/icon.png" alt="Site simgesi" width={24} height={24} className="object-contain flex-shrink-0" />
           <h2 className="text-lg font-bold text-gray-900">{MSG.MESSAGES_TITLE}</h2>
         </div>
 
@@ -436,7 +460,7 @@ export function MessengerInbox({
                 conv={conv}
                 currentUserId={currentUserId}
                 isActive={conv.id === activeConversationId}
-                onOpen={openConversation}
+                onOpen={handleOpenConversation}
                 onDelete={deleteConversation}
               />
             ))
@@ -446,9 +470,18 @@ export function MessengerInbox({
 
       {/* ── Right: Chat Panel ────────────────────────────────────────────────── */}
       {activeConv && otherParticipant ? (
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className={`${mobileView === 'list' ? 'hidden md:flex' : 'flex'} flex-1 flex-col min-w-0`}>
           {/* Chat Header */}
           <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-200 bg-white">
+            <button
+              onClick={() => setMobileView('list')}
+              className="md:hidden w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+              aria-label="Geri"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
             <Avatar src={otherAvatarUrl} name={otherName} size={40} />
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-gray-900 text-sm truncate">
@@ -457,7 +490,7 @@ export function MessengerInbox({
               <p className="text-xs text-gray-400">Mesaj bırakabilirsiniz</p>
             </div>
             <button
-              onClick={closeConversation}
+              onClick={() => { closeConversation(); setMobileView('list') }}
               className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
               aria-label={MSG.CLOSE}
             >
@@ -493,7 +526,19 @@ export function MessengerInbox({
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-amber-600 font-medium">Ürün hakkında soru</p>
-                <p className="text-sm font-semibold text-gray-800 truncate">{productInfo.title}</p>
+                {productInfo.handle ? (
+                  <a
+                    href={`/${locale}/products/${productInfo.handle}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-semibold text-gray-800 hover:text-amber-600 hover:underline truncate block transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {productInfo.title} ↗
+                  </a>
+                ) : (
+                  <p className="text-sm font-semibold text-gray-800 truncate">{productInfo.title}</p>
+                )}
               </div>
               <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">Ürün</span>
             </div>
@@ -803,7 +848,7 @@ export function MessengerInbox({
         </div>
       ) : (
         /* Empty right panel */
-        <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-gray-50/30">
+        <div className={`${mobileView === 'list' ? 'hidden md:flex' : 'flex'} flex-1 flex-col items-center justify-center text-center p-8 bg-gray-50/30`}>
           <div className="w-20 h-20 rounded-full bg-white shadow-sm border border-gray-200 flex items-center justify-center mb-4">
             <svg
               className="w-10 h-10 text-gray-300"

@@ -18,6 +18,7 @@ export const SellerTabs = ({
   categories,
   productCount,
   productMap = {},
+  page = 1,
 }: {
   tab: string
   seller_handle: string
@@ -28,6 +29,7 @@ export const SellerTabs = ({
   categories: { id: string; name: string; handle: string }[]
   productCount: number
   productMap?: Record<string, { title: string; thumbnail: string | null }>
+  page?: number
 }) => {
   const filteredReviews = seller.reviews?.filter((r) => r !== null) ?? []
   const reviewCount = filteredReviews.length
@@ -39,7 +41,7 @@ export const SellerTabs = ({
   const productContent = (
     <Suspense fallback={<ProductListingSkeleton />}>
       {!MEILISEARCH_HOST || !MEILISEARCH_SEARCH_KEY ? (
-        <ProductListing seller_id={seller_id} />
+        <ProductListing seller_id={seller_id} page={page} />
       ) : (
         <MeiliProductsListing
           locale={locale}
