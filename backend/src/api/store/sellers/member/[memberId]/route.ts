@@ -19,8 +19,8 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
 
   try {
     const { data: members } = await query.graph({
-      entity: "seller_member",
-      fields: ["id", "name", "email", "seller.name", "seller.photo"],
+      entity: "member",
+      fields: ["id", "name", "email", "photo", "seller.id", "seller.name", "seller.handle", "seller.photo"],
       filters: { id: memberId },
     })
 
@@ -28,8 +28,12 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
       const m = members[0] as any
       const seller = m.seller as any
       return res.json({
-        avatarUrl: seller?.photo ?? null,
+        avatarUrl: m.photo ?? null,
         displayName: m.name || seller?.name || null,
+        sellerId: seller?.id ?? null,
+        sellerName: seller?.name ?? null,
+        sellerHandle: seller?.handle ?? null,
+        sellerPhoto: seller?.photo ?? null,
       })
     }
   } catch (err) {

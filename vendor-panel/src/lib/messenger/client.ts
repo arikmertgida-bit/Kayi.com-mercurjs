@@ -42,6 +42,7 @@ export async function findOrCreateConversation(payload: {
   subject?: string
   productId?: string
   orderId?: string
+  contextType?: string
 }): Promise<{ conversation: Conversation }> {
   return request("/api/conversations", {
     method: "POST",

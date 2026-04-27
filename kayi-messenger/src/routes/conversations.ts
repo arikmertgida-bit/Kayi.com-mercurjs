@@ -2,8 +2,8 @@ import { Router } from "express"
 import { z } from "zod"
 import { authMiddleware, AuthRequest, resolveIdentity } from "../middleware/auth"
 import { ConversationService } from "../services/conversation.service"
-import { userNameCache } from "../lib/user-cache"
-import { UserType, ConversationType } from "@prisma/client"
+import { userNameCache, resolveDisplayName } from "../lib/user-cache"
+import { UserType, ConversationType, ConversationContextType } from "@prisma/client"
 import prisma from "../lib/prisma"
 
 const router = Router()
@@ -17,6 +17,7 @@ const createConversationSchema = z.object({
   subject: z.string().max(255).optional(),
   productId: z.string().optional(),
   orderId: z.string().optional(),
+  contextType: z.enum(["PRODUCT_BASED", "VENDOR_BASED"]).optional(),
 })
 
 /**
@@ -32,7 +33,10 @@ router.post("/", authMiddleware, async (req: AuthRequest, res) => {
       res.status(400).json({ error: parsed.error.errors[0].message })
       return
     }
-    const { targetUserId, targetUserType, type, subject, productId, orderId } = parsed.data
+    const { targetUserId, targetUserType, type, subject, productId, orderId, contextType } = parsed.data
+    // Auto-derive contextType if not explicitly provided
+    const resolvedContextType: ConversationContextType =
+      (contextType as ConversationContextType) ?? (productId ? ConversationContextType.PRODUCT_BASED : ConversationContextType.VENDOR_BASED)
 
     const conversation = await ConversationService.findOrCreate({
       participantAId: userId,
@@ -43,6 +47,7 @@ router.post("/", authMiddleware, async (req: AuthRequest, res) => {
       productId,
       orderId,
       type: type as ConversationType,
+      contextType: resolvedContextType,
     })
 
     res.json({ conversation })
@@ -62,14 +67,18 @@ router.get("/", authMiddleware, async (req: AuthRequest, res) => {
     const limit = Math.min(parseInt((req.query.limit as string) || "20", 10), 100)
     const offset = Math.max(parseInt((req.query.offset as string) || "0", 10), 0)
     const conversations = await ConversationService.listForUser(userId, limit, offset)
-    // Enrich each participant with a cached displayName
-    const enriched = conversations.map((conv) => ({
-      ...conv,
-      participants: conv.participants.map((p) => ({
-        ...p,
-        displayName: userNameCache.get(p.userId) ?? null,
-      })),
-    }))
+    // Enrich each participant with resolved displayName (cache → DB → Medusa API → fallback)
+    const enriched = await Promise.all(
+      conversations.map(async (conv) => ({
+        ...conv,
+        participants: await Promise.all(
+          conv.participants.map(async (p) => ({
+            ...p,
+            displayName: await resolveDisplayName(p.userId),
+          }))
+        ),
+      }))
+    )
     res.json({ conversations: enriched, limit, offset })
   } catch (err) {
     console.error("[conversations] GET /", err)

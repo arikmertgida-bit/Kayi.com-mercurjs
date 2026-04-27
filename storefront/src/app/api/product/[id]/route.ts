@@ -21,10 +21,13 @@ export async function GET(
   const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ""
 
   try {
-    const res = await fetch(`${backendUrl}/store/products/${encodeURIComponent(id)}`, {
-      headers: { "x-publishable-api-key": publishableKey },
-      next: { revalidate: 60 },
-    })
+    const res = await fetch(
+      `${backendUrl}/store/products/${encodeURIComponent(id)}?fields=id,title,handle,thumbnail,+variants.calculated_price`,
+      {
+        headers: { "x-publishable-api-key": publishableKey },
+        next: { revalidate: 60 },
+      }
+    )
 
     if (!res.ok) {
       return NextResponse.json({ product: null }, { status: res.status })

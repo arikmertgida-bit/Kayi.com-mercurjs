@@ -6,7 +6,11 @@ import { useParams } from "next/navigation"
 import { useMessenger } from "@/providers/MessengerProvider"
 import { MSG } from "@/lib/messenger/strings"
 import { useSellerAvatar } from "@/hooks/useSellerAvatar"
-import type { Conversation, Message } from "@/lib/messenger/types"
+import type { Conversation, Message, MessageContext, VendorContextData, ProductContextData } from "@/lib/messenger/types"
+import { ThreadListItem } from "./components/ThreadListItem"
+import { ProductContextCard } from "./components/ProductContextCard"
+import { VendorContextCard } from "./components/VendorContextCard"
+import { ChatHeader } from "./components/ChatHeader"
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -86,142 +90,6 @@ function TypingDots() {
   )
 }
 
-// ── ConvRow ───────────────────────────────────────────────────────────────────
-
-function ConvRow({
-  conv,
-  currentUserId,
-  isActive,
-  onOpen,
-  onDelete,
-}: {
-  conv: Conversation
-  currentUserId: string
-  isActive: boolean
-  onOpen: (id: string) => void
-  onDelete: (id: string, deleteForAll: boolean) => void
-}) {
-  const other = conv.participants.find((p) => p.userId !== currentUserId)
-  const me = conv.participants.find((p) => p.userId === currentUserId)
-  const unread = me?.unreadCount ?? 0
-  const lastMsg = conv.messages?.[0]
-  const otherName = other?.displayName ?? other?.userId ?? MSG.UNKNOWN_USER
-
-  const isSeller = other?.userType === "SELLER"
-  const { avatarUrl } = useSellerAvatar(isSeller ? other?.userId : undefined)
-
-  const [menuOpen, setMenuOpen] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
-
-  // Close menu when clicking outside
-  useEffect(() => {
-    if (!menuOpen) return
-    function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClick)
-    return () => document.removeEventListener("mousedown", handleClick)
-  }, [menuOpen])
-
-  return (
-    <div className="relative group">
-      <button
-        onClick={() => onOpen(conv.id)}
-        className={`w-full text-left px-4 py-3 border-b border-gray-200 transition-all hover:bg-gray-50 ${
-          isActive
-            ? "bg-amber-50 border-l-[3px] border-l-amber-400"
-            : "border-l-[3px] border-l-transparent"
-        }`}
-      >
-        <div className="flex items-center gap-3">
-          <div className="relative flex-shrink-0">
-            <Avatar
-              src={isSeller ? (avatarUrl ?? "/images/vendor/default-seller-avatar.png") : "/images/customer-default-avatar.jpg"}
-              name={otherName}
-              size={44}
-            />
-            {unread > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-amber-500 text-white text-[10px] rounded-full flex items-center justify-center px-1 font-medium">
-                {unread > 99 ? "99+" : unread}
-              </span>
-            )}
-          </div>
-          <div className="flex-1 min-w-0 pr-6">
-            <div className="flex items-center justify-between mb-0.5">
-              <span
-                className={`text-sm truncate ${
-                  unread > 0
-                    ? "font-semibold text-gray-900"
-                    : "font-medium text-gray-700"
-                }`}
-              >
-                {conv.subject ?? otherName}
-              </span>
-              <span className="text-xs text-gray-400 flex-shrink-0 ml-2">
-                {formatRelative(conv.updatedAt)}
-              </span>
-            </div>
-            <p
-              className={`text-xs truncate ${
-                unread > 0 ? "text-gray-700 font-medium" : "text-gray-400"
-              }`}
-            >
-              {lastMsg
-                ? lastMsg.messageType === "IMAGE"
-                  ? MSG.IMAGE_MESSAGE
-                  : lastMsg.content
-                : MSG.NO_MESSAGE_YET}
-            </p>
-            {conv.productId ? (
-              <span className="mt-1 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600 font-medium border border-amber-100">
-                <svg className="w-2.5 h-2.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-                Ürün sorusu
-              </span>
-            ) : isSeller ? (
-              <span className="mt-1 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 font-medium border border-blue-100">
-                <svg className="w-2.5 h-2.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                Mağaza
-              </span>
-            ) : null}
-          </div>
-        </div>
-      </button>
-
-      {/* 3-dot menu button */}
-      <div ref={menuRef} className="absolute right-2 top-1/2 -translate-y-1/2">
-        <button
-          onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v) }}
-          className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-200 transition-all opacity-0 group-hover:opacity-100"
-          aria-label="Sohbet seçenekleri"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" />
-          </svg>
-        </button>
-
-        {menuOpen && (
-          <div className="absolute z-50 right-0 top-9 w-48 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden text-sm">
-            <button
-              onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onDelete(conv.id, false) }}
-              className="w-full text-left px-4 py-2.5 hover:bg-gray-50 text-gray-700 transition-colors"
-            >
-              Sadece Benden Sil
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onDelete(conv.id, true) }}
-              className="w-full text-left px-4 py-2.5 hover:bg-red-50 text-red-600 transition-colors"
-            >
-              Herkesten Sil
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
 // ── Main Component ────────────────────────────────────────────────────────────
 
 interface MessengerInboxProps {
@@ -241,6 +109,7 @@ export function MessengerInbox({
     messages,
     typingUserIds,
     isLoadingMessages,
+    isConnected,
     openConversation,
     closeConversation,
     sendMessage,
@@ -257,7 +126,11 @@ export function MessengerInbox({
   const [sendError, setSendError] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('list')
+  const [pendingImage, setPendingImage] = useState<File | null>(null)
+  const [pendingImagePreview, setPendingImagePreview] = useState<string | null>(null)
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -267,43 +140,85 @@ export function MessengerInbox({
   const otherParticipant = activeConv?.participants.find(
     (p) => p.userId !== currentUserId
   )
-  const otherName =
-    otherParticipant?.displayName ??
-    otherParticipant?.userId ??
-    MSG.UNKNOWN_USER
-
   const isSeller = otherParticipant?.userType === "SELLER"
-  const { avatarUrl: sellerAvatarUrl } = useSellerAvatar(
+  const { avatarUrl: sellerAvatarUrl, displayName: sellerDisplayName } = useSellerAvatar(
     isSeller ? otherParticipant?.userId : undefined
   )
+  const otherName =
+    sellerDisplayName ??
+    otherParticipant?.displayName ??
+    MSG.UNKNOWN_USER
   const otherAvatarUrl = isSeller
-    ? (sellerAvatarUrl ?? "/images/vendor/default-seller-avatar.png")
+    ? (sellerAvatarUrl ?? null)
     : "/images/customer-default-avatar.jpg"
   const isOtherTyping = typingUserIds.length > 0
 
-  // Product context: fetch product info when conversation has productId
   const params = useParams()
   const locale = (params?.locale as string) ?? "tr"
 
-  const [productInfo, setProductInfo] = useState<{ title: string; thumbnail: string | null; handle: string | null } | null>(null)
-  useEffect(() => {
-    const pid = activeConv?.productId
-    if (!pid) { setProductInfo(null); return }
-    fetch(`/api/product/${encodeURIComponent(pid)}`, {})
-      .then((r) => r.ok ? r.json() : null)
-      .then((data) => {
-        if (data?.product) {
-          setProductInfo({ title: data.product.title, thumbnail: data.product.thumbnail, handle: data.product.handle ?? null })
-        } else {
-          setProductInfo(null)
-        }
-      })
-      .catch(() => setProductInfo(null))
-  }, [activeConv?.productId])
+  // Active conversation context (PRODUCT or VENDOR) — drives ChatHeader + context cards
+  const [activeContext, setActiveContext] = useState<MessageContext | null>(null)
 
-  // Auto-scroll
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+    const conv = activeConv
+    if (!conv) { setActiveContext(null); return }
+
+    const isProduct = conv.contextType === "PRODUCT_BASED" || (conv.contextType !== "VENDOR_BASED" && !!conv.productId)
+
+    if (isProduct && conv.productId) {
+      const pid = conv.productId
+      fetch(`/api/product/${encodeURIComponent(pid)}`)
+        .then((r) => r.ok ? r.json() : null)
+        .then((data) => {
+          if (data?.product) {
+            setActiveContext({
+              type: "PRODUCT",
+              data: {
+                id: pid,
+                title: data.product.title,
+                thumbnail: data.product.thumbnail ?? null,
+                handle: data.product.handle ?? null,
+              },
+            })
+          } else {
+            setActiveContext(null)
+          }
+        })
+        .catch(() => setActiveContext(null))
+    } else if (!isProduct) {
+      const sellerParticipant = conv.participants.find((p) => p.userType === "SELLER")
+      const memberId = sellerParticipant?.userId
+      if (!memberId) { setActiveContext(null); return }
+
+      fetch(`/api/vendor-info/${encodeURIComponent(memberId)}`)
+        .then((r) => r.ok ? r.json() : null)
+        .then((data) => {
+          if (data?.name) {
+            setActiveContext({
+              type: "VENDOR",
+              data: {
+                id: data.id ?? memberId,
+                name: data.name,
+                handle: data.handle ?? "",
+                photo: data.photo ?? null,
+                storePhoto: data.storePhoto ?? null,
+              },
+            })
+          } else {
+            setActiveContext(null)
+          }
+        })
+        .catch(() => setActiveContext(null))
+    } else {
+      setActiveContext(null)
+    }
+  }, [activeConv?.id])
+
+  // Auto-scroll to bottom
+  useEffect(() => {
+    const container = messagesContainerRef.current
+    if (!container) return
+    container.scrollTop = container.scrollHeight
   }, [messages, typingUserIds])
 
   // Reset send error when switching conversations
@@ -313,22 +228,46 @@ export function MessengerInbox({
   }, [activeConversationId])
 
   const handleSend = useCallback(async () => {
-    const content = text.trim()
-    if (!content || isSending) return
+    if (!pendingImage && !text.trim()) return
+    if (isSending) return
+
     setIsSending(true)
     setSendError(null)
-    setText("")
-    stopTyping()
-    try {
-      await sendMessage(content)
-    } catch (err) {
-      console.error("[MessengerInbox] send error:", err)
-      setText(content)
-      setSendError("Mesaj gönderilemedi. Tekrar deneyin.")
-    } finally {
-      setIsSending(false)
+    const content = text.trim()
+
+    // Upload pending image first
+    if (pendingImage) {
+      const file = pendingImage
+      setPendingImage(null)
+      if (pendingImagePreview) {
+        URL.revokeObjectURL(pendingImagePreview)
+        setPendingImagePreview(null)
+      }
+      try {
+        await uploadImage(file)
+      } catch (err) {
+        console.error("[MessengerInbox] image upload error:", err)
+        setSendError("Görsel gönderilemedi. Lütfen tekrar deneyin.")
+        setIsSending(false)
+        return
+      }
     }
-  }, [text, isSending, sendMessage, stopTyping])
+
+    // Then send text if any
+    if (content) {
+      setText("")
+      stopTyping()
+      try {
+        await sendMessage(content)
+      } catch (err) {
+        console.error("[MessengerInbox] send error:", err)
+        setText(content)
+        setSendError("Mesaj gönderilemedi. Tekrar deneyin.")
+      }
+    }
+
+    setIsSending(false)
+  }, [text, pendingImage, pendingImagePreview, isSending, sendMessage, stopTyping, uploadImage])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -355,16 +294,12 @@ export function MessengerInbox({
     }, 2000)
   }
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    try {
-      await uploadImage(file)
-    } catch (err) {
-      console.error("[MessengerInbox] image upload error:", err)
-    } finally {
-      e.target.value = ""
-    }
+    setPendingImage(file)
+    setPendingImagePreview(URL.createObjectURL(file))
+    e.target.value = ""
   }
 
   const handleDeleteMessage = useCallback(async (messageId: string, deleteForAll: boolean) => {
@@ -395,6 +330,7 @@ export function MessengerInbox({
         })
 
   return (
+    <>
     <div className="flex h-[700px] border border-gray-300 rounded-2xl overflow-hidden shadow-sm bg-white">
       {/* ── Left: Conversation List ──────────────────────────────────────────── */}
       <div className={`${mobileView === 'chat' ? 'hidden md:flex' : 'flex'} w-full md:w-80 flex-shrink-0 border-r border-gray-200 flex-col`}>
@@ -455,7 +391,7 @@ export function MessengerInbox({
             </div>
           ) : (
             filtered.map((conv) => (
-              <ConvRow
+              <ThreadListItem
                 key={conv.id}
                 conv={conv}
                 currentUserId={currentUserId}
@@ -471,81 +407,25 @@ export function MessengerInbox({
       {/* ── Right: Chat Panel ────────────────────────────────────────────────── */}
       {activeConv && otherParticipant ? (
         <div className={`${mobileView === 'list' ? 'hidden md:flex' : 'flex'} flex-1 flex-col min-w-0`}>
-          {/* Chat Header */}
-          <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-200 bg-white">
-            <button
-              onClick={() => setMobileView('list')}
-              className="md:hidden w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
-              aria-label="Geri"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <Avatar src={otherAvatarUrl} name={otherName} size={40} />
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-gray-900 text-sm truncate">
-                {otherName}
-              </p>
-              <p className="text-xs text-gray-400">Mesaj bırakabilirsiniz</p>
-            </div>
-            <button
-              onClick={() => { closeConversation(); setMobileView('list') }}
-              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
-              aria-label={MSG.CLOSE}
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
+          {/* Chat Header — context-aware (product title or store name) */}
+          <ChatHeader
+            context={activeContext}
+            locale={locale}
+            onBack={() => setMobileView('list')}
+            onClose={() => { closeConversation(); setMobileView('list') }}
+            fallbackName={otherName}
+          />
 
-          {/* Product context banner */}
-          {productInfo && (
-            <div className="flex items-center gap-3 px-5 py-2.5 bg-amber-50 border-b border-amber-100">
-              <div className="w-10 h-10 rounded-lg overflow-hidden bg-white flex-shrink-0 border border-amber-100">
-                {productInfo.thumbnail ? (
-                  <Image src={productInfo.thumbnail} alt={productInfo.title} width={40} height={40} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-amber-300">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18" />
-                    </svg>
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-amber-600 font-medium">Ürün hakkında soru</p>
-                {productInfo.handle ? (
-                  <a
-                    href={`/${locale}/products/${productInfo.handle}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm font-semibold text-gray-800 hover:text-amber-600 hover:underline truncate block transition-colors"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {productInfo.title} ↗
-                  </a>
-                ) : (
-                  <p className="text-sm font-semibold text-gray-800 truncate">{productInfo.title}</p>
-                )}
-              </div>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">Ürün</span>
-            </div>
+          {/* Context card — sticky under header */}
+          {activeContext?.type === "PRODUCT" && (
+            <ProductContextCard product={activeContext.data} locale={locale} />
+          )}
+          {activeContext?.type === "VENDOR" && (
+            <VendorContextCard vendor={activeContext.data} locale={locale} />
           )}
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-1 bg-gray-50/40 scroll-smooth">
+          <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-1 bg-gray-50/40">
             {isLoadingMessages ? (
               <div className="flex justify-center items-center h-full">
                 <div className="w-6 h-6 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
@@ -640,15 +520,18 @@ export function MessengerInbox({
                       )}
 
                       {msg.messageType === "IMAGE" && msg.imageUrl ? (
-                        <Image
-                          src={msg.imageUrl}
-                          alt="Görsel mesaj"
-                          width={240}
-                          height={240}
-                          className={`object-cover max-h-60 rounded-2xl ${
-                            isMine ? "rounded-br-sm" : "rounded-bl-sm"
-                          }`}
-                        />
+                        <button
+                          onClick={() => setLightboxSrc(msg.imageUrl!)}
+                          className={`cursor-zoom-in border-0 p-0 rounded-2xl overflow-hidden ${isMine ? "rounded-br-sm" : "rounded-bl-sm"}`}
+                        >
+                          <Image
+                            src={msg.imageUrl}
+                            alt="Görsel mesaj"
+                            width={240}
+                            height={240}
+                            className="object-cover max-h-60 rounded-2xl hover:opacity-90 transition-opacity"
+                          />
+                        </button>
                       ) : (
                         <div
                           className={`px-4 py-2.5 rounded-[22px] text-sm leading-relaxed break-words ${
@@ -673,7 +556,7 @@ export function MessengerInbox({
                               e.stopPropagation()
                               setDeleteTarget(deleteTarget === msg.id ? null : msg.id)
                             }}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 flex items-center justify-center rounded-full bg-white shadow border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 flex-shrink-0"
+                            className={`transition-opacity w-6 h-6 flex items-center justify-center rounded-full bg-white shadow border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 flex-shrink-0 ${deleteTarget === msg.id ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
                             title={MSG.CONFIRM_DELETE}
                           >
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -785,6 +668,12 @@ export function MessengerInbox({
 
           {/* Input Bar */}
           <div className="px-4 py-3 border-t border-gray-200 bg-white">
+            {!isConnected && (
+              <div className="mb-2 px-3 py-1.5 bg-yellow-50 border border-yellow-100 rounded-xl text-xs text-yellow-700 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse flex-shrink-0" />
+                Bağlantı kesildi, yeniden bağlanılıyor…
+              </div>
+            )}
             {sendError && (
               <p className="text-xs text-red-500 px-1 pb-1">{sendError}</p>
             )}
@@ -818,6 +707,28 @@ export function MessengerInbox({
                 onChange={handleFileChange}
               />
 
+              {/* Pending image preview */}
+              {pendingImagePreview && (
+                <div className="relative flex-shrink-0 mb-0.5">
+                  <img
+                    src={pendingImagePreview}
+                    alt="Gönderilecek görsel"
+                    className="w-12 h-12 rounded-xl object-cover border border-gray-200"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      URL.revokeObjectURL(pendingImagePreview)
+                      setPendingImagePreview(null)
+                      setPendingImage(null)
+                    }}
+                    className="absolute -top-1 -right-1 w-4 h-4 bg-gray-700 text-white rounded-full text-[10px] flex items-center justify-center hover:bg-red-500 transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+
               {/* Text input */}
               <textarea
                 ref={textareaRef}
@@ -833,7 +744,7 @@ export function MessengerInbox({
               <button
                 type="button"
                 onClick={handleSend}
-                disabled={!text.trim() || isSending}
+                disabled={(!text.trim() && !pendingImage) || isSending}
                 className="w-8 h-8 flex items-center justify-center rounded-full transition-all flex-shrink-0 mb-0.5
                   disabled:text-gray-300 disabled:cursor-not-allowed
                   enabled:text-amber-500 enabled:hover:bg-amber-50"
@@ -873,5 +784,28 @@ export function MessengerInbox({
         </div>
       )}
     </div>
+
+    {/* Lightbox */}
+    {lightboxSrc && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+        onClick={() => setLightboxSrc(null)}
+      >
+        <button
+          className="absolute top-4 right-4 text-white text-2xl w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+          onClick={() => setLightboxSrc(null)}
+          aria-label="Kapat"
+        >
+          ✕
+        </button>
+        <img
+          src={lightboxSrc}
+          alt="Görsel"
+          className="max-w-[90vw] max-h-[90vh] rounded-xl object-contain"
+          onClick={(e) => e.stopPropagation()}
+        />
+      </div>
+    )}
+    </>
   )
 }

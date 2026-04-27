@@ -177,7 +177,7 @@ export function MessengerProvider({ children, sellerId, sellerName }: MessengerP
           c.id === msg.conversationId
             ? { ...c, messages: [msg], updatedAt: msg.createdAt }
             : c
-        )
+        ).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
       })
     }
 

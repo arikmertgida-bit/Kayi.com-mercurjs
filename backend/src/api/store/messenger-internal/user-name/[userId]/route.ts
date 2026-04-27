@@ -48,6 +48,23 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
     }
   }
 
+  // Seller store lookup (sel_...)
+  if (userId.startsWith("sel_")) {
+    try {
+      const { data: sellers } = await query.graph({
+        entity: "seller",
+        fields: ["id", "name"],
+        filters: { id: userId },
+      })
+      if (sellers.length) {
+        const s = sellers[0] as any
+        return res.json({ userId, displayName: s.name || userId })
+      }
+    } catch {
+      // fall through
+    }
+  }
+
   // Member lookup (mem_...) — look up via seller members
   if (userId.startsWith("mem_")) {
     try {

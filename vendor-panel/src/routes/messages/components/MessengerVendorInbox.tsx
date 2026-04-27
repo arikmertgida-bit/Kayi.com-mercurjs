@@ -1,11 +1,13 @@
 ﻿import { useState, useEffect, useRef, useCallback } from "react"
 import { useTranslation } from "react-i18next"
-import { formatDistanceToNow } from "date-fns"
 import { Heading } from "@medusajs/ui"
 import { useMessenger } from "../../../providers/messenger-provider/MessengerProvider"
 import { fetchQuery } from "../../../lib/client"
-import { MEDUSA_STOREFRONT_URL } from "../../../lib/storefront"
-import type { Message } from "../../../lib/messenger/types"
+import type { Message, MessageContext, ProductContextData } from "../../../lib/messenger/types"
+import { ThreadListItem } from "./ThreadListItem"
+import { ProductContextCard } from "./ProductContextCard"
+import { VendorContextCard } from "./VendorContextCard"
+import { ChatHeader } from "./ChatHeader"
 
 // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -59,151 +61,6 @@ function getOtherParticipant(participants: any[]) {
   return participants.find((p) => p.userType !== "SELLER") ?? null
 }
 
-// â”€â”€ ConvRow component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-function ConvRow({
-  conv,
-  isActive,
-  onOpen,
-  onDelete,
-}: {
-  conv: any
-  isActive: boolean
-  onOpen: (id: string) => void
-  onDelete: (id: string, deleteForAll: boolean) => void
-}) {
-  const other = getOtherParticipant(conv.participants ?? [])
-  const isAdmin = other?.userType === "ADMIN"
-  const isCustomer = other?.userType === "CUSTOMER" || other?.userId?.startsWith("cus_")
-
-  const { t } = useTranslation()
-
-  // Customer name lookup
-  const { displayName: customerDisplayName, avatarUrl: customerAvatarUrl } = useCustomerInfo(
-    isCustomer ? other?.userId : undefined
-  )
-
-  const name = isAdmin
-    ? t("messenger.supportTeam")
-    : isCustomer
-    ? customerDisplayName ?? other?.displayName ?? other?.userId ?? "Customer"
-    : other?.displayName ?? other?.userId ?? t("messenger.unknown")
-
-  const initials = (name || "?")[0]?.toUpperCase() ?? "?"
-  const lastMsg = conv.messages?.[0]
-  // Unread count for the SELLER participant (me)
-  const unread = conv.participants?.find((p: any) => p.userType === "SELLER")?.unreadCount ?? 0
-
-  const [menuOpen, setMenuOpen] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!menuOpen) return
-    function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClick)
-    return () => document.removeEventListener("mousedown", handleClick)
-  }, [menuOpen])
-
-  return (
-    <div className="relative group">
-      <button
-        onClick={() => onOpen(conv.id)}
-        className={`w-full text-left p-3 border-b border-ui-border-base transition-colors hover:bg-ui-bg-base-hover ${
-          isActive ? "bg-ui-bg-base" : ""
-        }`}
-      >
-      <div className="flex items-start gap-2">
-        <div className="relative flex-shrink-0">
-          {isCustomer ? (
-            <img
-              src={customerAvatarUrl ?? "/images/customer-default-avatar.jpg"}
-              alt={name}
-              className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-            />
-          ) : (
-            <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0 ${
-                isAdmin
-                  ? "bg-ui-tag-purple-bg text-ui-tag-purple-text"
-                  : "bg-ui-tag-blue-bg text-ui-tag-blue-text"
-              }`}
-            >
-              {initials}
-            </div>
-          )}
-          {unread > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-[16px] h-4 bg-ui-tag-blue-bg text-ui-tag-blue-text text-[10px] rounded-full flex items-center justify-center px-1 font-medium">
-              {unread > 99 ? "99+" : unread}
-            </span>
-          )}
-        </div>
-<div className="flex-1 min-w-0 pr-6">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-ui-fg-base truncate">{name}</span>
-              <span className="text-xs text-ui-fg-muted flex-shrink-0 ml-1">
-                {formatDistanceToNow(new Date(conv.updatedAt), { addSuffix: true })}
-              </span>
-            </div>
-            <p className="text-xs text-ui-fg-muted truncate mt-0.5">
-              {lastMsg
-                ? lastMsg.messageType === "IMAGE"
-                  ? t("messenger.imageMessage")
-                  : lastMsg.content?.slice(0, 50)
-                : conv.subject ?? t("messenger.noMessages")}
-            </p>
-            {conv.productId ? (
-              <span className="mt-1 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-ui-tag-orange-bg text-ui-tag-orange-text font-medium">
-                <svg className="w-2.5 h-2.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-                Ürün sorusu
-              </span>
-            ) : (
-              <span className="mt-1 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-ui-tag-green-bg text-ui-tag-green-text font-medium">
-                <svg className="w-2.5 h-2.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                Mağaza
-              </span>
-            )}
-          </div>
-        </div>
-      </button>
-
-      {/* 3-dot menu */}
-      <div ref={menuRef} className="absolute right-2 top-1/2 -translate-y-1/2">
-        <button
-          onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v) }}
-          className="w-7 h-7 flex items-center justify-center rounded-full text-ui-fg-muted hover:text-ui-fg-base hover:bg-ui-bg-base-hover transition-all opacity-0 group-hover:opacity-100"
-          aria-label="Sohbet seçenekleri"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-            <circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" />
-          </svg>
-        </button>
-        {menuOpen && (
-          <div className="absolute z-50 right-0 top-9 w-52 bg-ui-bg-overlay rounded-xl shadow-lg border border-ui-border-base overflow-hidden text-sm">
-            <button
-              onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onDelete(conv.id, false) }}
-              className="w-full text-left px-4 py-2.5 hover:bg-ui-bg-base-hover text-ui-fg-base transition-colors"
-            >
-              Sadece Benden Sil
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onDelete(conv.id, true) }}
-              className="w-full text-left px-4 py-2.5 hover:bg-ui-tag-red-bg text-ui-tag-red-text transition-colors"
-            >
-              Herkesten Sil
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// â”€â”€ Main Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
 interface MessengerVendorInboxProps {
   sellerId: string
   sellerName?: string
@@ -232,9 +89,14 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
   const [text, setText] = useState("")
   const [search, setSearch] = useState("")
   const [isSending, setIsSending] = useState(false)
+  const [sendError, setSendError] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('list')
+  const [pendingImage, setPendingImage] = useState<File | null>(null)
+  const [pendingImagePreview, setPendingImagePreview] = useState<string | null>(null)
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -250,15 +112,36 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
     isOtherCustomer ? otherParticipant?.userId : undefined
   )
 
-  // Product context: fetch product info if conversation has a productId
-  const [productInfo, setProductInfo] = useState<{ title: string; thumbnail: string | null; handle: string | null } | null>(null)
+  // Active conversation context (PRODUCT or VENDOR) — drives ChatHeader + context cards
+  const [activeContext, setActiveContext] = useState<MessageContext | null>(null)
   useEffect(() => {
-    const pid = activeConv?.productId
-    if (!pid) { setProductInfo(null); return }
-    fetchQuery<{ product: { title: string; thumbnail: string | null; handle: string | null } }>(`/vendor/products/${pid}`, { method: "GET" })
-      .then(({ product }) => setProductInfo({ title: product.title, thumbnail: product.thumbnail, handle: product.handle ?? null }))
-      .catch(() => setProductInfo(null))
-  }, [activeConv?.productId])
+    const conv = activeConv
+    if (!conv) { setActiveContext(null); return }
+
+    const isProduct = conv.contextType === "PRODUCT_BASED" || (conv.contextType !== "VENDOR_BASED" && !!conv.productId)
+
+    if (isProduct && conv.productId) {
+      const pid = conv.productId
+      fetchQuery<{ product: ProductContextData & { thumbnail: string | null; handle: string | null } }>(
+        `/vendor/products/${pid}`,
+        { method: "GET" }
+      )
+        .then(({ product }) => {
+          setActiveContext({
+            type: "PRODUCT",
+            data: {
+              id: pid,
+              title: product.title,
+              thumbnail: product.thumbnail ?? null,
+              handle: product.handle ?? null,
+            },
+          })
+        })
+        .catch(() => setActiveContext(null))
+    } else {
+      setActiveContext({ type: "VENDOR", data: { id: "", name: "", handle: "", photo: null } })
+    }
+  }, [activeConv?.id])
 
   const otherName = isOtherAdmin
     ? t("messenger.supportTeam")
@@ -268,14 +151,39 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
 
   const isOtherTyping = typingUserIds.length > 0
 
-  // Auto-scroll
+  // Auto-scroll to bottom
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+    const container = messagesContainerRef.current
+    if (!container) return
+    container.scrollTop = container.scrollHeight
   }, [messages, typingUserIds])
 
   const handleSend = useCallback(async () => {
+    if (!activeConversationId) return
+
+    // Pending image takes priority
+    if (pendingImage) {
+      setIsSending(true)
+      setSendError(null)
+      const file = pendingImage
+      setPendingImage(null)
+      if (pendingImagePreview) {
+        URL.revokeObjectURL(pendingImagePreview)
+        setPendingImagePreview(null)
+      }
+      try {
+        await uploadImage(file)
+      } catch (err) {
+        console.error("[MessengerVendorInbox] image upload error:", err)
+        setSendError("Görsel gönderilemedi. Lütfen tekrar deneyin.")
+      } finally {
+        setIsSending(false)
+      }
+      return
+    }
+
     const content = text.trim()
-    if (!content || isSending || !activeConversationId) return
+    if (!content || isSending) return
     setIsSending(true)
     setText("")
     stopTyping()
@@ -286,7 +194,7 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
     } finally {
       setIsSending(false)
     }
-  }, [text, isSending, activeConversationId, sendMessage, stopTyping])
+  }, [text, pendingImage, pendingImagePreview, isSending, activeConversationId, sendMessage, stopTyping, uploadImage])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -313,16 +221,12 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
     }, 2000)
   }
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !activeConversationId) return
-    try {
-      await uploadImage(file)
-    } catch (err) {
-      console.error("[MessengerVendorInbox] image upload error:", err)
-    } finally {
-      e.target.value = ""
-    }
+    setPendingImage(file)
+    setPendingImagePreview(URL.createObjectURL(file))
+    e.target.value = ""
   }
 
   const handleDeleteMessage = useCallback(async (messageId: string, deleteForAll: boolean) => {
@@ -358,6 +262,7 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
         })
 
   return (
+    <>
     <div className="flex h-[700px] border border-ui-border-base rounded-lg overflow-hidden">
       {/* â”€â”€ Left: Conversation list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className={`${mobileView === 'chat' ? 'hidden md:flex' : 'flex'} w-full md:w-80 flex-col border-r border-ui-border-base bg-ui-bg-subtle flex-shrink-0`}>
@@ -384,12 +289,14 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
             <p className="text-center text-ui-fg-muted text-sm mt-8">No conversations</p>
           ) : (
             filtered.map((conv) => (
-              <ConvRow
+              <ThreadListItem
                 key={conv.id}
                 conv={conv}
                 isActive={conv.id === activeConversationId}
                 onOpen={handleOpenConversation}
                 onDelete={deleteConversation}
+                customerDisplayName={null}
+                customerAvatarUrl={null}
               />
             ))
           )}
@@ -399,88 +306,26 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
       {/* â”€â”€ Right: Chat panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {activeConv ? (
         <div className={`${mobileView === 'list' ? 'hidden md:flex' : 'flex'} flex-1 flex-col min-w-0`}>
-          {/* Chat Header */}
-          <div className="p-3 border-b border-ui-border-base bg-ui-bg-base flex items-center gap-2">
-            <button
-              onClick={() => setMobileView('list')}
-              className="md:hidden w-7 h-7 flex items-center justify-center rounded-full hover:bg-ui-bg-base-hover text-ui-fg-muted hover:text-ui-fg-subtle transition-colors flex-shrink-0"
-              aria-label="Geri"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            {isOtherCustomer ? (
-              <img
-                src={customerAvatarUrl ?? "/images/customer-default-avatar.jpg"}
-                alt={otherName}
-                className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-              />
-            ) : (
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0 ${
-                  isOtherAdmin
-                    ? "bg-ui-tag-purple-bg text-ui-tag-purple-text"
-                    : "bg-ui-tag-blue-bg text-ui-tag-blue-text"
-                }`}
-              >
-                {(otherName[0] ?? "?").toUpperCase()}
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-ui-fg-base truncate">{otherName}</p>
-              <p className="text-xs text-ui-fg-muted">
-                {otherParticipant?.userType}
-                {" · "}
-                {activeConv.participants?.length} {t("messenger.participants")}
-              </p>
-            </div>
-            <button
-              onClick={() => { closeConversation(); setMobileView('list') }}
-              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-ui-bg-base-hover text-ui-fg-muted hover:text-ui-fg-subtle transition-colors flex-shrink-0"
-              aria-label={t("messenger.close")}
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+          {/* Chat Header — context-aware */}
+          <ChatHeader
+            context={activeContext}
+            otherName={otherName}
+            otherParticipantType={otherParticipant?.userType ?? ""}
+            participantCount={activeConv.participants?.length ?? 0}
+            onBack={() => setMobileView('list')}
+            onClose={() => { closeConversation(); setMobileView('list') }}
+          />
 
-          {/* Product context banner */}
-          {productInfo && (
-            <div className="flex items-center gap-3 px-3 py-2 bg-ui-bg-base border-b border-ui-border-base">
-              <div className="w-10 h-10 rounded-lg overflow-hidden bg-ui-bg-subtle flex-shrink-0">
-                {productInfo.thumbnail ? (
-                  <img src={productInfo.thumbnail} alt={productInfo.title} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-ui-fg-muted">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18" />
-                    </svg>
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-ui-fg-muted">Ürün hakkında soru</p>
-                {productInfo.handle ? (
-                  <a
-                    href={`${MEDUSA_STOREFRONT_URL}/tr/products/${productInfo.handle}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm font-medium text-ui-fg-base hover:text-ui-fg-interactive hover:underline truncate block transition-colors"
-                  >
-                    {productInfo.title} ↗
-                  </a>
-                ) : (
-                  <p className="text-sm font-medium text-ui-fg-base truncate">{productInfo.title}</p>
-                )}
-              </div>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-ui-tag-blue-bg text-ui-tag-blue-text font-medium">Ürün</span>
-            </div>
+          {/* Context card — product or vendor */}
+          {activeContext?.type === "PRODUCT" && (
+            <ProductContextCard product={activeContext.data} />
+          )}
+          {activeContext?.type === "VENDOR" && (
+            <VendorContextCard />
           )}
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-ui-bg-subtle">
+          <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3 bg-ui-bg-subtle">
             {isLoadingMessages ? (
               <div className="flex justify-center items-center h-full">
                 <div className="w-6 h-6 border-2 border-ui-border-interactive border-t-transparent rounded-full animate-spin" />
@@ -504,6 +349,10 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
                 // SELLER = me (vendor), others = customer or admin
                 const isMe = msg.senderType === "SELLER"
                 const isNotification = msg.messageType === "NOTIFICATION"
+
+                // Message grouping
+                const prevMsg = messages[idx - 1]
+                const isFirstInGroup = !prevMsg || prevMsg.senderId !== msg.senderId || prevMsg.messageType === "NOTIFICATION"
 
                 if (isNotification) {
                   return (
@@ -531,11 +380,16 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
                           : "bg-ui-bg-base text-ui-fg-base border border-ui-border-base"
                       }${msg.deletedForAll ? " italic opacity-70" : ""}`}
                     >
-                      {!isMe && (
-                        <p className="text-xs font-medium mb-1 opacity-70">{msg.senderType}</p>
+                      {!isMe && isFirstInGroup && (
+                        <p className="text-xs font-medium mb-1 opacity-70">{otherName}</p>
                       )}
                       {msg.messageType === "IMAGE" && msg.imageUrl ? (
-                        <img src={msg.imageUrl} alt={t("messenger.image")} className="max-w-full rounded-lg mb-1" />
+                        <button
+                          onClick={() => setLightboxSrc(msg.imageUrl!)}
+                          className="block border-0 p-0 cursor-zoom-in rounded-lg overflow-hidden"
+                        >
+                          <img src={msg.imageUrl} alt={t("messenger.image")} className="max-w-full rounded-lg mb-1 hover:opacity-90 transition-opacity" />
+                        </button>
                       ) : null}
                       <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                       <p
@@ -554,7 +408,7 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
                         <>
                           <button
                             onClick={(e) => { e.stopPropagation(); setDeleteTarget(deleteTarget === msg.id ? null : msg.id) }}
-                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 flex items-center justify-center rounded-full bg-white/80 shadow text-gray-400 hover:text-red-500"
+                            className={`absolute top-1 right-1 transition-opacity w-5 h-5 flex items-center justify-center rounded-full bg-white/80 shadow text-gray-400 hover:text-red-500 ${deleteTarget === msg.id ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
                           >
                             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -569,7 +423,7 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
                                 Benden Sil
                               </button>
                               <button
-                                disabled={msg.senderId !== sellerId}
+                                disabled={!isMe}
                                 onClick={() => handleDeleteMessage(msg.id, true)}
                                 className="text-left text-sm px-3 py-1.5 rounded-lg hover:bg-red-50 text-red-600 disabled:opacity-40 disabled:cursor-not-allowed"
                               >
@@ -602,7 +456,17 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
           </div>
 
           {/* Input */}
-          <div className="p-3 border-t border-ui-border-base bg-ui-bg-base flex gap-2 items-end">
+          <div className="p-3 border-t border-ui-border-base bg-ui-bg-base flex flex-col gap-2">
+            {!isConnected && (
+              <div className="px-3 py-1.5 bg-yellow-50 border border-yellow-100 rounded-xl text-xs text-yellow-700 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse flex-shrink-0" />
+                Bağlantı kesildi, yeniden bağlanılıyor…
+              </div>
+            )}
+            {sendError && (
+              <p className="text-xs text-red-500 px-1">{sendError}</p>
+            )}
+            <div className="flex gap-2 items-end">
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
@@ -624,6 +488,26 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
               className="hidden"
               onChange={handleFileChange}
             />
+            {pendingImagePreview && (
+              <div className="relative flex-shrink-0">
+                <img
+                  src={pendingImagePreview}
+                  alt="Gönderilecek görsel"
+                  className="w-10 h-10 rounded-lg object-cover border border-ui-border-base"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    URL.revokeObjectURL(pendingImagePreview)
+                    setPendingImagePreview(null)
+                    setPendingImage(null)
+                  }}
+                  className="absolute -top-1 -right-1 w-4 h-4 bg-gray-700 text-white rounded-full text-[10px] flex items-center justify-center hover:bg-red-500 transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
             <textarea
               ref={textareaRef}
               value={text}
@@ -636,13 +520,14 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
             />
             <button
               onClick={handleSend}
-              disabled={!text.trim() || isSending}
+              disabled={(!text.trim() && !pendingImage) || isSending}
               className="w-9 h-9 rounded-full bg-ui-button-inverted text-ui-fg-on-inverted flex items-center justify-center disabled:opacity-40 hover:opacity-90 transition-opacity flex-shrink-0"
             >
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
                 <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
               </svg>
             </button>
+            </div>
           </div>
         </div>
       ) : (
@@ -658,5 +543,28 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
         </div>
       )}
     </div>
+
+    {/* Lightbox */}
+    {lightboxSrc && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+        onClick={() => setLightboxSrc(null)}
+      >
+        <button
+          className="absolute top-4 right-4 text-white text-2xl w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+          onClick={() => setLightboxSrc(null)}
+          aria-label="Kapat"
+        >
+          ✕
+        </button>
+        <img
+          src={lightboxSrc}
+          alt="Görsel"
+          className="max-w-[90vw] max-h-[90vh] rounded-xl object-contain"
+          onClick={(e) => e.stopPropagation()}
+        />
+      </div>
+    )}
+    </>
   )
 }

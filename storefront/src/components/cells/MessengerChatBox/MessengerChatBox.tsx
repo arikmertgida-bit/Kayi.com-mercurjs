@@ -20,6 +20,8 @@ interface MessengerChatBoxProps {
   /** Current authenticated user's profile photo */
   currentUserAvatarUrl?: string | null
   conversationId: string
+  /** Optional product ID — shows a product reference card at the top of the chat */
+  productId?: string | null
   onClose: () => void
   /** Called after the FIRST message in a new conversation is successfully sent */
   onFirstMessageSent?: () => void
@@ -259,6 +261,7 @@ export function MessengerChatBox({
   currentUserName,
   currentUserAvatarUrl,
   conversationId,
+  productId,
   onClose,
   onFirstMessageSent,
 }: MessengerChatBoxProps) {
@@ -279,8 +282,26 @@ export function MessengerChatBox({
   const [isSending, setIsSending] = useState(false)
   const [sendError, setSendError] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+  const [pendingImage, setPendingImage] = useState<File | null>(null)
+  const [pendingImagePreview, setPendingImagePreview] = useState<string | null>(null)
+  const [productInfo, setProductInfo] = useState<{ title: string; thumbnail: string | null; handle: string | null } | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Fetch product info if productId is provided
+  useEffect(() => {
+    if (!productId) { setProductInfo(null); return }
+    fetch(`/api/product/${encodeURIComponent(productId)}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data?.product) {
+          setProductInfo({ title: data.product.title, thumbnail: data.product.thumbnail ?? null, handle: data.product.handle ?? null })
+        } else {
+          setProductInfo(null)
+        }
+      })
+      .catch(() => setProductInfo(null))
+  }, [productId])
 
   useEffect(() => {
     openConversation(conversationId)
@@ -294,26 +315,48 @@ export function MessengerChatBox({
   }, [messages, typingUserIds])
 
   const handleSend = useCallback(async () => {
-    const content = text.trim()
-    if (!content || isSending) return
-    const isFirstMessage = messages.length === 0
+    if (!pendingImage && !text.trim()) return
+    if (isSending) return
     setIsSending(true)
     setSendError(null)
-    setText("")
-    stopTyping()
-    try {
-      await sendMessage(content)
-      if (isFirstMessage && onFirstMessageSent) {
-        onFirstMessageSent()
+    const content = text.trim()
+    const isFirstMessage = messages.length === 0
+
+    // Upload pending image first
+    if (pendingImage) {
+      const file = pendingImage
+      setPendingImage(null)
+      if (pendingImagePreview) { URL.revokeObjectURL(pendingImagePreview); setPendingImagePreview(null) }
+      try {
+        await uploadImage(file)
+      } catch (err) {
+        console.error("[MessengerChatBox] Image upload error:", err)
+        setSendError("Görsel gönderilemedi. Lütfen tekrar deneyin.")
+        setIsSending(false)
+        return
       }
-    } catch (err) {
-      console.error("[MessengerChatBox] send error:", err)
-      setText(content)
-      setSendError("Mesaj gönderilemedi. Tekrar deneyin.")
-    } finally {
-      setIsSending(false)
     }
-  }, [text, isSending, sendMessage, stopTyping, messages.length, onFirstMessageSent])
+
+    // Then send text if any
+    if (content) {
+      setText("")
+      stopTyping()
+      try {
+        await sendMessage(content)
+        if (isFirstMessage && onFirstMessageSent) {
+          onFirstMessageSent()
+        }
+      } catch (err) {
+        console.error("[MessengerChatBox] send error:", err)
+        setText(content)
+        setSendError("Mesaj gönderilemedi. Tekrar deneyin.")
+      }
+    } else if (isFirstMessage && onFirstMessageSent) {
+      onFirstMessageSent()
+    }
+
+    setIsSending(false)
+  }, [text, pendingImage, pendingImagePreview, isSending, sendMessage, stopTyping, uploadImage, messages.length, onFirstMessageSent])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -336,16 +379,12 @@ export function MessengerChatBox({
     }
   }, [deleteMessage])
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    try {
-      await uploadImage(file)
-    } catch (err) {
-      console.error("[MessengerChatBox] Image upload error:", err)
-    } finally {
-      e.target.value = ""
-    }
+    setPendingImage(file)
+    setPendingImagePreview(URL.createObjectURL(file))
+    e.target.value = ""
   }
 
   const isOtherTyping = typingUserIds.includes(otherUser.id)
@@ -372,6 +411,32 @@ export function MessengerChatBox({
           </svg>
         </button>
       </div>
+
+      {/* ── Product context banner ──────────────────────────────────────── */}
+      {productInfo && (
+        <div className="flex items-center gap-3 px-4 py-2.5 bg-amber-50 border-b border-amber-100 flex-shrink-0">
+          <div className="w-10 h-10 rounded-lg overflow-hidden bg-white flex-shrink-0 border border-amber-100">
+            {productInfo.thumbnail ? (
+              <Image src={productInfo.thumbnail} alt={productInfo.title} width={40} height={40} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-amber-300">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18" /></svg>
+              </div>
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-amber-600 font-medium">Ürün hakkında soru</p>
+            {productInfo.handle ? (
+              <a href={`/tr/products/${productInfo.handle}`} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-gray-800 hover:text-amber-600 hover:underline truncate block transition-colors">
+                {productInfo.title} ↗
+              </a>
+            ) : (
+              <p className="text-sm font-semibold text-gray-800 truncate">{productInfo.title}</p>
+            )}
+          </div>
+          <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium flex-shrink-0">Ürün</span>
+        </div>
+      )}
 
       {/* ── Messages ────────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1 scroll-smooth">
@@ -447,7 +512,7 @@ export function MessengerChatBox({
             type="button"
             onClick={() => fileInputRef.current?.click()}
             className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-amber-500 hover:bg-amber-50 transition-colors flex-shrink-0 mb-0.5"
-            aria-label="Fotoğraf gönder"
+            aria-label="Fotoğraf seç"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
@@ -463,7 +528,29 @@ export function MessengerChatBox({
             onChange={handleFileChange}
           />
 
-          {/* Text input */}
+          {/* Pending image preview */}
+          {pendingImagePreview && (
+            <div className="relative flex-shrink-0 mb-0.5">
+              <img
+                src={pendingImagePreview}
+                alt="Gönderilecek görsel"
+                className="w-12 h-12 rounded-xl object-cover border border-gray-200"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  URL.revokeObjectURL(pendingImagePreview)
+                  setPendingImagePreview(null)
+                  setPendingImage(null)
+                }}
+                className="absolute -top-1 -right-1 w-4 h-4 bg-gray-700 text-white rounded-full text-[10px] flex items-center justify-center hover:bg-red-500 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {/* Text input */}}
           <textarea
             value={text}
             onChange={handleTextChange}
@@ -477,7 +564,7 @@ export function MessengerChatBox({
           <button
             type="button"
             onClick={handleSend}
-            disabled={!text.trim() || isSending}
+            disabled={(!text.trim() && !pendingImage) || isSending}
             className="w-8 h-8 flex items-center justify-center rounded-full transition-all flex-shrink-0 mb-0.5
               disabled:text-gray-300 disabled:cursor-not-allowed
               enabled:text-amber-500 enabled:hover:bg-amber-50"

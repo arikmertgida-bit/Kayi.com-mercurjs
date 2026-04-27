@@ -27,10 +27,11 @@ function formatTime(iso: string): string {
 }
 
 function getSellerAvatar(seller: SellerProps): string | null {
+  // Prefer member profile photo (Profil Fotoğrafı), fall back to store photo
   const owner =
     seller.members?.find((m) => m.role === "owner" || m.role === "admin") ??
     seller.members?.[0]
-  return owner?.photo ?? null
+  return owner?.photo ?? seller.photo ?? null
 }
 
 function Initials({ name, size, gradient = "from-amber-400 to-amber-600" }: { name: string; size: number; gradient?: string }) {
@@ -331,6 +332,7 @@ export function SellerMessengerWidget({
     messages,
     typingUserIds,
     isLoadingMessages,
+    isConnected,
     sendMessage,
     uploadImage,
     startTyping,
@@ -340,12 +342,20 @@ export function SellerMessengerWidget({
     startConversation,
   } = useMessenger()
 
+  // Resolve the owner member ID (mem_...) which is what the vendor panel socket uses
+  const ownerMember = seller.members?.find((m) => m.role === "owner" || m.role === "admin") ?? seller.members?.[0]
+  const memberUserId = ownerMember?.id ?? seller.id
+
   const [isOpen, setIsOpen] = useState(false)
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [isStarting, setIsStarting] = useState(false)
   const [text, setText] = useState("")
   const [isSending, setIsSending] = useState(false)
+  const [sendError, setSendError] = useState<string | null>(null)
   const [isMobile, setIsMobile] = useState(false)
+  const [pendingImage, setPendingImage] = useState<File | null>(null)
+  const [pendingImagePreview, setPendingImagePreview] = useState<string | null>(null)
+  const [productInfo, setProductInfo] = useState<{ title: string; thumbnail: string | null; handle: string | null } | null>(null)
   const [responseTime, setResponseTime] = useState<{
     avgMinutes: number | null
     isWithinHours: boolean
@@ -372,10 +382,10 @@ export function SellerMessengerWidget({
       .catch(() => {/* silent fail */})
   }, [seller.id])
 
-  // Find existing conversation with this seller in the conversations list
+  // Find existing conversation with this seller (match by seller.id OR member ID)
   const existingConversation = conversations.find((c) =>
     c.participants.some(
-      (p) => p.userId === seller.id && p.userType === "SELLER"
+      (p) => (p.userId === seller.id || p.userId === memberUserId) && p.userType === "SELLER"
     )
   )
 
@@ -414,6 +424,22 @@ export function SellerMessengerWidget({
     el.style.height = `${Math.min(el.scrollHeight, 96)}px`
   }, [text])
 
+  // Fetch product info when there's a product conversation
+  useEffect(() => {
+    const pid = existingConversation?.productId
+    if (!pid) { setProductInfo(null); return }
+    fetch(`/api/product/${encodeURIComponent(pid)}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data?.product) {
+          setProductInfo({ title: data.product.title, thumbnail: data.product.thumbnail ?? null, handle: data.product.handle ?? null })
+        } else {
+          setProductInfo(null)
+        }
+      })
+      .catch(() => setProductInfo(null))
+  }, [existingConversation?.productId])
+
   const handleOpen = useCallback(() => {
     setIsOpen(true)
     // Lock scroll on mobile
@@ -429,46 +455,86 @@ export function SellerMessengerWidget({
   }, [closeConversation])
 
   const handleSend = useCallback(async () => {
-    const content = text.trim()
-    if (!content || isSending || !currentUserId) return
+    if (!currentUserId) return
+
+    if (!pendingImage && !text.trim()) return
+    if (isSending) return
 
     setIsSending(true)
-    setText("")
-    stopTyping()
+    setSendError(null)
+    const content = text.trim()
 
-    try {
-      // If no conversation yet, create it first
-      if (!conversationId) {
-        setIsStarting(true)
+    // Ensure conversation exists
+    let activeConvId = conversationId
+    if (!activeConvId) {
+      setIsStarting(true)
+      try {
         const newConvId = await startConversation({
-          targetUserId: seller.members?.[0]?.id ?? seller.id,
+          targetUserId: memberUserId,
           targetUserType: "SELLER",
           subject: `${seller.name} ile sohbet`,
+          contextType: "VENDOR_BASED",
         })
         setConversationId(newConvId)
         await openConversation(newConvId)
+        activeConvId = newConvId
+      } catch (err) {
+        console.error("[SellerMessengerWidget] startConversation error:", err)
+        setSendError("Sohbet başlatılamadı. Tekrar deneyin.")
+        setIsSending(false)
         setIsStarting(false)
-        // Send after conversation is ready
-        await sendMessage(content)
-      } else {
-        await sendMessage(content)
+        return
+      } finally {
+        setIsStarting(false)
       }
-    } catch (err) {
-      console.error("[SellerMessengerWidget] send error:", err)
-    } finally {
-      setIsSending(false)
-      setIsStarting(false)
     }
+
+    // Upload pending image first
+    if (pendingImage) {
+      const file = pendingImage
+      setPendingImage(null)
+      if (pendingImagePreview) {
+        URL.revokeObjectURL(pendingImagePreview)
+        setPendingImagePreview(null)
+      }
+      try {
+        await uploadImage(file)
+      } catch (err) {
+        console.error("[SellerMessengerWidget] image upload error:", err)
+        setSendError("Görsel gönderilemedi. Lütfen tekrar deneyin.")
+        setIsSending(false)
+        return
+      }
+    }
+
+    // Then send text if any
+    if (content) {
+      setText("")
+      stopTyping()
+      try {
+        await sendMessage(content)
+      } catch (err) {
+        console.error("[SellerMessengerWidget] send error:", err)
+        setText(content)
+        setSendError("Mesaj gönderilemedi. Tekrar deneyin.")
+      }
+    }
+
+    setIsSending(false)
   }, [
     text,
+    pendingImage,
+    pendingImagePreview,
     isSending,
     currentUserId,
     conversationId,
-    seller,
+    memberUserId,
+    seller.name,
     startConversation,
     openConversation,
     sendMessage,
     stopTyping,
+    uploadImage,
   ])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -483,25 +549,12 @@ export function SellerMessengerWidget({
     startTyping()
   }
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    try {
-      if (!conversationId) {
-        const newConvId = await startConversation({
-          targetUserId: seller.members?.[0]?.id ?? seller.id,
-          targetUserType: "SELLER",
-          subject: `${seller.name} ile sohbet`,
-        })
-        setConversationId(newConvId)
-        await openConversation(newConvId)
-      }
-      await uploadImage(file)
-    } catch (err) {
-      console.error("[SellerMessengerWidget] image upload error:", err)
-    } finally {
-      e.target.value = ""
-    }
+    setPendingImage(file)
+    setPendingImagePreview(URL.createObjectURL(file))
+    e.target.value = ""
   }
 
   const isOtherTyping = typingUserIds.includes(seller.id)
@@ -652,6 +705,31 @@ export function SellerMessengerWidget({
               <GuestScreen seller={seller} />
             ) : (
               <>
+                {/* Product context banner */}
+                {productInfo && isConversationActive && (
+                  <div className="flex items-center gap-2.5 px-4 py-2.5 bg-amber-50 border-b border-amber-100 flex-shrink-0">
+                    <div className="w-9 h-9 rounded-lg overflow-hidden bg-white flex-shrink-0 border border-amber-100">
+                      {productInfo.thumbnail ? (
+                        <Image src={productInfo.thumbnail} alt={productInfo.title} width={36} height={36} className="w-full h-full object-cover" unoptimized />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-amber-300">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18" /></svg>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] text-amber-600 font-medium">Ürün hakkında soru</p>
+                      {productInfo.handle ? (
+                        <a href={`/tr/products/${productInfo.handle}`} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-gray-800 hover:text-amber-600 hover:underline truncate block transition-colors">
+                          {productInfo.title} ↗
+                        </a>
+                      ) : (
+                        <p className="text-xs font-semibold text-gray-800 truncate">{productInfo.title}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Messages area */}
                 <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1 scroll-smooth">
                   {isLoadingMessages || isStarting ? (
@@ -708,6 +786,15 @@ export function SellerMessengerWidget({
 
                 {/* ── Input Bar ──────────────────────────────────────── */}
                 <div className="px-3 py-3 border-t border-gray-100 bg-white flex-shrink-0">
+                  {!isConnected && (
+                    <div className="mb-2 px-3 py-1.5 bg-yellow-50 border border-yellow-100 rounded-xl text-xs text-yellow-700 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse flex-shrink-0" />
+                      Bağlantı kesildi, yeniden bağlanılıyor…
+                    </div>
+                  )}
+                  {sendError && (
+                    <p className="text-xs text-red-500 px-1 pb-1">{sendError}</p>
+                  )}
                   <div className="flex items-end gap-2 bg-gray-50 rounded-[28px] px-3 py-2 border border-gray-200 focus-within:border-amber-400 transition-colors">
                     {/* Image upload */}
                     <button
@@ -738,7 +825,29 @@ export function SellerMessengerWidget({
                       onChange={handleFileChange}
                     />
 
-                    {/* Text input */}
+                    {/* Pending image preview */}
+                    {pendingImagePreview && (
+                      <div className="relative flex-shrink-0 mb-0.5">
+                        <img
+                          src={pendingImagePreview}
+                          alt="Gönderilecek görsel"
+                          className="w-10 h-10 rounded-xl object-cover border border-gray-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            URL.revokeObjectURL(pendingImagePreview)
+                            setPendingImagePreview(null)
+                            setPendingImage(null)
+                          }}
+                          className="absolute -top-1 -right-1 w-4 h-4 bg-gray-700 text-white rounded-full text-[10px] flex items-center justify-center hover:bg-red-500 transition-colors"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Text input */}}
                     <textarea
                       ref={textareaRef}
                       value={text}
@@ -753,10 +862,10 @@ export function SellerMessengerWidget({
                     <button
                       type="button"
                       onClick={handleSend}
-                      disabled={!text.trim() || isSending}
+                      disabled={(!text.trim() && !pendingImage) || isSending}
                       aria-label="Gönder"
                       className={`w-8 h-8 flex items-center justify-center rounded-full transition-all flex-shrink-0 mb-0.5 ${
-                        text.trim() && !isSending
+                        (text.trim() || pendingImage) && !isSending
                           ? "bg-blue-500 text-white hover:bg-blue-600 shadow-sm"
                           : "text-gray-300 cursor-not-allowed"
                       }`}

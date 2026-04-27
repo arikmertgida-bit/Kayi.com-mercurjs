@@ -34,7 +34,7 @@ ENV NEXT_PUBLIC_BASE_URL=$NEXT_PUBLIC_BASE_URL \
     NEXT_TELEMETRY_DISABLED=$NEXT_TELEMETRY_DISABLED
 
 # Build Next.js app at image build time (not at container start)
-RUN NEXT_TELEMETRY_DISABLED=1 pnpm next build
+RUN NODE_OPTIONS=--openssl-legacy-provider NEXT_TELEMETRY_DISABLED=1 pnpm next build
 
 # Run as non-root user
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup \

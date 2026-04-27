@@ -1,5 +1,5 @@
 import prisma from "../lib/prisma"
-import { ConversationType, Prisma, UserType } from "@prisma/client"
+import { ConversationType, ConversationContextType, Prisma, UserType } from "@prisma/client"
 
 export interface FindOrCreateConversationInput {
   participantAId: string
@@ -10,6 +10,7 @@ export interface FindOrCreateConversationInput {
   productId?: string
   orderId?: string
   type?: ConversationType
+  contextType?: ConversationContextType
 }
 
 export const ConversationService = {
@@ -18,7 +19,7 @@ export const ConversationService = {
    * or creates one if none exists.
    */
   async findOrCreate(input: FindOrCreateConversationInput) {
-    const { participantAId, participantAType, participantBId, participantBType, subject, productId, orderId, type } = input
+    const { participantAId, participantAType, participantBId, participantBType, subject, productId, orderId, type, contextType } = input
 
     return prisma.$transaction(async (tx) => {
       // Try to find existing conversation with both participants.
@@ -54,6 +55,7 @@ export const ConversationService = {
           subject,
           productId,
           orderId,
+          contextType: contextType ?? (productId ? ConversationContextType.PRODUCT_BASED : ConversationContextType.VENDOR_BASED),
           participants: {
             create: [
               { userId: participantAId, userType: participantAType },

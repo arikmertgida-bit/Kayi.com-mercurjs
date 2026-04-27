@@ -4,6 +4,7 @@
 export type UserType = "CUSTOMER" | "SELLER" | "ADMIN"
 export type MessageType = "TEXT" | "IMAGE" | "NOTIFICATION"
 export type ConversationType = "DIRECT" | "ADMIN_SUPPORT"
+export type ConversationContextType = "PRODUCT_BASED" | "VENDOR_BASED"
 
 export interface Participant {
   id: string
@@ -33,6 +34,7 @@ export interface Message {
 export interface Conversation {
   id: string
   type: ConversationType
+  contextType: ConversationContextType
   subject: string | null
   productId: string | null
   orderId: string | null
@@ -62,3 +64,24 @@ export interface TypingUpdatePayload {
   conversationId: string
   typingUserIds: string[]
 }
+
+// ── Messaging Context Types ─────────────────────────────────────────────────
+
+export interface ProductContextData {
+  id: string
+  title: string
+  thumbnail: string | null
+  handle: string | null
+}
+
+export interface VendorContextData {
+  id: string
+  name: string
+  handle: string
+  photo: string | null
+  storePhoto?: string | null
+}
+
+export type ProductMessageContext = { type: "PRODUCT"; data: ProductContextData }
+export type VendorMessageContext = { type: "VENDOR"; data: VendorContextData }
+export type MessageContext = ProductMessageContext | VendorMessageContext

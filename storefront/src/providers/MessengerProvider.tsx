@@ -60,6 +60,7 @@ interface MessengerContextValue {
     subject?: string
     productId?: string
     orderId?: string
+    contextType?: string
   }) => Promise<string>
   sendMessage: (content: string) => Promise<void>
   uploadImage: (file: File) => Promise<void>
@@ -105,9 +106,11 @@ export function MessengerProvider({ children, userId, authToken, userName }: Mes
   const [isWidgetOpen, setIsWidgetOpen] = useState(false)
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const activeConvRef = useRef<string | null>(null)
+  const conversationsRef = useRef<Conversation[]>([])
 
-  // Sync ref so socket callbacks always see latest value
+  // Sync refs so socket callbacks always see latest values
   activeConvRef.current = activeConversationId
+  conversationsRef.current = conversations
 
   // ── Browser Push Notification ────────────────────────────────────────────
   const showBrowserNotification = useCallback((payload: NotificationPayload) => {
@@ -145,11 +148,13 @@ export function MessengerProvider({ children, userId, authToken, userName }: Mes
       }
       // Refresh conversation list to update last message
       setConversations((prev) =>
-        prev.map((c) =>
-          c.id === msg.conversationId
-            ? { ...c, messages: [msg], updatedAt: msg.createdAt }
-            : c
-        )
+        prev
+          .map((c) =>
+            c.id === msg.conversationId
+              ? { ...c, messages: [msg], updatedAt: msg.createdAt }
+              : c
+          )
+          .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
       )
     }
 
@@ -190,6 +195,18 @@ export function MessengerProvider({ children, userId, authToken, userName }: Mes
     const onNotification = (payload: NotificationPayload) => {
       showBrowserNotification(payload)
       setUnreadCount((n) => n + 1)
+      // If this notification is for a conversation we don't have yet, refresh the list
+      if (payload.conversationId && !conversationsRef.current.find((c) => c.id === payload.conversationId)) {
+        getConversations()
+          .then((r) =>
+            setConversations(
+              r.conversations.sort(
+                (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+              )
+            )
+          )
+          .catch(console.error)
+      }
     }
 
     socket.on("connect", onConnect)
@@ -287,6 +304,7 @@ export function MessengerProvider({ children, userId, authToken, userName }: Mes
       subject?: string
       productId?: string
       orderId?: string
+      contextType?: string
     }): Promise<string> => {
       const { conversation } = await findOrCreateConversation(params)
       setConversations((prev) => {

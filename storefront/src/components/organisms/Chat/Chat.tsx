@@ -94,6 +94,7 @@ export const Chat = ({
                 user.email ||
                 "Ben"
               }
+              productId={product?.id}
               otherUser={{
                 id: memberUserId,
                 name: seller.name || MSG.SELLER_FALLBACK,

@@ -3,6 +3,11 @@ import { LoginForm } from "@/components/molecules/LoginForm/LoginForm"
 import { UserMessagesSection } from "@/components/sections/UserMessagesSection/UserMessagesSection"
 import { retrieveCustomer } from "@/lib/data/customer"
 
+export const metadata = {
+  title: "Mesajlarım | Kayı.com",
+  description: "Satıcılarla mesajlaşma kutunuz",
+}
+
 export default async function MessagesPage() {
   const user = await retrieveCustomer()
 

@@ -28,12 +28,18 @@ enum MessageType {
   NOTIFICATION
 }
 
+enum ConversationContextType {
+  PRODUCT_BASED
+  VENDOR_BASED
+}
+
 model Conversation {
   id           String                    @id @default(uuid())
   type         ConversationType          @default(DIRECT)
   subject      String?
   productId    String?
   orderId      String?
+  contextType  ConversationContextType   @default(VENDOR_BASED)
   createdAt    DateTime                  @default(now())
   updatedAt    DateTime                  @updatedAt
   participants ConversationParticipant[]
