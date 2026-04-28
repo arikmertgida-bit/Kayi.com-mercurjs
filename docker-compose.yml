@@ -180,8 +180,7 @@ services:
         VITE_MEDUSA_BASE: /
         VITE_MEDUSA_BACKEND_URL: http://localhost:9000
         VITE_MEDUSA_STOREFRONT_URL: http://localhost:3000
-        VITE_MEDUSA_PUBLISHABLE_KEY: pk_fe7220c20ab9f3cc9b0fbb86f6c2e126e621d17f7c176584cbdd7fe8b04c67af
-        VITE_DISABLE_SELLERS_REGISTRATION: "false"
+        VITE_MEDUSA_PUBLISHABLE_KEY: pk_242a1899a51980a715b8315f91107ba3dd5f54500e920e7e0e8a3ba77eb1ade3
     restart: unless-stopped
     mem_limit: 256m
     cpus: '0.5'
@@ -210,7 +209,7 @@ services:
       args:
         NEXT_PUBLIC_BASE_URL: http://localhost:3000
         NEXT_PUBLIC_DEFAULT_REGION: tr
-        NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: pk_fe7220c20ab9f3cc9b0fbb86f6c2e126e621d17f7c176584cbdd7fe8b04c67af
+        NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: pk_242a1899a51980a715b8315f91107ba3dd5f54500e920e7e0e8a3ba77eb1ade3
         NEXT_PUBLIC_SITE_NAME: "Kayı | Güvenle Al, Güvenle Sat"
         NEXT_PUBLIC_SITE_DESCRIPTION: "Kayı | Güvenle Al, Güvenle Sat"
         NEXT_PUBLIC_VENDOR_URL: http://localhost:7001
@@ -231,7 +230,7 @@ services:
       MEDUSA_BACKEND_URL: http://backend:9000
       NEXT_PUBLIC_BASE_URL: http://localhost:3000
       NEXT_PUBLIC_DEFAULT_REGION: tr
-      NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: pk_fe7220c20ab9f3cc9b0fbb86f6c2e126e621d17f7c176584cbdd7fe8b04c67af
+      NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: pk_242a1899a51980a715b8315f91107ba3dd5f54500e920e7e0e8a3ba77eb1ade3
       REVALIDATE_SECRET: ${REVALIDATE_SECRET:-supersecret}
       NEXT_PUBLIC_SITE_NAME: "Kayı | Güvenle Al, Güvenle Sat"
       NEXT_PUBLIC_SITE_DESCRIPTION: "Kayı | Güvenle Al, Güvenle Sat"

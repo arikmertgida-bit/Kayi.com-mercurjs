@@ -1,7 +1,7 @@
 # Builder stage
-FROM node:22-alpine AS builder
 
-RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
+FROM node:22-alpine AS builder
+RUN corepack enable && corepack prepare pnpm@10.33.0 --activate && pnpm --version
 
 WORKDIR /app
 
@@ -26,15 +26,15 @@ ENV VITE_MEDUSA_BASE=$VITE_MEDUSA_BASE \
 RUN pnpm build:preview
 
 # Production stage
-FROM node:22-alpine
 
-RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
+FROM node:22-alpine
+RUN npm install -g pnpm@10.33.0
 
 WORKDIR /app
 
 # Copy only production dependencies
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
-RUN pnpm install --prod --prefer-frozen-lockfile
+RUN pnpm install --prefer-frozen-lockfile
 
 # Copy built dist directory from builder
 COPY --from=builder /app/dist ./dist

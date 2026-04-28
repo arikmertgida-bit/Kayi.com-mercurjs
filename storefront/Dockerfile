@@ -1,7 +1,7 @@
 # Builder stage
-FROM node:22-alpine AS builder
 
-RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
+FROM node:22-alpine AS builder
+RUN corepack enable && corepack prepare pnpm@10.33.0 --activate && pnpm --version
 
 WORKDIR /app
 
@@ -38,15 +38,15 @@ ENV NEXT_PUBLIC_BASE_URL=$NEXT_PUBLIC_BASE_URL \
 RUN NODE_OPTIONS=--openssl-legacy-provider NEXT_TELEMETRY_DISABLED=1 pnpm next build
 
 # Production stage
-FROM node:22-alpine
 
-RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
+FROM node:22-alpine
+RUN npm install -g pnpm@10.33.0
 
 WORKDIR /app
 
 # Copy only production dependencies and .npmrc from builder
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json .npmrc ./
-RUN pnpm install --prod --prefer-frozen-lockfile
+RUN pnpm install --prefer-frozen-lockfile
 
 # Copy built .next directory from builder
 COPY --from=builder /app/.next ./.next
