@@ -1,3 +1,32 @@
+// GDPR Consent helpers (localStorage tabanlı, SSR etkisi yok)
+export type ConsentType = {
+  necessary: boolean;
+  analytics: boolean;
+  marketing: boolean;
+};
+
+export const CONSENT_KEY = "kayi_cookie_consent";
+
+export const getConsent = (): ConsentType | null => {
+  if (typeof window === "undefined") return null;
+  const raw = localStorage.getItem(CONSENT_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+};
+
+export const setConsent = (consent: ConsentType) => {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(CONSENT_KEY, JSON.stringify(consent));
+};
+
+export const revokeConsent = () => {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(CONSENT_KEY);
+};
 import 'server-only';
 import { cookies as nextCookies } from 'next/headers';
 

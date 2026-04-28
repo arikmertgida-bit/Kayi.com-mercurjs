@@ -2,6 +2,8 @@ import type { Metadata } from "next"
 import { Funnel_Display } from "next/font/google"
 import "./globals.css"
 import { Toaster } from "@medusajs/ui"
+// CookieConsentBannerWrapper bir client component olarak eklenir
+import CookieConsentBannerWrapper from "../components/CookieConsentBannerWrapper"
 import Head from "next/head"
 import { Suspense } from "react"
 import { CartInitializer } from "./cart-initializer"
@@ -129,6 +131,7 @@ export default async function RootLayout({
           {children}
         </Providers>
         <Toaster position="top-right" />
+        <CookieConsentBannerWrapper />
       </body>
     </html>
   )

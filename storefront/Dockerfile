@@ -1,11 +1,12 @@
-FROM node:22-alpine
+# Builder stage
+FROM node:22-alpine AS builder
 
 RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
 
 WORKDIR /app
 
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json .npmrc ./
-RUN pnpm install
+RUN pnpm install --prefer-frozen-lockfile
 
 COPY . .
 
@@ -35,6 +36,23 @@ ENV NEXT_PUBLIC_BASE_URL=$NEXT_PUBLIC_BASE_URL \
 
 # Build Next.js app at image build time (not at container start)
 RUN NODE_OPTIONS=--openssl-legacy-provider NEXT_TELEMETRY_DISABLED=1 pnpm next build
+
+# Production stage
+FROM node:22-alpine
+
+RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
+
+WORKDIR /app
+
+# Copy only production dependencies and .npmrc from builder
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json .npmrc ./
+RUN pnpm install --prod --prefer-frozen-lockfile
+
+# Copy built .next directory from builder
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/next.config.ts ./
+COPY --from=builder /app/tsconfig.json ./
 
 # Run as non-root user
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup \

@@ -550,7 +550,7 @@ export function MessengerChatBox({
             </div>
           )}
 
-          {/* Text input */}}
+          {/* Text input */}
           <textarea
             value={text}
             onChange={handleTextChange}

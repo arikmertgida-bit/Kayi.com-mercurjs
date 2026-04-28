@@ -847,7 +847,7 @@ export function SellerMessengerWidget({
                       </div>
                     )}
 
-                    {/* Text input */}}
+                    {/* Text input */}
                     <textarea
                       ref={textareaRef}
                       value={text}

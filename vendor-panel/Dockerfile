@@ -1,11 +1,12 @@
-FROM node:22-alpine
+# Builder stage
+FROM node:22-alpine AS builder
 
 RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
 
 WORKDIR /app
 
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
-RUN pnpm install
+RUN pnpm install --prefer-frozen-lockfile
 
 COPY . .
 
@@ -21,8 +22,23 @@ ENV VITE_MEDUSA_BASE=$VITE_MEDUSA_BASE \
     VITE_MEDUSA_PUBLISHABLE_KEY=$VITE_MEDUSA_PUBLISHABLE_KEY \
     VITE_DISABLE_SELLERS_REGISTRATION=$VITE_DISABLE_SELLERS_REGISTRATION
 
-# Build Vite app at image build time (API key is pre-set via build arg)
+# Build Vite app at image build time
 RUN pnpm build:preview
+
+# Production stage
+FROM node:22-alpine
+
+RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
+
+WORKDIR /app
+
+# Copy only production dependencies
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+RUN pnpm install --prod --prefer-frozen-lockfile
+
+# Copy built dist directory from builder
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package.json ./
 
 # Run as non-root user
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup \

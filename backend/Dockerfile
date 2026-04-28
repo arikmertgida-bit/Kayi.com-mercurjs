@@ -5,7 +5,7 @@ RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
 WORKDIR /app
 
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
-RUN pnpm install
+RUN pnpm install --prefer-frozen-lockfile
 
 COPY . .
 
@@ -13,7 +13,6 @@ COPY . .
 RUN pnpm build
 
 # Run as non-root user
-# Ownership is set before switching; pnpm start needs write access to .medusa/
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup \
     && chown -R appuser:appgroup /app
 USER appuser

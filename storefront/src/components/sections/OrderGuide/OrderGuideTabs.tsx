@@ -262,7 +262,7 @@ export function OrderGuideTabs() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(i)}
-              className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
+              className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-semibold font-bold transition-colors ${
                 activeTab === i
                   ? "bg-gray-900 text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -283,7 +283,7 @@ export function OrderGuideTabs() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(i)}
-            className={`text-left px-4 py-3 rounded-lg text-sm font-semibold transition-colors relative ${
+            className={`text-left px-4 py-3 rounded-lg text-sm font-semibold font-bold transition-colors relative ${
               activeTab === i
                 ? "bg-gray-900 text-white"
                 : "text-gray-700 hover:bg-gray-100"
