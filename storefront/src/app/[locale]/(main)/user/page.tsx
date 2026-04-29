@@ -1,10 +1,15 @@
 import { LoginForm } from "@/components/molecules"
 import { retrieveCustomer } from "@/lib/data/customer"
 
-export default async function UserPage() {
+export default async function UserPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ returnTo?: string }>
+}) {
   const user = await retrieveCustomer()
+  const { returnTo } = await searchParams
 
-  if (!user) return <LoginForm />
+  if (!user) return <LoginForm returnTo={returnTo} />
 
   return (
     <main className="container">

@@ -11,10 +11,8 @@ const reportImageSchema = z.object({
 })
 
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
-  const customerId = (req as any).auth_context?.actor_id
-  if (!customerId) {
-    return res.status(401).json({ message: "Unauthorized" })
-  }
+  // Auth optional — both logged-in and anonymous users can report
+  const customerId = (req as any).auth_context?.actor_id ?? "anonymous"
 
   const { id } = req.params
   const parsed = reportImageSchema.safeParse(req.body)
@@ -39,7 +37,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     reason,
   })
 
-  // Auto-hide image on report (Facebook-style: hidden until admin reviews)
+  // Auto-hide image on report — hidden from all users until admin reviews
   await reviewImageService.updateReviewImages({ id }, { is_hidden: true })
 
   res.json({ report })

@@ -47,11 +47,11 @@ export const listMegaMenuCategories = async () => {
     product_categories: HttpTypes.StoreProductCategory[]
   }>("/store/product-categories", {
     query: {
-      fields: "id,handle,name,rank,parent_category_id,thumbnail,+metadata,*category_children,category_children.id,category_children.handle,category_children.name",
+      fields: "id,handle,name,rank,parent_category_id,thumbnail,+metadata,*category_children,category_children.id,category_children.handle,category_children.name,category_children.rank",
       limit: 100,
     },
+    next: { revalidate: 60 },
     cache: "force-cache",
-    next: { revalidate: 3600 },
   })
 
   return product_categories

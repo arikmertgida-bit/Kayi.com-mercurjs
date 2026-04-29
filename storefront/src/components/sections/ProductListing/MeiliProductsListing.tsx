@@ -144,7 +144,7 @@ const FilteredProductsContent = ({
   return (
     <>
       <Configure query={query} filters={filters} />
-      <ProductsListing locale={locale} currency_code={currency_code} sidebarContent={sidebarContent} />
+      <ProductsListing locale={locale} currency_code={currency_code} collection_id={collection_id} sidebarContent={sidebarContent} />
     </>
   )
 }
@@ -154,10 +154,12 @@ const FilteredProductsContent = ({
 const ProductsListing = ({
   locale,
   currency_code,
+  collection_id,
   sidebarContent,
 }: {
   locale?: string
   currency_code: string
+  collection_id?: string
   sidebarContent?: React.ReactNode
 }) => {
   const { paramMap } = useFiltersContext()
@@ -167,12 +169,14 @@ const ProductsListing = ({
   async function handleSetProducts() {
     if (!items.length) return
     try {
+      const ids = items.map((item) => item.objectID as string)
       const { response } = await listProducts({
         countryCode: locale,
+        collection_id,
         queryParams: {
           fields:
             "*variants.calculated_price,*seller.reviews,-thumbnail,-images,-type,-tags,-variants.options,-options,-collection,-collection_id,+categories,+categories.id,+categories.metadata",
-          handle: items.map((item) => item.handle as string),
+          id: ids as any,
           limit: items.length,
         },
       })

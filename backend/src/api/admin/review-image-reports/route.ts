@@ -1,4 +1,5 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
+import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 import { REVIEW_IMAGE_REPORT_MODULE } from "../../../modules/review-image-reports"
 import { REVIEW_IMAGE_MODULE } from "../../../modules/review-images"
 import ReviewImageReportService from "../../../modules/review-image-reports/service"
@@ -13,6 +14,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 
   const reportService: ReviewImageReportService = req.scope.resolve(REVIEW_IMAGE_REPORT_MODULE)
   const reviewImageService: ReviewImageService = req.scope.resolve(REVIEW_IMAGE_MODULE)
+  const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
 
   const filters: Record<string, any> = {}
   if (status) filters.status = status
@@ -22,9 +24,11 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     take: parseInt(limit),
   })
 
-  const count = await (reportService as any).countReviewImageReports(filters)
+  // Get total count with same filters but no pagination
+  const allForCount = await reportService.listReviewImageReports(filters, {})
+  const count = allForCount.length
 
-  // Batch fetch all images in a single query (eliminates N+1)
+  // Batch fetch images
   const imageIds = reports.map((r: any) => r.review_image_id).filter(Boolean)
   const allImages = imageIds.length > 0
     ? await reviewImageService.listReviewImages({ id: imageIds })
@@ -35,9 +39,31 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     return acc
   }, {})
 
+  // Batch resolve customer names
+  const customerIds = [...new Set(
+    reports.map((r: any) => r.customer_id).filter((id: string) => id && id !== "anonymous")
+  )]
+
+  let customerNames: Record<string, string> = {}
+  if (customerIds.length > 0) {
+    try {
+      const { data: customers } = await query.graph({
+        entity: "customer",
+        fields: ["id", "first_name", "last_name"],
+        filters: { id: customerIds },
+      })
+      for (const c of customers as any[]) {
+        customerNames[c.id] = [c.first_name, c.last_name].filter(Boolean).join(" ") || c.id
+      }
+    } catch { /* non-critical */ }
+  }
+
   const reportsWithImages = reports.map((report: any) => ({
     ...report,
     image: imagesById[report.review_image_id] ?? null,
+    customer_name: report.customer_id === "anonymous"
+      ? "Misafir"
+      : (customerNames[report.customer_id] ?? report.customer_id),
   }))
 
   res.json({ reports: reportsWithImages, count })

@@ -9,7 +9,7 @@ export const CollectionProductSection = async ({
   locale = process.env.NEXT_PUBLIC_DEFAULT_REGION || "tr",
   allProductsHref,
 }: {
-  heading: string
+  heading?: string
   collectionHandle: string
   locale?: string
   allProductsHref?: string
@@ -31,7 +31,7 @@ export const CollectionProductSection = async ({
   return (
     <section className="py-4 w-full">
       <HomeSlider
-        heading={heading}
+        heading={heading ?? collection.title}
         initialProducts={products as HttpTypes.StoreProduct[]}
         allProductsHref={allProductsHref ?? `/collections/${collectionHandle}`}
       />

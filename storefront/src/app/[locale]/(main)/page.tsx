@@ -12,6 +12,8 @@ import Script from "next/script"
 import { listRegions } from "@/lib/data/regions"
 import { toHreflang } from "@/lib/helpers/hreflang"
 
+export const revalidate = 60
+
 export async function generateMetadata({
   params,
 }: {
@@ -158,7 +160,6 @@ export default async function Home({
       </div>
       <div className="px-4 lg:px-6 w-full">
         <CollectionProductSection
-          heading="İndirimli Ürünler"
           collectionHandle="firsat-urunleri"
           locale={locale}
           allProductsHref="/collections/firsat-urunleri"
@@ -166,7 +167,6 @@ export default async function Home({
       </div>
       <div className="px-4 lg:px-6 w-full">
         <CollectionProductSection
-          heading="Sezonluk Ürünler"
           collectionHandle="yeni-sezon"
           locale={locale}
           allProductsHref="/collections/yeni-sezon"

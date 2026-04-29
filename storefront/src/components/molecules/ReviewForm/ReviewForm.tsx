@@ -11,6 +11,7 @@ import { reviewSchema, ReviewFormData } from "./schema"
 import { Button } from "@/components/atoms"
 import { InteractiveStarRating } from "@/components/atoms/InteractiveStarRating/InteractiveStarRating"
 import { useRef, useState } from "react"
+import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { createReview, uploadReviewImages, Order } from "@/lib/data/reviews"
 
@@ -52,6 +53,7 @@ export const ReviewForm: React.FC<Props> = ({ ...props }) => {
 const MAX_IMAGES = 3
 
 const Form: React.FC<Props> = ({ handleClose, seller, referenceType = "seller", referenceId }) => {
+  const router = useRouter()
   const [error, setError] = useState<string>()
   const [imageSlots, setImageSlots] = useState<ImageSlot[]>([
     { status: "empty" },
@@ -164,6 +166,7 @@ const Form: React.FC<Props> = ({ handleClose, seller, referenceType = "seller", 
     }
 
     setError("")
+    router.refresh()
     handleClose && handleClose()
   }
 

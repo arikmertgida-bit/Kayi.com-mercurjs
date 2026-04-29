@@ -4,6 +4,7 @@ import { HttpTypes } from "@medusajs/types"
 import { CartDropdown, MobileNavbar, Navbar } from "@/components/cells"
 import { HeartIcon } from "@/icons"
 import { listCategories, listMegaMenuCategories } from "@/lib/data/categories"
+import { listCollections } from "@/lib/data/collections"
 import { PARENT_CATEGORIES } from "@/const"
 import { UserDropdown } from "@/components/cells/UserDropdown/UserDropdown"
 import { retrieveCustomer } from "@/lib/data/customer"
@@ -18,12 +19,15 @@ import { NavbarSearch } from "@/components/molecules"
 export const Header = async () => {
   // Parallelise all independent data fetches — eliminates a ~3-request waterfall
   // and reduces total server-side blocking time to that of the slowest single fetch.
-  const [user, regions, categoriesResult, megaMenuCategories] = await Promise.all([
+  const [user, regions, categoriesResult, megaMenuCategories, collectionsResult] = await Promise.all([
     retrieveCustomer(),
     listRegions(),
     listCategories({ headingCategories: PARENT_CATEGORIES }),
     listMegaMenuCategories(),
+    listCollections({ fields: "id,title,handle" }),
   ])
+
+  const collections = collectionsResult.collections
 
   // Wishlist depends on user — only fetch when needed
   let wishlist: Wishlist[] = []
@@ -80,6 +84,7 @@ export const Header = async () => {
               parentCategories={parentCategories}
               childrenCategories={categories}
               menuCategories={megaMenuCategories}
+              collections={collections}
             />
           </div>
         </div>
@@ -88,7 +93,7 @@ export const Header = async () => {
       <div className="lg:hidden bg-white shadow-sm border-t px-4 py-2">
         <NavbarSearch />
       </div>
-      <Navbar megaMenuCategories={megaMenuCategories} />
+      <Navbar megaMenuCategories={megaMenuCategories} collections={collections} />
     </>
   )
 }

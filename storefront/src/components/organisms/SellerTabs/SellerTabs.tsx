@@ -1,13 +1,10 @@
 import { Suspense } from "react"
 import { ProductListingSkeleton } from "../ProductListingSkeleton/ProductListingSkeleton"
-import { MeiliProductsListing, ProductListing } from "@/components/sections"
+import { SellerProductListing } from "@/components/sections"
 import { SellerProps } from "@/types/seller"
 import { SellerTabsSwitcher } from "./SellerTabsSwitcher"
 import { SellerScore, SellerReviewList } from "@/components/molecules"
 import { SellerSidebar } from "../SellerSidebar/SellerSidebar"
-
-const MEILISEARCH_HOST = process.env.NEXT_PUBLIC_MEILISEARCH_HOST
-const MEILISEARCH_SEARCH_KEY = process.env.NEXT_PUBLIC_MEILISEARCH_SEARCH_KEY
 
 export const SellerTabs = ({
   seller_handle,
@@ -39,24 +36,24 @@ export const SellerTabs = ({
       : 0
 
   const productContent = (
-    <Suspense fallback={<ProductListingSkeleton />}>
-      {!MEILISEARCH_HOST || !MEILISEARCH_SEARCH_KEY ? (
-        <ProductListing seller_id={seller_id} page={page} />
-      ) : (
-        <MeiliProductsListing
-          locale={locale}
-          seller_handle={seller_handle}
-          currency_code={currency_code}
-          sidebarContent={
-            <SellerSidebar
-              seller={seller}
-              categories={categories}
-              productCount={productCount}
-            />
-          }
+    <div className="md:flex gap-4 mt-6">
+      <div className="w-[280px] flex-shrink-0 hidden md:block">
+        <SellerSidebar
+          seller={seller}
+          categories={categories}
+          productCount={productCount}
         />
-      )}
-    </Suspense>
+      </div>
+      <div className="w-full">
+        <Suspense fallback={<ProductListingSkeleton />}>
+          <SellerProductListing
+            seller_handle={seller_handle}
+            locale={locale}
+            page={page}
+          />
+        </Suspense>
+      </div>
+    </div>
   )
 
   const reviewContent = (

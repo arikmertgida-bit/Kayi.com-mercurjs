@@ -23,7 +23,8 @@
 15. [Code Quality Standards](#15-code-quality-standards)
 16. [Environment Variables](#16-environment-variables)
 17. [Technical Debt Backlog](#17-technical-debt-backlog)
-18. [Completed Work](#18-completed-work)
+18. [Quick Reference — Credentials & Endpoints](#18-quick-reference--credentials--endpoints)
+19. [Completed Work](#19-completed-work)
 
 ---
 
@@ -108,6 +109,32 @@ Multi-vendor marketplace (B2C) built on MedusaJS v2 + MercurJS plugin ecosystem.
 - **Jobs:** MeiliSearch cron sync (periodic product index update)
 - **DB connection pool:** `min: 2, max: 10, idleTimeoutMillis: 30000`
 
+#### Backend Docker — Multi-Stage Build Architecture
+
+> **CRITICAL:** The backend Docker image uses a two-stage build. Misunderstanding this will cause image bloat (2GB+) or broken containers.
+
+**Stage 1 — Builder (`node:22-alpine`):**
+1. Install ALL deps (dev + prod) with `pnpm install` — needed for `medusa build`
+2. Run `pnpm build` → produces `.medusa/server/` (self-contained MedusaJS server with its own `package.json`)
+3. `cd .medusa/server` → run `npm install --omit=dev --ignore-scripts --no-audit --no-fund --legacy-peer-deps`
+   - This installs **only production** deps INTO the compiled output directory
+   - Uses `npm` (not pnpm) because `.medusa/server/` has no lockfile
+   - **`--legacy-peer-deps` is mandatory** — `@medusajs/ui` has a peer dep version conflict between `mercurjs` and `draft-order` packages (non-breaking, but npm strict mode rejects it)
+
+**Stage 2 — Runtime (`node:22-alpine`):**
+- Copies **only** `/app/.medusa/server/` from builder → `/app/`
+- No root `node_modules`, no source files, no dev tools, no pnpm cache
+- Result: **self-contained ~1GB image** (vs 2GB+ with root node_modules)
+
+**What runs at container start (CMD):**
+```
+npx medusa db:migrate
+node src/scripts/ensure-columns.js   (skipped gracefully if it fails)
+npx medusa start
+```
+
+**Image size history:** 2.04GB (before) → **1.04GB** (after multi-stage refactor, 49% reduction)
+
 ### 3.2 Storefront (`/storefront`)
 - **Framework:** Next.js 15.3.6 (App Router)
 - **Package manager:** `pnpm` — NEVER use npm or yarn here
@@ -121,6 +148,49 @@ Multi-vendor marketplace (B2C) built on MedusaJS v2 + MercurJS plugin ecosystem.
   - i18n/translation is NOT active — site runs in Turkish only
   - `next-intl` package is installed but never used (technical debt)
 - **TalkJS:** completely removed — do not add back, do not reference it
+
+#### Storefront Docker — Standalone Output + Edge Runtime Fix
+
+> **CRITICAL:** Two separate architectural requirements must be maintained simultaneously. Removing either one breaks the storefront.
+
+**Requirement 1 — `output: 'standalone'` in `next.config.ts`:**
+- Next.js bundles a minimal server + required `node_modules` subset into `.next/standalone/`
+- Docker Stage 2 copies ONLY this directory — no full `node_modules` install at runtime
+- Without this: Docker Stage 2 would need to run `pnpm install` again (~400MB overhead)
+- **Dockerfile copies 3 artifacts from builder:**
+  ```
+  .next/standalone  →  /app/               (server + minimal node_modules)
+  .next/static      →  /app/.next/static   (CSS, JS, images — must be separate)
+  public/           →  /app/public         (robots.txt, favicon, etc.)
+  ```
+
+**Requirement 2 — `MEDUSA_BACKEND_URL` baked into build in `next.config.ts`:**
+- **Root cause of "No regions found" error:** Next.js middleware runs on the Edge Runtime. Edge Runtime **cannot** read standard `process.env` variables at runtime — they are undefined unless explicitly provided at build time.
+- **Fix (both parts are required together):**
+
+  Part A — `storefront/next.config.ts`:
+  ```typescript
+  env: {
+    MEDUSA_BACKEND_URL: process.env.MEDUSA_BACKEND_URL || 'http://localhost:9000',
+  },
+  ```
+  This tells Next.js to inline the value into the bundle at build time.
+
+  Part B — `storefront/Dockerfile` build stage:
+  ```dockerfile
+  ARG MEDUSA_BACKEND_URL=http://backend:9000
+  ENV MEDUSA_BACKEND_URL=$MEDUSA_BACKEND_URL
+  ```
+  Without this, `process.env.MEDUSA_BACKEND_URL` is `undefined` when `next.config.ts` is evaluated during `next build`, so the `env` block bakes in `undefined`.
+
+  Part C — `docker-compose.yml` build args:
+  ```yaml
+  build:
+    args:
+      MEDUSA_BACKEND_URL: http://backend:9000
+  ```
+
+- **If you change `MEDUSA_BACKEND_URL`:** You MUST rebuild the storefront image — it is baked in, not a runtime variable.
 
 ### 3.3 Vendor Panel (`/vendor-panel`)
 - **Framework:** Vite + React
@@ -253,14 +323,29 @@ When you change a file, use this table to decide what action is needed:
 | `storefront/Dockerfile` | Full Docker rebuild storefront |
 | `storefront/src/**/*.tsx` or `*.ts` | Docker rebuild storefront (Next.js compiles at build time) |
 | `storefront/next.config.ts` | Docker rebuild storefront |
-| `kayi-messenger/package.json` or `package-lock.json` | `npm install` locally → full Docker rebuild kayi-messenger |
-| `kayi-messenger/prisma/schema.prisma` | `npx prisma migrate dev` locally → Docker rebuild kayi-messenger (migration runs on container start) |
-| `kayi-messenger/src/**/*.ts` | Docker rebuild kayi-messenger |
+| `storefront/next.config.ts` → `env` block changes | **Must rebuild** — env values are baked into JS bundle, not runtime |
 | `backend/package.json` or `pnpm-lock.yaml` | `pnpm install` locally → full Docker rebuild backend |
 | `backend/medusa-config.ts` | Docker rebuild backend |
 | `backend/src/**/*.ts` | Docker rebuild backend |
+| `backend/Dockerfile` | Full Docker rebuild backend |
+| `kayi-messenger/package.json` or `package-lock.json` | `npm install` locally → full Docker rebuild kayi-messenger |
+| `kayi-messenger/prisma/schema.prisma` | `npx prisma migrate dev` locally → Docker rebuild kayi-messenger (migration runs on container start) |
+| `kayi-messenger/src/**/*.ts` | Docker rebuild kayi-messenger |
 | `vendor-panel/src/**` | Docker rebuild vendor-panel |
-| `docker-compose.yml` | `docker compose up -d` (no rebuild needed unless image changed) |
+| `admin-panel/src/**` | Docker rebuild admin-panel |
+| `docker-compose.yml` (env vars only) | `docker compose up -d` (no rebuild needed unless image changed) |
+| `docker-compose.yml` (build args added/changed) | **Must rebuild** the affected service — build args are consumed at image build time |
+
+### ⚠️ Build Args vs Runtime Env — Critical Distinction
+
+```
+docker-compose.yml
+├── build.args.*     → consumed at IMAGE BUILD TIME → must docker compose build
+└── environment.*    → injected at CONTAINER START TIME → docker compose up -d is enough
+```
+
+- `MEDUSA_BACKEND_URL` is a **build arg** for storefront (baked into Next.js bundle)
+- `DATABASE_URL`, `REDIS_URL` etc. are **runtime env vars** for backend (read at startup)
 
 ---
 
@@ -268,22 +353,56 @@ When you change a file, use this table to decide what action is needed:
 
 Docker builds layers in order. Each `COPY` or `RUN` instruction is a layer. If a layer changes, all subsequent layers rebuild.
 
-**Storefront Dockerfile layer order (important):**
+### Backend Dockerfile — Layer Order
+
 ```
-Layer 1: FROM node:22-alpine
-Layer 2: RUN corepack enable                                  (CACHED — almost never changes)
-Layer 3: WORKDIR /app                                         (CACHED)
-Layer 4: COPY pnpm-lock.yaml pnpm-workspace.yaml package.json .npmrc ./
-         ↑ If ANY of these 4 files change → layers 4,5,6,7 all rebuild
-Layer 5: RUN pnpm install                                     (slow — downloads all packages)
-Layer 6: COPY . .                                             (copies source code)
-Layer 7: RUN pnpm run launcher build                          (Next.js build — slow)
-Layer 8: RUN addgroup/adduser                                 (permissions)
+Stage 1 (builder):
+  Layer 1:  FROM node:22-alpine AS builder
+  Layer 2:  RUN corepack enable + pnpm@10.33.0       (CACHED — never changes)
+  Layer 3:  WORKDIR /app
+  Layer 4:  COPY pnpm-lock.yaml pnpm-workspace.yaml package.json
+            ↑ Any of these change → layers 5,6,7,8 all rebuild
+  Layer 5:  RUN pnpm install                          (slow — full dev+prod install)
+  Layer 6:  COPY . .                                  (copies all source)
+  Layer 7:  RUN pnpm build                            (medusa build → .medusa/server/)
+  Layer 8:  WORKDIR /app/.medusa/server
+            RUN npm install --omit=dev --legacy-peer-deps  (prod-only install)
+
+Stage 2 (runtime):
+  Layer 9:  FROM node:22-alpine                       (CACHED base image)
+  Layer 10: RUN addgroup/adduser                      (CACHED)
+  Layer 11: COPY --from=builder .medusa/server → /app (rebuilds only if stage 1 changed)
 ```
 
-**Rule:** If only source `.tsx`/`.ts` files changed (not package.json), layers 4 and 5 stay cached. Layer 6 onward rebuilds.
+**Key insight:** Layer 8 (`npm install --omit=dev`) runs INSIDE `.medusa/server/` which is the output dir, not the source root. This is what makes the runtime image self-contained without root-level `node_modules`.
 
-**If you see `[5/8] RUN pnpm install — CACHED` but the build still fails:** Force a clean build:
+**Why `--legacy-peer-deps` on Layer 8:**
+`@medusajs/ui` has a peer dependency conflict between the versions pulled by `mercurjs` (4.0.25) and `draft-order` (4.0.27). It is non-breaking but npm strict mode exits with `ERESOLVE`. This flag must stay or the build fails.
+
+### Storefront Dockerfile — Layer Order
+
+```
+Stage 1 (builder):
+  Layer 1:  FROM node:22-alpine AS builder
+  Layer 2:  RUN corepack enable + pnpm@10.33.0       (CACHED)
+  Layer 3:  WORKDIR /app
+  Layer 4:  COPY pnpm-lock.yaml pnpm-workspace.yaml package.json .npmrc ./
+            ↑ If ANY of these 4 files change → layers 5,6,7 all rebuild
+  Layer 5:  RUN pnpm install --prefer-frozen-lockfile (slow — downloads all packages)
+  Layer 6:  COPY . .                                  (copies source code)
+  Layer 7:  RUN pnpm next build                       (Next.js build — slow, bakes env vars)
+
+Stage 2 (runtime):
+  Layer 8:  FROM node:22-alpine                       (CACHED base image)
+  Layer 9:  COPY --from=builder .next/standalone ./
+  Layer 10: COPY --from=builder .next/static ./.next/static
+  Layer 11: COPY --from=builder public ./public
+  Layer 12: RUN addgroup/adduser + chown              (CACHED)
+```
+
+**Rule:** If only source `.tsx`/`.ts` files changed (not package.json or .npmrc), layers 4 and 5 stay cached. Layer 6 onward rebuilds.
+
+**If you see `RUN pnpm install — CACHED` but the build still fails:** Force a clean build:
 ```bash
 docker compose build --no-cache storefront
 ```
@@ -368,15 +487,52 @@ PostgreSQL + Redis + MinIO + MeiliSearch  (infrastructure layer)
 
 **CRITICAL: `Running` status does NOT mean `Ready`**
 
-| Container | Ready When |
-|---|---|
-| `kaycom-postgres-1` | `pg_isready` responds (healthcheck: 10s interval) |
-| `kaycom-redis-1` | `redis-cli ping` responds |
-| `kaycom-minio-1` | HTTP `/minio/health/live` returns 200 (can take 15-30s) |
-| `kaycom-meilisearch-1` | HTTP health endpoint responds |
-| `kaycom-backend-1` | `/store/regions` returns 200 (startup: 30-60s) |
-| `kaycom-storefront-1` | `✓ Ready in Xms` in logs |
-| `kaycom-kayi-messenger-1` | `[kayi-messenger] Listening on port 4000` in logs |
+| Container | Ready When | Healthcheck Command |
+|---|---|---|
+| `kaycom-postgres-1` | `pg_isready` responds | `pg_isready -U postgres` |
+| `kaycom-redis-1` | `redis-cli ping` responds | `redis-cli ping` |
+| `kaycom-minio-1` | HTTP `/minio/health/live` returns 200 | `curl -sf http://localhost:9000/minio/health/live` |
+| `kaycom-meilisearch-1` | HTTP `/health` responds | `curl -sf http://localhost:7700/health` |
+| `kaycom-backend-1` | `/health` returns 200 (startup: 30-60s) | `wget -qO- http://localhost:9000/health` |
+| `kaycom-admin-panel-1` | nginx root responds | `wget -qO- http://127.0.0.1/` |
+| `kaycom-vendor-panel-1` | nginx root responds | `wget -qO- http://127.0.0.1/` |
+| `kaycom-storefront-1` | Next.js `✓ Ready` in logs | `wget -qO /dev/null http://127.0.0.1:8000/` |
+| `kaycom-kayi-messenger-1` | `/health` returns 200 | `node -e "require('http').get('http://localhost:4000/health', ...)"` |
+
+### Healthcheck Commands — BusyBox wget Limitations
+
+> **WARNING:** Alpine-based containers use BusyBox wget, not GNU wget. BusyBox wget does NOT support `--max-redirect`, `-T` (timeout), or long-form options beyond what's listed below.
+
+**BusyBox wget supported flags:**
+```
+-q          Quiet
+-O FILE     Save to file ('-' or /dev/null for discard)
+--spider    Only check URL existence (exit 0 if exists)
+-T SEC      Network read timeout
+-S          Show server response
+```
+
+**CORRECT storefront healthcheck** (redirect-friendly):
+```bash
+wget -qO /dev/null http://127.0.0.1:8000/ 2>&1 || exit 1
+```
+
+**WRONG** (will fail on all Alpine containers):
+```bash
+wget --spider --max-redirect=10 -q http://127.0.0.1:8000/  # --max-redirect NOT supported
+```
+
+### Admin/Vendor Panel Healthcheck — localhost vs 127.0.0.1
+
+> **WARNING:** On some Docker networking configurations, `localhost` resolves to IPv6 (`::1`). nginx listens only on IPv4. Always use `127.0.0.1` explicitly in healthcheck commands for nginx-based containers.
+
+```bash
+# CORRECT
+wget -qO- http://127.0.0.1/ || exit 1
+
+# WRONG — may fail with "Connection refused" if IPv6 resolves first
+wget -qO- http://localhost/ || exit 1
+```
 
 **Verify all containers are ready:**
 ```bash
@@ -399,6 +555,12 @@ docker ps --format "table {{.Names}}\t{{.Status}}"
 | Container shows `Up X seconds` but not `(healthy)` | Service still initializing | Wait — do not restart immediately. Check logs first |
 | Backend `401` on `/store/customers/me` | Unauthenticated visitor request | This is NORMAL behavior, not an error |
 | MeiliSearch sync errors at startup | Backend started before MeiliSearch was fully ready | Wait for all healthchecks to pass; sync job will retry |
+| `npm install` ERESOLVE error in backend Docker build | `@medusajs/ui` peer dep version conflict (mercurjs vs draft-order) | Add `--legacy-peer-deps` flag — this is expected and non-breaking |
+| Storefront shows "No regions found" / blank page | `MEDUSA_BACKEND_URL` is `undefined` in Edge Runtime middleware | Ensure: (1) `next.config.ts` has `env: { MEDUSA_BACKEND_URL: ... }` block, (2) `storefront/Dockerfile` has `ARG MEDUSA_BACKEND_URL` + `ENV MEDUSA_BACKEND_URL=$MEDUSA_BACKEND_URL`, (3) `docker-compose.yml` build args include it. Then **rebuild** storefront. |
+| `wget: unrecognized option: max-redirect=10` in healthcheck | BusyBox wget (Alpine) does not support GNU wget's `--max-redirect` flag | Replace with `wget -qO /dev/null http://127.0.0.1:8000/ 2>&1 \|\| exit 1` |
+| Admin/vendor panel healthcheck `Connection refused` | `localhost` resolving to IPv6 (`::1`), nginx only on IPv4 | Use `127.0.0.1` instead of `localhost` in healthcheck test command |
+| Backend container named `51dc4a00f5d7_kaycom-backend-1` | Docker Compose orphan container from previous session | Run `docker compose down && docker compose up -d` to normalize (volumes are safe) |
+| `[listProducts] fetch error: Publishable key needs to have a sales channel configured` | Backend publishable key has no sales channel assigned | In admin panel: Settings → API Keys → select the key → assign "Default Sales Channel" |
 
 ---
 
@@ -439,6 +601,28 @@ docker ps --format "table {{.Names}}\t{{.Status}}"
 - All secrets via environment variables only
 - JWT_SECRET, COOKIE_SECRET, API keys — all from `.env` or Docker env
 
+**9. Backend `--legacy-peer-deps` — DO NOT REMOVE**
+- `backend/Dockerfile` Stage 1 runs: `npm install --omit=dev --legacy-peer-deps` inside `.medusa/server/`
+- This flag is required due to a non-breaking peer dependency conflict in `@medusajs/ui`
+- Removing it causes `ERESOLVE` failure and the Docker build will exit with code 1
+- The conflict is between `@mercurjs/mercur-draft-order` (needs `@medusajs/ui@4.0.27`) and other mercurjs packages (need `4.0.25`) — functionally harmless
+
+**10. `MEDUSA_BACKEND_URL` is a BUILD-TIME variable for storefront — NOT runtime**
+- It is baked into the Next.js JS bundle via `next.config.ts` `env` block
+- If you change this URL, you MUST rebuild the storefront Docker image
+- Simply updating `docker-compose.yml` environment block and restarting the container is NOT sufficient
+- The value must flow: docker-compose build args → Dockerfile ARG/ENV → next build → JS bundle
+
+**11. Backend `medusajs-launch-utils` — REMOVED**
+- Previously in `backend/package.json` — was removed because the multi-stage build CMD directly calls `npx medusa` commands
+- Do NOT add it back — it caused unnecessary overhead and was bypassed anyway
+
+**12. Backend runtime directory is `/app` (was `.medusa/server` in builder)**
+- In the builder stage, files live at `/app/.medusa/server/`
+- In the runtime stage (Stage 2), they are copied to `/app/`
+- When debugging inside the running container: files are at `/app/src/`, `/app/node_modules/`, etc.
+- Do not look for `.medusa/server/` in the running container — it doesn't exist there
+
 ### Module Key Pattern (Backend)
 When referencing `@mercurjs/reviews` module key in custom code:
 ```typescript
@@ -447,6 +631,16 @@ const REVIEW_MODULE_KEY = "review" as const
 
 // WRONG — do not import from @mercurjs/reviews directly in custom routes
 import { REVIEW_MODULE_KEY } from "@mercurjs/reviews"
+```
+
+### Operational Safety
+```bash
+# SAFE — keeps all data volumes
+docker compose down
+docker compose up -d
+
+# DANGEROUS — destroys all database data (mercurjs + kayi_messenger)
+docker compose down -v   # Only run if you intend to reset ALL data
 ```
 
 ---
@@ -622,6 +816,7 @@ PORT=4000
 ### Medium Priority
 - [ ] `next-intl` package installed but never used — remove from `storefront/package.json`
 - [ ] `[locale]` URL segment name is misleading — it is a country/region code, not a language code. Consider renaming to `[countryCode]` in a future refactor (breaking change — requires full URL migration)
+- [ ] Backend container may be named `51dc4a00f5d7_kaycom-backend-1` (orphan name from Docker Compose) — normalize with `docker compose down && docker compose up -d` (volumes are safe, no data loss)
 
 ### Low Priority
 - [ ] `@medusajs/ui` peer dependency warning: requires `react@^18.3.1`, project uses `react@19.2.0` — functionally working, watch for upstream fix
@@ -630,9 +825,34 @@ PORT=4000
 
 ---
 
-## 18. Completed Work
+## 18. Quick Reference — Credentials & Endpoints
 
-### Phase 1 — Security Vulnerabilities
+> These values are for local development. Change all secrets before any production deployment.
+
+| Service | URL | Notes |
+|---|---|---|
+| Storefront | http://localhost:3000 | Mapped from container port 8000 |
+| Admin Panel | http://localhost:5173 | |
+| Vendor Panel | http://localhost:7001 | |
+| Backend API | http://localhost:9000 | Container-internal: `http://backend:9000` |
+| Kayi-Messenger | http://localhost:4000 | |
+| MinIO Console | http://localhost:9001 | |
+| MinIO API | http://localhost:9002 | |
+| MeiliSearch | http://localhost:7700 | |
+| PostgreSQL | localhost:5432 | user: postgres / pass: postgres |
+| Redis | localhost:6380 | |
+
+**Admin credentials:** `arikmertgida@gmail.com` / `19791979aa`
+
+**Publishable key:** `pk_fb240b283e19519b1a6f3cb9b57f67442eaa1fcdb3ea77a24cad97e616727a84`
+
+**Turkey region ID:** `reg_01KQBTE5Y6SFRQF29SDQWD6TQ5`
+
+**MeiliSearch API key:** `masterKey_kayicom`
+
+---
+
+## 19. Completed Work
 - [x] Auth bypass protection on all protected endpoints
 - [x] Hardcoded secrets moved to environment variables
 - [x] XSS sanitization with `isomorphic-dompurify`
@@ -661,3 +881,20 @@ PORT=4000
 - [x] `backend/src/api/reviewValidationMiddleware.ts` — removed broken `@mercurjs/reviews` import
 - [x] `backend/src/api/store/review-replies/[id]/like/route.ts` — fixed incorrect relative import path
 - [x] `kayi-messenger/package.json` — added missing `zod` and `express-rate-limit` dependencies
+
+### Docker Optimization & Healthcheck Fixes (April 2026)
+- [x] **Backend Dockerfile refactored to multi-stage build**
+  - Before: 2.04GB image (root `node_modules` copied to runtime)
+  - After: 1.04GB image (only `.medusa/server/` with prod deps)
+  - `npm install --omit=dev --legacy-peer-deps` runs inside `.medusa/server/` in builder stage
+- [x] **Removed `medusajs-launch-utils`** from `backend/package.json` (no longer needed)
+- [x] **Storefront `output: 'standalone'`** added to `next.config.ts`
+- [x] **Storefront Edge Runtime fix** — `MEDUSA_BACKEND_URL` baked into build:
+  - `next.config.ts` `env` block added
+  - `storefront/Dockerfile` `ARG MEDUSA_BACKEND_URL` + `ENV` added
+  - `docker-compose.yml` build args updated
+- [x] **Admin/vendor panel healthcheck fix** — `localhost` → `127.0.0.1` (IPv6 resolution issue)
+- [x] **Storefront healthcheck fix** — removed unsupported `--max-redirect=10` flag, replaced with `wget -qO /dev/null`
+- [x] **TRY currency + Türkiye region** created via `backend/src/scripts/add-try-currency.ts`
+  - Region ID: `reg_01KQBTE5Y6SFRQF29SDQWD6TQ5`
+  - All 9 containers confirmed `(healthy)`

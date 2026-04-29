@@ -14,6 +14,8 @@ import { queryClient } from "../../lib/query-client"
 const REVIEWS_QUERY_KEY = "reviews" as const
 export const reviewsQueryKeys = queryKeysFactory(REVIEWS_QUERY_KEY)
 
+const DEFAULT_REVIEW_FIELDS = "*customer, reference, *images"
+
 export const useReview = (
   id: string,
   query?: { [key: string]: string | number },
@@ -27,7 +29,7 @@ export const useReview = (
     queryFn: async () =>
       fetchQuery(`/vendor/sellers/me/reviews/${id}`, {
         method: "GET",
-        query: query as { [key: string]: string | number },
+        query: { fields: DEFAULT_REVIEW_FIELDS, ...(query ?? {}) },
       }),
     ...options,
   })

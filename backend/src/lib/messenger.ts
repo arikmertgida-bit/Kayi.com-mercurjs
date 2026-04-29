@@ -31,6 +31,8 @@ interface NotifyParams {
   sourceUserId?: string
   sourceUserType?: "CUSTOMER" | "SELLER" | "ADMIN"
   subject?: string
+  /** Conversation type when auto-creating: DIRECT (default) or ADMIN_SUPPORT (one-way) */
+  conversationType?: "DIRECT" | "ADMIN_SUPPORT"
 }
 
 /**

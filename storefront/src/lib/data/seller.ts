@@ -1,8 +1,10 @@
 "use server"
 
 import { FollowedSeller, SellerProps } from "@/types/seller"
+import { HttpTypes } from "@medusajs/types"
 import { sdk } from "../config"
 import { getAuthHeaders } from "./cookies"
+import { listProducts } from "./products"
 
 const BACKEND_URL =
   process.env.MEDUSA_BACKEND_URL || "http://localhost:9000"
@@ -143,5 +145,51 @@ export const getSellerCategories = async (
     return data.categories || []
   } catch {
     return []
+  }
+}
+
+export const getSellerProducts = async (
+  handle: string,
+  countryCode: string,
+  page: number = 1
+): Promise<{
+  products: (HttpTypes.StoreProduct & { seller?: SellerProps })[]
+  count: number
+}> => {
+  const PRODUCT_LIMIT = 24
+  const offset = (page - 1) * PRODUCT_LIMIT
+
+  try {
+    const res = await fetch(
+      `${BACKEND_URL}/store/sellers/${handle}/products?limit=${PRODUCT_LIMIT}&offset=${offset}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "x-publishable-api-key": PUBLISHABLE_KEY,
+        },
+        cache: "no-store",
+      }
+    )
+    if (!res.ok) return { products: [], count: 0 }
+    const data: { product_ids: string[]; count: number } = await res.json()
+
+    if (!data.product_ids?.length) return { products: [], count: data.count }
+
+    const { response } = await listProducts({
+      countryCode,
+      queryParams: {
+        id: data.product_ids,
+        limit: data.product_ids.length,
+        fields:
+          "*variants.calculated_price,+variants.inventory_quantity,*seller," +
+          "*variants,*variants.options,*options," +
+          "+categories,+categories.id,+categories.metadata",
+      },
+    })
+
+    return { products: response.products, count: data.count }
+  } catch {
+    return { products: [], count: 0 }
   }
 }

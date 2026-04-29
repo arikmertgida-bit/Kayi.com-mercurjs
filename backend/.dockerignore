@@ -3,3 +3,10 @@ node_modules
 .medusa
 dist
 *.log
+.git
+.gitignore
+README.md
+integration-tests
+coverage
+*.test.ts
+*.spec.ts

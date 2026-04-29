@@ -16,20 +16,29 @@ interface Props {
 const ReportModal = ({
   imageId,
   onClose,
+  onReported,
 }: {
   imageId: string
   onClose: () => void
+  onReported: (imageId: string) => void
 }) => {
   const [reason, setReason] = useState("")
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async () => {
     if (!reason.trim()) return
     setLoading(true)
-    await reportReviewImage(imageId, reason)
-    setSubmitted(true)
+    setError(null)
+    const result = await reportReviewImage(imageId, reason.trim())
     setLoading(false)
+    if (result.error) {
+      setError(result.error)
+      return
+    }
+    onReported(imageId)
+    setSubmitted(true)
     setTimeout(onClose, 1800)
   }
 
@@ -70,6 +79,9 @@ const ReportModal = ({
                 {loading ? "Gönderiliyor..." : "Bildir"}
               </button>
             </div>
+            {error && (
+              <p className="text-xs text-red-500 text-center">{error}</p>
+            )}
           </>
         )}
       </div>
@@ -353,8 +365,14 @@ const SellerReplyCard = ({
 
 // ─── Main Card ─────────────────────────────────────────────────────────────────
 export const ProductReviewCard = ({ review }: Props) => {
+  const [localImages, setLocalImages] = useState(review.images ?? [])
   const [reportingImageId, setReportingImageId] = useState<string | null>(null)
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
+
+  const handleImageReported = (imageId: string) => {
+    setLocalImages((prev) => prev.filter((img) => img.id !== imageId))
+    setLightboxIndex(null)
+  }
   const [liked, setLiked] = useState(review.is_liked_by_me ?? false)
   const [likesCount, setLikesCount] = useState(review.likes_count ?? 0)
   const [likeLoading, setLikeLoading] = useState(false)
@@ -447,26 +465,31 @@ export const ProductReviewCard = ({ review }: Props) => {
     if (!replyText.trim() || replySubmitting) return
     setReplySubmitting(true)
     setReplyError(null)
-    try {
-      const newReply = await createReviewReply(review.id, replyText.trim())
-      setReplies((prev) => [...prev, newReply])
+    const result = await createReviewReply(review.id, replyText.trim())
+    setReplySubmitting(false)
+    if (result.error === "auth") {
+      setReplyError("Yanıt yazmak için giriş yapmalısınız.")
+      return
+    }
+    if (result.error) {
+      setReplyError(result.error)
+      return
+    }
+    if (result.reply) {
+      setReplies((prev) => [...prev, result.reply!])
       setReplyText("")
-    } catch (err: any) {
-      setReplyError(err?.message ?? "Yanıt gönderilemedi.")
-    } finally {
-      setReplySubmitting(false)
     }
   }
 
   return (
     <>
       {reportingImageId && (
-        <ReportModal imageId={reportingImageId} onClose={() => setReportingImageId(null)} />
+        <ReportModal imageId={reportingImageId} onClose={() => setReportingImageId(null)} onReported={handleImageReported} />
       )}
-      {lightboxIndex !== null && review.images && (
+      {lightboxIndex !== null && localImages.length > 0 && (
         <PhotoLightbox
-          images={review.images}
-          startIndex={lightboxIndex}
+          images={localImages}
+          startIndex={Math.min(lightboxIndex, localImages.length - 1)}
           onClose={() => setLightboxIndex(null)}
           onReport={(id) => setReportingImageId(id)}
         />
@@ -513,23 +536,22 @@ export const ProductReviewCard = ({ review }: Props) => {
         )}
 
         {/* Photos grid — click to open lightbox */}
-        {review.images && review.images.length > 0 && (
+        {localImages.length > 0 && (
           <div
-            className={`grid gap-1 px-4 pb-3 ${
-              review.images.length === 1 ? "grid-cols-1" :
-              review.images.length === 2 ? "grid-cols-2" : "grid-cols-3"
-            }`}
+            className={`flex gap-1.5 px-4 pb-3 flex-wrap`}
           >
-            {review.images.map((img, index) => (
+            {localImages.map((img, index) => (
               <button
                 key={img.id}
                 onClick={() => setLightboxIndex(index)}
-                className="relative group aspect-square overflow-hidden rounded-2xl bg-[#f7f1f5]"
+                className="relative group overflow-hidden rounded-xl bg-[#f7f1f5] shrink-0"
+                style={{ width: 64, height: 64 }}
               >
                 <Image
                   src={img.url}
                   alt={`Yorum fotoğrafı ${index + 1}`}
                   fill
+                  sizes="64px"
                   className="object-cover group-hover:scale-105 transition-transform duration-200"
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />

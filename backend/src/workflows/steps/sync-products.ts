@@ -23,7 +23,11 @@ export type SyncProductsStepInput = {
 }
 
 export const syncProductsStep = createStep(
-  "sync-products",
+  {
+    name: "sync-products",
+    maxRetries: 3,
+    retryInterval: 5,
+  },
   async ({ products }: SyncProductsStepInput, { container }) => {
     const meilisearchModuleService =
       container.resolve<MeilisearchModuleService>(MEILISEARCH_MODULE)

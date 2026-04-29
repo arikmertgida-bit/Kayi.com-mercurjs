@@ -137,6 +137,7 @@ export function MessengerInbox({
   const isTypingRef = useRef(false)
 
   const activeConv = conversations.find((c) => c.id === activeConversationId)
+  const isAdminSupportConv = activeConv?.type === "ADMIN_SUPPORT"
   const otherParticipant = activeConv?.participants.find(
     (p) => p.userId !== currentUserId
   )
@@ -666,7 +667,15 @@ export function MessengerInbox({
             <div ref={bottomRef} />
           </div>
 
-          {/* Input Bar */}
+          {/* Input Bar — ADMIN_SUPPORT konuşmalarında gizlenir */}
+          {isAdminSupportConv ? (
+            <div className="px-4 py-3 border-t border-gray-200 bg-gray-50 flex items-center justify-center gap-2">
+              <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              <p className="text-xs text-gray-400">Bu konuşmada mesaj gönderemezsiniz.</p>
+            </div>
+          ) : (
           <div className="px-4 py-3 border-t border-gray-200 bg-white">
             {!isConnected && (
               <div className="mb-2 px-3 py-1.5 bg-yellow-50 border border-yellow-100 rounded-xl text-xs text-yellow-700 flex items-center gap-1.5">
@@ -756,6 +765,7 @@ export function MessengerInbox({
               </button>
             </div>
           </div>
+          )}
         </div>
       ) : (
         /* Empty right panel */

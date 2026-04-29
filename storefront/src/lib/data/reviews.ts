@@ -110,23 +110,33 @@ const uploadReviewImages = async (reviewId: string, urls: string[]) => {
   return response.json()
 }
 
-const reportReviewImage = async (imageId: string, reason: string) => {
-  const headers = {
-    ...(await getAuthHeaders()),
-    "Content-Type": "application/json",
-    "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY as string,
-  }
-
-  const response = await fetch(
-    `${process.env.MEDUSA_BACKEND_URL}/store/review-images/${imageId}/report`,
-    {
-      headers,
-      method: "POST",
-      body: JSON.stringify({ reason }),
+const reportReviewImage = async (imageId: string, reason: string): Promise<{ success?: boolean; error?: string }> => {
+  try {
+    const authHeaders = await getAuthHeaders()
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY as string,
+      ...(authHeaders as Record<string, string>),
     }
-  )
 
-  return response.json()
+    const response = await fetch(
+      `${process.env.MEDUSA_BACKEND_URL}/store/review-images/${imageId}/report`,
+      {
+        headers,
+        method: "POST",
+        body: JSON.stringify({ reason }),
+      }
+    )
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}))
+      return { error: (err as any)?.message || "Bildirim gönderilemedi." }
+    }
+
+    return { success: true }
+  } catch {
+    return { error: "Bildirim gönderilemedi." }
+  }
 }
 
 const createReview = async (review: any) => {
@@ -176,29 +186,39 @@ const getReviewReplies = async (reviewId: string): Promise<ReviewReply[]> => {
   }
 }
 
-const createReviewReply = async (reviewId: string, content: string): Promise<ReviewReply> => {
+const createReviewReply = async (reviewId: string, content: string): Promise<{ reply?: ReviewReply; error?: string }> => {
+  const authHeaders = await getAuthHeaders()
+  if (!("authorization" in authHeaders)) {
+    return { error: "auth" }
+  }
+
   const headers = {
-    ...(await getAuthHeaders()),
+    ...authHeaders,
     "Content-Type": "application/json",
     "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY as string,
   }
 
-  const res = await fetch(
-    `${process.env.MEDUSA_BACKEND_URL}/store/review-replies`,
-    {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ review_id: reviewId, content }),
+  try {
+    const res = await fetch(
+      `${process.env.MEDUSA_BACKEND_URL}/store/review-replies`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ review_id: reviewId, content }),
+      }
+    )
+
+    if (res.status === 401) return { error: "auth" }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      return { error: err?.message || "Yanıt gönderilemedi." }
     }
-  )
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error(err?.message || "Yanıt gönderilemedi.")
+    const data = await res.json()
+    return { reply: data.reply }
+  } catch {
+    return { error: "Yanıt gönderilemedi." }
   }
-
-  const data = await res.json()
-  return data.reply
 }
 
 const likeReviewReply = async (replyId: string): Promise<{ liked: boolean; likes_count: number; error?: string }> => {
@@ -219,6 +239,7 @@ const likeReviewReply = async (replyId: string): Promise<{ liked: boolean; likes
 }
 
 export { getReviews, createReview, getProductReviews, uploadReviewImages, reportReviewImage, getReviewReplies, createReviewReply, likeReviewReply }
+export type { ReviewReply }
 
 export const isAuthenticated = async (): Promise<boolean> => {
   const headers = await getAuthHeaders()

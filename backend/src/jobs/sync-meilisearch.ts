@@ -15,7 +15,6 @@ export default async function syncMeiliSearchJob(container: MedusaContainer) {
 
 export const config = {
   name: "sync-meilisearch-products",
-  // Saatte bir fallback sync — gerçek zamanlı güncelleme product-sync.ts subscriber'ı tarafından yapılır.
-  // Her 2 dakikada bir çalıştırmak gereksiz DB/CPU yükü oluşturuyordu.
-  schedule: "0 * * * *",
+  // Her 5 dakikada bir tam sync — subscriber ile birlikte çalışır (fallback)
+  schedule: "*/5 * * * *",
 }

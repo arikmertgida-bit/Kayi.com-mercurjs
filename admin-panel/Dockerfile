@@ -1,7 +1,6 @@
-# Builder stage
-
+# ── Stage 1: Build ────────────────────────────────────────────────────────────
 FROM node:22-alpine AS builder
-RUN corepack enable && corepack prepare pnpm@10.33.0 --activate && pnpm --version
+RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
 
 WORKDIR /app
 
@@ -21,26 +20,16 @@ ENV VITE_MEDUSA_BASE=$VITE_MEDUSA_BASE \
 # Build Vite app at image build time
 RUN pnpm build:preview
 
-# Production stage
 
-FROM node:22-alpine
-RUN npm install -g pnpm@10.33.0
+# ── Stage 2: Runtime (nginx:alpine — ~30MB vs ~300MB+ node:alpine) ────────────
+FROM nginx:alpine
 
-WORKDIR /app
+# Copy static bundle from builder
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy only production dependencies
-COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
-RUN pnpm install --prefer-frozen-lockfile
+# SPA routing config
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy built dist directory from builder
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/package.json ./
+EXPOSE 80
 
-# Run as non-root user
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup \
-    && chown -R appuser:appgroup /app
-USER appuser
-
-EXPOSE 5173
-
-CMD ["sh", "-c", "pnpm preview --host --port 5173"]
+CMD ["nginx", "-g", "daemon off;"]

@@ -9,6 +9,11 @@ import {
 import { Client } from 'minio';
 import path from 'path';
 import { ulid } from 'ulid';
+import sharp from 'sharp';
+
+const IMAGE_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"])
+const MAX_IMAGE_DIMENSION = 1200
+const WEBP_QUALITY = 80
 
 type InjectedDependencies = {
   logger: Logger
@@ -166,7 +171,6 @@ class MinioFileProviderService extends AbstractFileProviderService {
 
     try {
       const parsedFilename = path.parse(file.filename)
-      // Sanitize: normalize unicode (NFD), strip diacritics, replace non-ASCII/special chars
       const safeName = parsedFilename.name
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
@@ -174,9 +178,28 @@ class MinioFileProviderService extends AbstractFileProviderService {
         .replace(/-+/g, '-')
         .toLowerCase()
         .substring(0, 60)
-      const safeExt = parsedFilename.ext.replace(/[^a-zA-Z0-9.]/g, '').toLowerCase()
-      const fileKey = `${safeName}-${ulid()}${safeExt}`
-      const content = Buffer.from(file.content, 'base64')
+
+      let content = Buffer.from(file.content, 'base64')
+      let mimeType = file.mimeType
+      let fileExt = '.webp'
+
+      // Görsel ise WebP'ye çevir, boyutlandır ve sıkıştır
+      if (IMAGE_MIME_TYPES.has(file.mimeType)) {
+        const optimized = await sharp(content)
+          .resize(MAX_IMAGE_DIMENSION, MAX_IMAGE_DIMENSION, {
+            fit: 'inside',
+            withoutEnlargement: true,
+          })
+          .webp({ quality: WEBP_QUALITY })
+          .toBuffer()
+        content = Buffer.from(optimized)
+        mimeType = 'image/webp'
+        fileExt = '.webp'
+      } else {
+        fileExt = parsedFilename.ext.replace(/[^a-zA-Z0-9.]/g, '').toLowerCase()
+      }
+
+      const fileKey = `${safeName}-${ulid()}${fileExt}`
 
       // Upload file (MinIO does not support x-amz-acl or custom x-amz-meta-* headers in signature)
       await this.client.putObject(
@@ -185,7 +208,7 @@ class MinioFileProviderService extends AbstractFileProviderService {
         content,
         content.length,
         {
-          'Content-Type': file.mimeType,
+          'Content-Type': mimeType,
         }
       )
 

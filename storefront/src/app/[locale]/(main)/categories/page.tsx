@@ -3,6 +3,7 @@ import { Suspense } from "react"
 
 import { Breadcrumbs } from "@/components/atoms"
 import { MeiliProductsListing, ProductListing } from "@/components/sections"
+import { MeiliProductSidebar } from "@/components/organisms"
 import { getRegion } from "@/lib/data/regions"
 import isBot from "@/lib/helpers/isBot"
 import { headers } from "next/headers"
@@ -10,6 +11,7 @@ import type { Metadata } from "next"
 import Script from "next/script"
 import { listRegions } from "@/lib/data/regions"
 import { listProducts } from "@/lib/data/products"
+import { listMegaMenuCategories } from "@/lib/data/categories"
 import { toHreflang } from "@/lib/helpers/hreflang"
 
 export const revalidate = 60
@@ -91,6 +93,9 @@ async function AllCategories({
 
   const currency_code = (await getRegion(locale))?.currency_code || "usd"
 
+  // Fetch categories on server side for sidebar
+  const megaMenuCategories = await listMegaMenuCategories().catch(() => [])
+
   // Fetch a small cached list for ItemList JSON-LD
   const headersList = await headers()
   const host = headersList.get("host")
@@ -154,6 +159,7 @@ async function AllCategories({
           <MeiliProductsListing
             locale={locale}
             currency_code={currency_code}
+            sidebarContent={<MeiliProductSidebar initialCategories={megaMenuCategories} />}
           />
         )}
       </Suspense>

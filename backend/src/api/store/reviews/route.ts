@@ -213,14 +213,15 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       customer
         ? `${(customer as any).first_name ?? ""} ${(customer as any).last_name ?? ""}`.trim() || "Müşteri"
         : "Müşteri"
+    // Sadece gerçek zamanlı bildirim gönder — /messages'ta konuşma oluşturma
     notifyMessengerUser({
       targetUserId: sellerToNotify,
       targetUserType: "SELLER",
       senderName: customerName,
       preview: `${customerName} ürününüze yeni bir yorum bıraktı.`,
-      sourceUserId: customerId,
-      sourceUserType: "CUSTOMER",
-      subject: "Yeni Yorum Bildirimi",
+      // sourceUserId/sourceUserType bilinçli olarak verilmedi:
+      // verilseydi kayi-messenger'da DIRECT konuşma açılırdı ve
+      // yorum bildirimleri /messages alanında görünürdü.
     })
   }
 

@@ -112,6 +112,13 @@ export async function middleware(request: NextRequest) {
 
   let response = NextResponse.next()
 
+  // Security headers
+  response.headers.set("X-Frame-Options", "SAMEORIGIN")
+  response.headers.set("X-Content-Type-Options", "nosniff")
+  response.headers.set("X-XSS-Protection", "1; mode=block")
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin")
+  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+
   // Ensure cache id cookie exists (set without redirect)
   const cacheId = cacheIdCookie?.value || crypto.randomUUID()
   if (!cacheIdCookie) {

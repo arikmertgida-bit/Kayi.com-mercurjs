@@ -34,7 +34,7 @@ export const useSignUpWithEmailPass = (
 ) => {
   return useMutation({
     mutationFn: (payload) => sdk.auth.register("seller", "emailpass", payload),
-    onSuccess: async (_, variables) => {
+    onSuccess: async (token, variables) => {
       const seller = {
         name: variables.name,
         member: {
@@ -42,9 +42,12 @@ export const useSignUpWithEmailPass = (
           email: variables.email,
         },
       }
+      // Pass the registration token explicitly — localStorage may not be populated yet
+      // when this onSuccess callback runs, causing /vendor/sellers to receive no auth header.
       await fetchQuery("/vendor/sellers", {
         method: "POST",
         body: seller,
+        headers: { authorization: `Bearer ${token}` },
       })
     },
     ...options,

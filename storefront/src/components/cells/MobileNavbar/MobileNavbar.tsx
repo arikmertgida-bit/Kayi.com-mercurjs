@@ -10,10 +10,12 @@ export const MobileNavbar = ({
   childrenCategories,
   parentCategories,
   menuCategories = [],
+  collections = [],
 }: {
   childrenCategories: HttpTypes.StoreProductCategory[];
   parentCategories: HttpTypes.StoreProductCategory[];
   menuCategories?: HttpTypes.StoreProductCategory[];
+  collections?: HttpTypes.StoreCollection[];
 }) => {
   const [openMenu, setOpenMenu] = useState(false);
   const [openAccordion, setOpenAccordion] = useState<string | null>(null);
@@ -128,20 +130,16 @@ export const MobileNavbar = ({
             >
               All Products
             </LocalizedClientLink>
-            <LocalizedClientLink
-              href='/collections/firsat-urunleri'
-              onClick={closeMenuHandler}
-              className='block px-4 py-[6px] text-sm font-semibold uppercase tracking-wide text-red-600 hover:bg-gray-50 transition-colors'
-            >
-              İndirimli Ürünler
-            </LocalizedClientLink>
-            <LocalizedClientLink
-              href='/collections/yeni-sezon'
-              onClick={closeMenuHandler}
-              className='block px-4 py-[6px] text-sm font-medium uppercase tracking-wide hover:bg-gray-50 transition-colors'
-            >
-              Sezonluk Ürünler
-            </LocalizedClientLink>
+            {collections.map((collection, index) => (
+              <LocalizedClientLink
+                key={collection.id}
+                href={`/collections/${collection.handle}`}
+                onClick={closeMenuHandler}
+                className={`block px-4 py-[6px] text-sm font-medium uppercase tracking-wide hover:bg-gray-50 transition-colors${index === 0 ? " font-semibold text-red-600" : ""}`}
+              >
+                {collection.title}
+              </LocalizedClientLink>
+            ))}
           </div>
         </div>
 

@@ -1,6 +1,12 @@
 import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
+  // Expose MEDUSA_BACKEND_URL to Edge middleware via build-time env injection
+  // Edge Runtime cannot read runtime env vars; they must be in next.config env block
+  env: {
+    MEDUSA_BACKEND_URL: process.env.MEDUSA_BACKEND_URL || 'http://localhost:9000',
+  },
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -15,7 +21,7 @@ const nextConfig: NextConfig = {
     },
   },
   images: {
-    unoptimized: process.env.NEXT_IMAGE_UNOPTIMIZED !== "false",
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",

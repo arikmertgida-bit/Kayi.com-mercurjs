@@ -15,7 +15,14 @@ import { useState } from "react"
 import { login } from "@/lib/data/customer"
 import { useRouter } from "next/navigation"
 
-export const LoginForm = () => {
+// Only allow same-origin relative paths — prevents open redirect attacks
+const getSafeRedirect = (returnTo?: string | null): string => {
+  if (!returnTo) return "/user"
+  if (!returnTo.startsWith("/") || returnTo.startsWith("//")) return "/user"
+  return returnTo
+}
+
+export const LoginForm = ({ returnTo }: { returnTo?: string }) => {
   const methods = useForm<LoginFormData>({
     resolver: zodResolver(loginFormSchema),
     defaultValues: {
@@ -26,12 +33,12 @@ export const LoginForm = () => {
 
   return (
     <FormProvider {...methods}>
-      <Form />
+      <Form returnTo={returnTo} />
     </FormProvider>
   )
 }
 
-const Form = () => {
+const Form = ({ returnTo }: { returnTo?: string }) => {
   const [error, setError] = useState("")
   const {
     handleSubmit,
@@ -51,7 +58,7 @@ const Form = () => {
       return
     }
     setError("")
-    router.push("/user")
+    router.push(getSafeRedirect(returnTo))
   }
 
   return (

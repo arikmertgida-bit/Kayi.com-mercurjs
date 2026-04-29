@@ -156,17 +156,20 @@ services:
         VITE_MEDUSA_BACKEND_URL: http://localhost:9000
         VITE_MEDUSA_STOREFRONT_URL: http://localhost:3000
     restart: unless-stopped
-    mem_limit: 256m
-    cpus: '0.5'
+    mem_limit: 64m
+    cpus: '0.25'
+    # nginx listens on port 80 inside the container
     ports:
-      - "5173:5173"
+      - "5173:80"
     depends_on:
       backend:
         condition: service_healthy
-    environment:
-      VITE_MEDUSA_BASE: /
-      VITE_MEDUSA_BACKEND_URL: http://localhost:9000
-      VITE_MEDUSA_STOREFRONT_URL: http://localhost:3000
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     logging:
       driver: "json-file"
       options:
@@ -180,23 +183,23 @@ services:
         VITE_MEDUSA_BASE: /
         VITE_MEDUSA_BACKEND_URL: http://localhost:9000
         VITE_MEDUSA_STOREFRONT_URL: http://localhost:3000
-        VITE_MEDUSA_PUBLISHABLE_KEY: pk_242a1899a51980a715b8315f91107ba3dd5f54500e920e7e0e8a3ba77eb1ade3
+        VITE_MEDUSA_PUBLISHABLE_KEY: ${MEDUSA_PUBLISHABLE_KEY:-pk_fe7220c20ab9f3cc9b0fbb86f6c2e126e621d17f7c176584cbdd7fe8b04c67af}
+        VITE_DISABLE_SELLERS_REGISTRATION: "false"
     restart: unless-stopped
-    mem_limit: 256m
-    cpus: '0.5'
+    mem_limit: 64m
+    cpus: '0.25'
+    # nginx listens on port 80 inside the container
     ports:
-      - "7001:7001"
+      - "7001:80"
     depends_on:
       backend:
         condition: service_healthy
-    environment:
-      PORT: "7001"
-      BACKEND_INTERNAL_URL: http://backend:9000
-      VITE_MEDUSA_BASE: /
-      VITE_MEDUSA_BACKEND_URL: http://localhost:9000
-      VITE_MEDUSA_STOREFRONT_URL: http://localhost:3000
-      VITE_MEDUSA_PUBLISHABLE_KEY: pk_fe7220c20ab9f3cc9b0fbb86f6c2e126e621d17f7c176584cbdd7fe8b04c67af
-      VITE_DISABLE_SELLERS_REGISTRATION: "false"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     logging:
       driver: "json-file"
       options:
@@ -209,16 +212,19 @@ services:
       args:
         NEXT_PUBLIC_BASE_URL: http://localhost:3000
         NEXT_PUBLIC_DEFAULT_REGION: tr
-        NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: pk_242a1899a51980a715b8315f91107ba3dd5f54500e920e7e0e8a3ba77eb1ade3
+        NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: ${MEDUSA_PUBLISHABLE_KEY:-pk_242a1899a51980a715b8315f91107ba3dd5f54500e920e7e0e8a3ba77eb1ade3}
         NEXT_PUBLIC_SITE_NAME: "Kayı | Güvenle Al, Güvenle Sat"
         NEXT_PUBLIC_SITE_DESCRIPTION: "Kayı | Güvenle Al, Güvenle Sat"
         NEXT_PUBLIC_VENDOR_URL: http://localhost:7001
         NEXT_PUBLIC_MESSENGER_URL: http://localhost:4000
         NEXT_PUBLIC_MEILISEARCH_HOST: http://localhost:7700
-        NEXT_PUBLIC_MEILISEARCH_SEARCH_KEY: masterKey_kayicom
-        NEXT_PUBLIC_SEARCH_API_KEY: masterKey_kayicom
+        NEXT_PUBLIC_MEILISEARCH_SEARCH_KEY: ${MEILISEARCH_SEARCH_KEY:-masterKey_kayicom}
+        NEXT_PUBLIC_SEARCH_API_KEY: ${MEILISEARCH_SEARCH_KEY:-masterKey_kayicom}
+        MEDUSA_BACKEND_URL: http://backend:9000
     restart: unless-stopped
+    mem_limit: 512m
     cpus: '1.5'
+    # Container exposes 8000 (Next.js standalone); mapped to host 3000
     ports:
       - "3000:8000"
     depends_on:
@@ -227,10 +233,11 @@ services:
       meilisearch:
         condition: service_healthy
     environment:
+      NODE_ENV: production
       MEDUSA_BACKEND_URL: http://backend:9000
       NEXT_PUBLIC_BASE_URL: http://localhost:3000
       NEXT_PUBLIC_DEFAULT_REGION: tr
-      NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: pk_242a1899a51980a715b8315f91107ba3dd5f54500e920e7e0e8a3ba77eb1ade3
+      NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: ${MEDUSA_PUBLISHABLE_KEY:-pk_242a1899a51980a715b8315f91107ba3dd5f54500e920e7e0e8a3ba77eb1ade3}
       REVALIDATE_SECRET: ${REVALIDATE_SECRET:-supersecret}
       NEXT_PUBLIC_SITE_NAME: "Kayı | Güvenle Al, Güvenle Sat"
       NEXT_PUBLIC_SITE_DESCRIPTION: "Kayı | Güvenle Al, Güvenle Sat"
@@ -240,13 +247,11 @@ services:
       NEXT_PUBLIC_MEILISEARCH_SEARCH_KEY: ${MEILISEARCH_SEARCH_KEY:-masterKey_kayicom}
       NEXT_PUBLIC_SEARCH_API_KEY: ${MEILISEARCH_SEARCH_KEY:-masterKey_kayicom}
       NEXT_IMAGE_UNOPTIMIZED: "true"
-      NODE_OPTIONS: "--max-old-space-size=1536"
       NEXT_TELEMETRY_DISABLED: "1"
-    mem_limit: 2g
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/ || exit 1"]
+      test: ["CMD-SHELL", "wget -qO /dev/null http://127.0.0.1:8000/ 2>&1 || exit 1"]
       interval: 60s
-      timeout: 10s
+      timeout: 15s
       retries: 3
       start_period: 60s
     logging:

@@ -74,3 +74,11 @@ export default async function initMeilisearch() {
     console.error(`[MEILISEARCH] Failed to initialize: ${error}`)
   }
 }
+
+// Self-execute when run directly (e.g., from Docker CMD)
+if (require.main === module) {
+  initMeilisearch().catch((err) => {
+    console.error("[MEILISEARCH] Startup init failed:", err)
+    process.exit(0) // non-fatal
+  })
+}

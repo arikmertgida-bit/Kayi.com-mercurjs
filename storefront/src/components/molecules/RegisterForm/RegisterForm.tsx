@@ -12,6 +12,7 @@ import { LabeledInput } from "@/components/cells"
 import { registerFormSchema, RegisterFormData } from "./schema"
 import { signup } from "@/lib/data/customer"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Container } from "@medusajs/ui"
 import Link from "next/link"
 import { PasswordValidator } from "@/components/cells/PasswordValidator/PasswordValidator"
@@ -44,7 +45,8 @@ const Form = () => {
     symbolOrDigit: false,
   })
   const [termsAccepted, setTermsAccepted] = useState(false)
-  const [error, setError] = useState()
+  const [error, setError] = useState<string>("")
+  const router = useRouter()
   const {
     handleSubmit,
     register,
@@ -53,6 +55,13 @@ const Form = () => {
   } = useFormContext()
 
   const submit = async (data: FieldValues) => {
+    setError("")
+
+    if (!passwordError.isValid) {
+      setError("Please fix the password errors before submitting.")
+      return
+    }
+
     const formData = new FormData()
     formData.append("email", data.email)
     formData.append("password", data.password)
@@ -60,9 +69,15 @@ const Form = () => {
     formData.append("last_name", data.lastName)
     formData.append("phone", data.phone)
 
-    const res = passwordError.isValid && (await signup(formData))
+    const res = await signup(formData)
 
-    if (res && !res?.id) setError(res)
+    if (!res || typeof res === "string") {
+      setError(res || "Something went wrong. Please try again.")
+      return
+    }
+
+    // Registration successful — redirect to account page
+    router.push("/user")
   }
 
   return (

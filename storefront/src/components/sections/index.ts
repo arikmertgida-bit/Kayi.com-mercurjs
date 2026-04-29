@@ -12,6 +12,7 @@ import { WishlistPage } from "./WishlistPage/WishlistPage"
 import { ProductDetailsPage } from "./ProductDetailsPage/ProductDetailsPage"
 import { MeiliProductsListing } from "./ProductListing/MeiliProductsListing"
 import { OrdersPagination } from "../organisms/OrdersPagination/OrdersPagination"
+import { SellerProductListing } from "./SellerProductListing/SellerProductListing"
 
 export {
   Hero,
@@ -28,4 +29,5 @@ export {
   ProductDetailsPage,
   MeiliProductsListing,
   OrdersPagination,
+  SellerProductListing,
 }

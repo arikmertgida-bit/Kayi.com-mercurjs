@@ -25,7 +25,11 @@ const filters = [
   { label: "1", amount: 0 },
 ]
 
-export const MeiliProductSidebar = () => {
+export const MeiliProductSidebar = ({
+  initialCategories,
+}: {
+  initialCategories?: HttpTypes.StoreProductCategory[]
+}) => {
   const [isMobile, setIsMobile] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
 
@@ -51,7 +55,7 @@ export const MeiliProductSidebar = () => {
         <Modal heading="Filters" onClose={() => setIsOpen(false)}>
           <div className="px-4">
             <ProductListingActiveFilters />
-            <CategoryFilter />
+            <CategoryFilter initialCategories={initialCategories} />
             <SortFilter />
             <SizeFilter defaultOpen={Boolean(allSearchParams.size)} />
             <ColorFilter defaultOpen={Boolean(allSearchParams.color)} />
@@ -62,7 +66,7 @@ export const MeiliProductSidebar = () => {
     </>
   ) : (
     <div className="rounded-[28px] border border-white/70 bg-[linear-gradient(180deg,_rgba(255,247,251,0.96),_rgba(255,240,232,0.98))] p-3 shadow-[0_18px_44px_rgba(221,42,123,0.10)]">
-      <CategoryFilter />
+      <CategoryFilter initialCategories={initialCategories} />
       <SortFilter />
       <SizeFilter />
       <ColorFilter />
@@ -74,47 +78,53 @@ export const MeiliProductSidebar = () => {
 
 function CategoryAccordion({ category }: { category: HttpTypes.StoreProductCategory }) {
   const [isOpen, setIsOpen] = useState(false)
-  const children = (category.category_children ?? []) as HttpTypes.StoreProductCategory[]
+  const children = ((category.category_children ?? []) as HttpTypes.StoreProductCategory[])
+    .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0))
   const hasChildren = children.length > 0
 
   return (
     <div className="border-b border-gray-100 last:border-0">
-      <div className="flex items-center justify-between py-2">
+      <div className="flex items-center justify-between py-2 px-1">
+        {/* Category name → navigates to category page */}
         <Link
           href={`/categories/${category.handle}`}
-          className="text-sm text-primary hover:underline flex-1"
+          className="text-sm font-bold text-gray-900 hover:text-primary flex-1 leading-snug"
         >
           {category.name}
         </Link>
+        {/* Arrow only toggles accordion, does NOT navigate */}
         {hasChildren && (
           <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="p-1 ml-1 cursor-pointer"
+            onClick={() => setIsOpen((prev) => !prev)}
+            className="p-1 ml-2 cursor-pointer flex-shrink-0"
             aria-expanded={isOpen}
+            aria-label="Alt kategorileri göster"
           >
             <CollapseIcon
               size={16}
               className={cn(
-                "transition-all duration-300",
+                "transition-transform duration-300 text-ui-fg-muted",
                 isOpen ? "rotate-0" : "-rotate-90"
               )}
             />
           </button>
         )}
       </div>
+
+      {/* Subcategories */}
       {hasChildren && (
         <div
           className={cn(
             "overflow-hidden transition-all duration-300",
-            isOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
+            isOpen ? "max-h-[600px] opacity-100" : "max-h-0 opacity-0"
           )}
         >
-          <ul className="pl-3 pb-2">
+          <ul className="pb-2 pl-4">
             {children.map((child) => (
               <li key={child.id} className="py-1">
                 <Link
                   href={`/categories/${child.handle}`}
-                  className="text-sm text-secondary hover:text-primary hover:underline"
+                  className="text-sm text-ui-fg-subtle hover:text-primary hover:underline"
                 >
                   {child.name}
                 </Link>
@@ -127,18 +137,25 @@ function CategoryAccordion({ category }: { category: HttpTypes.StoreProductCateg
   )
 }
 
-function CategoryFilter() {
+function CategoryFilter({
+  initialCategories,
+}: {
+  initialCategories?: HttpTypes.StoreProductCategory[]
+}) {
   const pathname = usePathname()
-  const [categories, setCategories] = useState<HttpTypes.StoreProductCategory[]>([])
+  const [categories, setCategories] = useState<HttpTypes.StoreProductCategory[]>(
+    initialCategories ?? []
+  )
 
   const isOnCategoriesPage = pathname?.includes("/categories")
 
   useEffect(() => {
     if (!isOnCategoriesPage) return
+    if (initialCategories && initialCategories.length > 0) return
     listMegaMenuCategories().then((cats) => {
       setCategories(cats)
     }).catch(() => {})
-  }, [isOnCategoriesPage])
+  }, [isOnCategoriesPage, initialCategories])
 
   if (!isOnCategoriesPage) return null
 

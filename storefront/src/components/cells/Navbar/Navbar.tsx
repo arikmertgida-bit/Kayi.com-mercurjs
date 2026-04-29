@@ -5,8 +5,10 @@ import LocalizedClientLink from "@/components/molecules/LocalizedLink/LocalizedL
 
 export const Navbar = ({
   megaMenuCategories,
+  collections = [],
 }: {
   megaMenuCategories: HttpTypes.StoreProductCategory[]
+  collections?: HttpTypes.StoreCollection[]
 }) => {
   return (
     <div className="hidden lg:flex border py-3 justify-between px-6 items-center">
@@ -18,18 +20,15 @@ export const Navbar = ({
         >
           All Products
         </LocalizedClientLink>
-        <LocalizedClientLink
-          href="/collections/firsat-urunleri"
-          className="label-md uppercase px-4 text-red-600 font-semibold"
-        >
-          İndirimli Ürünler
-        </LocalizedClientLink>
-        <LocalizedClientLink
-          href="/collections/yeni-sezon"
-          className="label-md uppercase px-4"
-        >
-          Sezonluk Ürünler
-        </LocalizedClientLink>
+        {collections.map((collection, index) => (
+          <LocalizedClientLink
+            key={collection.id}
+            href={`/collections/${collection.handle}`}
+            className={`label-md uppercase px-4${index === 0 ? " text-red-600 font-semibold" : ""}`}
+          >
+            {collection.title}
+          </LocalizedClientLink>
+        ))}
       </div>
 
       <SellNowButton />

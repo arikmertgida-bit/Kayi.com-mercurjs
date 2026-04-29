@@ -13,6 +13,7 @@ export interface ReviewImageReport {
   id: string
   review_image_id: string
   customer_id: string
+  customer_name?: string
   reason: string
   status: "pending" | "resolved"
   action_taken: "hidden" | "published" | null

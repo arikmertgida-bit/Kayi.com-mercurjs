@@ -117,7 +117,7 @@ export const ReportedImageList = () => {
                   )}
                 </Table.Cell>
                 <Table.Cell>
-                  <Text className="text-sm">{report.customer_id}</Text>
+                  <Text className="text-sm">{report.customer_name ?? report.customer_id}</Text>
                 </Table.Cell>
                 <Table.Cell>
                   <Text className="text-sm max-w-[200px] truncate" title={report.reason}>

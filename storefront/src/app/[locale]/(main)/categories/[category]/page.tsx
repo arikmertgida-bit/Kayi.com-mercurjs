@@ -5,12 +5,14 @@ import { Suspense } from "react"
 import type { Metadata } from "next"
 import { Breadcrumbs } from "@/components/atoms"
 import { MeiliProductsListing, ProductListing } from "@/components/sections"
+import { MeiliProductSidebar } from "@/components/organisms"
 import { notFound } from "next/navigation"
 import isBot from "@/lib/helpers/isBot"
 import { headers } from "next/headers"
 import Script from "next/script"
 import { getRegion, listRegions } from "@/lib/data/regions"
 import { listProducts } from "@/lib/data/products"
+import { listMegaMenuCategories } from "@/lib/data/categories"
 import { toHreflang } from "@/lib/helpers/hreflang"
 
 export const revalidate = 60
@@ -115,6 +117,9 @@ async function Category({
   const ua = (await headers()).get("user-agent") || ""
   const bot = isBot(ua)
 
+  // Fetch categories server-side so sidebar always has them (no client-side fetch needed)
+  const megaMenuCategories = await listMegaMenuCategories().catch(() => [])
+
   const breadcrumbsItems = [
     {
       path: category?.handle,
@@ -188,6 +193,7 @@ async function Category({
               category_id={allCategoryIds}
               locale={locale}
               currency_code={currency_code}
+              sidebarContent={<MeiliProductSidebar initialCategories={megaMenuCategories} />}
             />
           )}
         </Suspense>
