@@ -478,12 +478,12 @@ export const ProductCreateVariantsSection = ({
     const permutations = getPermutations(valid)
     const old = [...watchedVariants]
 
-    const merged = permutations.map((perm) => {
+    const merged = permutations.map((perm, permIdx) => {
       const match = old.find((v) =>
         Object.keys(perm).every((k) => v.options[k] === perm[k])
       )
       if (match) {
-        return { ...match, title: getVariantName(perm), options: perm, should_create: true }
+        return { ...match, title: getVariantName(perm), options: perm, should_create: true, variant_rank: permIdx }
       }
       const colorVal = getColorKey(perm) ?? ""
       const sizeVal = getSizeKey(perm) ?? ""
@@ -494,7 +494,7 @@ export const ProductCreateVariantsSection = ({
             title: getVariantName(perm),
             options: perm,
             should_create: true,
-            variant_rank: 0,
+            variant_rank: permIdx,
             inventory: [{ inventory_item_id: "", required_quantity: "" }],
           },
         ])[0],

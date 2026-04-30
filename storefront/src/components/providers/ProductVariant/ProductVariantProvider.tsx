@@ -73,12 +73,20 @@ export function ProductVariantProvider({
 
   // ── Local state — updates immediately on click ─────────────────────────────
   // Initialize from URL params so page refresh / direct links still work.
+  // Also auto-select any option that has exactly one possible value (e.g. "Default option value").
   const [localOptions, setLocalOptions] = useState<Record<string, string>>(
     () => {
       const initial: Record<string, string> = {}
       searchParams.forEach((value, key) => {
         if (key !== "sortBy" && key !== "page") initial[key] = value
       })
+      // Auto-select options with a single value when not already set via URL.
+      for (const opt of productOptions) {
+        const key = opt.title.toLowerCase()
+        if (!initial[key] && opt.values?.length === 1) {
+          initial[key] = opt.values[0].value
+        }
+      }
       return initial
     }
   )
@@ -91,16 +99,21 @@ export function ProductVariantProvider({
     searchParams.forEach((value, key) => {
       if (key !== "sortBy" && key !== "page") fromUrl[key] = value
     })
+    // Preserve auto-selections for single-value options that are not in the URL.
+    for (const opt of productOptions) {
+      const key = opt.title.toLowerCase()
+      if (!fromUrl[key] && opt.values?.length === 1) {
+        fromUrl[key] = opt.values[0].value
+      }
+    }
     setLocalOptions((prev) => {
-      const prevKeys = Object.keys(prev)
-      const nextKeys = Object.keys(fromUrl)
-      if (prevKeys.length !== nextKeys.length) return fromUrl
-      for (const k of nextKeys) {
+      const allKeys = new Set([...Object.keys(prev), ...Object.keys(fromUrl)])
+      for (const k of allKeys) {
         if (prev[k] !== fromUrl[k]) return fromUrl
       }
       return prev // same reference → no re-render
     })
-  }, [searchParams])
+  }, [searchParams, productOptions])
 
   // ── setOption — immediate local update + async URL push ──────────────────
   const setOption = useCallback(
@@ -205,7 +218,10 @@ export function ProductVariantProvider({
         return colorMatches && valueMatches
       })
 
-      return (match?.inventory_quantity ?? 0) > 0
+      if (!match) return false
+      // Variants with manage_inventory=false are always considered in stock.
+      if ((match as any).manage_inventory === false) return true
+      return (match.inventory_quantity ?? 0) > 0
     },
     [variants, variantOptionMaps, selectedColor, productOptions]
   )
@@ -235,7 +251,11 @@ export function ProductVariantProvider({
     () => (selectedVariant ? getPricesForVariant(selectedVariant) : null),
     [selectedVariant]
   )
-  const variantStock = selectedVariant?.inventory_quantity ?? 0
+  const variantStock = selectedVariant
+    ? (selectedVariant as any).manage_inventory === false
+      ? 1
+      : selectedVariant.inventory_quantity ?? 0
+    : 0
   const isOutOfStock = variantStock === 0
 
   // hasAnyPrice: ürünün bu bölgede satılıp satılmadığını gösterir.

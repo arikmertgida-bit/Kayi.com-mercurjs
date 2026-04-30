@@ -135,7 +135,7 @@ export const ProductDetailsHeader = ({
         disabled={
           !hasAnyPrice ||
           (hasVariants && !allOptionsSelected) ||
-          !variantStock ||
+          isOutOfStock ||
           !variantHasPrice
         }
         loading={isAdding}
@@ -147,7 +147,7 @@ export const ProductDetailsHeader = ({
           : hasVariants && !allOptionsSelected
           ? "PLEASE SELECT OPTIONS"
           : isOutOfStock || !variantHasPrice
-          ? "OUT OF STOCK"
+          ? "STOKTA YOK"
           : "ADD TO CART"}
       </Button>
 

@@ -14,7 +14,7 @@ import {
 } from "../../../../../extensions"
 import { useCreateProduct } from "../../../../../hooks/api/products"
 import { useBatchInventoryItemsLocationLevels } from "../../../../../hooks/api/inventory"
-import { useStockLocations } from "../../../../../hooks/api/stock-locations"
+import { useStockLocations, useCreateStockLocation } from "../../../../../hooks/api/stock-locations"
 import { useRegions } from "../../../../../hooks/api/regions"
 import { uploadFilesQuery, fetchQuery } from "../../../../../lib/client"
 import {
@@ -100,6 +100,7 @@ export const ProductCreateForm = ({
 
   const { mutateAsync, isPending } = useCreateProduct()
   const { mutateAsync: batchUpdateStock } = useBatchInventoryItemsLocationLevels()
+  const { mutateAsync: createStockLocation } = useCreateStockLocation()
   const { stock_locations } = useStockLocations({ limit: 9999 })
   const { regions } = useRegions({ limit: 9999 })
 
@@ -210,6 +211,8 @@ export const ProductCreateForm = ({
       if (error instanceof Error) {
         toast.error(error.message)
       }
+      // Görsel yükleme başarısız olursa işlemi durdur
+      return
     }
 
     // Upload variant thumbnail files
@@ -309,8 +312,9 @@ export const ProductCreateForm = ({
             : undefined,
           prices: Object.keys(variant.prices || {}).flatMap((key) => {
             const raw = variant.prices?.[key]
+            if (raw === undefined || raw === null || raw === "") return []
             const amount = parseFloat(raw as string)
-            if (!raw || isNaN(amount)) return []
+            if (isNaN(amount)) return []
             if (key.startsWith("reg_")) {
               const region = (regions ?? []).find((r) => r.id === key)
               if (!region) return []
@@ -347,34 +351,55 @@ export const ProductCreateForm = ({
             .map((v: any, i: number) => ({ index: i, stock: Number(v.initial_stock) || 0 }))
             .filter(({ stock }) => stock > 0)
 
-          if (variantsWithStock.length > 0 && stock_locations?.length) {
+          if (variantsWithStock.length > 0) {
             try {
-              const productData: any = await fetchQuery(
-                `/vendor/products/${data.product.id}`,
-                { method: "GET", query: { fields: "*variants.inventory_items" } }
-              )
-              const createdVariants = productData?.product?.variants ?? []
-              const createLevels: any[] = []
-
-              for (const { index, stock } of variantsWithStock) {
-                const variant = createdVariants[index]
-                if (!variant?.inventory_items?.length) continue
-                const inventoryItemId = variant.inventory_items[0].inventory_item_id
-                const locationCount = stock_locations.length
-                const perLocation = Math.floor(stock / locationCount)
-                const remainder = stock % locationCount
-
-                for (let i = 0; i < stock_locations.length; i++) {
-                  createLevels.push({
-                    inventory_item_id: inventoryItemId,
-                    location_id: stock_locations[i].id,
-                    stocked_quantity: perLocation + (i === 0 ? remainder : 0),
-                  })
-                }
+              // Satıcının hiç lokasyonu yoksa otomatik oluştur
+              let locationsToUse: { id: string }[] = stock_locations ?? []
+              if (locationsToUse.length === 0) {
+                const newLocResult: any = await createStockLocation({ name: "Varsayılan Depo" })
+                const newLoc = newLocResult?.stock_location
+                if (newLoc) locationsToUse = [newLoc]
               }
 
-              if (createLevels.length > 0) {
-                await batchUpdateStock({ create: createLevels })
+              if (locationsToUse.length > 0) {
+                // /vendor/products/:id route'u olmadığı için inventory-items üzerinden SKU eşleşmesi
+                const invData: any = await fetchQuery("/vendor/inventory-items", {
+                  method: "GET",
+                  query: { limit: 500, fields: "id,sku" },
+                })
+                const allInventoryItems: any[] = invData?.inventory_items ?? []
+
+                // SKU → inventory_item_id haritası
+                const skuToInvId = new Map<string, string>()
+                for (const item of allInventoryItems) {
+                  if (item.sku && item.id) skuToInvId.set(item.sku, item.id)
+                }
+
+                const createLevels: any[] = []
+
+                for (const { index, stock } of variantsWithStock) {
+                  const formVariant = values.variants[index] as any
+                  const inventoryItemId = formVariant.sku
+                    ? skuToInvId.get(formVariant.sku)
+                    : undefined
+                  if (!inventoryItemId) continue
+
+                  const locationCount = locationsToUse.length
+                  const perLocation = Math.floor(stock / locationCount)
+                  const remainder = stock % locationCount
+
+                  for (let i = 0; i < locationsToUse.length; i++) {
+                    createLevels.push({
+                      inventory_item_id: inventoryItemId,
+                      location_id: locationsToUse[i].id,
+                      stocked_quantity: perLocation + (i === 0 ? remainder : 0),
+                    })
+                  }
+                }
+
+                if (createLevels.length > 0) {
+                  await batchUpdateStock({ create: createLevels })
+                }
               }
             } catch (e) {
               console.error("Failed to set initial stock:", e)

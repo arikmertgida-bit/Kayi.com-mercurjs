@@ -118,5 +118,6 @@ export const decorateVariantsWithDefaultValues = (
     manage_inventory: variant.manage_inventory || false,
     allow_backorder: variant.allow_backorder || false,
     inventory_kit: variant.inventory_kit || false,
+    prices: variant.prices ?? {},
   }))
 }

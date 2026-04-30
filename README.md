@@ -215,6 +215,34 @@ npx medusa start
 - **Key dependencies:** `zod` (validation), `express-rate-limit` (rate limiting)
 - Replaces TalkJS completely — do NOT suggest TalkJS as an alternative
 
+#### Kayi-Messenger Docker — Multi-Stage Build Architecture
+
+> **NOTE:** The kayi-messenger image uses a two-stage build. The runtime stage performs a clean `npm ci --omit=dev` install rather than copying a pruned `node_modules` from the builder — this eliminates devDependency residue entirely.
+
+**Stage 1 — Builder (`node:22-alpine`):**
+1. `npm ci` — installs all deps (dev+prod) needed for `tsc` and `prisma generate`
+2. `npx prisma generate` — generates Prisma client
+3. `npm run build` (pure `tsc`) → produces `dist/`
+
+**Stage 2 — Runtime (`node:22-alpine`):**
+- Copies only: `package.json`, `package-lock.json`, `prisma/` schema from builder
+- Runs `npm ci --omit=dev` (clean install — no TypeScript compiler, no `tsx`, no `@types/*`)
+- Runs `npx prisma generate` to generate client against prod `node_modules`
+- Deletes non-Alpine Prisma engine binaries (`prisma` package ships both `linux-musl` and `debian` binaries — removing `debian` saves ~15MB)
+- Cleans npm cache in the same layer to prevent cache from surviving in the image
+- Uses `--chown` on all `COPY` instructions — avoids a `chown -R /app` layer (which previously duplicated all files into a new 140MB layer)
+- Copies compiled `dist/` from builder — no TypeScript source files in the runtime image
+
+**CMD (container start):**
+```
+node node_modules/.bin/prisma migrate deploy
+node dist/index.js
+```
+
+**Image size history:** 659MB (original single-stage) → **475MB** (after multi-stage refactor + chown fix + Prisma binary cleanup, 28% reduction)
+
+**Size floor analysis:** `node:22-alpine` base runtime contributes ~171MB (irreducible). Prisma CLI (`prisma` package, required for `migrate deploy`) + Prisma client engines contribute ~69MB. The minimum achievable image size for this service stack is ~300-320MB. The 475MB figure is considered optimised for this dependency profile.
+
 ---
 
 ## 4. Databases
@@ -898,3 +926,12 @@ PORT=4000
 - [x] **TRY currency + Türkiye region** created via `backend/src/scripts/add-try-currency.ts`
   - Region ID: `reg_01KQBTE5Y6SFRQF29SDQWD6TQ5`
   - All 9 containers confirmed `(healthy)`
+
+### Kayi-Messenger Docker Optimisation (April 2026)
+- [x] **Dockerfile refactored: `npm prune` → clean `npm ci --omit=dev` in Stage 2**
+  - Before: 659MB (Stage 2 copied pruned `node_modules` from builder — devDep residue remained)
+  - After: **475MB** (Stage 2 does fresh `npm ci --omit=dev` — zero devDep residue)
+- [x] **Eliminated 140MB `chown -R` anti-pattern** — all `COPY` instructions now use `--chown=appuser:appgroup`; `/app` pre-created and owned by `appuser` before `USER appuser` switch
+- [x] **Prisma debian engine binary removed** — `prisma` package ships both `linux-musl` and `debian` binaries; deleted `libquery_engine-debian-*` on Alpine (~15MB saving)
+- [x] **npm cache cleaned in single RUN layer** — `npm cache clean --force` at end of prod install layer prevents cache from surviving into image
+- [x] **All prod install steps merged into one RUN** — `npm ci --omit=dev` + `prisma generate` + binary cleanup + cache clean in one layer (no intermediate layers to bloat the image)

@@ -74,7 +74,7 @@ export const StickyAddToCart = ({
   const isDisabled =
     !hasAnyPrice ||
     (hasVariants && !allOptionsSelected) ||
-    !variantStock ||
+    isOutOfStock ||
     !variantHasPrice
 
   const buttonLabel = !hasAnyPrice
@@ -82,7 +82,7 @@ export const StickyAddToCart = ({
     : hasVariants && !allOptionsSelected
     ? "SELECT OPTIONS"
     : isOutOfStock || !variantHasPrice
-    ? "OUT OF STOCK"
+    ? "STOKTA YOK"
     : "ADD TO CART"
 
   // Only render on mobile (md:hidden) — desktop uses the inline button

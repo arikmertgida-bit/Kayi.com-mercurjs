@@ -70,9 +70,7 @@ export const ProductVariants = ({
                     selected={selectedOptions[titleLower] === value}
                     disabled={!inStock}
                     value={value}
-                    onSelect={() => {
-                      if (inStock) setOption(titleLower, value)
-                    }}
+                    onSelect={() => setOption(titleLower, value)}
                   />
                 )
               })}
