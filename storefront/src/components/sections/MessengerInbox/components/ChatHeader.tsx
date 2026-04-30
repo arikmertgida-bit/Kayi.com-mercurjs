@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
 import type { MessageContext } from "@/lib/messenger/types"
 
@@ -10,6 +11,8 @@ interface ChatHeaderProps {
   onClose: () => void
   /** Fallback name when context is not yet loaded */
   fallbackName: string
+  /** When true, renders admin-system specific header (icon + logo, no subtitle) */
+  isAdminSupport?: boolean
 }
 
 /**
@@ -17,7 +20,7 @@ interface ChatHeaderProps {
  * with a clickable link to /sellers/[handle] (VENDOR context).
  * Raw IDs (mem_01K...) are never rendered.
  */
-export function ChatHeader({ context, locale, onBack, onClose, fallbackName }: ChatHeaderProps) {
+export function ChatHeader({ context, locale, onBack, onClose, fallbackName, isAdminSupport }: ChatHeaderProps) {
   const isProduct = context?.type === "PRODUCT"
   const isVendor = context?.type === "VENDOR"
 
@@ -47,7 +50,15 @@ export function ChatHeader({ context, locale, onBack, onClose, fallbackName }: C
       )}
 
       {/* Context icon */}
-      {isProduct ? (
+      {isAdminSupport ? (
+        <Image
+          src="/icon.png"
+          alt="Kayı.com"
+          width={36}
+          height={36}
+          className="rounded-full flex-shrink-0"
+        />
+      ) : isProduct ? (
         <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
           <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
@@ -69,7 +80,9 @@ export function ChatHeader({ context, locale, onBack, onClose, fallbackName }: C
 
       {/* Title */}
       <div className="flex-1 min-w-0">
-        {sellerUrl ? (
+        {isAdminSupport ? (
+          <Image src="/Logo.png" width={100} height={32} alt="Kayı.com" className="object-contain" />
+        ) : sellerUrl ? (
           <Link
             href={sellerUrl}
             className="font-semibold text-gray-900 text-sm truncate block hover:text-blue-600 transition-colors"
@@ -79,7 +92,9 @@ export function ChatHeader({ context, locale, onBack, onClose, fallbackName }: C
         ) : (
           <p className="font-semibold text-gray-900 text-sm truncate">{title}</p>
         )}
-        <p className="text-xs text-gray-400 truncate">{subtitle}</p>
+        {!isAdminSupport && (
+          <p className="text-xs text-gray-400 truncate">{subtitle}</p>
+        )}
       </div>
 
       {/* Close button */}

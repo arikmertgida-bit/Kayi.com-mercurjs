@@ -53,7 +53,13 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       ])
     : [[], []]
 
-  const imagesByReview = (allImages as any[]).reduce((acc: Record<string, any[]>, img: any) => {
+  // Belt-and-suspenders: enforce is_hidden filter in code too,
+  // in case the ORM silently ignores boolean-false as a filter value.
+  // Using !img.is_hidden (truthy check) instead of !== true because the ORM
+  // may return integer 1 instead of boolean true for boolean columns.
+  const allVisibleImages = (allImages as any[]).filter((img: any) => !img.is_hidden)
+
+  const imagesByReview = allVisibleImages.reduce((acc: Record<string, any[]>, img: any) => {
     acc[img.review_id] = acc[img.review_id] ?? []
     acc[img.review_id].push(img)
     return acc

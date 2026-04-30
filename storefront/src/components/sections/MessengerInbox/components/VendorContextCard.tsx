@@ -21,9 +21,9 @@ export function VendorContextCard({ vendor, locale }: VendorContextCardProps) {
     <div className="flex items-center gap-3 px-5 py-3 bg-slate-50 border-b border-slate-100 flex-shrink-0">
       {/* Store logo */}
       <div className="w-11 h-11 rounded-full overflow-hidden bg-white flex-shrink-0 border border-slate-200 shadow-sm">
-        {vendor.storePhoto ?? vendor.photo ? (
+        {vendor.photo ?? vendor.storePhoto ? (
           <Image
-            src={(vendor.storePhoto ?? vendor.photo)!}
+            src={(vendor.photo ?? vendor.storePhoto)!}
             alt={vendor.name}
             width={44}
             height={44}

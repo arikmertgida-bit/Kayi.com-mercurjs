@@ -175,34 +175,30 @@ export function ThreadListItem({ conv, currentUserId, isActive, onOpen, onDelete
       ? ctx.data.name
       : null
 
-  const [menuOpen, setMenuOpen] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!menuOpen) return
-    function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClick)
-    return () => document.removeEventListener("mousedown", handleClick)
-  }, [menuOpen])
+  const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null)
+  const btnRef = useRef<HTMLButtonElement>(null)
 
   return (
+    <>
     <div className="relative group">
-      <button
+      <div
         onClick={() => onOpen(conv.id)}
-        className={`w-full text-left px-4 py-3 border-b border-gray-100 transition-all hover:bg-gray-50 ${
+        className={`w-full text-left px-4 py-3 border-b border-gray-100 transition-all hover:bg-gray-50 cursor-pointer ${
           isActive
             ? "bg-amber-50 border-l-[3px] border-l-amber-400"
             : "border-l-[3px] border-l-transparent"
         }`}
       >
         <div className="flex items-center gap-3">
-          {/* Thumbnail / Avatar */}
+          {/* Thumbnail / Avatar — Site Logo for ADMIN_SUPPORT, ContextAvatar for all others */}
           <div className="relative flex-shrink-0">
-            <ContextAvatar ctx={ctx} size={44} />
+            {conv.type === "ADMIN_SUPPORT" ? (
+              <div className="flex items-center justify-center" style={{ width: 44, height: 44 }}>
+                <Image src="/Logo.png" width={80} height={26} alt="Kayı.com" className="object-contain" />
+              </div>
+            ) : (
+              <ContextAvatar ctx={ctx} size={44} />
+            )}
             {unread > 0 && (
               <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-amber-500 text-white text-[10px] rounded-full flex items-center justify-center px-1 font-medium">
                 {unread > 99 ? "99+" : unread}
@@ -251,36 +247,59 @@ export function ThreadListItem({ conv, currentUserId, isActive, onOpen, onDelete
             )}
           </div>
         </div>
-      </button>
+      </div>
 
       {/* 3-dot menu */}
-      <div ref={menuRef} className="absolute right-2 top-1/2 -translate-y-1/2">
+      <div className="absolute right-2 top-1/2 -translate-y-1/2 z-10">
         <button
-          onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v) }}
-          className={`w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-200 transition-all ${menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
+          ref={btnRef}
+          onClick={(e) => {
+            e.stopPropagation()
+            if (menuPos) {
+              setMenuPos(null)
+            } else {
+              const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect()
+              setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right })
+            }
+          }}
+          className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-200 transition-all"
           aria-label="Sohbet seçenekleri"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" />
+            <circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" />
           </svg>
         </button>
-        {menuOpen && (
-          <div className="absolute z-50 right-0 top-9 w-48 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden text-sm">
-            <button
-              onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onDelete(conv.id, false) }}
-              className="w-full text-left px-4 py-2.5 hover:bg-gray-50 text-gray-700 transition-colors"
-            >
-              Sadece Benden Sil
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onDelete(conv.id, true) }}
-              className="w-full text-left px-4 py-2.5 hover:bg-red-50 text-red-600 transition-colors"
-            >
-              Herkesten Sil
-            </button>
-          </div>
-        )}
       </div>
     </div>
+    {menuPos && (
+      <>
+        <div className="fixed inset-0 z-[9998]" onClick={() => setMenuPos(null)} />
+        <div
+          style={{ position: "fixed", top: menuPos.top, right: menuPos.right, zIndex: 9999 }}
+          className="w-48 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden text-sm"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={() => { setMenuPos(null); onDelete(conv.id, false) }}
+            className="w-full text-left px-4 py-2.5 hover:bg-gray-50 text-gray-700 transition-colors"
+          >
+            Sadece Benden Sil
+          </button>
+          <button
+            onClick={() => { setMenuPos(null); onDelete(conv.id, true) }}
+            className="w-full text-left px-4 py-2.5 hover:bg-red-50 text-red-600 transition-colors"
+          >
+            Herkesten Sil
+          </button>
+          <button
+            onClick={() => setMenuPos(null)}
+            className="w-full text-left px-4 py-2.5 text-gray-400 hover:text-gray-600 transition-colors text-sm"
+          >
+            Kapat
+          </button>
+        </div>
+      </>
+    )}
+  </>
   )
 }

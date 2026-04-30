@@ -9,7 +9,7 @@ const createReviewImagesSchema = z.object({
   urls: z
     .array(z.string().url("Each URL must be a valid URL").max(2048, "URL too long"))
     .min(1, "At least one URL is required")
-    .max(3, "Maximum 3 images allowed per review"),
+    .max(6, "Maximum 6 images allowed per review"),
 })
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {

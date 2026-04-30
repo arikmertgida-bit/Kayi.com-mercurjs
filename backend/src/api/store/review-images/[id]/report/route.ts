@@ -38,7 +38,8 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   })
 
   // Auto-hide image on report — hidden from all users until admin reviews
-  await reviewImageService.updateReviewImages({ id }, { is_hidden: true })
+  // MedusaJS v2 MedusaService: id + updated fields must be in a single object (Overload 1)
+  await reviewImageService.updateReviewImages({ id, is_hidden: true })
 
   res.json({ report })
 }

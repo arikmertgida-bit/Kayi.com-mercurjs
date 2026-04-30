@@ -91,6 +91,7 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
   const [isSending, setIsSending] = useState(false)
   const [sendError, setSendError] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+  const [deleteMenuPos, setDeleteMenuPos] = useState<{ top: number; left?: number; right?: number } | null>(null)
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('list')
   const [pendingImage, setPendingImage] = useState<File | null>(null)
   const [pendingImagePreview, setPendingImagePreview] = useState<string | null>(null)
@@ -231,6 +232,7 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
 
   const handleDeleteMessage = useCallback(async (messageId: string, deleteForAll: boolean) => {
     setDeleteTarget(null)
+    setDeleteMenuPos(null)
     try {
       await deleteMessage(messageId, deleteForAll)
     } catch (err) {
@@ -403,37 +405,31 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
                         )}
                       </p>
 
-                      {/* Trash icon */}
+                      {/* Three-dots menu trigger */}
                       {!msg.deletedForAll && (
                         <>
                           <button
-                            onClick={(e) => { e.stopPropagation(); setDeleteTarget(deleteTarget === msg.id ? null : msg.id) }}
-                            className={`absolute top-1 right-1 transition-opacity w-5 h-5 flex items-center justify-center rounded-full bg-white/80 shadow text-gray-400 hover:text-red-500 ${deleteTarget === msg.id ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (deleteTarget === msg.id) {
+                                setDeleteTarget(null)
+                                setDeleteMenuPos(null)
+                              } else {
+                                const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect()
+                                setDeleteMenuPos(
+                                  isMe
+                                    ? { top: rect.bottom + 4, right: window.innerWidth - rect.right }
+                                    : { top: rect.bottom + 4, left: rect.left }
+                                )
+                                setDeleteTarget(msg.id)
+                              }
+                            }}
+                            className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-full bg-ui-bg-base/80 shadow text-ui-fg-muted hover:text-ui-fg-base"
                           >
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                              <circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" />
                             </svg>
                           </button>
-                          {deleteTarget === msg.id && (
-                            <div
-                              className={`absolute z-50 top-8 bg-white rounded-xl shadow-lg border border-gray-200 p-1.5 flex flex-col gap-0.5 min-w-[160px] ${isMe ? "right-0" : "left-0"}`}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <button onClick={() => handleDeleteMessage(msg.id, false)} className="text-left text-sm px-3 py-1.5 rounded-lg hover:bg-gray-50 text-gray-700">
-                                Benden Sil
-                              </button>
-                              <button
-                                disabled={!isMe}
-                                onClick={() => handleDeleteMessage(msg.id, true)}
-                                className="text-left text-sm px-3 py-1.5 rounded-lg hover:bg-red-50 text-red-600 disabled:opacity-40 disabled:cursor-not-allowed"
-                              >
-                                Herkes İçin Sil
-                              </button>
-                              <button onClick={() => setDeleteTarget(null)} className="text-left text-xs px-3 py-1 text-gray-400 hover:text-gray-600">
-                                İptal
-                              </button>
-                            </div>
-                          )}
                         </>
                       )}
                     </div>
@@ -543,6 +539,46 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
         </div>
       )}
     </div>
+
+    {/* Delete message dropdown (fixed, always on top) */}
+    {deleteTarget && deleteMenuPos && (
+      <>
+        <div
+          className="fixed inset-0 z-[9998]"
+          onClick={() => { setDeleteTarget(null); setDeleteMenuPos(null) }}
+        />
+        <div
+          style={{
+            position: "fixed",
+            top: deleteMenuPos.top,
+            ...(deleteMenuPos.right !== undefined ? { right: deleteMenuPos.right } : { left: deleteMenuPos.left }),
+            zIndex: 9999,
+          }}
+          className="bg-ui-bg-overlay rounded-xl shadow-elevation-modal border border-ui-border-base p-1.5 flex flex-col gap-0.5 min-w-[160px]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={() => handleDeleteMessage(deleteTarget, false)}
+            className="text-left text-sm px-3 py-1.5 rounded-lg hover:bg-ui-bg-base-hover text-ui-fg-base transition-colors"
+          >
+            Sil
+          </button>
+          <button
+            disabled={messages.find((m) => m.id === deleteTarget)?.senderId !== sellerId}
+            onClick={() => handleDeleteMessage(deleteTarget, true)}
+            className="text-left text-sm px-3 py-1.5 rounded-lg hover:bg-ui-tag-red-bg text-ui-tag-red-text disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            Herkesten Sil
+          </button>
+          <button
+            onClick={() => { setDeleteTarget(null); setDeleteMenuPos(null) }}
+            className="text-left text-xs px-3 py-1 text-ui-fg-muted hover:text-ui-fg-base transition-colors"
+          >
+            Kapat
+          </button>
+        </div>
+      </>
+    )}
 
     {/* Lightbox */}
     {lightboxSrc && (

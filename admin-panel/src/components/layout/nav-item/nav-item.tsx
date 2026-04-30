@@ -27,6 +27,7 @@ export type INavItem = {
   type?: ItemType
   from?: string
   nested?: string
+  badge?: number
 }
 
 const BASE_NAV_LINK_CLASSES =
@@ -90,6 +91,7 @@ export const NavItem = ({
   items,
   type = "core",
   from,
+  badge,
 }: INavItem) => {
   const { pathname } = useLocation()
   const [open, setOpen] = useState(getIsOpen(to, items, pathname))
@@ -152,6 +154,11 @@ export const NavItem = ({
           <Text size="small" weight="plus" leading="compact">
             {label}
           </Text>
+          {badge != null && badge > 0 && (
+            <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-semibold text-white leading-none">
+              {badge > 99 ? "99+" : badge}
+            </span>
+          )}
         </NavLink>
       </NavItemTooltip>
       {items && items.length > 0 && (

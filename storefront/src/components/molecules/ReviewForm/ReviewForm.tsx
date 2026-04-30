@@ -50,7 +50,7 @@ export const ReviewForm: React.FC<Props> = ({ ...props }) => {
   )
 }
 
-const MAX_IMAGES = 3
+const MAX_IMAGES = 6
 
 const Form: React.FC<Props> = ({ handleClose, seller, referenceType = "seller", referenceId }) => {
   const router = useRouter()
@@ -59,8 +59,14 @@ const Form: React.FC<Props> = ({ handleClose, seller, referenceType = "seller", 
     { status: "empty" },
     { status: "empty" },
     { status: "empty" },
+    { status: "empty" },
+    { status: "empty" },
+    { status: "empty" },
   ])
   const fileInputRefs = [
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
     useRef<HTMLInputElement>(null),
     useRef<HTMLInputElement>(null),
     useRef<HTMLInputElement>(null),

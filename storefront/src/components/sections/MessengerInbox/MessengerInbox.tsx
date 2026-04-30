@@ -125,6 +125,7 @@ export function MessengerInbox({
   const [isSending, setIsSending] = useState(false)
   const [sendError, setSendError] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+  const [deleteMenuPos, setDeleteMenuPos] = useState<{ top: number; left?: number; right?: number } | null>(null)
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('list')
   const [pendingImage, setPendingImage] = useState<File | null>(null)
   const [pendingImagePreview, setPendingImagePreview] = useState<string | null>(null)
@@ -305,6 +306,7 @@ export function MessengerInbox({
 
   const handleDeleteMessage = useCallback(async (messageId: string, deleteForAll: boolean) => {
     setDeleteTarget(null)
+    setDeleteMenuPos(null)
     try {
       await deleteMessage(messageId, deleteForAll)
     } catch (err) {
@@ -415,6 +417,7 @@ export function MessengerInbox({
             onBack={() => setMobileView('list')}
             onClose={() => { closeConversation(); setMobileView('list') }}
             fallbackName={otherName}
+            isAdminSupport={isAdminSupportConv}
           />
 
           {/* Context card — sticky under header */}
@@ -472,7 +475,6 @@ export function MessengerInbox({
                     className={`flex items-end gap-2 ${
                       isMine ? "flex-row-reverse" : "flex-row"
                     } group`}
-                    onClick={() => deleteTarget === msg.id && setDeleteTarget(null)}
                   >
                     {/* Other user avatar */}
                     {!isMine && (
@@ -547,51 +549,34 @@ export function MessengerInbox({
                         </div>
                       )}
 
-                      {/* Trash icon + delete popup */}
+                      {/* Three-dots menu trigger */}
                       {!msg.deletedForAll && (
-                        <div className={`relative flex items-center ${
+                        <div className={`flex items-center ${
                           isMine ? "justify-end" : "justify-start"
                         }`}>
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
-                              setDeleteTarget(deleteTarget === msg.id ? null : msg.id)
+                              if (deleteTarget === msg.id) {
+                                setDeleteTarget(null)
+                                setDeleteMenuPos(null)
+                              } else {
+                                const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect()
+                                setDeleteMenuPos(
+                                  isMine
+                                    ? { top: rect.bottom + 4, right: window.innerWidth - rect.right }
+                                    : { top: rect.bottom + 4, left: rect.left }
+                                )
+                                setDeleteTarget(msg.id)
+                              }
                             }}
-                            className={`transition-opacity w-6 h-6 flex items-center justify-center rounded-full bg-white shadow border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 flex-shrink-0 ${deleteTarget === msg.id ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
+                            className="w-6 h-6 flex items-center justify-center rounded-full bg-white shadow border border-gray-200 text-gray-400 hover:text-gray-700 flex-shrink-0"
                             title={MSG.CONFIRM_DELETE}
                           >
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                              <circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" />
                             </svg>
                           </button>
-                          {deleteTarget === msg.id && (
-                            <div
-                              className={`absolute z-50 bottom-8 bg-white rounded-xl shadow-lg border border-gray-200 p-1.5 flex flex-col gap-0.5 min-w-[160px] ${
-                                isMine ? "right-0" : "left-0"
-                              }`}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <button
-                                onClick={() => handleDeleteMessage(msg.id, false)}
-                                className="text-left text-sm px-3 py-1.5 rounded-lg hover:bg-gray-50 text-gray-700"
-                              >
-                                {MSG.DELETE_FOR_ME}
-                              </button>
-                              <button
-                                disabled={msg.senderId !== currentUserId}
-                                onClick={() => handleDeleteMessage(msg.id, true)}
-                                className="text-left text-sm px-3 py-1.5 rounded-lg hover:bg-red-50 text-red-600 disabled:opacity-40 disabled:cursor-not-allowed"
-                              >
-                                {MSG.DELETE_FOR_ALL}
-                              </button>
-                              <button
-                                onClick={() => setDeleteTarget(null)}
-                                className="text-left text-xs px-3 py-1 text-gray-400 hover:text-gray-600"
-                              >
-                                {MSG.DELETE_CANCEL}
-                              </button>
-                            </div>
-                          )}
                         </div>
                       )}
 
@@ -794,6 +779,46 @@ export function MessengerInbox({
         </div>
       )}
     </div>
+
+    {/* Delete message dropdown (fixed, always on top) */}
+    {deleteTarget && deleteMenuPos && (
+      <>
+        <div
+          className="fixed inset-0 z-[9998]"
+          onClick={() => { setDeleteTarget(null); setDeleteMenuPos(null) }}
+        />
+        <div
+          style={{
+            position: "fixed",
+            top: deleteMenuPos.top,
+            ...(deleteMenuPos.right !== undefined ? { right: deleteMenuPos.right } : { left: deleteMenuPos.left }),
+            zIndex: 9999,
+          }}
+          className="bg-white rounded-xl shadow-lg border border-gray-200 p-1.5 flex flex-col gap-0.5 min-w-[160px]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={() => handleDeleteMessage(deleteTarget, false)}
+            className="text-left text-sm px-3 py-1.5 rounded-lg hover:bg-gray-50 text-gray-700"
+          >
+            {MSG.DELETE_FOR_ME}
+          </button>
+          <button
+            disabled={messages.find((m) => m.id === deleteTarget)?.senderId !== currentUserId}
+            onClick={() => handleDeleteMessage(deleteTarget, true)}
+            className="text-left text-sm px-3 py-1.5 rounded-lg hover:bg-red-50 text-red-600 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {MSG.DELETE_FOR_ALL}
+          </button>
+          <button
+            onClick={() => { setDeleteTarget(null); setDeleteMenuPos(null) }}
+            className="text-left text-xs px-3 py-1 text-gray-400 hover:text-gray-600"
+          >
+            {MSG.DELETE_CANCEL}
+          </button>
+        </div>
+      </>
+    )}
 
     {/* Lightbox */}
     {lightboxSrc && (

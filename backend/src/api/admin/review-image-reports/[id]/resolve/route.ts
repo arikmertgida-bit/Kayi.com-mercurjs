@@ -39,13 +39,11 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     // Also soft-delete the report itself — no reason to keep it after permanent removal
     await reportService.softDeleteReviewImageReports(id)
   } else {
-    // Publish — unhide image
-    await reviewImageService.updateReviewImages({ id: imageId }, { is_hidden: false })
-    // Resolve report
-    await reportService.updateReviewImageReports(
-      { id },
-      { status: "resolved", action_taken: "published" }
-    )
+    // Publish — unhide image (stays visible on storefront)
+    // MedusaJS v2 MedusaService: id + updated fields must be in a single object (Overload 1)
+    await reviewImageService.updateReviewImages({ id: imageId, is_hidden: false })
+    // Soft-delete the report so it disappears from the admin list (image remains public)
+    await reportService.softDeleteReviewImageReports(id)
   }
 
   // Bildiren müşteriye tek yönlü admin mesajı gönder (fire-and-forget)

@@ -35,11 +35,11 @@ export const MSG = {
   SEND: "Gönder",
 
   // Message deletion
-  DELETE_FOR_ME: "Benden Sil",
-  DELETE_FOR_ALL: "Herkes İçin Sil",
+  DELETE_FOR_ME: "Sil",
+  DELETE_FOR_ALL: "Herkesten Sil",
   MESSAGE_DELETED: "[Bu mesaj silindi]",
-  CONFIRM_DELETE: "Mesajı Sil",
-  DELETE_CANCEL: "İptal",
+  CONFIRM_DELETE: "Seçenekler",
+  DELETE_CANCEL: "Kapat",
 
   // Seller fallback name (PDP chat modal)
   SELLER_FALLBACK: "Satıcı",

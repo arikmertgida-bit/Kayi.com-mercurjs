@@ -30,6 +30,7 @@ import { Shell } from "../../layout/shell";
 
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLogout } from "../../../hooks/api";
+import { useReviewImageReports } from "../../../hooks/api/review-image-reports";
 import { queryClient } from "../../../lib/query-client";
 import { useExtension } from "../../../providers/extension-provider";
 import { useSearch } from "../../../providers/search-provider";
@@ -183,6 +184,7 @@ const Header = () => {
 
 const useCoreRoutes = (): Omit<INavItem, "pathname">[] => {
   const { t } = useTranslation();
+  const { count: pendingReportCount = 0 } = useReviewImageReports({ status: "pending", limit: 1 });
 
   return [
     {
@@ -317,6 +319,7 @@ const useCoreRoutes = (): Omit<INavItem, "pathname">[] => {
       icon: <ExclamationCircle />,
       label: "Reported Images",
       to: "/reported-images",
+      badge: pendingReportCount > 0 ? pendingReportCount : undefined,
     },
   ];
 };
