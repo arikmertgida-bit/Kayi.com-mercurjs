@@ -542,20 +542,40 @@ export const useBulkDeleteProducts = (
 }
 
 export const useExportProducts = (
-  query?: HttpTypes.AdminProductListParams,
-  options?: UseMutationOptions<
-    HttpTypes.AdminExportProductResponse & { url: string },
-    FetchError,
-    HttpTypes.AdminExportProductRequest
-  >
+  options?: UseMutationOptions<void, FetchError, { format: "csv" | "xlsx" }>
 ) => {
   return useMutation({
-    mutationFn: (payload) =>
-      fetchQuery("/vendor/products/export", {
-        method: "POST",
-        body: payload,
-        query: query as { [key: string]: string },
-      }),
+    mutationFn: async (payload) => {
+      const bearer = window.localStorage.getItem("medusa_auth_token") || ""
+      const response = await fetch(
+        `${(await import("../../lib/client")).backendUrl}/vendor/products/export`,
+        {
+          method: "POST",
+          headers: {
+            authorization: `Bearer ${bearer}`,
+            "Content-Type": "application/json",
+            "x-publishable-api-key": (await import("../../lib/client")).publishableApiKey,
+          },
+          body: JSON.stringify(payload),
+        }
+      )
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}))
+        throw new Error(err?.message ?? "Export failed")
+      }
+      const blob = await response.blob()
+      const contentDisposition = response.headers.get("Content-Disposition") ?? ""
+      const match = contentDisposition.match(/filename="?([^"]+)"?/)
+      const filename = match?.[1] ?? `products-export.${payload.format}`
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    },
     onSuccess: (data, variables, context) => {
       options?.onSuccess?.(data, variables, context)
     },
@@ -563,12 +583,18 @@ export const useExportProducts = (
   })
 }
 
+export interface ImportAnalyzeResult {
+  transaction_id: string
+  total: number
+  to_create: number
+  to_update: number
+  categories_to_map: string[]
+  sku_conflicts: { sku: string; row: number }[]
+  errors: { row: number; sku?: string; message: string }[]
+}
+
 export const useImportProducts = (
-  options?: UseMutationOptions<
-    HttpTypes.AdminImportProductResponse,
-    FetchError,
-    HttpTypes.AdminImportProductRequest
-  >
+  options?: UseMutationOptions<ImportAnalyzeResult, FetchError, { file: File }>
 ) => {
   return useMutation({
     mutationFn: (payload) => importProductsQuery(payload.file),
@@ -579,14 +605,51 @@ export const useImportProducts = (
   })
 }
 
+export interface ConfirmImportPayload {
+  transaction_id: string
+  category_mapping?: { name: string; platform_id: string }[]
+}
+
+export interface ImportJobStatus {
+  job_id: string
+  status: "pending" | "running" | "done" | "failed"
+  processed: number
+  total: number
+  created: number
+  updated: number
+  skipped: number
+  errors: { row: number; sku?: string; message: string }[]
+  sku_changes: { original: string; generated: string }[]
+  error_log_url?: string
+}
+
 export const useConfirmImportProducts = (
-  options?: UseMutationOptions<{}, FetchError, string>
+  options?: UseMutationOptions<{ job_id: string }, FetchError, ConfirmImportPayload>
 ) => {
   return useMutation({
-    mutationFn: (payload) => sdk.admin.product.confirmImport(payload),
+    mutationFn: (payload) =>
+      fetchQuery("/vendor/products/import/confirm", {
+        method: "POST",
+        body: payload,
+      }),
     onSuccess: (data, variables, context) => {
       options?.onSuccess?.(data, variables, context)
     },
     ...options,
+  })
+}
+
+export const useImportJobStatus = (
+  jobId: string | undefined,
+  options?: { enabled?: boolean; refetchInterval?: number }
+) => {
+  return useQuery({
+    queryKey: ["import-job", jobId],
+    queryFn: () =>
+      fetchQuery(`/vendor/products/import/jobs/${jobId}`, { method: "GET" }) as Promise<{
+        job: ImportJobStatus
+      }>,
+    enabled: !!jobId && options?.enabled !== false,
+    refetchInterval: options?.refetchInterval ?? 2000,
   })
 }

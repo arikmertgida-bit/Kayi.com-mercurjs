@@ -105,7 +105,11 @@ Multi-vendor marketplace (B2C) built on MedusaJS v2 + MercurJS plugin ecosystem.
   - `/store/*` — customer-facing API (used by storefront)
   - `/vendor/*` — seller API (used by vendor-panel)
   - `/admin/*` — admin API (used by admin-panel)
-- **Subscribers:** seller approval, product approval, MeiliSearch sync, collection sync
+  - `/vendor/products/import` — CSV/Excel/XML analiz endpoint (multipart POST, 200 + transaction_id)
+  - `/vendor/products/import/confirm` — 202 Accepted async import (POST → job_id, arka planda işler)
+  - `/vendor/products/import/jobs/:id` — İş durumu polling (GET)
+  - `/vendor/products/export` — CSV veya Excel blob akışı (POST → binary response)
+- **Subscribers:** seller approval, product approval, MeiliSearch sync, collection sync, `import-image-optimizer` (product.created eventinde async görsel optimizasyonu — sharp ile WebP 1200×1200)
 - **Jobs:** MeiliSearch cron sync (periodic product index update)
 - **DB connection pool:** `min: 2, max: 10, idleTimeoutMillis: 30000`
 
@@ -673,6 +677,21 @@ docker compose down -v   # Only run if you intend to reset ALL data
 
 ---
 
+**13. `sharp` kütüphanesi — Stage 1'de yerel bağımlılıklar korunmalı**
+- `import-image-optimizer` subscriber `sharp@0.33.5` kullanır
+- `pnpm install`, `sharp`'ın build scriptlerini varsayılan olarak yoksayar (`pnpm approve-builds` gerektirebilir)
+- Alpine tabanlı builder imajında `sharp` libvips'e ihtiyaç duyar — `backend/Dockerfile` Stage 1'deki Alpine base image değiştirilmemelidir
+- `sharp`'ın doğal bağımlılıkları çalışmazsa subscriber sessizce hata loglar (non-fatal), ancak görsel optimizasyonu devre dışı kalır
+
+**14. MinIO `imports/temp/` — geçici import deposu**
+- Import analiz aşamasında parse edilmiş satırlar `imports/temp/{transaction_id}.json` olarak MinIO'ya yazılır
+- İşlem meta verisi backend process'in belleğinde (in-process Map) tutulur; TTL: 2 saat
+- Confirm aşamasında geçici dosya silinir (`removeObject`)
+- Backend yeniden başlatılırsa (container restart) in-memory transaction store sıfırlanır → aktif transaction_id'ler geçersiz olur
+- Hata logları `imports/errors/{job_id}-errors.csv` olarak MinIO'da kalıcı tutulur (presigned URL ile indirilebilir)
+
+---
+
 ## 13. Security Standards
 
 ### Every new API endpoint MUST have:
@@ -935,3 +954,14 @@ PORT=4000
 - [x] **Prisma debian engine binary removed** — `prisma` package ships both `linux-musl` and `debian` binaries; deleted `libquery_engine-debian-*` on Alpine (~15MB saving)
 - [x] **npm cache cleaned in single RUN layer** — `npm cache clean --force` at end of prod install layer prevents cache from surviving into image
 - [x] **All prod install steps merged into one RUN** — `npm ci --omit=dev` + `prisma generate` + binary cleanup + cache clean in one layer (no intermediate layers to bloat the image)
+
+### Vendor Panel Import/Export Sistemi (Nisan 2026)
+- [x] **CSV / Excel (.xlsx) / XML import pipeline** — 2 adımlı akış (analiz → onay)
+  - SKU çakışma tespiti (başka satıcıya ait SKU'lar otomatik suffix alır: `-{seller_id_son_6}`)
+  - Kategori eşleme arayüzü (manuel, analiz adımında)
+  - Hata CSV'si MinIO'ya yazılır, presigned URL ile indirilebilir
+- [x] **202 Accepted + Job Polling altyapısı** — import işlemi arka planda çalışır, frontend 2sn aralıkla polling yapar
+- [x] **CSV ve Excel export** — format seçici (CSV/XLSX), blob doğrudan tarayıcıya indirilir
+- [x] **`import-image-optimizer` subscriber** — `product.created` eventinde ürün görsellerini indirir, sharp ile WebP 1200×1200'e dönüştürür, MinIO'ya `products/{id}/{timestamp}.webp` yükler
+- [x] **Yeni backend bağımlılıkları:** `csv-parse ^5.6.0`, `fast-xml-parser ^4.4.1`, `xlsx ^0.18.5`
+- [x] **Vendor panel multi-step import UI** — yükle → analiz → ilerleme → tamamlandı adımları

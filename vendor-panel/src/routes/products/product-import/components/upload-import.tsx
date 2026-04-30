@@ -3,8 +3,15 @@ import { FileType, FileUpload } from "../../../../components/common/file-upload"
 import { Hint } from "@medusajs/ui"
 import { useTranslation } from "react-i18next"
 
-const SUPPORTED_FORMATS = ["text/csv"]
-const SUPPORTED_FORMATS_FILE_EXTENSIONS = [".csv"]
+const SUPPORTED_FORMATS = [
+  "text/csv",
+  "application/csv",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "text/xml",
+  "application/xml",
+]
+const SUPPORTED_FORMATS_FILE_EXTENSIONS = [".csv", ".xlsx", ".xls", ".xml"]
 
 export const UploadImport = ({
   onUploaded,
@@ -15,9 +22,14 @@ export const UploadImport = ({
   const [error, setError] = useState<string>()
 
   const hasInvalidFiles = (fileList: FileType[]) => {
-    const invalidFile = fileList.find(
-      (f) => !SUPPORTED_FORMATS.includes(f.file.type)
-    )
+    const allowedExt = SUPPORTED_FORMATS_FILE_EXTENSIONS
+    const invalidFile = fileList.find((f) => {
+      const ext = "." + f.file.name.split(".").pop()?.toLowerCase()
+      return (
+        !SUPPORTED_FORMATS.includes(f.file.type) &&
+        !allowedExt.includes(ext)
+      )
+    })
 
     if (invalidFile) {
       setError(
