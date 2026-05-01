@@ -58,7 +58,7 @@ const nextConfig: NextConfig = {
         hostname: "s3.eu-central-1.amazonaws.com",
       },
       ...(process.env.NEXT_PUBLIC_MINIO_ENDPOINT ? [{
-        protocol: "https",
+        protocol: "https" as const,
         hostname: process.env.NEXT_PUBLIC_MINIO_ENDPOINT,
       }] : []),
     ],

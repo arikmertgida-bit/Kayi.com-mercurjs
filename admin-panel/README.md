@@ -81,6 +81,3 @@ npm run dev
 &nbsp;
 
 ## Guides
-
-<a href="https://talkjs.com/docs/Reference/Concepts/Sessions/" target="_blank">How
-to get TalkJs App ID</a>

@@ -7,8 +7,6 @@ import { HttpTypes } from "@medusajs/types"
 import { toast } from "@medusajs/ui"
 import { uploadCustomerFile, updateCustomerPhoto } from "@/lib/data/customer"
 
-const AVATAR = 96
-const HALF = AVATAR / 2
 
 const ALLOWED_FORMATS = ["image/jpeg", "image/jpg", "image/png"]
 const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
@@ -138,20 +136,18 @@ export const CustomerProfileHeader = ({
 
       {/* Avatar + Name row */}
       <div
-        className="relative flex items-start px-4 md:px-8"
-        style={{ marginTop: -HALF }}
+        className="relative flex items-start px-4 md:px-8 -mt-8 md:-mt-12"
       >
         {/* Avatar */}
         <div className="relative flex-shrink-0">
           <div
-            className="relative rounded-full ring-4 ring-white shadow-xl overflow-hidden z-10"
-            style={{ width: AVATAR, height: AVATAR }}
+            className="relative rounded-full ring-4 ring-white overflow-hidden z-10 w-16 h-16 md:w-24 md:h-24"
           >
             <Image
               src={avatarUrl}
               alt={fullName}
               fill
-              sizes="200px"
+              sizes="(max-width: 768px) 64px, 96px"
               className="object-cover"
               priority
             />
@@ -194,7 +190,7 @@ export const CustomerProfileHeader = ({
         </div>
 
         {/* İsim + Email — avatarın sağında */}
-        <div style={{ marginTop: HALF + 6, marginLeft: 14 }}>
+        <div className="mt-[38px] md:mt-[54px] ml-3.5">
           <span className="text-base md:text-lg font-semibold text-gray-900 leading-tight block">
             {fullName}
           </span>

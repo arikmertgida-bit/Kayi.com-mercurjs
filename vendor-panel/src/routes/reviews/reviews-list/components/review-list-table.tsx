@@ -92,17 +92,11 @@ export const ReviewListTable = () => {
         columns={columns}
         pageSize={PAGE_SIZE}
         count={count}
-        // orderBy={[
-        //   {
-        //     key: 'created_at',
-        //     label: 'Added',
-        //   },
-        //   {
-        //     key: 'seller_note',
-        //     label: 'Status',
-        //   },
-        //   { key: 'rating', label: 'Stars' },
-        // ]}
+        orderBy={[
+          { key: "created_at", label: "Tarih" },
+          { key: "seller_note", label: "Durum" },
+          { key: "rating", label: "Puan" },
+        ]}
         isLoading={isLoading}
         navigateTo={(row) => row.original.id}
         search

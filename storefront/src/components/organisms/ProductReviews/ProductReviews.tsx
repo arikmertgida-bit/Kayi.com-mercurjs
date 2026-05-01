@@ -101,7 +101,7 @@ export const ProductReviews = async ({ product, locale }: Props) => {
           </div>
         )}
         {reviews.map((review) => (
-          <ProductReviewCard key={review.id} review={review} />
+          <ProductReviewCard key={review.id} review={review} currentCustomerId={customer?.id} />
         ))}
       </div>
 

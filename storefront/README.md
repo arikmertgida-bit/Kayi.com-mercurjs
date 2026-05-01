@@ -93,8 +93,6 @@ NEXT_PUBLIC_SITE_DESCRIPTION="Fleek Markeplace"
 NEXT_PUBLIC_ALGOLIA_ID=supersecret
 # Algolia Search API Key
 NEXT_PUBLIC_ALGOLIA_SEARCH_KEY=supersecret
-#TalkJS APP ID
-NEXT_PUBLIC_TALKJS_APP_ID=<your talkjs app id>
 ```
 
 &nbsp;
@@ -110,8 +108,6 @@ npm run dev
 ### Guides
 
 #### <a href="https://www.algolia.com/doc/guides/security/api-keys/" target="_blank">How to get Aloglia Keys</a>
-
-#### <a href="https://talkjs.com/docs/Reference/Concepts/Sessions/" target="_blank">How to get TalkJs App ID</a>
 
 ### Configure Algolia index
 

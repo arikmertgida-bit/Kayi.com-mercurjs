@@ -219,6 +219,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       targetUserType: "SELLER",
       senderName: customerName,
       preview: `${customerName} ürününüze yeni bir yorum bıraktı.`,
+      notificationType: "review_notification",
       // sourceUserId/sourceUserType bilinçli olarak verilmedi:
       // verilseydi kayi-messenger'da DIRECT konuşma açılırdı ve
       // yorum bildirimleri /messages alanında görünürdü.

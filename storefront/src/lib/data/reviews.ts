@@ -238,7 +238,75 @@ const likeReviewReply = async (replyId: string): Promise<{ liked: boolean; likes
   return res.json()
 }
 
-export { getReviews, createReview, getProductReviews, uploadReviewImages, reportReviewImage, getReviewReplies, createReviewReply, likeReviewReply }
+const updateReviewReply = async (replyId: string, content: string): Promise<{ reply?: ReviewReply; error?: string }> => {
+  const authHeaders = await getAuthHeaders()
+  if (!("authorization" in authHeaders)) {
+    return { error: "auth" }
+  }
+
+  const headers = {
+    ...authHeaders,
+    "Content-Type": "application/json",
+    "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY as string,
+  }
+
+  try {
+    const res = await fetch(
+      `${process.env.MEDUSA_BACKEND_URL}/store/review-replies/${replyId}`,
+      {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({ content }),
+      }
+    )
+
+    if (res.status === 401) return { error: "auth" }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      return { error: err?.message || "Yanıt güncellenemedi." }
+    }
+
+    const data = await res.json()
+    return { reply: data.reply }
+  } catch {
+    return { error: "Yanıt güncellenemedi." }
+  }
+}
+
+const deleteReviewReply = async (replyId: string): Promise<{ success?: boolean; error?: string }> => {
+  const authHeaders = await getAuthHeaders()
+  if (!("authorization" in authHeaders)) {
+    return { error: "auth" }
+  }
+
+  const headers = {
+    ...authHeaders,
+    "Content-Type": "application/json",
+    "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY as string,
+  }
+
+  try {
+    const res = await fetch(
+      `${process.env.MEDUSA_BACKEND_URL}/store/review-replies/${replyId}`,
+      {
+        method: "DELETE",
+        headers,
+      }
+    )
+
+    if (res.status === 401) return { error: "auth" }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      return { error: err?.message || "Yanıt silinemedi." }
+    }
+
+    return { success: true }
+  } catch {
+    return { error: "Yanıt silinemedi." }
+  }
+}
+
+export { getReviews, createReview, getProductReviews, uploadReviewImages, reportReviewImage, getReviewReplies, createReviewReply, likeReviewReply, updateReviewReply, deleteReviewReply }
 export type { ReviewReply }
 
 export const isAuthenticated = async (): Promise<boolean> => {

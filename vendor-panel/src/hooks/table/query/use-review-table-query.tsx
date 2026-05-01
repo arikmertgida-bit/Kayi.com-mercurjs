@@ -24,7 +24,7 @@ export const useReviewTableQuery = ({
   const searchParams = {
     limit: pageSize,
     offset: offset ? Number(offset) : 0,
-    order,
+    order: order ?? "-created_at",
   }
 
   return {

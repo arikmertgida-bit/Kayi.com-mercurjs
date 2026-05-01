@@ -33,6 +33,8 @@ interface NotifyParams {
   subject?: string
   /** Conversation type when auto-creating: DIRECT (default) or ADMIN_SUPPORT (one-way) */
   conversationType?: "DIRECT" | "ADMIN_SUPPORT"
+  /** Notification type emitted to the client socket (e.g. "review_notification", "new_message") */
+  notificationType?: string
 }
 
 /**

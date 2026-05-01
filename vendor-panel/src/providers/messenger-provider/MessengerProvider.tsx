@@ -68,11 +68,6 @@ interface MessengerContextValue {
 
 const MessengerContext = createContext<MessengerContextValue | null>(null)
 
-/**
- * Drop-in replacement for the old `useTalkjsUnreads` hook.
- * Returns an array-like value where the first element is the unreads count,
- * so existing code that reads `unreads?.length` or maps over it is compatible.
- */
 export function useMessengerUnreads(): Array<{ unreadMessageCount: number }> {
   const ctx = useContext(MessengerContext)
   const count = ctx?.unreadCount ?? 0

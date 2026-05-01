@@ -7,8 +7,9 @@ export const reviewSchema = z.object({
     .string()
     .min(3, "Yorumunuz en az 3 karakter olmalı")
     .max(500, "Yorumunuz en fazla 500 karakter olabilir")
-    .optional(),
-  images: z.array(z.string()).max(3, "En fazla 3 fotoğraf ekleyebilirsiniz").optional(),
+    .optional()
+    .or(z.literal("")),
+  images: z.array(z.string()).max(4, "En fazla 4 fotoğraf ekleyebilirsiniz").optional(),
 })
 
 export type ReviewFormData = z.infer<typeof reviewSchema>

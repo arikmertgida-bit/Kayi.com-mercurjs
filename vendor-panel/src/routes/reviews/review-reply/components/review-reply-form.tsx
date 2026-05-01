@@ -1,16 +1,8 @@
-import { useForm } from "react-hook-form"
 import { useRef, useState } from "react"
-import { Form } from "../../../../components/common/form"
 import { RouteDrawer, useRouteModal } from "../../../../components/modals"
-import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
 import { Button, Heading, Textarea, toast } from "@medusajs/ui"
 import { useParams } from "react-router-dom"
-import { useReview, useUpdateReview, useReviewReplies, useCreateReviewReply } from "../../../../hooks/api/review"
-
-const ReviewReplySchema = z.object({
-  seller_note: z.string().min(1),
-})
+import { useReview, useUpdateReview, useReviewReplies, useCreateReviewReply, useUpdateVendorReviewReply, useDeleteVendorReviewReply } from "../../../../hooks/api/review"
 
 function formatDate(iso: string) {
   try {
@@ -41,48 +33,22 @@ export const ReviewReplyForm = () => {
   const replyTextareaRef = useRef<HTMLTextAreaElement>(null)
   const { mutateAsync: createReply, isPending: isReplying } = useCreateReviewReply(id!)
 
-  const form = useForm<z.infer<typeof ReviewReplySchema>>({
-    defaultValues: {
-      seller_note: review.seller_note || "",
-    },
-    resolver: zodResolver(ReviewReplySchema),
-  })
+  const { mutateAsync: updateReview, isPending: isDeleting } = useUpdateReview(id!)
 
-  const { mutateAsync, isPending } = useUpdateReview(id!)
-  //@ts-ignore
-  const handleSubmit = form.handleSubmit(async (data, { deleting }) => {
-    if (deleting) {
-      await mutateAsync(
-        {
-          seller_note: "",
+  const handleDeleteNote = async () => {
+    await updateReview(
+      { seller_note: "" },
+      {
+        onSuccess: () => {
+          toast.success("Reply has been deleted")
+          handleSuccess(`/reviews/${id}`)
         },
-        {
-          onSuccess: () => {
-            toast.success("Reply has been deleted")
-            handleSuccess(`/reviews/${id}`)
-          },
-          onError: (error) => {
-            toast.error(error.message)
-          },
-        }
-      )
-    } else {
-      await mutateAsync(
-        {
-          seller_note: data.seller_note,
+        onError: (error) => {
+          toast.error(error.message)
         },
-        {
-          onSuccess: () => {
-            toast.success("Reply has been sent")
-            handleSuccess(`/reviews/${id}`)
-          },
-          onError: (error) => {
-            toast.error(error.message)
-          },
-        }
-      )
-    }
-  })
+      }
+    )
+  }
 
   const handleSendReply = async () => {
     const content = replyText.trim()
@@ -95,9 +61,11 @@ export const ReviewReplyForm = () => {
     try {
       await createReply({ content })
       setReplyText("")
+      refetchReplies()
       toast.success("Yanıt gönderildi")
-    } catch (err: any) {
-      toast.error(err?.message ?? "Yanıt gönderilemedi")
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Yanıt gönderilemedi"
+      toast.error(message)
     }
   }
 
@@ -113,8 +81,7 @@ export const ReviewReplyForm = () => {
             : "Reply to customer review."}
         </RouteDrawer.Description>
       </RouteDrawer.Header>
-      <RouteDrawer.Form form={form}>
-        <RouteDrawer.Body>
+      <RouteDrawer.Body>
           {/* Customer photo gallery */}
           {images.length > 0 && (
             <div className="mb-4">
@@ -200,23 +167,7 @@ export const ReviewReplyForm = () => {
             </div>
           )}
 
-          <Form.Field
-            control={form.control}
-            name="seller_note"
-            render={({ field }) => {
-              return (
-                <Form.Item>
-                  <Form.Label>Comment</Form.Label>
-                  <Form.Control>
-                    <Textarea autoComplete="off" {...field} />
-                  </Form.Control>
-                  <Form.ErrorMessage />
-                </Form.Item>
-              )
-            }}
-          />
-
-          {/* ─── Customer Replies Thread ─── */}
+          {/* ─── Customer & Seller Replies Thread ─── */}
           <div className="mt-5 border-t border-ui-border-base pt-4">
             <p className="text-xs font-semibold text-ui-fg-base mb-3 flex items-center gap-1.5">
               <span>💬</span>
@@ -232,46 +183,40 @@ export const ReviewReplyForm = () => {
               <p className="text-xs text-ui-fg-muted italic py-2">Henüz yanıt yok.</p>
             ) : (
               <div className="space-y-2.5 mb-4 max-h-64 overflow-y-auto pr-1">
-                {replies.map((reply: any) => (
-                  <div
-                    key={reply.id}
-                    className={`flex gap-2 text-xs ${reply.is_seller_reply ? "justify-end" : ""}`}
-                  >
-                    {!reply.is_seller_reply && (
+                {replies.map((reply: any) =>
+                  reply.is_seller_reply ? (
+                    <SellerReplyItem
+                      key={reply.id}
+                      reply={reply}
+                      reviewId={id!}
+                      onMutated={refetchReplies}
+                    />
+                  ) : (
+                    <div
+                      key={reply.id}
+                      className="flex gap-2 text-xs"
+                    >
                       <div className="size-6 rounded-full bg-ui-bg-base-pressed flex items-center justify-center text-[10px] font-bold text-ui-fg-subtle shrink-0">
                         {reply.customer
                           ? `${reply.customer.first_name?.[0] ?? ""}${reply.customer.last_name?.[0] ?? ""}`.toUpperCase() || "K"
                           : "K"}
                       </div>
-                    )}
-                    <div className={`max-w-[80%] ${reply.is_seller_reply ? "items-end" : ""}`}>
-                      <div
-                        className={`rounded-xl px-3 py-1.5 ${
-                          reply.is_seller_reply
-                            ? "bg-ui-bg-interactive text-ui-fg-on-color rounded-tr-none"
-                            : "bg-ui-bg-base border border-ui-border-base rounded-tl-none"
-                        }`}
-                      >
-                        <p className="font-medium mb-0.5 text-[10px] opacity-80">
-                          {reply.is_seller_reply
-                            ? `🏪 ${reply.seller_name ?? "Mağaza"}`
-                            : reply.customer
-                            ? `${reply.customer.first_name} ${reply.customer.last_name}`.trim() || "Müşteri"
-                            : "Müşteri"}
+                      <div className="max-w-[80%]">
+                        <div className="rounded-xl px-3 py-1.5 bg-ui-bg-base border border-ui-border-base rounded-tl-none">
+                          <p className="font-medium mb-0.5 text-[10px] opacity-80">
+                            {reply.customer
+                              ? `${reply.customer.first_name} ${reply.customer.last_name}`.trim() || "Müşteri"
+                              : "Müşteri"}
+                          </p>
+                          <p className="leading-snug whitespace-pre-line">{reply.content}</p>
+                        </div>
+                        <p className="text-[9px] text-ui-fg-muted mt-0.5 px-1">
+                          {formatDate(reply.created_at)}
                         </p>
-                        <p className="leading-snug whitespace-pre-line">{reply.content}</p>
                       </div>
-                      <p className="text-[9px] text-ui-fg-muted mt-0.5 px-1">
-                        {formatDate(reply.created_at)}
-                      </p>
                     </div>
-                    {reply.is_seller_reply && (
-                      <div className="size-6 rounded-full bg-ui-bg-interactive flex items-center justify-center text-[10px] font-bold text-ui-fg-on-color shrink-0">
-                        🏪
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  )
+                )}
               </div>
             )}
 
@@ -310,27 +255,144 @@ export const ReviewReplyForm = () => {
             )}
           </div>
         </RouteDrawer.Body>
-      </RouteDrawer.Form>
       <RouteDrawer.Footer>
-        {review.seller_note && (
+        {review?.seller_note && (
           <Button
             className="px-6"
             variant="secondary"
-            //@ts-ignore
-            onClick={() => handleSubmit({ deleting: true })}
+            onClick={handleDeleteNote}
+            isLoading={isDeleting}
           >
             Delete reply
           </Button>
         )}
         <Button
-          //@ts-ignore
-          onClick={() => handleSubmit({ deleting: false })}
+          variant="secondary"
           className="px-6"
-          isLoading={isPending}
+          onClick={() => handleSuccess(`/reviews/${id}`)}
         >
-          {review.seller_note ? "Save" : "Reply"}
+          Kapat
         </Button>
       </RouteDrawer.Footer>
     </RouteDrawer>
+  )
+}
+
+// ─── Seller Reply Item with inline edit/delete ─────────────────────────────────
+const SellerReplyItem = ({
+  reply,
+  reviewId,
+  onMutated,
+}: {
+  reply: any
+  reviewId: string
+  onMutated: () => void
+}) => {
+  const [isEditing, setIsEditing] = useState(false)
+  const [editText, setEditText] = useState(reply.content)
+  const [editError, setEditError] = useState<string | null>(null)
+
+  const { mutateAsync: updateReply, isPending: isUpdating } = useUpdateVendorReviewReply(reviewId, reply.id)
+  const { mutateAsync: deleteReply, isPending: isDeleting } = useDeleteVendorReviewReply(reviewId, reply.id)
+
+  const handleSaveEdit = async () => {
+    const content = editText.trim()
+    if (!content || content.length > 500) {
+      setEditError("Yanıt boş olamaz veya 500 karakteri geçemez.")
+      return
+    }
+    try {
+      await updateReply({ content })
+      setIsEditing(false)
+      setEditError(null)
+      onMutated()
+      toast.success("Yanıt güncellendi")
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Güncellenemedi"
+      setEditError(message)
+    }
+  }
+
+  const handleDelete = async () => {
+    try {
+      await deleteReply()
+      onMutated()
+      toast.success("Yanıt silindi")
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Silinemedi"
+      toast.error(message)
+    }
+  }
+
+  return (
+    <div className="flex gap-2 text-xs justify-end">
+      <div className="max-w-[80%] items-end">
+        <div className="rounded-xl px-3 py-1.5 bg-ui-bg-interactive text-ui-fg-on-color rounded-tr-none">
+          <div className="flex items-center justify-between gap-2 mb-0.5">
+            <p className="font-medium text-[10px] opacity-80">
+              🏪 {reply.seller_name ?? "Mağaza"}
+            </p>
+            {!isEditing && (
+              <div className="flex items-center gap-1.5 ml-2">
+                <button
+                  type="button"
+                  onClick={() => { setIsEditing(true); setEditText(reply.content) }}
+                  className="text-[10px] opacity-70 hover:opacity-100 transition-opacity"
+                  title="Düzenle"
+                >
+                  ✏️
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="text-[10px] opacity-70 hover:opacity-100 transition-opacity disabled:opacity-30"
+                  title="Sil"
+                >
+                  {isDeleting ? "⏳" : "🗑️"}
+                </button>
+              </div>
+            )}
+          </div>
+          {isEditing ? (
+            <div className="mt-1">
+              <textarea
+                className="w-full bg-white/20 text-ui-fg-on-color placeholder:text-white/50 border border-white/30 rounded-lg px-2 py-1 text-xs resize-none focus:outline-none min-h-[48px] max-h-[100px]"
+                value={editText}
+                maxLength={500}
+                onChange={(e) => { setEditText(e.target.value); setEditError(null) }}
+                autoFocus
+              />
+              {editError && <p className="text-[10px] text-red-300 mt-0.5">{editError}</p>}
+              <div className="flex gap-1.5 mt-1.5">
+                <button
+                  type="button"
+                  onClick={handleSaveEdit}
+                  disabled={isUpdating || !editText.trim()}
+                  className="text-[10px] font-semibold bg-white/20 hover:bg-white/30 text-white px-2 py-0.5 rounded disabled:opacity-40 transition-colors"
+                >
+                  {isUpdating ? "..." : "Kaydet"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setIsEditing(false); setEditError(null) }}
+                  className="text-[10px] font-semibold bg-white/10 hover:bg-white/20 text-white px-2 py-0.5 rounded transition-colors"
+                >
+                  İptal
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p className="leading-snug whitespace-pre-line">{reply.content}</p>
+          )}
+        </div>
+        <p className="text-[9px] text-ui-fg-muted mt-0.5 px-1 text-right">
+          {formatDate(reply.created_at)}
+        </p>
+      </div>
+      <div className="size-6 rounded-full bg-ui-bg-interactive flex items-center justify-center text-[10px] font-bold text-ui-fg-on-color shrink-0">
+        🏪
+      </div>
+    </div>
   )
 }

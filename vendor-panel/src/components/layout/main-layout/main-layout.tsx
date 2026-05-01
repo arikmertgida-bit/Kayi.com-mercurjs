@@ -17,6 +17,7 @@ import {
 import { Divider, Text, clx } from "@medusajs/ui"
 import { Collapsible as RadixCollapsible } from "radix-ui"
 import { useTranslation } from "react-i18next"
+import { useState, useEffect } from "react"
 
 import { Skeleton } from "../../common/skeleton"
 import { INavItem, NavItem } from "../../layout/nav-item"
@@ -30,6 +31,7 @@ import { UserMenu } from "../user-menu"
 import { StripeIcon } from "../../../assets/icons/Stripe"
 import { ImageAvatar } from "../../common/image-avatar"
 import { useMessengerUnreads } from "../../../providers/messenger-provider/MessengerProvider"
+import { useReviews } from "../../../hooks/api/review"
 
 export const MainLayout = () => {
   return (
@@ -99,8 +101,25 @@ const Header = () => {
 
 const useCoreRoutes = (): Omit<INavItem, "pathname">[] => {
   const { t } = useTranslation()
+  const location = useLocation()
 
   const unreadMessages = useMessengerUnreads()
+  const { count: totalReviewCount } = useReviews({ limit: 1 })
+
+  const [lastSeenCount, setLastSeenCount] = useState<number>(() => {
+    if (typeof window === "undefined") return 0
+    return parseInt(localStorage.getItem("reviews_last_seen_count") ?? "0", 10) || 0
+  })
+
+  useEffect(() => {
+    if (location.pathname === "/reviews") {
+      const current = totalReviewCount ?? 0
+      localStorage.setItem("reviews_last_seen_count", String(current))
+      setLastSeenCount(current)
+    }
+  }, [location.pathname, totalReviewCount])
+
+  const reviewBadgeCount = Math.max(0, (totalReviewCount ?? 0) - lastSeenCount)
 
   return [
     {
@@ -183,7 +202,7 @@ const useCoreRoutes = (): Omit<INavItem, "pathname">[] => {
     },
     {
       icon: <Star />,
-      label: "Reviews",
+      label: reviewBadgeCount > 0 ? `Reviews (${reviewBadgeCount})` : "Reviews",
       to: "/reviews",
     },
     {

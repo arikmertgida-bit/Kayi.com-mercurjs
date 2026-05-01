@@ -5,6 +5,7 @@ import { StatusCell } from "../../../../components/table/table-cells/review/stat
 import { ActionMenu } from "../../../../components/common/action-menu"
 import { ExclamationCircle } from "@medusajs/icons"
 import { Link } from "react-router-dom"
+import { useReviewReplies } from "../../../../hooks/api/review"
 
 export const ReviewGeneralSection = ({
   review,
@@ -13,13 +14,18 @@ export const ReviewGeneralSection = ({
   review: any
   isRequested?: boolean
 }) => {
+  const { replies } = useReviewReplies(review.id)
+  const firstSellerReply = replies.find((r: any) => r.is_seller_reply)
+  const displayedReply = firstSellerReply?.content || review.seller_note || null
+  const hasReplied = !!displayedReply
+
   return (
     <Container className="divide-y p-0">
       <div className="flex items-center justify-between px-6 py-4">
         <Heading>Review</Heading>
         <div className="flex items-center gap-4">
           <Badge>
-            <StatusCell status={review.seller_note} />
+            <StatusCell status={hasReplied ? displayedReply : null} />
           </Badge>
           {isRequested ? (
             <Badge className="flex items-center gap-2">
@@ -58,7 +64,7 @@ export const ReviewGeneralSection = ({
       </div>
       <div className="px-6 py-4 grid grid-cols-2">
         <div>Reply</div>
-        <div>{review.seller_note || "-"}</div>
+        <div className="whitespace-pre-line break-words">{displayedReply || "-"}</div>
       </div>
       <div className="px-6 py-4 grid grid-cols-2">
         <div>Added</div>
@@ -67,7 +73,7 @@ export const ReviewGeneralSection = ({
       <div className="px-6 py-4 flex justify-end">
         <Link to={`/reviews/${review.id}/reply`}>
           <Button className="px-6">
-            {review.seller_note ? "Edit Reply" : "Reply"}
+            {hasReplied ? "Edit Reply" : "Reply"}
           </Button>
         </Link>
       </div>

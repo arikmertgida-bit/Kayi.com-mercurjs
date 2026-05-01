@@ -13,7 +13,7 @@ export const NotificationService = {
     io: SocketServer,
     targetUserId: string,
     payload: {
-      type: "new_message" | "review_notification"
+      type: string
       conversationId?: string
       senderName: string
       preview: string

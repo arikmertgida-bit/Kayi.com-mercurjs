@@ -29,8 +29,8 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   const body = (req.body ?? {}) as Record<string, any>
   const content = typeof body.content === "string" ? body.content.trim() : ""
 
-  if (!content || content.length > 300) {
-    return res.status(400).json({ message: "Yanıt en fazla 300 karakter olmalıdır." })
+  if (!content || content.length > 500) {
+    return res.status(400).json({ message: "Yanıt en fazla 500 karakter olmalıdır." })
   }
 
   const replyService: ReviewReplyService = req.scope.resolve(REVIEW_REPLY_MODULE)
@@ -74,6 +74,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
           sourceUserId: customerId,
           sourceUserType: "CUSTOMER",
           subject: "Yorum Yanıtı Bildirimi",
+          notificationType: "review_notification",
         })
       }
     })

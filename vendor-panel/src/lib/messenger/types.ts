@@ -45,7 +45,7 @@ export interface Conversation {
 }
 
 export interface NotificationPayload {
-  type: "new_message" | "review_notification"
+  type: string
   conversationId?: string
   senderName: string
   preview: string

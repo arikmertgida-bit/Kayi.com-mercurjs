@@ -50,7 +50,7 @@ export const ReviewForm: React.FC<Props> = ({ ...props }) => {
   )
 }
 
-const MAX_IMAGES = 6
+const MAX_IMAGES = 4
 
 const Form: React.FC<Props> = ({ handleClose, seller, referenceType = "seller", referenceId }) => {
   const router = useRouter()
@@ -60,12 +60,8 @@ const Form: React.FC<Props> = ({ handleClose, seller, referenceType = "seller", 
     { status: "empty" },
     { status: "empty" },
     { status: "empty" },
-    { status: "empty" },
-    { status: "empty" },
   ])
   const fileInputRefs = [
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
     useRef<HTMLInputElement>(null),
     useRef<HTMLInputElement>(null),
     useRef<HTMLInputElement>(null),
@@ -226,7 +222,7 @@ const Form: React.FC<Props> = ({ handleClose, seller, referenceType = "seller", 
           {/* Photo upload section */}
           <div>
             <p className="label-sm mb-2 text-[#8a1d54]">Fotoğraflar (max {MAX_IMAGES})</p>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               {imageSlots.map((slot, index) => (
                 <div key={index} className="relative">
                   <input
@@ -307,6 +303,7 @@ const Form: React.FC<Props> = ({ handleClose, seller, referenceType = "seller", 
 
         {error && <p className="label-md text-negative">{error}</p>}
         <Button
+          type="submit"
           className="w-full rounded-full border-0 bg-gradient-to-r from-[#f58529] via-[#dd2a7b] to-[#8134af] py-3 text-white shadow-[0_14px_28px_rgba(221,42,123,0.24)] hover:opacity-95"
           disabled={isUploading}
         >

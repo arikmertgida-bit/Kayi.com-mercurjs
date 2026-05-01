@@ -26,6 +26,7 @@ const notifySchema = z.object({
   sourceUserType: userTypeEnum.optional(),
   subject: z.string().max(255).optional(),
   conversationType: z.enum(["DIRECT", "ADMIN_SUPPORT"]).optional(),
+  notificationType: z.string().min(1).max(100).optional(),
 })
 
 /**
@@ -78,11 +79,12 @@ export function createInternalRouter(io: SocketServer): Router {
       sourceUserType,
       subject,
       conversationType,
+      notificationType,
     } = parsed.data
 
     // Always emit real-time notification to user room
     NotificationService.notifyUser(io, targetUserId, {
-      type: "review_notification",
+      type: notificationType ?? "notification",
       senderName: senderName ?? "System",
       preview,
       conversationId,

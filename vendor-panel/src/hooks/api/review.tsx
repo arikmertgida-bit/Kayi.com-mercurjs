@@ -125,3 +125,55 @@ export const useCreateReviewReply = (
     ...options,
   })
 }
+
+export const useUpdateVendorReviewReply = (
+  reviewId: string,
+  replyId: string,
+  options?: UseMutationOptions<any, FetchError, { content: string }>
+) => {
+  return useMutation({
+    mutationFn: (payload) =>
+      fetchQuery(`/vendor/sellers/me/reviews/${reviewId}/replies/${replyId}`, {
+        method: "PUT",
+        body: payload,
+      }),
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({
+        queryKey: [...reviewsQueryKeys.detail(reviewId), "replies"],
+      })
+      queryClient.invalidateQueries({ queryKey: reviewsQueryKeys.list() })
+      options?.onSuccess?.(data, variables, context)
+    },
+    ...options,
+  })
+}
+
+export const useDeleteVendorReviewReply = (
+  reviewId: string,
+  replyId: string,
+  options?: UseMutationOptions<any, FetchError, void>
+) => {
+  return useMutation({
+    mutationFn: () =>
+      fetchQuery(`/vendor/sellers/me/reviews/${reviewId}/replies/${replyId}`, {
+        method: "DELETE",
+      }),
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({
+        queryKey: [...reviewsQueryKeys.detail(reviewId), "replies"],
+      })
+      queryClient.invalidateQueries({ queryKey: reviewsQueryKeys.list() })
+      options?.onSuccess?.(data, variables, context)
+    },
+    ...options,
+  })
+}
+
+export const useReviewUnreadCount = (): number => {
+  const { count } = useReviews({ limit: 1 })
+  const lastSeenCount =
+    typeof window !== "undefined"
+      ? parseInt(localStorage.getItem("reviews_last_seen_count") ?? "0", 10) || 0
+      : 0
+  return Math.max(0, (count ?? 0) - lastSeenCount)
+}

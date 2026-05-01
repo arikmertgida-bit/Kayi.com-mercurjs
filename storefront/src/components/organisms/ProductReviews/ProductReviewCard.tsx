@@ -3,13 +3,14 @@ import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { StarRating } from "@/components/atoms"
-import { Review, ReviewReply, reportReviewImage, getReviewReplies, createReviewReply, likeReviewReply, isAuthenticated } from "@/lib/data/reviews"
+import { Review, ReviewReply, reportReviewImage, getReviewReplies, createReviewReply, likeReviewReply, updateReviewReply, deleteReviewReply, isAuthenticated } from "@/lib/data/reviews"
 import { likeReview } from "@/lib/data/review-likes"
 import { formatDistanceToNow } from "date-fns"
 import { tr } from "date-fns/locale"
 
 interface Props {
   review: Review
+  currentCustomerId?: string
 }
 
 // ─── Report Modal ──────────────────────────────────────────────────────────────
@@ -156,15 +157,29 @@ const PhotoLightbox = ({
 const ReplyCard = ({
   reply,
   onMention,
+  currentCustomerId,
+  onDeleted,
+  onUpdated,
 }: {
   reply: ReviewReply
   onMention: (name: string) => void
+  currentCustomerId?: string
+  onDeleted: (id: string) => void
+  onUpdated: (id: string, content: string) => void
 }) => {
   const [liked, setLiked] = useState(reply.is_liked_by_me ?? false)
   const [likesCount, setLikesCount] = useState(reply.likes_count ?? 0)
   const [likeLoading, setLikeLoading] = useState(false)
   const [authErr, setAuthErr] = useState(false)
   const [replyAuthErr, setReplyAuthErr] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editText, setEditText] = useState(reply.content)
+  const [editLoading, setEditLoading] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [editError, setEditError] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  const isOwn = !!currentCustomerId && reply.customer_id === currentCustomerId && !reply.is_seller_reply
 
   const name = `${reply.customer?.first_name ?? ""} ${reply.customer?.last_name ?? ""}`.trim() || "Kullanıcı"
   const initials = `${reply.customer?.first_name?.[0] ?? ""}${reply.customer?.last_name?.[0] ?? ""}`.toUpperCase() || "?"
@@ -202,60 +217,139 @@ const ReplyCard = ({
     }
   }
 
+  const handleEditConfirm = async () => {
+    const trimmed = editText.trim()
+    if (!trimmed) return
+    if (trimmed.length > 500) {
+      setEditError("En fazla 500 karakter girilebilir.")
+      return
+    }
+    setEditLoading(true)
+    setEditError(null)
+    const result = await updateReviewReply(reply.id, trimmed)
+    setEditLoading(false)
+    if (result.error) {
+      setEditError(result.error)
+      return
+    }
+    onUpdated(reply.id, trimmed)
+    setIsEditing(false)
+  }
+
+  const handleDelete = async () => {
+    setDeleteLoading(true)
+    setDeleteError(null)
+    const result = await deleteReviewReply(reply.id)
+    setDeleteLoading(false)
+    if (result.error) {
+      setDeleteError(result.error)
+    } else {
+      onDeleted(reply.id)
+    }
+  }
+
   return (
     <div className="flex gap-2.5">
       {/* Avatar */}
-      {reply.customer?.avatar_url ? (
-        <Image
-          src={reply.customer.avatar_url}
-          alt={name}
-          width={28}
-          height={28}
-          unoptimized
-          className="rounded-full size-7 object-cover border border-[#efbdd1] shrink-0"
-        />
-      ) : (
-        <div className="size-7 rounded-full bg-gradient-to-br from-[#8134af] via-[#dd2a7b] to-[#f58529] flex items-center justify-center text-white text-[10px] font-bold shrink-0">
-          {initials}
-        </div>
-      )}
+      <Image
+        src={reply.customer?.avatar_url ?? "/images/customer-default-avatar.jpg"}
+        alt={name}
+        width={28}
+        height={28}
+        unoptimized
+        className="rounded-full size-7 object-cover border border-[#efbdd1] shrink-0"
+      />
       <div className="flex-1 min-w-0">
         <div className="rounded-2xl bg-white/80 border border-[#f5d8e6] px-3 py-2">
           <div className="flex items-center justify-between gap-2 mb-1">
             <span className="text-xs font-semibold text-primary">{name}</span>
-            <span className="text-[10px] text-secondary shrink-0">{timeAgo}</span>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="text-[10px] text-secondary">{timeAgo}</span>
+              {isOwn && !isEditing && (
+                <>
+                  <button
+                    onClick={() => { setIsEditing(true); setEditText(reply.content) }}
+                    className="text-[10px] text-secondary hover:text-[#8134af] transition-colors px-1"
+                    title="Düzenle"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    disabled={deleteLoading}
+                    className="text-[10px] text-secondary hover:text-red-500 transition-colors px-1 disabled:opacity-50"
+                    title="Sil"
+                  >
+                    {deleteLoading ? "⏳" : "🗑️"}
+                  </button>
+                </>
+              )}
+            </div>
           </div>
-          <p className="text-xs text-primary/90 leading-relaxed whitespace-pre-line">{reply.content}</p>
+          {isEditing ? (
+            <>
+              <textarea
+                className="w-full border border-[#efbdd1] rounded-lg px-2 py-1.5 text-xs resize-none focus:outline-none focus:border-[#dd2a7b] bg-white min-h-[56px] max-h-[120px]"
+                value={editText}
+                maxLength={500}
+                onChange={(e) => { setEditText(e.target.value); setEditError(null) }}
+                autoFocus
+              />
+              {editError && <p className="text-[10px] text-red-500 mt-0.5">{editError}</p>}
+              <div className="flex gap-2 mt-1.5">
+                <button
+                  onClick={handleEditConfirm}
+                  disabled={editLoading || !editText.trim()}
+                  className="text-[10px] font-semibold text-white bg-[#dd2a7b] px-2.5 py-1 rounded-lg disabled:opacity-50 hover:bg-[#c13584] transition-colors"
+                >
+                  {editLoading ? "Kaydediliyor..." : "Kaydet"}
+                </button>
+                <button
+                  onClick={() => { setIsEditing(false); setEditError(null) }}
+                  className="text-[10px] font-semibold text-secondary px-2.5 py-1 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  İptal
+                </button>
+              </div>
+            </>
+          ) : (
+            <p className="text-xs text-primary/90 leading-relaxed whitespace-pre-line">{reply.content}</p>
+          )}
         </div>
         {/* Reply like + mention row */}
-        <div className="flex items-center gap-3 mt-1 pl-1">
-          <button
-            onClick={handleLike}
-            disabled={likeLoading}
-            className={`flex items-center gap-1 text-[10px] font-medium transition-colors ${
-              liked ? "text-[#dd2a7b]" : "text-secondary hover:text-[#dd2a7b]"
-            }`}
-          >
-            <span className="text-xs">{liked ? "❤️" : "🤍"}</span>
-            {likesCount > 0 ? likesCount : "Beğen"}
-          </button>
-          {authErr && <span className="text-[10px] text-red-400">Beğenmek için giriş yapmalısınız.</span>}
-          <button
-            onClick={async () => {
-              const loggedIn = await isAuthenticated()
-              if (!loggedIn) {
-                setReplyAuthErr(true)
-                setTimeout(() => setReplyAuthErr(false), 3000)
-                return
-              }
-              onMention(name)
-            }}
-            className="text-[10px] font-medium text-secondary hover:text-[#8134af] transition-colors"
-          >
-            Yanıtla
-          </button>
-          {replyAuthErr && <span className="text-[10px] text-red-400">Yanıtlamak için giriş yapmalısınız.</span>}
-        </div>
+        {!isEditing && (
+          <div className="flex items-center gap-3 mt-1 pl-1">
+            <button
+              onClick={handleLike}
+              disabled={likeLoading}
+              className={`flex items-center gap-1 text-[10px] font-medium transition-colors ${
+                liked ? "text-[#dd2a7b]" : "text-secondary hover:text-[#dd2a7b]"
+              }`}
+            >
+              <span className="text-xs">{liked ? "❤️" : "🤍"}</span>
+              {likesCount > 0 ? likesCount : "Beğen"}
+            </button>
+            {authErr && <span className="text-[10px] text-red-400">Beğenmek için giriş yapmalısınız.</span>}
+            <button
+              onClick={async () => {
+                const loggedIn = await isAuthenticated()
+                if (!loggedIn) {
+                  setReplyAuthErr(true)
+                  setTimeout(() => setReplyAuthErr(false), 3000)
+                  return
+                }
+                onMention(name)
+              }}
+              className="text-[10px] font-medium text-secondary hover:text-[#8134af] transition-colors"
+            >
+              Yanıtla
+            </button>
+            {replyAuthErr && <span className="text-[10px] text-red-400">Yanıtlamak için giriş yapmalısınız.</span>}
+          </div>
+        )}
+        {deleteError && (
+          <p className="text-[10px] text-red-500 mt-0.5 pl-1">{deleteError}</p>
+        )}
       </div>
     </div>
   )
@@ -268,15 +362,22 @@ const SellerReplyCard = ({
   sellerHandle,
   note,
   onMention,
+  replyId,
+  initialLikes = 0,
+  initialLikedByMe = false,
 }: {
   sellerName: string
   sellerPhoto?: string
   sellerHandle: string
   note: string
   onMention: (name: string) => void
+  replyId?: string
+  initialLikes?: number
+  initialLikedByMe?: boolean
 }) => {
-  const [liked, setLiked] = useState(false)
-  const [likesCount, setLikesCount] = useState(0)
+  const [liked, setLiked] = useState(initialLikedByMe)
+  const [likesCount, setLikesCount] = useState(initialLikes)
+  const [likeLoading, setLikeLoading] = useState(false)
   const [replyAuthErr, setReplyAuthErr] = useState(false)
 
   const initials = sellerName
@@ -285,6 +386,30 @@ const SellerReplyCard = ({
     .slice(0, 2)
     .join("")
     .toUpperCase()
+
+  const handleLike = async () => {
+    if (!replyId || likeLoading) return
+    const wasLiked = liked
+    const prevCount = likesCount
+    setLiked(!liked)
+    setLikesCount(liked ? Math.max(0, likesCount - 1) : likesCount + 1)
+    setLikeLoading(true)
+    try {
+      const res = await likeReviewReply(replyId)
+      if (res.error) {
+        setLiked(wasLiked)
+        setLikesCount(prevCount)
+      } else {
+        setLiked(res.liked)
+        setLikesCount(res.likes_count)
+      }
+    } catch {
+      setLiked(wasLiked)
+      setLikesCount(prevCount)
+    } finally {
+      setLikeLoading(false)
+    }
+  }
 
   return (
     <div className="flex gap-2.5 mb-1">
@@ -331,12 +456,10 @@ const SellerReplyCard = ({
         {/* Like + Reply row */}
         <div className="flex items-center gap-3 mt-1 pl-1">
           <button
-            onClick={() => {
-              setLiked((prev) => !prev)
-              setLikesCount((prev) => liked ? Math.max(0, prev - 1) : prev + 1)
-            }}
+            onClick={handleLike}
+            disabled={likeLoading || !replyId}
             className={`flex items-center gap-1 text-[10px] font-medium transition-colors ${
-              liked ? "text-[#dd2a7b]" : "text-secondary hover:text-[#dd2a7b]"
+              liked ? "text-[#dd2a7b]" : replyId ? "text-secondary hover:text-[#dd2a7b]" : "text-secondary/40 cursor-default"
             }`}
           >
             <span className="text-xs">{liked ? "❤️" : "🤍"}</span>
@@ -364,7 +487,7 @@ const SellerReplyCard = ({
 }
 
 // ─── Main Card ─────────────────────────────────────────────────────────────────
-export const ProductReviewCard = ({ review }: Props) => {
+export const ProductReviewCard = ({ review, currentCustomerId }: Props) => {
   const [localImages, setLocalImages] = useState(review.images ?? [])
   const [reportingImageId, setReportingImageId] = useState<string | null>(null)
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
@@ -388,6 +511,14 @@ export const ProductReviewCard = ({ review }: Props) => {
   const [replySubmitting, setReplySubmitting] = useState(false)
   const [replyError, setReplyError] = useState<string | null>(null)
 
+  const handleReplyDeleted = (id: string) => {
+    setReplies((prev) => prev.filter((r) => r.id !== id))
+  }
+
+  const handleReplyUpdated = (id: string, content: string) => {
+    setReplies((prev) => prev.map((r) => r.id === id ? { ...r, content } : r))
+  }
+
   const customerName = review.customer
     ? `${review.customer.first_name} ${review.customer.last_name}`
     : "Anonim"
@@ -398,7 +529,7 @@ export const ProductReviewCard = ({ review }: Props) => {
 
   const timeAgo = (() => {
     try {
-      return formatDistanceToNow(new Date(review.updated_at), { addSuffix: true, locale: tr })
+      return formatDistanceToNow(new Date(review.created_at), { addSuffix: true, locale: tr })
     } catch { return "" }
   })()
 
@@ -602,9 +733,12 @@ export const ProductReviewCard = ({ review }: Props) => {
               <span className="text-base">💬</span>
             )}
             <span>
-              {replies.length > 0 || review.seller_note
-                ? `Yanıtlar (${replies.length + (review.seller_note ? 1 : 0)})`
-                : "Yanıtla"}
+              {(() => {
+                const hasSellerReply = replies.some((r) => r.is_seller_reply)
+                const extraCount = review.seller_note && !hasSellerReply ? 1 : 0
+                const total = replies.length + extraCount
+                return total > 0 || review.seller_note ? `Yanıtlar (${total})` : "Yanıtla"
+              })()}
             </span>
           </button>
 
@@ -622,8 +756,8 @@ export const ProductReviewCard = ({ review }: Props) => {
         {/* Reply thread */}
         {replyOpen && (
           <div className="border-t border-[#f5d8e6] bg-[#fff8fb]/60 px-4 py-3 space-y-3">
-            {/* Seller reply — always pinned at top if exists */}
-            {review.seller_note && (
+            {/* seller_note shown only when there are no is_seller_reply entries in thread */}
+            {review.seller_note && !replies.some((r) => r.is_seller_reply) && (
               <SellerReplyCard
                 sellerName={review.seller.name}
                 sellerPhoto={
@@ -643,13 +777,16 @@ export const ProductReviewCard = ({ review }: Props) => {
               />
             )}
 
-            {/* Customer & seller replies */}
+            {/* All replies (customers and sellers) in chronological order */}
             {replies.length > 0 && (
               <div className="space-y-2.5">
                 {replies.map((reply) =>
                   reply.is_seller_reply ? (
                     <SellerReplyCard
                       key={reply.id}
+                      replyId={reply.id}
+                      initialLikes={reply.likes_count ?? 0}
+                      initialLikedByMe={reply.is_liked_by_me ?? false}
                       sellerName={reply.seller_name ?? review.seller.name}
                       sellerPhoto={
                         (
@@ -670,6 +807,9 @@ export const ProductReviewCard = ({ review }: Props) => {
                     <ReplyCard
                       key={reply.id}
                       reply={reply}
+                      currentCustomerId={currentCustomerId}
+                      onDeleted={handleReplyDeleted}
+                      onUpdated={handleReplyUpdated}
                       onMention={(name) => {
                         const prefix = `@${name} `
                         setReplyText((prev) =>
@@ -690,9 +830,9 @@ export const ProductReviewCard = ({ review }: Props) => {
             <div className="flex gap-2 items-end">
               <textarea
                 className="flex-1 border border-[#efbdd1] rounded-xl px-3 py-2 text-xs resize-none focus:outline-none focus:border-[#dd2a7b] bg-white/90 placeholder:text-secondary/60 min-h-[36px] max-h-[80px]"
-                placeholder="Yanıtınızı yazın... (max 300 karakter)"
+                placeholder="Yanıtınızı yazın... (max 500 karakter)"
                 value={replyText}
-                maxLength={300}
+                maxLength={500}
                 rows={1}
                 onChange={(e) => setReplyText(e.target.value)}
                 onKeyDown={(e) => {

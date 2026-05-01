@@ -18,6 +18,7 @@
     "@hookform/resolvers": "^3.10.0",
     "@medusajs/icons": "^2.13.6",
     "@medusajs/js-sdk": "^2.11.0",
+    "@medusajs/types": "^2.11.0",
     "@medusajs/ui": "^4.1.6",
     "@meilisearch/instant-meilisearch": "^0.25.0",
     "@stripe/react-stripe-js": "^3.7.0",

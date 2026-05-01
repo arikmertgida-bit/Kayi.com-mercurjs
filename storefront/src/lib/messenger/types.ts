@@ -46,7 +46,7 @@ export interface Conversation {
 
 // Notification payload emitted by the server
 export interface NotificationPayload {
-  type: "new_message" | "review_notification"
+  type: string
   conversationId?: string
   senderName: string
   preview: string

@@ -86,7 +86,7 @@ export const CartDropdown = () => {
         )}
       </LocalizedClientLink>
       <Dropdown show={open}>
-        <div className="lg:w-[460px] shadow-lg">
+        <div className="w-[min(460px,calc(100vw_-_84px))] shadow-lg">
           <h3 className="uppercase heading-md border-b p-4">Shopping cart</h3>
           <div className="p-4">
             {Boolean(cartItemsCount) ? (

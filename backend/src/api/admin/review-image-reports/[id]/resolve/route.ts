@@ -62,6 +62,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       sourceUserType: "ADMIN",
       subject: "Görsel İnceleme Sonucu",
       conversationType: "ADMIN_SUPPORT",
+      notificationType: "review_notification",
     })
   }
 

@@ -4,6 +4,8 @@ import { REVIEW_REPLY_MODULE } from "../../../../../../../modules/review-replies
 import ReviewReplyService from "../../../../../../../modules/review-replies/service"
 import { notifyMessengerUser } from "../../../../../../../lib/messenger"
 import { enrichRepliesWithCustomerData } from "../../../../../../utils/enrich-replies"
+// @ts-ignore — import workflow from mercurjs package
+import { updateReviewWorkflow } from "@mercurjs/reviews/workflows"
 
 // Helper: resolve seller from vendor auth
 async function resolveSeller(req: MedusaRequest) {
@@ -59,6 +61,16 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     content,
   } as any)
 
+  // Sync seller_note on the review so the list status shows "Replied"
+  try {
+    await updateReviewWorkflow.run({
+      container: req.scope,
+      input: { id: reviewId, seller_note: content },
+    })
+  } catch (err: any) {
+    console.warn("[review-reply] Could not sync seller_note:", err?.message)
+  }
+
   // Find the review's customer_id to send notification (fire-and-forget)
   const query2 = req.scope.resolve(ContainerRegistrationKeys.QUERY)
   query2
@@ -78,6 +90,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
           sourceUserId: seller.id,
           sourceUserType: "SELLER",
           subject: "Yorum Yanıtı Bildirimi",
+          notificationType: "review_notification",
         })
       }
     })
