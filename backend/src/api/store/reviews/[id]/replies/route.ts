@@ -1,8 +1,7 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
-import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
+import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
 import { REVIEW_REPLY_MODULE } from "../../../../../modules/review-replies"
 import ReviewReplyService from "../../../../../modules/review-replies/service"
-import { notifyMessengerUser } from "../../../../../lib/messenger"
 import { enrichRepliesWithCustomerData } from "../../../../utils/enrich-replies"
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
@@ -55,28 +54,12 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     }
   } catch { /* non-critical */ }
 
-  // Notify seller about the customer reply (fire-and-forget)
-  query
-    .graph({
-      entity: "seller_review",
-      fields: ["seller_id"],
-      filters: { review_id: reviewId },
-    })
-    .then(({ data: relations }: { data: any[] }) => {
-      const sellerId = relations?.[0]?.seller_id
-      if (sellerId) {
-        const customerName = `${customer.first_name} ${customer.last_name}`.trim() || "Müşteri"
-        notifyMessengerUser({
-          targetUserId: sellerId,
-          targetUserType: "SELLER",
-          senderName: customerName,
-          preview: `${customerName} yorumunuza yorum ekledi.`,
-          sourceUserId: customerId,
-          sourceUserType: "CUSTOMER",
-          subject: "Yorum Yanıtı Bildirimi",
-          notificationType: "review_notification",
-        })
-      }
+  // Notify seller about the customer reply via event (fire-and-forget)
+  const eventBus = req.scope.resolve(Modules.EVENT_BUS) as any
+  eventBus
+    .emit({
+      eventName: "review_notification.customer_reply",
+      body: { data: { reviewId, customerId, customerName: `${customer.first_name} ${customer.last_name}`.trim() || "Müşteri" } },
     })
     .catch(() => { /* non-critical */ })
 

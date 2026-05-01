@@ -9,5 +9,5 @@ import { CartSynchronizer } from "./cart-synchronizer"
  */
 export async function CartInitializer() {
   const cart = await retrieveCart()
-  return <CartSynchronizer cart={cart} />
+  return <CartSynchronizer cart={cart as unknown as import("@/types/cart").Cart | null} />
 }

@@ -12,15 +12,15 @@ export const ProductGalleryClient = ({
 }) => {
   const { colorGalleryImages, selectedColor } = useProductVariants()
   const [isTransitioning, setIsTransitioning] = useState(false)
-  const [displayImages, setDisplayImages] = useState(
-    colorGalleryImages.length > 0 ? colorGalleryImages : images ?? []
+  const [displayImages, setDisplayImages] = useState<HttpTypes.StoreProductImage[]>(
+    (colorGalleryImages.length > 0 ? colorGalleryImages : images ?? []) as HttpTypes.StoreProductImage[]
   )
 
   useEffect(() => {
     setIsTransitioning(true)
     const timer = setTimeout(() => {
       setDisplayImages(
-        colorGalleryImages.length > 0 ? colorGalleryImages : images ?? []
+        (colorGalleryImages.length > 0 ? colorGalleryImages : images ?? []) as HttpTypes.StoreProductImage[]
       )
       setIsTransitioning(false)
     }, 150)

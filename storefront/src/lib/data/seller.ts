@@ -185,7 +185,7 @@ export const getSellerProducts = async (
           "*variants.calculated_price,+variants.inventory_quantity,*seller," +
           "*variants,*variants.options,*options," +
           "+categories,+categories.id,+categories.metadata",
-      },
+      } as any,
     })
 
     return { products: response.products, count: data.count }

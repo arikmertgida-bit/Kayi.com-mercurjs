@@ -21,6 +21,7 @@ export const getUserWishlists = async () => {
     .then((res) => {
       return res
     })
+    .catch(() => ({ wishlists: [], count: 0 }))
 }
 
 export const addWishlistItem = async ({

@@ -136,4 +136,4 @@ export const CookieConsentBanner: React.FC = () => {
   );
 };
 
-export { getConsent, setConsent, revokeConsent, CONSENT_KEY, ConsentType };
+export { getConsent, setConsent, revokeConsent, CONSENT_KEY };

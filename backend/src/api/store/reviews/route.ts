@@ -1,6 +1,5 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys, MedusaError, Modules } from "@medusajs/framework/utils"
-import { notifyMessengerUser } from "../../../lib/messenger"
 import { DEV_BYPASS_EMAIL, DEV_BYPASS_ORDER_ID } from "./constants"
 
 const REVIEW_MODULE = "review"
@@ -205,7 +204,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     filters: { id: review.id },
   })
 
-  // Notify seller about the new review (fire-and-forget)
+  // Notify seller about the new review via event (fire-and-forget)
   const sellerToNotify =
     reference === "seller" ? referenceId : linkedSellerId
   if (sellerToNotify) {
@@ -213,17 +212,10 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       customer
         ? `${(customer as any).first_name ?? ""} ${(customer as any).last_name ?? ""}`.trim() || "Müşteri"
         : "Müşteri"
-    // Sadece gerçek zamanlı bildirim gönder — /messages'ta konuşma oluşturma
-    notifyMessengerUser({
-      targetUserId: sellerToNotify,
-      targetUserType: "SELLER",
-      senderName: customerName,
-      preview: `${customerName} ürününüze yeni bir yorum bıraktı.`,
-      notificationType: "review_notification",
-      // sourceUserId/sourceUserType bilinçli olarak verilmedi:
-      // verilseydi kayi-messenger'da DIRECT konuşma açılırdı ve
-      // yorum bildirimleri /messages alanında görünürdü.
-    })
+    const eventBus = req.scope.resolve(Modules.EVENT_BUS) as any
+    eventBus
+      .emit({ eventName: "review_notification.new_review", body: { data: { sellerToNotify, customerName } } })
+      .catch((err: Error) => console.warn("[review] notification event emit failed:", err?.message))
   }
 
   return res.status(201).json({ review: data[0] ?? review })

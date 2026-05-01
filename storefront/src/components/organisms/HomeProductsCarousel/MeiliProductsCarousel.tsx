@@ -25,7 +25,7 @@ export const MeiliProductsCarousel = ({
   }seller.store_status != SUSPENDED AND variants.prices.currency_code = "${currency_code}"`
 
   return (
-    <InstantSearchNext searchClient={client} indexName="products">
+    <InstantSearchNext searchClient={client as any} indexName="products">
       <Configure hitsPerPage={10} filters={filters} />
       <ProductsListing locale={locale} />
     </InstantSearchNext>

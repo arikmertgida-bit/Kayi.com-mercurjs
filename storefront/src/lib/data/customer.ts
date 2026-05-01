@@ -297,7 +297,8 @@ export const sendResetPasswordEmail = async (email: string) => {
 }
 
 export const uploadCustomerFile = async (
-  formData: FormData
+  formData: FormData,
+  imageType?: "avatar" | "cover"
 ): Promise<string | null> => {
   const authHeaders = await getAuthHeaders()
   if (!authHeaders) return null
@@ -312,6 +313,7 @@ export const uploadCustomerFile = async (
     headers: {
       "x-publishable-api-key": PUBLISHABLE_KEY,
       ...(authHeaders as Record<string, string>),
+      ...(imageType ? { "x-image-type": imageType } : {}),
     },
     body: formData,
   })

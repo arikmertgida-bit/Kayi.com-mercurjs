@@ -10,7 +10,10 @@ export const listCategories = async ({
   query,
   headingCategories = [],
 }: Partial<CategoriesProps> = {}) => {
-  const limit = query?.limit || 100
+  // Default limit raised to 500: the flat list includes both parent and child
+  // categories. With 12 parents × ~10 children ≈ 132 records, the old limit
+  // of 100 silently dropped the last 2 parent categories.
+  const limit = query?.limit || 500
 
   const categories = await sdk.client
     .fetch<{
@@ -48,7 +51,10 @@ export const listMegaMenuCategories = async () => {
   }>("/store/product-categories", {
     query: {
       fields: "id,handle,name,rank,parent_category_id,thumbnail,+metadata,*category_children,category_children.id,category_children.handle,category_children.name,category_children.rank",
-      limit: 100,
+      // limit applies to the FLAT list (parents + all children combined).
+      // With 12 parent categories × ~10 children each ≈ 132 total records.
+      // The old limit of 100 cut off the last 2 parent categories (KİTAP & HOBİ, ÖZEL YAŞAM).
+      limit: 500,
     },
     next: { revalidate: 60 },
     cache: "force-cache",

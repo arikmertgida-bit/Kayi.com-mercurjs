@@ -20,7 +20,7 @@ export const Cart = async () => {
       <div className="lg:col-span-2"></div>
       <div className="col-span-12 lg:col-span-4">
         <div className="w-full mb-6 border rounded-sm p-4">
-          <CartPromotionCode cart={cart} />
+          <CartPromotionCode cart={cart as any} />
         </div>
         <div className="border rounded-sm p-4 h-fit">
           <CartSummary

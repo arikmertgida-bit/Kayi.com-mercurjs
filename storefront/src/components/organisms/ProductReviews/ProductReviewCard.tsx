@@ -529,7 +529,7 @@ export const ProductReviewCard = ({ review, currentCustomerId }: Props) => {
 
   const timeAgo = (() => {
     try {
-      return formatDistanceToNow(new Date(review.created_at), { addSuffix: true, locale: tr })
+      return formatDistanceToNow(new Date(review.updated_at), { addSuffix: true, locale: tr })
     } catch { return "" }
   })()
 

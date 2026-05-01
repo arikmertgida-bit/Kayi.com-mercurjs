@@ -13,7 +13,7 @@ export const Navbar = ({
   return (
     <div className="hidden lg:flex border py-3 justify-between px-6 items-center">
       <div className="flex items-center gap-6">
-        <MegaMenu categories={megaMenuCategories} />
+        <MegaMenu categories={megaMenuCategories as any} />
         <LocalizedClientLink
           href="/categories"
           className="label-md uppercase px-4"

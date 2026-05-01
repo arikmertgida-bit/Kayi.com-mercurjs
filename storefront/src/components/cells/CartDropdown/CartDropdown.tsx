@@ -20,8 +20,8 @@ export const CartDropdown = () => {
   const { cart } = useCartContext()
   const [open, setOpen] = useState(false)
 
-  const previousItemCount = usePrevious(getItemCount(cart))
-  const cartItemsCount = (cart && getItemCount(cart)) || 0
+  const previousItemCount = usePrevious(getItemCount(cart as HttpTypes.StoreCart | null))
+  const cartItemsCount = (cart && getItemCount(cart as HttpTypes.StoreCart | null)) || 0
   const pathname = usePathname()
 
   // Filter out items with invalid data (missing prices/variants)

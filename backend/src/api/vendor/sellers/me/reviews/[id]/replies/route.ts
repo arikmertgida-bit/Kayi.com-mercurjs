@@ -1,8 +1,7 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
-import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
+import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
 import { REVIEW_REPLY_MODULE } from "../../../../../../../modules/review-replies"
 import ReviewReplyService from "../../../../../../../modules/review-replies/service"
-import { notifyMessengerUser } from "../../../../../../../lib/messenger"
 import { enrichRepliesWithCustomerData } from "../../../../../../utils/enrich-replies"
 // @ts-ignore — import workflow from mercurjs package
 import { updateReviewWorkflow } from "@mercurjs/reviews/workflows"
@@ -71,31 +70,15 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     console.warn("[review-reply] Could not sync seller_note:", err?.message)
   }
 
-  // Find the review's customer_id to send notification (fire-and-forget)
-  const query2 = req.scope.resolve(ContainerRegistrationKeys.QUERY)
-  query2
-    .graph({
-      entity: "customer_review",
-      fields: ["customer_id"],
-      filters: { review_id: reviewId },
-    })
-    .then(({ data: relations }: { data: any[] }) => {
-      const customerId = relations?.[0]?.customer_id
-      if (customerId) {
-        notifyMessengerUser({
-          targetUserId: customerId,
-          targetUserType: "CUSTOMER",
-          senderName: seller.name ?? "Satıcı",
-          preview: `${seller.name ?? "Satıcı"} yorumunuza yanıt verdi.`,
-          sourceUserId: seller.id,
-          sourceUserType: "SELLER",
-          subject: "Yorum Yanıtı Bildirimi",
-          notificationType: "review_notification",
-        })
-      }
+  // Notify customer about the seller reply via event (fire-and-forget)
+  const eventBus = req.scope.resolve(Modules.EVENT_BUS) as any
+  eventBus
+    .emit({
+      eventName: "review_notification.seller_reply",
+      body: { data: { reviewId, sellerId: seller.id, sellerName: seller.name ?? "Satıcı" } },
     })
     .catch((err: Error) => {
-      console.warn("[review-reply] Could not resolve customer for notification:", err.message)
+      console.warn("[review-reply] notification event emit failed:", err.message)
     })
 
   return res.status(201).json({

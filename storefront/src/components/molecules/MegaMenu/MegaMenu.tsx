@@ -86,10 +86,10 @@ export const MegaMenu = ({ categories }: { categories: Category[] }) => {
             </div>
 
             {/* Category image — stored in metadata.thumbnail from Medusa admin */}
-            {activeCategory.metadata?.thumbnail && (
+            {(activeCategory.metadata?.thumbnail as string | null | undefined) && (
               <div className="shrink-0 relative self-stretch overflow-hidden rounded-[10px] m-2" style={{ width: 600 }}>
                 <Image
-                  src={activeCategory.metadata.thumbnail as string}
+                  src={activeCategory.metadata?.thumbnail as string}
                   alt={activeCategory.name}
                   fill
                   sizes="600px"

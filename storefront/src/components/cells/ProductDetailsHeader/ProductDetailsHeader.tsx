@@ -120,8 +120,6 @@ export const ProductDetailsHeader = ({
         <div>
           <WishlistButton
             productId={product.id}
-            wishlist={wishlist}
-            user={user}
           />
         </div>
       </div>

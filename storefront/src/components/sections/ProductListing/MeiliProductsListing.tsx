@@ -76,7 +76,7 @@ export const MeiliProductsListing = ({
 
   return (
     <FiltersProvider initialSearch={searchParams.toString()}>
-      <InstantSearchNext searchClient={client} indexName="products">
+      <InstantSearchNext searchClient={client as any} indexName="products">
         <FilteredProductsContent
           seller_handle={seller_handle}
           category_id={category_id}
@@ -178,7 +178,7 @@ const ProductsListing = ({
             "*variants.calculated_price,*seller.reviews,-thumbnail,-images,-type,-tags,-variants.options,-options,-collection,-collection_id,+categories,+categories.id,+categories.metadata",
           id: ids as any,
           limit: items.length,
-        },
+        } as any,
       })
       setApiProducts(response.products)
     } catch (error) {

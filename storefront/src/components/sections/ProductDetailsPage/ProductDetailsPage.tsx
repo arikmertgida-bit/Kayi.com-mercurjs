@@ -4,8 +4,27 @@ import { StickyAddToCart } from "@/components/cells/StickyAddToCart/StickyAddToC
 import { ProductVariantProvider } from "@/components/providers/ProductVariant/ProductVariantProvider"
 import { listProducts } from "@/lib/data/products"
 import { HomeProductSection } from "../HomeProductSection/HomeProductSection"
+import { RelatedProductsSection } from "../RelatedProductsSection/RelatedProductsSection"
 import NotFound from "@/app/not-found"
 import { Suspense } from "react"
+
+function RelatedProductsSkeleton() {
+  return (
+    <section className="py-4 w-full">
+      {/* Heading placeholder */}
+      <div className="h-6 w-48 bg-neutral-200 rounded mb-3 animate-pulse" />
+      {/* Card placeholders — aspect-square reserves height to prevent CLS */}
+      <div className="flex gap-3 overflow-hidden">
+        {[0, 1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="flex-shrink-0 w-[180px] aspect-square bg-neutral-200 rounded animate-pulse"
+          />
+        ))}
+      </div>
+    </section>
+  )
+}
 
 export const ProductDetailsPage = async ({
   handle,
@@ -40,6 +59,11 @@ export const ProductDetailsPage = async ({
       </div>
       <div className="my-8">
         <ProductReviews product={prod as any} locale={locale} />
+      </div>
+      <div className="my-8">
+        <Suspense fallback={<RelatedProductsSkeleton />}>
+          <RelatedProductsSection product={prod} locale={locale} />
+        </Suspense>
       </div>
       <div className="my-8">
         <HomeProductSection

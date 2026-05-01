@@ -307,7 +307,6 @@ const deleteReviewReply = async (replyId: string): Promise<{ success?: boolean; 
 }
 
 export { getReviews, createReview, getProductReviews, uploadReviewImages, reportReviewImage, getReviewReplies, createReviewReply, likeReviewReply, updateReviewReply, deleteReviewReply }
-export type { ReviewReply }
 
 export const isAuthenticated = async (): Promise<boolean> => {
   const headers = await getAuthHeaders()

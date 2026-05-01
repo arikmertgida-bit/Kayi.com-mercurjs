@@ -130,7 +130,7 @@ export const ProductLightbox = ({
                 >
                   <Image
                     src={decodeURIComponent(slide.url)}
-                    alt={slide.alt ?? `Product image ${idx + 1}`}
+                    alt={(slide as any).alt ?? `Product image ${idx + 1}`}
                     fill
                     quality={90}
                     priority={idx === startIndex}
@@ -187,7 +187,7 @@ export const ProductLightbox = ({
                 >
                   <Image
                     src={decodeURIComponent(slide.url)}
-                    alt={slide.alt ?? `Thumbnail ${idx + 1}`}
+                    alt={(slide as any).alt ?? `Thumbnail ${idx + 1}`}
                     fill
                     sizes="64px"
                     quality={60}
