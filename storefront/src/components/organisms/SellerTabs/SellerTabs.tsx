@@ -1,10 +1,14 @@
+"use client"
+
 import { Suspense } from "react"
 import { ProductListingSkeleton } from "../ProductListingSkeleton/ProductListingSkeleton"
 import { SellerProductListing } from "@/components/sections"
+import { MeiliProductsListing } from "@/components/sections"
 import { SellerProps } from "@/types/seller"
 import { SellerTabsSwitcher } from "./SellerTabsSwitcher"
 import { SellerScore, SellerReviewList } from "@/components/molecules"
 import { SellerSidebar } from "../SellerSidebar/SellerSidebar"
+import { useMeiliSearchClient } from "@/providers/MeiliSearchProvider"
 
 export const SellerTabs = ({
   seller_handle,
@@ -35,7 +39,27 @@ export const SellerTabs = ({
       ? filteredReviews.reduce((sum, r) => sum + (r?.rating || 0), 0) / reviewCount
       : 0
 
-  const productContent = (
+  const { searchClient } = useMeiliSearchClient()
+  const useMeili = Boolean(searchClient)
+
+  const productContent = useMeili ? (
+    <div className="mt-6">
+      <Suspense fallback={<ProductListingSkeleton />}>
+        <MeiliProductsListing
+          seller_handle={seller_handle}
+          locale={locale}
+          currency_code={currency_code}
+          sidebarContent={
+            <SellerSidebar
+              seller={seller}
+              categories={categories}
+              productCount={productCount}
+            />
+          }
+        />
+      </Suspense>
+    </div>
+  ) : (
     <div className="md:flex gap-4 mt-6">
       <div className="w-[280px] flex-shrink-0 hidden md:block">
         <SellerSidebar

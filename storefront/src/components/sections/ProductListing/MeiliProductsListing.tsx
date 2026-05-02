@@ -6,13 +6,12 @@ import {
   ProductCard,
   ProductsPagination,
 } from "@/components/organisms"
-import { client } from "@/lib/client"
-import { Configure, useHits } from "react-instantsearch"
-import { InstantSearchNext } from "react-instantsearch-nextjs"
+import { useMeiliSearchClient } from "@/providers/MeiliSearchProvider"
+import { Configure, InstantSearch, useHits } from "react-instantsearch"
 import { useSearchParams } from "next/navigation"
 import { PRODUCT_LIMIT } from "@/const"
 import { ProductListingSkeleton } from "@/components/organisms/ProductListingSkeleton/ProductListingSkeleton"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { listProducts } from "@/lib/data/products"
 import { sortProducts } from "@/lib/helpers/sort-products"
 import { SortOptions } from "@/types/product"
@@ -25,32 +24,25 @@ function buildFacetFiltersFromMap(filterMap: Record<string, string[]>): string {
       case "size":      return "variants.size"
       case "color":     return "variants.color"
       case "condition": return "variants.condition"
-      case "rating":    return "average_rating"
       default:          return ""
     }
   }
 
-  let facet  = ""
-  let rating = ""
+  let facet = ""
 
   for (const [key, values] of Object.entries(filterMap)) {
     if (!values.length) continue
     const attr = getAttr(key)
     if (!attr) continue
 
-    if (key === "rating") {
-      const parts = values.map((v) => `${attr} >= ${v}`)
-      rating += ` AND ${parts.length > 1 ? `(${parts.join(" OR ")})` : parts[0]}`
+    if (values.length > 1) {
+      facet += ` AND (${values.map((v) => `${attr} = "${v}"`).join(" OR ")})`
     } else {
-      if (values.length > 1) {
-        facet += ` AND (${values.map((v) => `${attr} = "${v}"`).join(" OR ")})`
-      } else {
-        facet += ` AND ${attr} = "${values[0]}"`
-      }
+      facet += ` AND ${attr} = "${values[0]}"`
     }
   }
 
-  return facet + rating
+  return facet
 }
 
 // ─── Main export: reads useSearchParams ONCE for SSR init, wraps everything ──
@@ -71,12 +63,13 @@ export const MeiliProductsListing = ({
   sidebarContent?: React.ReactNode
 }) => {
   const searchParams = useSearchParams()
+  const { searchClient } = useMeiliSearchClient()
 
-  if (!client) return null
+  if (!searchClient) return null
 
   return (
     <FiltersProvider initialSearch={searchParams.toString()}>
-      <InstantSearchNext searchClient={client as any} indexName="products">
+      <InstantSearch searchClient={searchClient as any} indexName="products">
         <FilteredProductsContent
           seller_handle={seller_handle}
           category_id={category_id}
@@ -85,7 +78,7 @@ export const MeiliProductsListing = ({
           currency_code={currency_code}
           sidebarContent={sidebarContent}
         />
-      </InstantSearchNext>
+      </InstantSearch>
     </FiltersProvider>
   )
 }
@@ -143,7 +136,8 @@ const FilteredProductsContent = ({
 
   return (
     <>
-      <Configure query={query} filters={filters} />
+      {/* hitsPerPage must exceed PRODUCT_LIMIT×max-pages to support client-side pagination */}
+      <Configure query={query} filters={filters} hitsPerPage={500} />
       <ProductsListing locale={locale} currency_code={currency_code} collection_id={collection_id} sidebarContent={sidebarContent} />
     </>
   )
@@ -166,43 +160,78 @@ const ProductsListing = ({
   const [apiProducts, setApiProducts] = useState<HttpTypes.StoreProduct[] | null>(null)
   const { items, results } = useHits()
 
-  async function handleSetProducts() {
-    if (!items.length) return
-    try {
-      const ids = items.map((item) => item.objectID as string)
-      const { response } = await listProducts({
-        countryCode: locale,
-        collection_id,
-        queryParams: {
-          fields:
-            "*variants.calculated_price,*seller.reviews,-thumbnail,-images,-type,-tags,-variants.options,-options,-collection,-collection_id,+categories,+categories.id,+categories.metadata",
-          id: ids as any,
-          limit: items.length,
-        } as any,
-      })
-      setApiProducts(response.products)
-    } catch (error) {
-      console.error("handleSetProducts error:", error)
-      setApiProducts([])
-    }
-  }
+  // Use a stable string of IDs as the effect dependency to prevent re-firing when
+  // react-instantsearch returns a new array reference with the same content.
+  // instant-meilisearch returns the document primary key as `id`, not `objectID`.
+  const itemIdsKey = items.map((item: any) => (item.objectID ?? item.id) as string).join(",")
 
   useEffect(() => {
-    handleSetProducts()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items])
+    // Reset immediately so stale products from previous filter don't flash
+    setApiProducts(null)
 
+    if (!itemIdsKey) {
+      setApiProducts([])
+      return
+    }
+
+    let cancelled = false
+    const ids = itemIdsKey.split(",")
+
+    listProducts({
+      countryCode: locale,
+      collection_id,
+      queryParams: {
+        fields:
+          "*variants.calculated_price,*seller.reviews,-thumbnail,-images,-type,-tags,-variants.options,-options,-collection,-collection_id,+categories,+categories.id,+categories.metadata",
+        id: ids as any,
+        limit: ids.length,
+      } as any,
+    })
+      .then(({ response }) => {
+        if (!cancelled) setApiProducts(response.products)
+      })
+      .catch(() => {
+        if (!cancelled) setApiProducts([])
+      })
+
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [itemIdsKey])
+
+  // ALL hooks must be called before any conditional returns (Rules of Hooks)
+  const sortBy = (paramMap["sortBy"] || "created_at") as SortOptions
+
+  // Build an ID→product lookup map so rendering is always driven by `items`
+  // (current MeiliSearch state), never by a potentially-stale apiProducts array.
+  const apiProductsMap = useMemo(() => {
+    const map = new Map<string, HttpTypes.StoreProduct>()
+    if (apiProducts) {
+      apiProducts.forEach((p) => map.set(p.id, p))
+    }
+    return map
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiProducts])
+
+  const count = items.length || 0
+  const page  = +(paramMap["page"] || 1)
+
+  // Sort items using the API product data (for price sort); fall back to MeiliSearch order
+  const sortedItems = useMemo(() => {
+    if (sortBy === "created_at" || sortBy === "created_at_asc") return items
+    // Collect API products in the same order as items, then sort
+    const paired = items
+      .map((hit: any) => ({ hit, api: apiProductsMap.get(hit.objectID ?? hit.id) }))
+      .filter((x): x is { hit: any; api: HttpTypes.StoreProduct } => Boolean(x.api))
+    if (paired.length < items.length) return items // not all loaded yet, keep MeiliSearch order
+    const sorted = sortProducts(paired.map((x) => x.api), sortBy)
+    return sorted.map((api) => items.find((h: any) => (h.objectID ?? h.id) === api.id)).filter(Boolean) as typeof items
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, apiProductsMap, sortBy])
+
+  // Early return AFTER all hooks have been called
   if (results === undefined) return <ProductListingSkeleton />
 
-  const sortBy = (paramMap["sortBy"] || "created_at") as SortOptions
-  const sortedApiProducts = apiProducts ? sortProducts([...apiProducts], sortBy) : null
-
-  const count      = items.length || 0
-  const page       = +(paramMap["page"] || 1)
-  const pagedItems = items.slice((page - 1) * PRODUCT_LIMIT, page * PRODUCT_LIMIT)
-  const pagedApiProducts = sortedApiProducts
-    ? sortedApiProducts.slice((page - 1) * PRODUCT_LIMIT, page * PRODUCT_LIMIT)
-    : null
+  const pagedItems = sortedItems.slice((page - 1) * PRODUCT_LIMIT, page * PRODUCT_LIMIT)
   const pages      = Math.ceil(count / PRODUCT_LIMIT) || 1
 
   return (
@@ -222,30 +251,27 @@ const ProductsListing = ({
                 Sorry, we can&apos;t find any results for your criteria
               </p>
             </div>
-          ) : pagedApiProducts === null ? (
-            <div className="grid grid-cols-1 min-[425px]:grid-cols-2 lg:grid-cols-3 min-[1440px]:grid-cols-4 gap-4">
-              {pagedItems.map((_, i) => (
-                <div key={i} className="w-full rounded-sm border overflow-hidden">
-                  <div className="aspect-square animate-pulse bg-gray-200 w-full" />
-                  <div className="p-2 space-y-2">
-                    <div className="h-4 animate-pulse bg-gray-200 rounded-sm w-3/4" />
-                    <div className="h-4 animate-pulse bg-gray-200 rounded-sm w-1/2" />
-                  </div>
-                </div>
-              ))}
-            </div>
           ) : (
             <div className="w-full">
               <ul className="grid grid-cols-1 min-[425px]:grid-cols-2 lg:grid-cols-3 min-[1440px]:grid-cols-4 gap-4">
-                {pagedApiProducts.map((apiProduct: any, i: number) => {
-                  const hit = items.find(
-                    (h: any) => h.objectID === apiProduct.id || h.handle === apiProduct.handle
-                  )
-                  if (!hit) return null
+                {pagedItems.map((hit: any, i: number) => {
+                  const apiProduct = apiProductsMap.get((hit as any).objectID ?? (hit as any).id)
+                  if (!apiProduct) {
+                    // API data not yet loaded for this hit → show skeleton card
+                    return (
+                      <div key={hit.objectID ?? hit.id} className="w-full rounded-sm border overflow-hidden">
+                        <div className="aspect-square animate-pulse bg-gray-200 w-full" />
+                        <div className="p-2 space-y-2">
+                          <div className="h-4 animate-pulse bg-gray-200 rounded-sm w-3/4" />
+                          <div className="h-4 animate-pulse bg-gray-200 rounded-sm w-1/2" />
+                        </div>
+                      </div>
+                    )
+                  }
                   return (
                     <ProductCard
                       api_product={apiProduct}
-                      key={String(apiProduct.id || apiProduct.handle)}
+                      key={apiProduct.id}
                       product={hit}
                       isEager={i < 4}
                     />

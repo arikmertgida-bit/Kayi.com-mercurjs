@@ -2,7 +2,7 @@
 
 import { HttpTypes } from "@medusajs/types"
 import { HomeSlider } from "./HomeSlider"
-import { client } from "@/lib/client"
+import { useMeiliSearchClient } from "@/providers/MeiliSearchProvider"
 import { Configure, useHits } from "react-instantsearch"
 import { InstantSearchNext } from "react-instantsearch-nextjs"
 import { listProducts } from "@/lib/data/products"
@@ -18,14 +18,17 @@ export const MeiliProductsCarousel = ({
   seller_handle?: string
   currency_code: string
 }) => {
+  const { searchClient } = useMeiliSearchClient()
   const filters = `${
     seller_handle
       ? `seller.handle = "${seller_handle}" AND `
       : ""
   }seller.store_status != SUSPENDED AND variants.prices.currency_code = "${currency_code}"`
 
+  if (!searchClient) return null
+
   return (
-    <InstantSearchNext searchClient={client as any} indexName="products">
+    <InstantSearchNext searchClient={searchClient as any} indexName="products">
       <Configure hitsPerPage={10} filters={filters} />
       <ProductsListing locale={locale} />
     </InstantSearchNext>
@@ -53,7 +56,7 @@ const ProductsListing = ({ locale }: { locale: string }) => {
     .map((hit) => {
       const apiProd = prod?.find((p) => {
         const { cheapestPrice } = getProductPrice({ product: p })
-        return p.id === hit.objectID && Boolean(cheapestPrice)
+        return p.id === ((hit as any).objectID ?? (hit as any).id) && Boolean(cheapestPrice)
       })
       return apiProd ?? null
     })

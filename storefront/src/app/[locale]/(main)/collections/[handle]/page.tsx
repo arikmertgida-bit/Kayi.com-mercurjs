@@ -9,7 +9,6 @@ import { headers } from "next/headers"
 import { Suspense } from "react"
 
 const MEILISEARCH_HOST = process.env.NEXT_PUBLIC_MEILISEARCH_HOST
-const MEILISEARCH_SEARCH_KEY = process.env.NEXT_PUBLIC_MEILISEARCH_SEARCH_KEY
 
 const SingleCollectionsPage = async ({
   params,
@@ -46,7 +45,7 @@ const SingleCollectionsPage = async ({
       <h1 className="heading-xl uppercase">{collection.title}</h1>
 
       <Suspense fallback={<ProductListingSkeleton />}>
-        {bot || !MEILISEARCH_HOST || !MEILISEARCH_SEARCH_KEY ? (
+        {bot || !MEILISEARCH_HOST ? (
           <ProductListing collection_id={collection.id} showSidebar page={page} />
         ) : (
           <MeiliProductsListing

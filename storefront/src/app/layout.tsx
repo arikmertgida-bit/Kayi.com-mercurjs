@@ -52,6 +52,26 @@ export default async function RootLayout({
   const MEILISEARCH_HOST = process.env.NEXT_PUBLIC_MEILISEARCH_HOST
   const htmlLang = locale || "en"
 
+  // Fetch MeiliSearch config from backend at runtime (server-side, cached 1 hour).
+  // This replaces the old build-time baked NEXT_PUBLIC_MEILISEARCH_SEARCH_KEY approach.
+  const backendUrl = process.env.MEDUSA_BACKEND_URL || "http://backend:9000"
+  const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ""
+  const meiliConfig: { host: string; key: string } = await fetch(
+    `${backendUrl}/store/search-config`,
+    {
+      headers: { "x-publishable-api-key": publishableKey },
+      next: { revalidate: 3600 },
+    }
+  )
+    .then((r) => r.json())
+    .then((data: { host: string; key: string }) => ({
+      // Use the public-facing host (baked at build time) instead of the internal Docker network URL
+      // that the backend returns (http://meilisearch:7700 → browser cannot resolve this).
+      host: process.env.NEXT_PUBLIC_MEILISEARCH_HOST || data.host,
+      key: data.key,
+    }))
+    .catch(() => ({ host: "", key: "" }))
+
   return (
     <html lang={htmlLang} className="">
       <Head>
@@ -118,7 +138,7 @@ export default async function RootLayout({
       <body
         className={`${funnelDisplay.className} antialiased bg-primary text-secondary relative`}
       >
-        <Providers cart={null}>
+        <Providers cart={null} meiliConfig={meiliConfig}>
           {/*
             CartInitializer fetches cart data server-side and injects it via
             CartSynchronizer (a client component). It does NOT wrap children,

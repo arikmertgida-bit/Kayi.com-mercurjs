@@ -79,7 +79,6 @@ export async function generateMetadata({
 }
 
 const MEILISEARCH_HOST = process.env.NEXT_PUBLIC_MEILISEARCH_HOST
-const MEILISEARCH_SEARCH_KEY = process.env.NEXT_PUBLIC_MEILISEARCH_SEARCH_KEY
 
 function getAllCategoryIds(cat: {
   id: string
@@ -186,7 +185,7 @@ async function Category({
 
       <div>
         <Suspense fallback={<ProductListingSkeleton />}>
-          {bot || !MEILISEARCH_HOST || !MEILISEARCH_SEARCH_KEY ? (
+          {bot || !MEILISEARCH_HOST ? (
             <ProductListing category_id={allCategoryIds} showSidebar page={page} />
           ) : (
             <MeiliProductsListing

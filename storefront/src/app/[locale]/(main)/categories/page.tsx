@@ -68,7 +68,6 @@ export async function generateMetadata({
 }
 
 const MEILISEARCH_HOST = process.env.NEXT_PUBLIC_MEILISEARCH_HOST
-const MEILISEARCH_SEARCH_KEY = process.env.NEXT_PUBLIC_MEILISEARCH_SEARCH_KEY
 
 async function AllCategories({
   params,
@@ -153,7 +152,7 @@ async function AllCategories({
       <h1 className="heading-xl uppercase">Tüm Ürünler</h1>
 
       <Suspense fallback={<ProductListingSkeleton />}>
-        {bot || !MEILISEARCH_HOST || !MEILISEARCH_SEARCH_KEY ? (
+        {bot || !MEILISEARCH_HOST ? (
           <ProductListing showSidebar locale={locale} page={page} />
         ) : (
           <MeiliProductsListing

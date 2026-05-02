@@ -37,4 +37,4 @@ USER appuser
 EXPOSE 9000
 
 # Run from /app (was .medusa/server in builder, same content)
-CMD ["sh", "-c", "npx medusa db:migrate && (node src/scripts/ensure-columns.js || echo 'ensure-columns skipped') && node src/scripts/init-meilisearch.js && npx medusa start"]
+CMD ["sh", "-c", "npx medusa db:migrate && (node src/scripts/ensure-columns.js || echo 'ensure-columns skipped') && node src/scripts/init-meilisearch.js && node src/scripts/create-search-key.js && npx medusa start"]

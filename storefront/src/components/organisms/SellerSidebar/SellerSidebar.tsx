@@ -39,7 +39,7 @@ export function SellerSidebar({ seller, categories, productCount }: SellerSideba
   const updateSearchParam = useUpdateSearchParams()
 
   const [activeCategory, setActiveCategory] = useState(searchParams.get("category_id") || "")
-  const [activeSort, setActiveSort] = useState(searchParams.get("sort") || "")
+  const [activeSort, setActiveSort] = useState(searchParams.get("sortBy") || "")
 
   const reviewCount = seller.reviews?.filter((r) => r !== null).length || 0
   const rating =
@@ -53,7 +53,7 @@ export function SellerSidebar({ seller, categories, productCount }: SellerSideba
   const isActive = seller.store_status === "ACTIVE"
 
   const sortOptions = [
-    { label: "En Yeniler", value: "created_at_desc" },
+    { label: "En Yeniler", value: "created_at" },
     { label: "Fiyat: Düşükten Yükseğe", value: "price_asc" },
     { label: "Fiyat: Yüksekten Düşüğe", value: "price_desc" },
   ]
@@ -87,7 +87,7 @@ export function SellerSidebar({ seller, categories, productCount }: SellerSideba
                 onClick={() => {
                   const next = activeSort === opt.value ? "" : opt.value
                   setActiveSort(next)
-                  updateSearchParam("sort", next || null)
+                  updateSearchParam("sortBy", next || null)
                 }}
                 className={`w-full text-left text-sm px-2 py-1.5 rounded-sm transition-colors ${
                   activeSort === opt.value

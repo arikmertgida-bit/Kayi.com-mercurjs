@@ -73,7 +73,7 @@ services:
         max-file: "3"
 
   meilisearch:
-    image: getmeili/meilisearch:latest
+    image: getmeili/meilisearch:v1.12.0
     restart: unless-stopped
     mem_limit: 512m
     cpus: '0.75'
@@ -218,8 +218,6 @@ services:
         NEXT_PUBLIC_VENDOR_URL: http://localhost:7001
         NEXT_PUBLIC_MESSENGER_URL: http://localhost:4000
         NEXT_PUBLIC_MEILISEARCH_HOST: http://localhost:7700
-        NEXT_PUBLIC_MEILISEARCH_SEARCH_KEY: ${MEILISEARCH_SEARCH_KEY:-masterKey_kayicom}
-        NEXT_PUBLIC_SEARCH_API_KEY: ${MEILISEARCH_SEARCH_KEY:-masterKey_kayicom}
         MEDUSA_BACKEND_URL: http://backend:9000
     restart: unless-stopped
     mem_limit: 512m
@@ -244,8 +242,6 @@ services:
       NEXT_PUBLIC_VENDOR_URL: http://localhost:7001
       NEXT_PUBLIC_MESSENGER_URL: http://localhost:4000
       NEXT_PUBLIC_MEILISEARCH_HOST: http://localhost:7700
-      NEXT_PUBLIC_MEILISEARCH_SEARCH_KEY: ${MEILISEARCH_SEARCH_KEY:-masterKey_kayicom}
-      NEXT_PUBLIC_SEARCH_API_KEY: ${MEILISEARCH_SEARCH_KEY:-masterKey_kayicom}
       NEXT_IMAGE_UNOPTIMIZED: "true"
       NEXT_TELEMETRY_DISABLED: "1"
     healthcheck:

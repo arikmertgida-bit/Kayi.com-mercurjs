@@ -1,15 +1,35 @@
 import { MedusaContainer } from "@medusajs/framework"
 import { syncProductsWorkflow } from "../workflows/sync-products"
 
+const BATCH_SIZE = 500
+
 export default async function syncMeiliSearchJob(container: MedusaContainer) {
   console.log("[MEILISEARCH-JOB] Starting sync at:", new Date().toISOString())
   try {
-    await syncProductsWorkflow(container).run({
-      input: {},
-    })
-    console.log("[MEILISEARCH-JOB] Sync completed successfully")
-  } catch (error) {
-    console.error("[MEILISEARCH-JOB] Sync failed:", error?.message || error)
+    let offset = 0
+    let totalSynced = 0
+
+    while (true) {
+      const result = await syncProductsWorkflow(container).run({
+        input: { limit: BATCH_SIZE, offset },
+      })
+
+      const batchCount: number = (result.result.products as unknown[])?.length ?? 0
+      totalSynced += batchCount
+
+      if (batchCount < BATCH_SIZE) {
+        // Last batch — no more products
+        break
+      }
+      offset += BATCH_SIZE
+    }
+
+    console.log(
+      `[MEILISEARCH-JOB] Sync completed — ${totalSynced} products processed`
+    )
+  } catch (error: unknown) {
+    const message = error instanceof Error ? (error as Error).message : String(error)
+    console.error("[MEILISEARCH-JOB] Sync failed:", message)
   }
 }
 

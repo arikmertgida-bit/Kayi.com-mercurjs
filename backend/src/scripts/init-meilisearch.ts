@@ -32,7 +32,6 @@ export default async function initMeilisearch() {
     const filterableAttributes = [
       "seller.handle",
       "seller.store_status",
-      "supported_countries",
       "variants.prices.currency_code",
       "variants.prices.amount",
       "categories.id",
@@ -57,6 +56,18 @@ export default async function initMeilisearch() {
       "variants.sku",
     ]
 
+    // rankingRules — e-ticaret için optimize edilmiş sıralama
+    // "words" ve "typo" öne alınarak arama doğruluğu önceliklendirilir;
+    // "sort" kuralı "attribute"'tan önce tutulur (fiyat sıralama performansı için)
+    const rankingRules = [
+      "words",
+      "typo",
+      "proximity",
+      "attribute",
+      "sort",
+      "exactness",
+    ]
+
     console.log("[MEILISEARCH] Configuring filterableAttributes...")
     const t1 = await index.updateFilterableAttributes(filterableAttributes)
     await client.waitForTask(t1.taskUid)
@@ -68,6 +79,10 @@ export default async function initMeilisearch() {
     console.log("[MEILISEARCH] Configuring searchableAttributes...")
     const t3 = await index.updateSearchableAttributes(searchableAttributes)
     await client.waitForTask(t3.taskUid)
+
+    console.log("[MEILISEARCH] Configuring rankingRules...")
+    const t4 = await index.updateRankingRules(rankingRules)
+    await client.waitForTask(t4.taskUid)
 
     console.log("[MEILISEARCH] Index configured successfully")
   } catch (error) {
