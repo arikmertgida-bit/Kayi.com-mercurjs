@@ -1,45 +1,26 @@
-import { Carousel } from "@/components/cells"
-import { CategoryCard } from "@/components/organisms"
+import { listMegaMenuCategories } from "@/lib/data/categories"
+import { HomeCategoriesCarousel } from "./HomeCategoriesCarousel"
 
-export const categories: { id: number; name: string; handle: string }[] = [
-  {
-    id: 1,
-    name: "Sneakers",
-    handle: "sneakers",
-  },
-  {
-    id: 2,
-    name: "Sandals",
-    handle: "sandals",
-  },
-  {
-    id: 3,
-    name: "Boots",
-    handle: "boots",
-  },
-  {
-    id: 4,
-    name: "Sport",
-    handle: "sport",
-  },
-  {
-    id: 5,
-    name: "Accessories",
-    handle: "accessories",
-  },
-]
+export const HomeCategories = async () => {
+  const raw = await listMegaMenuCategories().catch(() => [])
 
-export const HomeCategories = async ({ heading }: { heading: string }) => {
+  if (!raw?.length) return null
+
+  // thumbnail, MedusaJS'de metadata.thumbnail olarak saklanıyor
+  const categories = raw.map((cat) => ({
+    id: cat.id,
+    name: cat.name,
+    handle: cat.handle ?? "",
+    thumbnail:
+      (cat.metadata as Record<string, unknown> | null)?.thumbnail as
+        | string
+        | null
+        | undefined,
+  }))
+
   return (
-    <section className="bg-primary py-4 w-full">
-      <div className="mb-3">
-        <h2 className="heading-md text-primary uppercase">{heading}</h2>
-      </div>
-      <Carousel
-        items={categories?.map((category) => (
-          <CategoryCard key={category.id} category={category} />
-        ))}
-      />
+    <section className="py-4 w-full px-4 lg:px-6 min-h-[9rem] sm:min-h-[11rem] md:min-h-[13rem]">
+      <HomeCategoriesCarousel categories={categories} />
     </section>
   )
 }

@@ -31,6 +31,7 @@ import { Shell } from "../../layout/shell";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLogout } from "../../../hooks/api";
 import { useReviewImageReports } from "../../../hooks/api/review-image-reports";
+import { useProductReports } from "../../../hooks/api/product-reports";
 import { queryClient } from "../../../lib/query-client";
 import { useExtension } from "../../../providers/extension-provider";
 import { useSearch } from "../../../providers/search-provider";
@@ -184,7 +185,18 @@ const Header = () => {
 
 const useCoreRoutes = (): Omit<INavItem, "pathname">[] => {
   const { t } = useTranslation();
+  const location = useLocation();
   const { count: pendingReportCount = 0 } = useReviewImageReports({ status: "pending", limit: 1 });
+  const { count: pendingProductReportCount = 0 } = useProductReports({ status: "pending", limit: 1 });
+
+  // Badge sıfırlama: sayfaya girilince localStorage'a mevcut sayıyı kaydet
+  const SEEN_KEY = "product_reports_seen_count";
+  const isOnProductReports = location.pathname.startsWith("/product-reports");
+  if (isOnProductReports && typeof window !== "undefined") {
+    localStorage.setItem(SEEN_KEY, String(pendingProductReportCount));
+  }
+  const seenCount = typeof window !== "undefined" ? parseInt(localStorage.getItem(SEEN_KEY) || "0", 10) : 0;
+  const unseenProductReportCount = Math.max(0, pendingProductReportCount - seenCount);
 
   return [
     {
@@ -320,6 +332,12 @@ const useCoreRoutes = (): Omit<INavItem, "pathname">[] => {
       label: "Reported Images",
       to: "/reported-images",
       badge: pendingReportCount > 0 ? pendingReportCount : undefined,
+    },
+    {
+      icon: <ExclamationCircle />,
+      label: "Product Reports",
+      to: "/product-reports",
+      badge: unseenProductReportCount > 0 ? unseenProductReportCount : undefined,
     },
   ];
 };

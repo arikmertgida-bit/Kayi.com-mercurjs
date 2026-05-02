@@ -7,7 +7,7 @@ import {
   ProductsPagination,
 } from "@/components/organisms"
 import { useMeiliSearchClient } from "@/providers/MeiliSearchProvider"
-import { Configure, InstantSearch, useHits } from "react-instantsearch"
+import { Configure, InstantSearch, useHits, useInstantSearch } from "react-instantsearch"
 import { useSearchParams } from "next/navigation"
 import { PRODUCT_LIMIT } from "@/const"
 import { ProductListingSkeleton } from "@/components/organisms/ProductListingSkeleton/ProductListingSkeleton"
@@ -65,7 +65,7 @@ export const MeiliProductsListing = ({
   const searchParams = useSearchParams()
   const { searchClient } = useMeiliSearchClient()
 
-  if (!searchClient) return null
+  if (!searchClient) return <ProductListingSkeleton />
 
   return (
     <FiltersProvider initialSearch={searchParams.toString()}>
@@ -159,6 +159,7 @@ const ProductsListing = ({
   const { paramMap } = useFiltersContext()
   const [apiProducts, setApiProducts] = useState<HttpTypes.StoreProduct[] | null>(null)
   const { items, results } = useHits()
+  const { status } = useInstantSearch()
 
   // Use a stable string of IDs as the effect dependency to prevent re-firing when
   // react-instantsearch returns a new array reference with the same content.
@@ -229,7 +230,8 @@ const ProductsListing = ({
   }, [items, apiProductsMap, sortBy])
 
   // Early return AFTER all hooks have been called
-  if (results === undefined) return <ProductListingSkeleton />
+  // Show skeleton while results haven't arrived OR initial search is in flight (prevents "NO RESULTS" flash)
+  if (results === undefined || status === 'loading') return <ProductListingSkeleton />
 
   const pagedItems = sortedItems.slice((page - 1) * PRODUCT_LIMIT, page * PRODUCT_LIMIT)
   const pages      = Math.ceil(count / PRODUCT_LIMIT) || 1
@@ -257,13 +259,18 @@ const ProductsListing = ({
                 {pagedItems.map((hit: any, i: number) => {
                   const apiProduct = apiProductsMap.get((hit as any).objectID ?? (hit as any).id)
                   if (!apiProduct) {
-                    // API data not yet loaded for this hit → show skeleton card
+                    // API data not yet loaded — skeleton dimensions must match ProductCard exactly:
+                    //   outer p-1, image aspect-square, text area p-4 + title h-5 + price h-4
                     return (
-                      <div key={hit.objectID ?? hit.id} className="w-full rounded-sm border overflow-hidden">
-                        <div className="aspect-square animate-pulse bg-gray-200 w-full" />
-                        <div className="p-2 space-y-2">
-                          <div className="h-4 animate-pulse bg-gray-200 rounded-sm w-3/4" />
-                          <div className="h-4 animate-pulse bg-gray-200 rounded-sm w-1/2" />
+                      <div key={hit.objectID ?? hit.id} className="relative group border rounded-sm flex flex-col justify-between p-1 animate-pulse">
+                        <div className="relative w-full bg-gray-200 aspect-square rounded-sm" />
+                        <div className="flex justify-between p-4">
+                          <div className="w-full space-y-2">
+                            <div className="h-5 bg-gray-200 rounded-sm w-3/4" />
+                            <div className="flex items-center gap-2 mt-2">
+                              <div className="h-4 bg-gray-200 rounded-sm w-1/2" />
+                            </div>
+                          </div>
                         </div>
                       </div>
                     )

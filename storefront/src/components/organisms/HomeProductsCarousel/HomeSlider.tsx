@@ -111,24 +111,20 @@ export const HomeSlider = ({
 
       {/* Carousel */}
       <div className="relative">
-        {canScrollPrev && (
-          <button
-            onClick={scrollPrev}
-            aria-label="Previous products"
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-10 h-10 rounded-full bg-[#000000] text-[#fcfcfc] hover:bg-[#e30a17] hover:text-[#fcfcfc] transition-all duration-200 active:scale-95"
-          >
-            <ChevronLeftIcon />
-          </button>
-        )}
-        {canScrollNext && (
-          <button
-            onClick={scrollNext}
-            aria-label="Next products"
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-10 h-10 rounded-full bg-[#000000] text-[#fcfcfc] hover:bg-[#e30a17] hover:text-[#fcfcfc] transition-all duration-200 active:scale-95"
-          >
-            <ChevronRightIcon />
-          </button>
-        )}
+        <button
+          onClick={scrollPrev}
+          aria-label="Previous products"
+          className={`absolute left-2 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-10 h-10 rounded-full bg-[#000000] text-[#fcfcfc] hover:bg-[#e30a17] hover:text-[#fcfcfc] transition-all duration-200 active:scale-95 ${canScrollPrev ? "" : "invisible"}`}
+        >
+          <ChevronLeftIcon />
+        </button>
+        <button
+          onClick={scrollNext}
+          aria-label="Next products"
+          className={`absolute right-2 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-10 h-10 rounded-full bg-[#000000] text-[#fcfcfc] hover:bg-[#e30a17] hover:text-[#fcfcfc] transition-all duration-200 active:scale-95 ${canScrollNext ? "" : "invisible"}`}
+        >
+          <ChevronRightIcon />
+        </button>
         <div className="overflow-hidden -ml-1.5" ref={emblaRef}>
           <div className="flex">
             {products.map((product, index) => (

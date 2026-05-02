@@ -77,18 +77,28 @@ export const MeiliProductSidebar = ({
 }
 
 function CategoryAccordion({ category }: { category: HttpTypes.StoreProductCategory }) {
-  const [isOpen, setIsOpen] = useState(false)
+  const pathname = usePathname()
   const children = ((category.category_children ?? []) as HttpTypes.StoreProductCategory[])
     .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0))
   const hasChildren = children.length > 0
 
+  const isParentActive = Boolean(pathname?.endsWith(`/categories/${category.handle}`) || pathname?.includes(`/categories/${category.handle}/`))
+  const isAnyChildActive = children.some((c) => Boolean(pathname?.includes(`/${c.handle}`)))
+
+  const [isOpen, setIsOpen] = useState(isAnyChildActive || isParentActive)
+
+  const activeClass =
+    "bg-gradient-to-r from-[#f58529] via-[#dd2a7b] to-[#8134af] text-white shadow-[0_10px_20px_rgba(221,42,123,0.20)]"
+  const inactiveClass = "text-primary hover:bg-[#fff2f7]"
+  const commonClass = "w-full text-left text-sm px-2 py-1.5 rounded-sm transition-colors block"
+
   return (
-    <div className="border-b border-gray-100 last:border-0">
-      <div className="flex items-center justify-between py-2 px-1">
+    <div>
+      <div className="flex items-center gap-1">
         {/* Category name → navigates to category page */}
         <Link
           href={`/categories/${category.handle}`}
-          className="text-sm font-bold text-gray-900 hover:text-primary flex-1 leading-snug"
+          className={cn(commonClass, "flex-1 font-semibold", isParentActive ? activeClass : inactiveClass)}
         >
           {category.name}
         </Link>
@@ -96,7 +106,7 @@ function CategoryAccordion({ category }: { category: HttpTypes.StoreProductCateg
         {hasChildren && (
           <button
             onClick={() => setIsOpen((prev) => !prev)}
-            className="p-1 ml-2 cursor-pointer flex-shrink-0"
+            className="p-1 cursor-pointer flex-shrink-0"
             aria-expanded={isOpen}
             aria-label="Alt kategorileri göster"
           >
@@ -119,17 +129,20 @@ function CategoryAccordion({ category }: { category: HttpTypes.StoreProductCateg
             isOpen ? "max-h-[600px] opacity-100" : "max-h-0 opacity-0"
           )}
         >
-          <ul className="pb-2 pl-4">
-            {children.map((child) => (
-              <li key={child.id} className="py-1">
-                <Link
-                  href={`/categories/${child.handle}`}
-                  className="text-sm text-ui-fg-subtle hover:text-primary hover:underline"
-                >
-                  {child.name}
-                </Link>
-              </li>
-            ))}
+          <ul className="pb-1 pl-3 space-y-1 pt-1">
+            {children.map((child) => {
+              const isChildActive = Boolean(pathname?.includes(`/${child.handle}`))
+              return (
+                <li key={child.id}>
+                  <Link
+                    href={`/categories/${child.handle}`}
+                    className={cn(commonClass, isChildActive ? activeClass : inactiveClass)}
+                  >
+                    {child.name}
+                  </Link>
+                </li>
+              )
+            })}
           </ul>
         </div>
       )}
@@ -161,7 +174,7 @@ function CategoryFilter({
 
   return (
     <Accordion heading="Tüm Kategoriler" defaultOpen={true}>
-      <ul className="px-2 min-h-[24px]">
+      <ul className="px-2 pb-2 space-y-1 min-h-[24px]">
         {categories.map((cat) => (
           <li key={cat.id}>
             <CategoryAccordion category={cat} />

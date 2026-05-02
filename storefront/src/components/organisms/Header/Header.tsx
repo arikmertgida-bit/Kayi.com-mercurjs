@@ -1,5 +1,6 @@
 import Image from "next/image"
 import { HttpTypes } from "@medusajs/types"
+import { Suspense } from "react"
 
 import { CartDropdown, MobileNavbar, Navbar } from "@/components/cells"
 import { HeartIcon } from "@/icons"
@@ -62,7 +63,9 @@ export const Header = async () => {
           </div>
           {/* Search – desktop only (centre) */}
           <div className="hidden lg:flex flex-1 items-center justify-center px-4">
-            <NavbarSearch />
+            <Suspense fallback={<div className="h-10 w-full bg-gray-100 rounded-full" />}>
+              <NavbarSearch />
+            </Suspense>
           </div>
           {/* Right icons – always visible; MobileNavbar toggle appended for mobile */}
           <div className="flex items-center justify-end gap-2 lg:gap-4 shrink-0 py-2 ml-auto lg:ml-0">
@@ -91,7 +94,9 @@ export const Header = async () => {
       </header>
       {/* Mobile search row – only below lg, full width */}
       <div className="lg:hidden bg-white shadow-sm border-t px-4 py-2">
-        <NavbarSearch />
+        <Suspense fallback={<div className="w-full h-10 bg-gray-100 rounded-full" />}>
+          <NavbarSearch />
+        </Suspense>
       </div>
       <Navbar megaMenuCategories={megaMenuCategories} collections={collections} />
     </>

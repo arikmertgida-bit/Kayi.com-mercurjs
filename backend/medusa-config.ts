@@ -63,6 +63,9 @@ module.exports = defineConfig({
       resolve: './src/modules/review-image-reports',
     },
     {
+      resolve: './src/modules/product-reports',
+    },
+    {
       resolve: './src/modules/review-likes',
     },
     {

@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Modal } from '../Modal/Modal';
 import { ReportListingForm } from '../ReportListingForm/ReportListingForm';
 
-export const ProductReportButton = () => {
+export const ProductReportButton = ({ productId }: { productId: string }) => {
   const [openModal, setOpenModal] = useState(false);
   return (
     <>
@@ -23,6 +23,7 @@ export const ProductReportButton = () => {
         >
           <ReportListingForm
             onClose={() => setOpenModal(false)}
+            productId={productId}
           />
         </Modal>
       )}

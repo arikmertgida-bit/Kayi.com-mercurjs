@@ -156,6 +156,9 @@ export default async function Home({
 
       <HeroSlider />
       <div className="px-4 lg:px-6 w-full">
+        <HomeCategories />
+      </div>
+      <div className="px-4 lg:px-6 w-full">
         <HomeProductSection heading="Yeni Gelen Ürünler" locale={locale} home />
       </div>
       <div className="px-4 lg:px-6 w-full">
@@ -171,9 +174,6 @@ export default async function Home({
           locale={locale}
           allProductsHref="/collections/yeni-sezon"
         />
-      </div>
-      <div className="px-4 lg:px-6 w-full">
-        <HomeCategories heading="SHOP BY CATEGORY" />
       </div>
       <BlogSection />
     </main>

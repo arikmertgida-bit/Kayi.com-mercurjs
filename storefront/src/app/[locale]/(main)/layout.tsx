@@ -34,9 +34,13 @@ export default async function RootLayout({
   return (
     <WishlistProvider user={user}>
       <MessengerProvider userId={user?.id ?? null} authToken={authToken} userName={userName}>
-        <Header />
-        {children}
-        <Footer />
+        <div className="flex flex-col min-h-screen">
+          <Header />
+          <main className="flex-1">
+            {children}
+          </main>
+          <Footer />
+        </div>
       </MessengerProvider>
     </WishlistProvider>
   )

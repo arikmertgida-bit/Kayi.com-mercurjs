@@ -5,7 +5,7 @@ export const WishlistPage = ({ tab }: { tab: string }) => {
   return (
     <>
       <WishlistTabs tab={tab} />
-      <HomeCategories heading='Explore' />
+      <HomeCategories />
     </>
   );
 };

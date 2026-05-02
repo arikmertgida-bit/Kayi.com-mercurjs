@@ -25,7 +25,26 @@ export const MeiliProductsCarousel = ({
       : ""
   }seller.store_status != SUSPENDED AND variants.prices.currency_code = "${currency_code}"`
 
-  if (!searchClient) return null
+  if (!searchClient) {
+    return (
+      <div className="w-full">
+        <div className="h-7 w-40 bg-gray-200 rounded animate-pulse mb-3" />
+        <div className="flex gap-1.5 overflow-hidden">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="home-slider-slide flex-shrink-0 animate-pulse">
+              <div className="border rounded-sm p-1">
+                <div className="aspect-square w-full bg-gray-200 rounded-sm" />
+                <div className="p-4 space-y-2">
+                  <div className="h-5 bg-gray-200 rounded-sm w-3/4" />
+                  <div className="h-4 bg-gray-200 rounded-sm w-1/2" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <InstantSearchNext searchClient={searchClient as any} indexName="products">
@@ -63,14 +82,7 @@ const ProductsListing = ({ locale }: { locale: string }) => {
     .filter((p): p is HttpTypes.StoreProduct => p !== null)
 
   if (!items.length) {
-    return (
-      <div className="text-center w-full my-10">
-        <h2 className="uppercase text-primary heading-lg">no results</h2>
-        <p className="mt-4 text-lg">
-          Sorry, we can&apos;t find any results for your criteria
-        </p>
-      </div>
-    )
+    return null
   }
 
   return (

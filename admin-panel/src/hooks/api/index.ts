@@ -38,3 +38,5 @@ export * from "./views";
 export * from "./workflow-executions";
 export * from "./algolia";
 export * from "./commission";
+export * from "./product-reports"
+;

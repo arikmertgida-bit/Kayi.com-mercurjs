@@ -17,11 +17,16 @@ export const WishlistButton = ({
   const { user, isProductWishlisted, addToWishlist, removeFromWishlist } =
     useWishlistContext()
 
+  const [mounted, setMounted] = useState(false)
   const [isWishlistAdding, setIsWishlistAdding] = useState(false)
   const [isWishlisted, setIsWishlisted] = useState(
     isProductWishlisted(productId)
   )
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     setIsWishlisted(isProductWishlisted(productId))
@@ -54,6 +59,9 @@ export const WishlistButton = ({
 
   return (
     <>
+      {!mounted ? (
+        <div className="w-10 h-10 rounded" aria-hidden="true" />
+      ) : (
       <Button
         onClick={handleClick}
         variant="tonal"
@@ -63,6 +71,7 @@ export const WishlistButton = ({
       >
         {isWishlisted ? <HeartFilledIcon size={20} /> : <HeartIcon size={20} />}
       </Button>
+      )}
 
       {isLoginModalOpen && (
         <Modal

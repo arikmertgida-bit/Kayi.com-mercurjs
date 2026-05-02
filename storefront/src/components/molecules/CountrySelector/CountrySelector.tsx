@@ -7,7 +7,7 @@ import {
   ListboxOptions,
   Transition,
 } from "@headlessui/react"
-import { Fragment, useEffect, useMemo, useState } from "react"
+import { Fragment, useMemo } from "react"
 import ReactCountryFlag from "react-country-flag"
 
 import { useParams, usePathname, useRouter } from "next/navigation"
@@ -28,11 +28,6 @@ type CountrySelectProps = {
 }
 
 const CountrySelect = ({ regions }: CountrySelectProps) => {
-  const [current, setCurrent] = useState<
-    | { country: string | undefined; region: string; label: string | undefined }
-    | undefined
-  >(undefined)
-
   const { locale: countryCode } = useParams()
   const router = useRouter()
   const currentPath = usePathname().split(`/${countryCode}`)[1]
@@ -50,12 +45,11 @@ const CountrySelect = ({ regions }: CountrySelectProps) => {
       .sort((a, b) => (a?.label ?? "").localeCompare(b?.label ?? ""))
   }, [regions])
 
-  useEffect(() => {
-    if (countryCode) {
-      const option = options?.find((o) => o?.country === countryCode)
-      setCurrent(option)
-    }
-  }, [options, countryCode])
+  // Derived directly — no useState + useEffect means no extra render cycle (CLS fix)
+  const current = useMemo(
+    () => (countryCode ? options?.find((o) => o?.country === countryCode) : undefined),
+    [options, countryCode]
+  )
 
   const handleChange = async (option: CountryOption) => {
     try {
