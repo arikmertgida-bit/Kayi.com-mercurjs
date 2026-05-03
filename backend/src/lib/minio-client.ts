@@ -73,9 +73,18 @@ export async function removeObject(objectPath: string): Promise<void> {
 
 /**
  * Generate a short-lived presigned GET URL for a private object (error log CSV).
+ * Replaces the internal Docker hostname with the public-facing URL from MINIO_PUBLIC_URL.
  * Expires in 1 hour (3600 seconds).
  */
 export async function presignedGetUrl(objectPath: string, expirySeconds = 3600): Promise<string> {
   const client = getMinioClient()
-  return client.presignedGetObject(IMPORT_BUCKET, objectPath, expirySeconds)
+  const url = await client.presignedGetObject(IMPORT_BUCKET, objectPath, expirySeconds)
+
+  // Replace internal Docker hostname (e.g. http://minio:9000) with public URL
+  const publicUrl = process.env.MINIO_PUBLIC_URL
+  if (publicUrl) {
+    const internalBase = `http://${process.env.MINIO_ENDPOINT ?? "minio"}:${process.env.MINIO_PORT ?? "9000"}`
+    return url.replace(internalBase, publicUrl.replace(/\/$/, ""))
+  }
+  return url
 }

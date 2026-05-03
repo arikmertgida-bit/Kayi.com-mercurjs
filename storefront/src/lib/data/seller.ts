@@ -148,6 +148,32 @@ export const getSellerCategories = async (
   }
 }
 
+/**
+ * Sadece satıcının toplam ürün sayısını döndürür.
+ * Ürün detaylarını fetch etmez → arka plan yükü minimal.
+ * cache: "no-store" ile her sayfa ziyaretinde taze veri gelir.
+ */
+export const getSellerProductCount = async (handle: string): Promise<number> => {
+  try {
+    const res = await fetch(
+      `${BACKEND_URL}/store/sellers/${handle}/products?limit=1&offset=0`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "x-publishable-api-key": PUBLISHABLE_KEY,
+        },
+        cache: "no-store",
+      }
+    )
+    if (!res.ok) return 0
+    const data: { count: number } = await res.json()
+    return data.count ?? 0
+  } catch {
+    return 0
+  }
+}
+
 export const getSellerProducts = async (
   handle: string,
   countryCode: string,

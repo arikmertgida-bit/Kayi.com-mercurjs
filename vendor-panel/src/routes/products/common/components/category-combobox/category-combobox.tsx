@@ -162,6 +162,7 @@ export const CategoryCombobox = forwardRef<
               showTag ? "pl-[calc(var(--tag-width)+8px)]" : "pl-2"
             )}
             {...props}
+            placeholder={showSelected ? "" : props.placeholder}
           />
           <button
             type="button"

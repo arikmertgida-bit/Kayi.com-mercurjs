@@ -12,6 +12,12 @@ const SLIDES = [
   { src: "/images/slider/slider5.jpeg", alt: "Slider 5" },
   { src: "/images/slider/slider6.jpeg", alt: "Slider 6" },
   { src: "/images/slider/slider7.jpeg", alt: "Slider 7" },
+  { src: "/images/slider/slider8.jpeg", alt: "Slider 8" },
+  { src: "/images/slider/slider9.jpeg", alt: "Slider 9" },
+  { src: "/images/slider/slider10.jpeg", alt: "Slider 10" },
+  { src: "/images/slider/slider11.jpeg", alt: "Slider 11" },
+  { src: "/images/slider/slider12.jpeg", alt: "Slider 12" },
+  { src: "/images/slider/slider13.jpeg", alt: "Slider 13" },
 ]
 
 function ChevronLeftIcon() {

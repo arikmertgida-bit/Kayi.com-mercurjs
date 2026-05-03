@@ -60,7 +60,7 @@ export default async function RootLayout({
     `${backendUrl}/store/search-config`,
     {
       headers: { "x-publishable-api-key": publishableKey },
-      next: { revalidate: 3600 },
+      next: { revalidate: 300 },
     }
   )
     .then((r) => r.json())

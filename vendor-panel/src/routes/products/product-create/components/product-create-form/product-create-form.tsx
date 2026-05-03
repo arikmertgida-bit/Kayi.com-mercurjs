@@ -259,7 +259,7 @@ export const ProductCreateForm = ({
       {
         ...payload,
         attribute_values: undefined,
-        status: isDraftSubmission ? "draft" : "proposed",
+        status: isDraftSubmission ? "draft" : "published",
         thumbnail: uploadedMedia.find((m) => m.isThumbnail)?.url,
         images: uploadedMedia
           .filter((m) => !m.isThumbnail)

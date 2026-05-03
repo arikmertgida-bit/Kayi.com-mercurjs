@@ -4,6 +4,7 @@
  */
 export interface ImportedProduct {
   // Product-level fields
+  model_code?: string          // grouping key — rows with same model_code → single product
   title: string
   description?: string
   status: "draft" | "published"

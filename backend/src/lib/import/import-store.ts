@@ -31,7 +31,19 @@ export interface JobStatus {
   job_id: string
   seller_id: string
   transaction_id: string
-  status: "pending" | "running" | "done" | "failed"
+  /**
+   * queued   — job is in the BullMQ queue, not yet picked up by a worker
+   * pending  — job picked up, worker initialising
+   * running  — worker is actively processing rows
+   * done     — processing complete (may have partial errors)
+   * failed   — fatal error, no rows were processed
+   */
+  status: "queued" | "pending" | "running" | "done" | "failed"
+  /**
+   * Estimated position in the queue at the time of enqueue.
+   * 1 = next to be processed. Only meaningful when status === "queued".
+   */
+  queue_position?: number
   processed: number
   total: number
   created: number
@@ -92,13 +104,15 @@ export function createJob(
   job_id: string,
   seller_id: string,
   transaction_id: string,
-  total: number
+  total: number,
+  queue_position?: number
 ): JobStatus {
   const job: JobStatus = {
     job_id,
     seller_id,
     transaction_id,
-    status: "pending",
+    status: "queued",
+    queue_position,
     processed: 0,
     total,
     created: 0,

@@ -22,7 +22,7 @@ export const CollectionProductSection = async ({
   } = await listProducts({
     countryCode: locale,
     collection_id: collection.id,
-    queryParams: { limit: 10 },
+    queryParams: { limit: 10, order: "-created_at" },
     forceCache: true,
   })
 

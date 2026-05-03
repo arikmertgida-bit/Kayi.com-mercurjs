@@ -84,6 +84,19 @@ export function parseCsv(buffer: Buffer): ParseResult {
         return
       }
 
+      // Model code: grouping key that ties multiple rows into a single product
+      const model_code = (
+        rec["model_kodu"] ??
+        rec["model_code"] ??
+        rec["model_no"] ??
+        rec["urun_kodu"] ??
+        rec["ürün_kodu"] ??
+        rec["urun_kod"] ??
+        rec["product_code"] ??
+        rec["model"] ??
+        ""
+      ).trim() || undefined
+
       // Collect image URLs
       const images: string[] = []
       for (let i = 1; i <= 10; i++) {
@@ -93,6 +106,7 @@ export function parseCsv(buffer: Buffer): ParseResult {
       if (rec["product_thumbnail"]?.trim()) images.unshift(rec["product_thumbnail"].trim())
 
       rows.push({
+        model_code,
         title,
         description: rec["product_description"] ?? rec["description"] ?? rec["aciklama"],
         status: toStatus(rec["product_status"] ?? rec["status"] ?? rec["durum"]),

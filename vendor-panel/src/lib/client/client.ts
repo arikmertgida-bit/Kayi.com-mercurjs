@@ -1,4 +1,4 @@
-import Medusa from "@medusajs/js-sdk"
+import Medusa, { FetchError } from "@medusajs/js-sdk"
 import qs from "qs"
 
 export const backendUrl = __BACKEND_URL__ ?? "/"
@@ -27,8 +27,22 @@ export const importProductsQuery = async (file: File) => {
       "x-publishable-api-key": publishableApiKey,
     },
   })
-    .then((res) => res.json())
-    .catch(() => null)
+    .then(async (res) => {
+      if (!res.ok) {
+        let message = "An unexpected error occurred"
+        try {
+          const errorData = await res.json()
+          message = errorData.message || errorData.error || message
+        } catch {
+          // Response body was not JSON
+        }
+        throw new Error(message)
+      }
+      return res.json()
+    })
+    .catch((err: unknown) => {
+      throw err
+    })
 }
 
 export const uploadFilesQuery = async (files: any[]) => {
@@ -92,7 +106,7 @@ export const fetchQuery = async (
     } catch {
       // Response body was not JSON (e.g. HTML error page from proxy)
     }
-    throw new Error(message)
+    throw new FetchError(message, response.statusText, response.status)
   }
 
   return response.json()

@@ -3,6 +3,7 @@ import { Breadcrumbs } from "@/components/atoms"
 import { ProductListingSkeleton } from "@/components/organisms/ProductListingSkeleton/ProductListingSkeleton"
 import { MeiliProductsListing, ProductListing } from "@/components/sections"
 import { getCollectionByHandle } from "@/lib/data/collections"
+import { listMegaMenuCategories } from "@/lib/data/categories"
 import { getRegion } from "@/lib/data/regions"
 import isBot from "@/lib/helpers/isBot"
 import { headers } from "next/headers"
@@ -28,6 +29,7 @@ const SingleCollectionsPage = async ({
   if (!collection) return <NotFound />
 
   const currency_code = (await getRegion(locale))?.currency_code || "usd"
+  const megaMenuCategories = await listMegaMenuCategories().catch(() => [])
 
   const breadcrumbsItems = [
     {
@@ -52,6 +54,7 @@ const SingleCollectionsPage = async ({
             collection_id={collection.id}
             locale={locale}
             currency_code={currency_code}
+            initialCategories={megaMenuCategories}
           />
         )}
       </Suspense>

@@ -20,9 +20,9 @@ export const MegaMenu = ({ categories }: { categories: Category[] }) => {
 
   return (
     <div className="group relative">
-      {/* Trigger */}
-      <div className="flex items-center gap-2 label-md uppercase px-4 cursor-pointer select-none">
-        <HamburgerMenuIcon size={18} />
+      {/* Trigger — styled like SellNowButton (filled variant) */}
+      <div className="button-filled text-action-on-primary flex items-center gap-2 font-semibold uppercase px-4 py-2 rounded-sm cursor-pointer select-none">
+        <HamburgerMenuIcon size={18} color="currentColor" />
         <span>Tüm Kategoriler</span>
       </div>
 

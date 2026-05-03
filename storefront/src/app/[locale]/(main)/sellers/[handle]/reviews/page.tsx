@@ -2,7 +2,7 @@ import { SellerTabs } from "@/components/organisms"
 import { SellerPageHeader } from "@/components/sections"
 import { retrieveCustomer } from "@/lib/data/customer"
 import { getRegion } from "@/lib/data/regions"
-import { getSellerByHandle, getFollowStatus, getSellerCategories } from "@/lib/data/seller"
+import { getSellerByHandle, getFollowStatus, getSellerCategories, getSellerProductCount } from "@/lib/data/seller"
 import { SellerProps } from "@/types/seller"
 
 export default async function SellerReviewsPage({
@@ -14,16 +14,16 @@ export default async function SellerReviewsPage({
 
   const seller = (await getSellerByHandle(handle)) as SellerProps
 
-  const [user, followStatusRaw, categories, region] = await Promise.all([
+  const [user, followStatusRaw, categories, region, productCount] = await Promise.all([
     retrieveCustomer(),
     getFollowStatus(handle),
     getSellerCategories(handle),
     getRegion(locale),
+    getSellerProductCount(handle),
   ])
 
   const followStatus = followStatusRaw ?? { following: false, followers_count: 0 }
   const currency_code = region?.currency_code || "usd"
-  const productCount = seller.products?.length || 0
   const tab = "reviews"
 
   return (

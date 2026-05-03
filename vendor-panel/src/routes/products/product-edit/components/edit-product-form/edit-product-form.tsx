@@ -1,4 +1,4 @@
-import { Button, Input, Text, Textarea, toast } from "@medusajs/ui"
+import { Button, Input, Select, Text, Textarea, toast } from "@medusajs/ui"
 import { useEffect, useRef } from "react"
 import { useTranslation } from "react-i18next"
 import * as zod from "zod"
@@ -10,6 +10,7 @@ import { RouteDrawer, useRouteModal } from "../../../../../components/modals"
 import { useExtendableForm } from "../../../../../extensions/forms/hooks"
 import { useUpdateProduct } from "../../../../../hooks/api/products"
 import { generateHandle } from "../../../../../lib/generate-handle"
+import { fetchQuery } from "../../../../../lib/client"
 
 import { KeyboundForm } from "../../../../../components/utilities/keybound-form"
 import {
@@ -26,6 +27,7 @@ const EditProductSchema = zod.object({
   handle: zod.string().min(1),
   description: zod.string().optional(),
   discountable: zod.boolean(),
+  status: zod.string().optional(),
 })
 
 export const EditProductForm = ({ product }: EditProductFormProps) => {
@@ -42,6 +44,7 @@ export const EditProductForm = ({ product }: EditProductFormProps) => {
       handle: product.handle || "",
       description: product.description || "",
       discountable: product.discountable,
+      status: product.status || "draft",
     },
     schema: EditProductSchema,
     configs: configs,
@@ -62,7 +65,7 @@ export const EditProductForm = ({ product }: EditProductFormProps) => {
   const { mutateAsync, isPending } = useUpdateProduct(product.id)
 
   const handleSubmit = form.handleSubmit(async (data) => {
-    const { description, discountable, handle, title } = data
+    const { description, discountable, handle, title, status } = data
 
     await mutateAsync(
       {
@@ -70,9 +73,23 @@ export const EditProductForm = ({ product }: EditProductFormProps) => {
         discountable,
         handle,
         title,
+        // status is intentionally excluded — Mercur's UpdateProduct schema is strict
+        // and rejects it. Status is updated via the dedicated /status endpoint below.
       },
       {
-        onSuccess: ({ product }) => {
+        onSuccess: async ({ product }) => {
+          // Update status separately if it changed
+          if (status && status !== product.status) {
+            try {
+              await fetchQuery(`/vendor/products/${product.id}/status`, {
+                method: "POST",
+                body: { status },
+              })
+            } catch (statusErr: any) {
+              toast.error(statusErr?.message ?? "Statü güncellenemedi")
+              return
+            }
+          }
           toast.success(
             t("products.edit.successToast", {
               title: product.title,
@@ -96,7 +113,7 @@ export const EditProductForm = ({ product }: EditProductFormProps) => {
         <RouteDrawer.Body className="flex flex-1 flex-col gap-y-8 overflow-y-auto">
           <div className="flex flex-col gap-y-8">
             <div className="flex flex-col gap-y-4">
-              {/* <Form.Field
+              <Form.Field
                 control={form.control}
                 name="status"
                 render={({ field: { onChange, ref, ...field } }) => {
@@ -112,9 +129,8 @@ export const EditProductForm = ({ product }: EditProductFormProps) => {
                             {(
                               [
                                 "draft",
-                                "published",
                                 "proposed",
-                                "rejected",
+                                "published",
                               ] as const
                             ).map((status) => {
                               return (
@@ -130,7 +146,7 @@ export const EditProductForm = ({ product }: EditProductFormProps) => {
                     </Form.Item>
                   )
                 }}
-              /> */}
+              />
               <Form.Field
                 control={form.control}
                 name="title"

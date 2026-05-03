@@ -54,6 +54,7 @@ export const MeiliProductsListing = ({
   locale = process.env.NEXT_PUBLIC_DEFAULT_REGION,
   currency_code,
   sidebarContent,
+  initialCategories,
 }: {
   category_id?: string | string[]
   collection_id?: string
@@ -61,6 +62,7 @@ export const MeiliProductsListing = ({
   seller_handle?: string
   currency_code: string
   sidebarContent?: React.ReactNode
+  initialCategories?: import("@medusajs/types").HttpTypes.StoreProductCategory[]
 }) => {
   const searchParams = useSearchParams()
   const { searchClient } = useMeiliSearchClient()
@@ -77,6 +79,7 @@ export const MeiliProductsListing = ({
           locale={locale}
           currency_code={currency_code}
           sidebarContent={sidebarContent}
+          initialCategories={initialCategories}
         />
       </InstantSearch>
     </FiltersProvider>
@@ -92,6 +95,7 @@ const FilteredProductsContent = ({
   locale,
   currency_code,
   sidebarContent,
+  initialCategories,
 }: {
   seller_handle?: string
   category_id?: string | string[]
@@ -99,6 +103,7 @@ const FilteredProductsContent = ({
   locale?: string
   currency_code: string
   sidebarContent?: React.ReactNode
+  initialCategories?: import("@medusajs/types").HttpTypes.StoreProductCategory[]
 }) => {
   const { filterMap, paramMap } = useFiltersContext()
 
@@ -115,14 +120,23 @@ const FilteredProductsContent = ({
     .join(" AND ")
   const priceFilterStr = priceFilter ? ` AND ${priceFilter}` : ""
 
-  // Support dynamic category filtering from sidebar (e.g. SellerSidebar)
-  const activeCategoryId = paramMap["category_id"] || null
-  const resolvedCategoryId = category_id || activeCategoryId || null
+  // Support dynamic category filtering from sidebar.
+  // paramMap["category_id"] may be comma-separated (parent + children) when a parent is clicked.
+  const rawCategoryParam = paramMap["category_id"] || null
+  const sidebarCategoryIds: string[] | null = rawCategoryParam
+    ? rawCategoryParam.split(",").filter(Boolean)
+    : null
 
-  const categoryFilter = resolvedCategoryId
-    ? Array.isArray(resolvedCategoryId)
-      ? `(${resolvedCategoryId.map((id) => `categories.id = "${id}"`).join(" OR ")})`
-      : `categories.id = "${resolvedCategoryId}"`
+  // Prop-based category_id (from page) takes precedence; sidebar param is additive.
+  const resolvedCategoryIds: string[] | null =
+    category_id
+      ? (Array.isArray(category_id) ? category_id : [category_id])
+      : sidebarCategoryIds
+
+  const categoryFilter = resolvedCategoryIds && resolvedCategoryIds.length > 0
+    ? resolvedCategoryIds.length === 1
+      ? `categories.id = "${resolvedCategoryIds[0]}"`
+      : `(${resolvedCategoryIds.map((id) => `categories.id = "${id}"`).join(" OR ")})`
     : null
 
   const collectionFilter =
@@ -138,7 +152,7 @@ const FilteredProductsContent = ({
     <>
       {/* hitsPerPage must exceed PRODUCT_LIMIT×max-pages to support client-side pagination */}
       <Configure query={query} filters={filters} hitsPerPage={500} />
-      <ProductsListing locale={locale} currency_code={currency_code} collection_id={collection_id} sidebarContent={sidebarContent} />
+      <ProductsListing locale={locale} currency_code={currency_code} collection_id={collection_id} sidebarContent={sidebarContent} initialCategories={initialCategories} />
     </>
   )
 }
@@ -150,11 +164,13 @@ const ProductsListing = ({
   currency_code,
   collection_id,
   sidebarContent,
+  initialCategories,
 }: {
   locale?: string
   currency_code: string
   collection_id?: string
   sidebarContent?: React.ReactNode
+  initialCategories?: import("@medusajs/types").HttpTypes.StoreProductCategory[]
 }) => {
   const { paramMap } = useFiltersContext()
   const [apiProducts, setApiProducts] = useState<HttpTypes.StoreProduct[] | null>(null)
@@ -216,9 +232,8 @@ const ProductsListing = ({
   const count = items.length || 0
   const page  = +(paramMap["page"] || 1)
 
-  // Sort items using the API product data (for price sort); fall back to MeiliSearch order
+  // Sort items using the API product data (for price + date sort); fall back to MeiliSearch order
   const sortedItems = useMemo(() => {
-    if (sortBy === "created_at" || sortBy === "created_at_asc") return items
     // Collect API products in the same order as items, then sort
     const paired = items
       .map((hit: any) => ({ hit, api: apiProductsMap.get(hit.objectID ?? hit.id) }))
@@ -229,24 +244,39 @@ const ProductsListing = ({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items, apiProductsMap, sortBy])
 
-  // Early return AFTER all hooks have been called
-  // Show skeleton while results haven't arrived OR initial search is in flight (prevents "NO RESULTS" flash)
-  if (results === undefined || status === 'loading') return <ProductListingSkeleton />
+  // isLoading: show inline grid skeleton — but keep sidebar visible so filters remain interactive
+  const isLoading = results === undefined || status === 'loading'
 
-  const pagedItems = sortedItems.slice((page - 1) * PRODUCT_LIMIT, page * PRODUCT_LIMIT)
-  const pages      = Math.ceil(count / PRODUCT_LIMIT) || 1
+  const pagedItems = isLoading ? [] : sortedItems.slice((page - 1) * PRODUCT_LIMIT, page * PRODUCT_LIMIT)
+  const pages      = isLoading ? 1  : (Math.ceil(count / PRODUCT_LIMIT) || 1)
 
   return (
     <div className="min-h-[70vh]">
       <div className="flex justify-between w-full items-center">
-        <div className="my-4 label-md">{`${count} listings`}</div>
+        <div className="my-4 label-md">{isLoading ? "" : `${count} listings`}</div>
       </div>
       <div className="md:flex gap-4">
         <div className="w-[280px] flex-shrink-0 hidden md:block" style={{ backgroundColor: 'rgb(240, 225, 243)', borderRadius: '8px', padding: '8px' }}>
-          {sidebarContent ?? <MeiliProductSidebar />}
+          {sidebarContent ?? <MeiliProductSidebar initialCategories={initialCategories} />}
         </div>
         <div className="w-full">
-          {!items.length ? (
+          {isLoading ? (
+            <ul className="grid grid-cols-1 min-[425px]:grid-cols-2 lg:grid-cols-3 min-[1440px]:grid-cols-4 gap-4">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <li key={i} className="relative group border rounded-sm flex flex-col justify-between p-1 animate-pulse">
+                  <div className="relative w-full bg-gray-200 aspect-square rounded-sm" />
+                  <div className="flex justify-between p-4">
+                    <div className="w-full space-y-2">
+                      <div className="h-5 bg-gray-200 rounded-sm w-3/4" />
+                      <div className="flex items-center gap-2 mt-2">
+                        <div className="h-4 bg-gray-200 rounded-sm w-1/2" />
+                      </div>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : !items.length ? (
             <div className="text-center w-full my-10">
               <h2 className="uppercase text-primary heading-lg">no results</h2>
               <p className="mt-4 text-lg">

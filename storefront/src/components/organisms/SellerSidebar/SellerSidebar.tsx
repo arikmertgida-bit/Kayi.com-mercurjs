@@ -2,9 +2,12 @@
 
 import { useSearchParams } from "next/navigation"
 import useUpdateSearchParams from "@/hooks/useUpdateSearchParams"
+import useFilters from "@/hooks/useFilters"
 import { Accordion } from "@/components/molecules"
 import { SellerProps } from "@/types/seller"
 import { useState } from "react"
+import { useRefinementList } from "react-instantsearch"
+import { cn } from "@/lib/utils"
 
 type Category = { id: string; name: string; handle: string }
 
@@ -54,8 +57,8 @@ export function SellerSidebar({ seller, categories, productCount }: SellerSideba
 
   const sortOptions = [
     { label: "En Yeniler", value: "created_at" },
-    { label: "Fiyat: Düşükten Yükseğe", value: "price_asc" },
-    { label: "Fiyat: Yüksekten Düşüğe", value: "price_desc" },
+    { label: "Fiyat: Düşükten → Yükseğe", value: "price_asc" },
+    { label: "Fiyat: Yüksekten → Düşüğe", value: "price_desc" },
   ]
 
   return (
@@ -77,30 +80,6 @@ export function SellerSidebar({ seller, categories, productCount }: SellerSideba
         <p className="text-xs text-secondary mt-1">{reviewCount} değerlendirme</p>
         <p className="text-xs text-secondary mt-1">{productCount} ürün</p>
       </div>
-
-      {/* Sort */}
-      <Accordion heading="Sıralama" defaultOpen>
-        <ul className="px-4 pb-2 space-y-2">
-          {sortOptions.map((opt) => (
-            <li key={opt.value}>
-              <button
-                onClick={() => {
-                  const next = activeSort === opt.value ? "" : opt.value
-                  setActiveSort(next)
-                  updateSearchParam("sortBy", next || null)
-                }}
-                className={`w-full text-left text-sm px-2 py-1.5 rounded-sm transition-colors ${
-                  activeSort === opt.value
-                    ? "bg-gradient-to-r from-[#f58529] via-[#dd2a7b] to-[#8134af] text-white shadow-[0_10px_20px_rgba(221,42,123,0.20)]"
-                    : "text-primary hover:bg-[#fff2f7]"
-                }`}
-              >
-                {opt.label}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </Accordion>
 
       {/* Category Filter */}
       {categories.length > 0 && (
@@ -142,6 +121,118 @@ export function SellerSidebar({ seller, categories, productCount }: SellerSideba
           </ul>
         </Accordion>
       )}
+
+      {/* Sort */}
+      <Accordion heading="Sıralama" defaultOpen>
+        <ul className="px-4 pb-2 space-y-2">
+          {sortOptions.map((opt) => (
+            <li key={opt.value}>
+              <button
+                onClick={() => {
+                  const next = activeSort === opt.value ? "" : opt.value
+                  setActiveSort(next)
+                  updateSearchParam("sortBy", next || null)
+                }}
+                className={`w-full text-left text-sm px-2 py-1.5 rounded-sm transition-colors ${
+                  activeSort === opt.value
+                    ? "bg-gradient-to-r from-[#f58529] via-[#dd2a7b] to-[#8134af] text-white shadow-[0_10px_20px_rgba(221,42,123,0.20)]"
+                    : "text-primary hover:bg-[#fff2f7]"
+                }`}
+              >
+                {opt.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </Accordion>
+
+      {/* Color Filter — only shown if seller has products with color variants */}
+      <SellerColorFilter />
+
+      {/* Size Filter — only shown if seller has products with size variants */}
+      <SellerSizeFilter />
     </aside>
+  )
+}
+
+// ─── Renk Filtresi — sadece satıcının ürünlerinde renk varyantı varsa görünür ──
+
+function SellerColorFilter() {
+  const { items } = useRefinementList({
+    attribute: "variants.color",
+    limit: 100,
+    operator: "or",
+    sortBy: ["isRefined", "count", "name"],
+  })
+  const { updateFilters, isFilterActive } = useFilters("color")
+
+  if (!items.length) return null
+
+  const activeClass = "bg-gradient-to-r from-[#f58529] via-[#dd2a7b] to-[#8134af] text-white shadow-[0_10px_20px_rgba(221,42,123,0.20)]"
+  const inactiveClass = "text-primary hover:bg-[#fff2f7]"
+
+  return (
+    <Accordion heading="Renk" defaultOpen={false}>
+      <ul className="px-4 pb-2 space-y-1">
+        {items.map(({ label, count }) => (
+          <li key={label}>
+            <button
+              disabled={count === 0}
+              onClick={() => updateFilters(label)}
+              className={cn(
+                "w-full flex items-center justify-between text-sm px-2 py-1.5 rounded-sm transition-colors",
+                isFilterActive(label) ? activeClass : inactiveClass,
+                count === 0 && "opacity-40 cursor-not-allowed"
+              )}
+            >
+              <span>{label}</span>
+              <span
+                className="w-4 h-4 rounded-sm border border-current flex-shrink-0 ml-2"
+                style={{ backgroundColor: label.toLowerCase() }}
+              />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </Accordion>
+  )
+}
+
+// ─── Beden Filtresi — sadece satıcının ürünlerinde beden varyantı varsa görünür ──
+
+function SellerSizeFilter() {
+  const { items } = useRefinementList({
+    attribute: "variants.size",
+    limit: 100,
+    operator: "or",
+    sortBy: ["isRefined", "count", "name"],
+  })
+  const { updateFilters, isFilterActive } = useFilters("size")
+
+  if (!items.length) return null
+
+  const activeClass = "bg-gradient-to-r from-[#f58529] via-[#dd2a7b] to-[#8134af] text-white shadow-[0_10px_20px_rgba(221,42,123,0.20)]"
+  const inactiveClass = "text-primary hover:bg-[#fff2f7] border border-gray-200"
+
+  return (
+    <Accordion heading="Beden" defaultOpen={false}>
+      <ul className="grid grid-cols-3 gap-1.5 px-4 pb-2">
+        {items.map(({ label, count }) => (
+          <li key={label}>
+            <button
+              disabled={count === 0}
+              onClick={() => updateFilters(label)}
+              className={cn(
+                "w-full text-center text-sm px-1 py-1.5 rounded-sm transition-colors",
+                isFilterActive(label) ? activeClass : inactiveClass,
+                count === 0 && "opacity-40 cursor-not-allowed"
+              )}
+            >
+              {label}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </Accordion>
   )
 }

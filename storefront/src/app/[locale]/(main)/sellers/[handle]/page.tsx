@@ -3,7 +3,7 @@ import { SellerPageHeader } from "@/components/sections"
 import { SellerMessengerWidget } from "@/components/cells/SellerMessengerWidget/SellerMessengerWidget"
 import { retrieveCustomer } from "@/lib/data/customer"
 import { getRegion } from "@/lib/data/regions"
-import { getSellerByHandle, getFollowStatus, getSellerCategories } from "@/lib/data/seller"
+import { getSellerByHandle, getFollowStatus, getSellerCategories, getSellerProductCount } from "@/lib/data/seller"
 import { sdk } from "@/lib/config"
 import { SellerProps } from "@/types/seller"
 
@@ -24,17 +24,17 @@ export default async function SellerPage({
     return null
   }
 
-  const [user, followStatusRaw, categories, region] = await Promise.all([
+  const [user, followStatusRaw, categories, region, productCount] = await Promise.all([
     retrieveCustomer(),
     getFollowStatus(handle),
     getSellerCategories(handle),
     getRegion(locale),
+    getSellerProductCount(handle),
   ])
 
   const followStatus = followStatusRaw ?? { following: false, followers_count: 0 }
 
   const currency_code = region?.currency_code || "usd"
-  const productCount = seller.products?.length || 0
   const tab = "products"
 
   // Build a map of product_id -> { title, thumbnail } for reviews that reference a product

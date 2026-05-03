@@ -1,6 +1,6 @@
 "use client"
 
-import { Button, Chip, Input, StarRating } from "@/components/atoms"
+import { Button, Input, StarRating } from "@/components/atoms"
 import { Accordion, FilterCheckboxOption, Modal } from "@/components/molecules"
 import useFilters from "@/hooks/useFilters"
 import useUpdateSearchParams from "@/hooks/useUpdateSearchParams"
@@ -78,12 +78,27 @@ export const MeiliProductSidebar = ({
 
 function CategoryAccordion({ category }: { category: HttpTypes.StoreProductCategory }) {
   const pathname = usePathname()
+  const filtersCtx = useContext(FiltersContext)
   const children = ((category.category_children ?? []) as HttpTypes.StoreProductCategory[])
     .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0))
   const hasChildren = children.length > 0
 
-  const isParentActive = Boolean(pathname?.endsWith(`/categories/${category.handle}`) || pathname?.includes(`/categories/${category.handle}/`))
-  const isAnyChildActive = children.some((c) => Boolean(pathname?.includes(`/${c.handle}`)))
+  // Use setParam toggle (no navigation) on any page where FiltersContext is available.
+  // FiltersProvider wraps MeiliProductsListing → sidebar is always inside it on /categories
+  // and /collections pages. Elsewhere (e.g. standalone render) fall back to Link navigation.
+  const isOnFilterPage = filtersCtx !== null
+
+  // Active: filter-based (setParam) when inside FiltersProvider, URL-based otherwise.
+  // paramMap["category_id"] may be a comma-separated list: "parentId,child1Id,child2Id"
+  const rawParam = filtersCtx?.paramMap["category_id"] ?? ""
+  const activeIds = rawParam ? rawParam.split(",") : []
+
+  const isParentActive = isOnFilterPage
+    ? activeIds.includes(category.id)
+    : Boolean(pathname?.endsWith(`/categories/${category.handle}`) || pathname?.includes(`/categories/${category.handle}/`))
+  const isAnyChildActive = isOnFilterPage
+    ? children.some((c) => activeIds.includes(c.id))
+    : children.some((c) => Boolean(pathname?.includes(`/${c.handle}`)))
 
   const [isOpen, setIsOpen] = useState(isAnyChildActive || isParentActive)
 
@@ -92,16 +107,45 @@ function CategoryAccordion({ category }: { category: HttpTypes.StoreProductCateg
   const inactiveClass = "text-primary hover:bg-[#fff2f7]"
   const commonClass = "w-full text-left text-sm px-2 py-1.5 rounded-sm transition-colors block"
 
+  // Parent click: set parent + all children IDs (comma-separated) so products from
+  // every subcategory are included. Clicking again clears the filter (toggle).
+  const handleParentClick = () => {
+    if (!filtersCtx) return
+    if (isParentActive) {
+      filtersCtx.setParam("category_id", null)
+    } else {
+      const ids = [category.id, ...children.map((c) => c.id)]
+      filtersCtx.setParam("category_id", ids.join(","))
+    }
+  }
+
+  // Child click: set only the child ID. Clicking again clears.
+  const handleChildClick = (childId: string) => {
+    if (!filtersCtx) return
+    filtersCtx.setParam("category_id", activeIds.includes(childId) ? null : childId)
+  }
+
   return (
     <div>
       <div className="flex items-center gap-1">
-        {/* Category name → navigates to category page */}
-        <Link
-          href={`/categories/${category.handle}`}
-          className={cn(commonClass, "flex-1 font-semibold", isParentActive ? activeClass : inactiveClass)}
-        >
-          {category.name}
-        </Link>
+        {isOnFilterPage ? (
+          // Inside FiltersProvider (categories/collections pages): toggle, no navigation
+          <button
+            type="button"
+            onClick={handleParentClick}
+            className={cn(commonClass, "flex-1 font-semibold text-left", isParentActive ? activeClass : inactiveClass)}
+          >
+            {category.name}
+          </button>
+        ) : (
+          // Outside FiltersProvider: navigate to category page
+          <Link
+            href={`/categories/${category.handle}`}
+            className={cn(commonClass, "flex-1 font-semibold", isParentActive ? activeClass : inactiveClass)}
+          >
+            {category.name}
+          </Link>
+        )}
         {/* Arrow only toggles accordion, does NOT navigate */}
         {hasChildren && (
           <button
@@ -131,15 +175,27 @@ function CategoryAccordion({ category }: { category: HttpTypes.StoreProductCateg
         >
           <ul className="pb-1 pl-3 space-y-1 pt-1">
             {children.map((child) => {
-              const isChildActive = Boolean(pathname?.includes(`/${child.handle}`))
+              const isChildActive = isOnFilterPage
+                ? activeIds.includes(child.id)
+                : Boolean(pathname?.includes(`/${child.handle}`))
               return (
                 <li key={child.id}>
-                  <Link
-                    href={`/categories/${child.handle}`}
-                    className={cn(commonClass, isChildActive ? activeClass : inactiveClass)}
-                  >
-                    {child.name}
-                  </Link>
+                  {isOnFilterPage ? (
+                    <button
+                      type="button"
+                      onClick={() => handleChildClick(child.id)}
+                      className={cn(commonClass, "text-left", isChildActive ? activeClass : inactiveClass)}
+                    >
+                      {child.name}
+                    </button>
+                  ) : (
+                    <Link
+                      href={`/categories/${child.handle}`}
+                      className={cn(commonClass, isChildActive ? activeClass : inactiveClass)}
+                    >
+                      {child.name}
+                    </Link>
+                  )}
                 </li>
               )
             })}
@@ -160,17 +216,12 @@ function CategoryFilter({
     initialCategories ?? []
   )
 
-  const isOnCategoriesPage = pathname?.includes("/categories")
-
   useEffect(() => {
-    if (!isOnCategoriesPage) return
     if (initialCategories && initialCategories.length > 0) return
     listMegaMenuCategories().then((cats) => {
       setCategories(cats)
     }).catch(() => {})
-  }, [isOnCategoriesPage, initialCategories])
-
-  if (!isOnCategoriesPage) return null
+  }, [initialCategories])
 
   return (
     <Accordion heading="Tüm Kategoriler" defaultOpen={true}>
@@ -193,20 +244,25 @@ function ConditionFilter({ defaultOpen = true }: { defaultOpen?: boolean }) {
   })
   const { updateFilters, isFilterActive } = useFilters("condition")
 
-  const selectHandler = (option: string) => {
-    updateFilters(option)
-  }
+  const activeClass = "bg-gradient-to-r from-[#f58529] via-[#dd2a7b] to-[#8134af] text-white shadow-[0_10px_20px_rgba(221,42,123,0.20)]"
+  const inactiveClass = "text-primary hover:bg-[#fff2f7]"
+
   return (
-    <Accordion heading="Condition" defaultOpen={defaultOpen}>
-      <ul className="px-4 min-h-[24px]">
+    <Accordion heading="Durum" defaultOpen={defaultOpen}>
+      <ul className="px-4 pb-2 space-y-1 min-h-[24px]">
         {items.map(({ label, count }) => (
-          <li key={label} className="mb-4">
-            <FilterCheckboxOption
-              checked={isFilterActive(label)}
+          <li key={label}>
+            <button
               disabled={Boolean(!count)}
-              onCheck={selectHandler}
-              label={label}
-            />
+              onClick={() => updateFilters(label)}
+              className={cn(
+                "w-full text-left text-sm px-2 py-1.5 rounded-sm transition-colors",
+                isFilterActive(label) ? activeClass : inactiveClass,
+                Boolean(!count) && "opacity-40 cursor-not-allowed"
+              )}
+            >
+              {label}
+            </button>
           </li>
         ))}
       </ul>
@@ -224,27 +280,29 @@ function ColorFilter({ defaultOpen = true }: { defaultOpen?: boolean }) {
   })
   const { updateFilters, isFilterActive } = useFilters("color")
 
-  const selectHandler = (option: string) => {
-    updateFilters(option)
-  }
+  const activeClass = "bg-gradient-to-r from-[#f58529] via-[#dd2a7b] to-[#8134af] text-white shadow-[0_10px_20px_rgba(221,42,123,0.20)]"
+  const inactiveClass = "text-primary hover:bg-[#fff2f7]"
+
   return (
-    <Accordion heading="Color" defaultOpen={defaultOpen}>
-      <ul className="px-4 min-h-[24px]">
+    <Accordion heading="Renk" defaultOpen={defaultOpen}>
+      <ul className="px-4 pb-2 space-y-1 min-h-[24px]">
         {items.map(({ label, count }) => (
-          <li key={label} className="mb-4 flex items-center justify-between">
-            <FilterCheckboxOption
-              checked={isFilterActive(label)}
+          <li key={label}>
+            <button
               disabled={Boolean(!count)}
-              onCheck={selectHandler}
-              label={label}
-            />
-            <div
-              style={{ backgroundColor: label.toLowerCase() }}
+              onClick={() => updateFilters(label)}
               className={cn(
-                "w-5 h-5 border border-primary rounded-xs",
-                Boolean(!label) && "opacity-30"
+                "w-full flex items-center justify-between text-sm px-2 py-1.5 rounded-sm transition-colors",
+                isFilterActive(label) ? activeClass : inactiveClass,
+                Boolean(!count) && "opacity-40 cursor-not-allowed"
               )}
-            />
+            >
+              <span>{label}</span>
+              <span
+                className="w-4 h-4 rounded-sm border border-current flex-shrink-0 ml-2"
+                style={{ backgroundColor: label.toLowerCase() }}
+              />
+            </button>
           </li>
         ))}
       </ul>
@@ -260,21 +318,25 @@ function SizeFilter({ defaultOpen = true }: { defaultOpen?: boolean }) {
   })
   const { updateFilters, isFilterActive } = useFilters("size")
 
-  const selectSizeHandler = (size: string) => {
-    updateFilters(size)
-  }
+  const activeClass = "bg-gradient-to-r from-[#f58529] via-[#dd2a7b] to-[#8134af] text-white shadow-[0_10px_20px_rgba(221,42,123,0.20)]"
+  const inactiveClass = "text-primary hover:bg-[#fff2f7] border border-gray-200"
 
   return (
-    <Accordion heading="Size" defaultOpen={defaultOpen}>
-      <ul className="grid grid-cols-4 mt-2 gap-2 min-h-[24px]">
-        {items.map(({ label }) => (
-          <li key={label} className="mb-4">
-            <Chip
-              selected={isFilterActive(label)}
-              onSelect={() => selectSizeHandler(label)}
-              value={label}
-              className="w-full !justify-center !py-2 !font-normal"
-            />
+    <Accordion heading="Beden" defaultOpen={defaultOpen}>
+      <ul className="grid grid-cols-3 gap-1.5 px-4 pb-2 min-h-[24px]">
+        {items.map(({ label, count }) => (
+          <li key={label}>
+            <button
+              disabled={Boolean(!count)}
+              onClick={() => updateFilters(label)}
+              className={cn(
+                "w-full text-center text-sm px-1 py-1.5 rounded-sm transition-colors",
+                isFilterActive(label) ? activeClass : inactiveClass,
+                Boolean(!count) && "opacity-40 cursor-not-allowed"
+              )}
+            >
+              {label}
+            </button>
           </li>
         ))}
       </ul>

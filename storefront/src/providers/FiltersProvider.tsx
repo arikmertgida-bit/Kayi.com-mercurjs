@@ -76,6 +76,16 @@ export function FiltersProvider({
   const [filterMap, setFilterMap] = useState<FilterMap>(init.filterMap)
   const [paramMap,  setParamMap]  = useState<ParamMap>(init.paramMap)
 
+  // Re-parse whenever the URL search string changes (e.g. NavbarSearch router.push).
+  // FiltersProvider is NOT remounted on same-page navigations, so we watch the
+  // initialSearch prop (which MeiliProductsListing derives from useSearchParams())
+  // to keep internal state in sync with the live URL.
+  useEffect(() => {
+    const { filterMap: fm, paramMap: pm } = parseSearch(initialSearch)
+    setFilterMap(fm)
+    setParamMap(pm)
+  }, [initialSearch])
+
   // Stable refs so callbacks never close over stale state
   const fmRef = useRef(filterMap)
   const pmRef = useRef(paramMap)

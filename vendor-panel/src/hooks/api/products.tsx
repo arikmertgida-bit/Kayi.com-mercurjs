@@ -608,11 +608,22 @@ export const useImportProducts = (
 export interface ConfirmImportPayload {
   transaction_id: string
   category_mapping?: { name: string; platform_id: string }[]
+  stock_location_id?: string
+  total_stock?: number
 }
 
 export interface ImportJobStatus {
   job_id: string
-  status: "pending" | "running" | "done" | "failed"
+  /**
+   * queued   — job is in the BullMQ queue, waiting to be processed
+   * pending  — job picked up by worker, initializing
+   * running  — worker is actively processing rows
+   * done     — processing complete (may have partial errors)
+   * failed   — fatal error, no rows were processed
+   */
+  status: "queued" | "pending" | "running" | "done" | "failed"
+  /** Estimated position in the queue. 1 = next to run. Only set when status === "queued". */
+  queue_position?: number
   processed: number
   total: number
   created: number
@@ -624,7 +635,7 @@ export interface ImportJobStatus {
 }
 
 export const useConfirmImportProducts = (
-  options?: UseMutationOptions<{ job_id: string }, FetchError, ConfirmImportPayload>
+  options?: UseMutationOptions<{ job_id: string; queue_position?: number; total?: number }, FetchError, ConfirmImportPayload>
 ) => {
   return useMutation({
     mutationFn: (payload) =>
@@ -651,5 +662,37 @@ export const useImportJobStatus = (
       }>,
     enabled: !!jobId && options?.enabled !== false,
     refetchInterval: options?.refetchInterval ?? 2000,
+  })
+}
+
+export interface BulkProductEntry {
+  title: string
+  description?: string
+  thumbnail?: string
+  images?: string[]
+  category_id?: string
+  tags?: string[]
+  type_id?: string
+  collection_id?: string
+  stock_location_id?: string
+  status: "draft" | "proposed"
+  product_type: "simple" | "variant"
+  sku?: string
+  price?: number
+  stock?: number
+  option_name?: string
+  variants?: { option_value: string; sku?: string; price: number; stock?: number }[]
+}
+
+export const useBulkImportProducts = (
+  options?: UseMutationOptions<{ job_id: string }, FetchError, { products: BulkProductEntry[] }>
+) => {
+  return useMutation({
+    mutationFn: (payload) =>
+      fetchQuery("/vendor/products/import/bulk", {
+        method: "POST",
+        body: payload,
+      }),
+    ...options,
   })
 }
