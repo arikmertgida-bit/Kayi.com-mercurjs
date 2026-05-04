@@ -757,16 +757,16 @@ export const ProductReviewCard = ({ review, currentCustomerId }: Props) => {
         {replyOpen && (
           <div className="border-t border-[#f5d8e6] bg-[#fff8fb]/60 px-4 py-3 space-y-3">
             {/* seller_note shown only when there are no is_seller_reply entries in thread */}
-            {review.seller_note && !replies.some((r) => r.is_seller_reply) && (
+            {review.seller_note && review.seller && !replies.some((r) => r.is_seller_reply) && (
               <SellerReplyCard
-                sellerName={review.seller.name}
+                sellerName={review.seller?.name ?? "Satıcı"}
                 sellerPhoto={
                   (
-                    review.seller.members?.find(m => m.role === "owner" || m.role === "admin")
-                    ?? review.seller.members?.[0]
+                    review.seller?.members?.find((m: { role: string }) => m.role === "owner" || m.role === "admin")
+                    ?? review.seller?.members?.[0]
                   )?.photo
                 }
-                sellerHandle={review.seller.handle}
+                sellerHandle={review.seller?.handle ?? ""}
                 note={review.seller_note}
                 onMention={(name) => {
                   const prefix = `@${name} `
@@ -787,14 +787,14 @@ export const ProductReviewCard = ({ review, currentCustomerId }: Props) => {
                       replyId={reply.id}
                       initialLikes={reply.likes_count ?? 0}
                       initialLikedByMe={reply.is_liked_by_me ?? false}
-                      sellerName={reply.seller_name ?? review.seller.name}
+                      sellerName={reply.seller_name ?? review.seller?.name ?? "Satıcı"}
                       sellerPhoto={
                         (
-                          review.seller.members?.find(m => m.role === "owner" || m.role === "admin")
-                          ?? review.seller.members?.[0]
+                          review.seller?.members?.find((m: { role: string }) => m.role === "owner" || m.role === "admin")
+                          ?? review.seller?.members?.[0]
                         )?.photo
                       }
-                      sellerHandle={review.seller.handle}
+                      sellerHandle={review.seller?.handle ?? ""}
                       note={reply.content}
                       onMention={(name) => {
                         const prefix = `@${name} `

@@ -164,6 +164,7 @@ export const CustomerProfileHeader = ({
           fill
           sizes="100vw"
           className="object-cover"
+          quality={90}
           priority
         />
         <div className="absolute inset-0 bg-black/20" />

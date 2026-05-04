@@ -31,9 +31,12 @@ export default async function RootLayout({
     ? [user.first_name, user.last_name].filter(Boolean).join(" ") || user.email || null
     : null
 
+  const notifyEnabled =
+    ((user?.metadata as Record<string, unknown> | null | undefined)?.notify_enabled as boolean | undefined) ?? true
+
   return (
     <WishlistProvider user={user}>
-      <MessengerProvider userId={user?.id ?? null} authToken={authToken} userName={userName}>
+      <MessengerProvider userId={user?.id ?? null} authToken={authToken} userName={userName} notifyEnabled={notifyEnabled}>
         <div className="flex flex-col min-h-screen">
           <Header />
           <main className="flex-1">

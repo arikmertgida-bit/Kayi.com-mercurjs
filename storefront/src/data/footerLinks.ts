@@ -13,9 +13,9 @@ const links = {
     { label: 'Terms & Conditions', path: '/terms-and-conditions' },
   ],
   connect: [
-    { label: 'Facebook', path: 'https://facebook.com' },
-    { label: 'Instagram', path: 'https://instagram.com' },
-    { label: 'LinekdIn', path: 'https://linkedin.com' },
+    { label: 'Facebook', path: 'https://www.facebook.com/ahmet.arikmert2' },
+    { label: 'Instagram', path: 'https://www.instagram.com/kayi_platform/' },
+    { label: 'YouTube', path: 'https://www.youtube.com/channel/UC9DT5jOBgOOvrmrJE_-ThTQ' },
   ],
 };
 

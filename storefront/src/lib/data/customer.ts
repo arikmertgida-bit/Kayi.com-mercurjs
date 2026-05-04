@@ -337,3 +337,31 @@ export const updateCustomerPhoto = async (
     },
   } as any)
 }
+
+export const updateNotificationPreference = async (
+  enabled: boolean
+): Promise<void> => {
+  const existing = await retrieveCustomer()
+  const meta = ((existing?.metadata as Record<string, any>) || {})
+
+  await updateCustomer({
+    metadata: {
+      ...meta,
+      notify_on_review_reply: enabled,
+    },
+  } as any)
+}
+
+export const updateGlobalNotificationPreference = async (
+  enabled: boolean
+): Promise<void> => {
+  const existing = await retrieveCustomer()
+  const meta = ((existing?.metadata as Record<string, any>) || {})
+
+  await updateCustomer({
+    metadata: {
+      ...meta,
+      notify_enabled: enabled,
+    },
+  } as any)
+}

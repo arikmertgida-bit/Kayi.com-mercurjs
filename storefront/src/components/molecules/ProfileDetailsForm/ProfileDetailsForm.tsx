@@ -17,6 +17,7 @@ import { useState } from "react"
 interface Props {
   defaultValues?: ProfileDetailsFormData
   handleClose?: () => void
+  notificationToggle?: React.ReactNode
 }
 
 export const ProfileDetailsForm: React.FC<Props> = ({
@@ -40,7 +41,7 @@ export const ProfileDetailsForm: React.FC<Props> = ({
   )
 }
 
-const Form: React.FC<Props> = ({ handleClose }) => {
+const Form: React.FC<Props> = ({ handleClose, notificationToggle }) => {
   const [error, setError] = useState<string>()
   const {
     handleSubmit,
@@ -90,6 +91,13 @@ const Form: React.FC<Props> = ({ handleClose }) => {
           <LabeledInput label="Email" disabled {...register("email")} />
         </div>
         {error && <p className="label-md text-negative">{error}</p>}
+        {notificationToggle && (
+          <>
+            <div className="border-t pt-4">
+              {notificationToggle}
+            </div>
+          </>
+        )}
         <Button className="w-full ">Save</Button>
       </div>
     </form>

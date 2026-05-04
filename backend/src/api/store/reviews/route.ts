@@ -11,6 +11,13 @@ const DEFAULT_FIELDS = [
   "customer_note",
   "customer.first_name",
   "customer.last_name",
+  "customer.metadata",
+  "seller.id",
+  "seller.name",
+  "seller.handle",
+  "seller.photo",
+  "seller.members.role",
+  "seller.members.photo",
   "seller_note",
   "created_at",
   "updated_at",
@@ -33,9 +40,39 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     pagination: { skip: offset, take: limit },
   })
 
+  const rawReviews = reviews.map((relation: any) => relation.review).filter(Boolean)
+
+  // product_id is NOT a column on review — it lives in the product_product_review_review link table.
+  // Fetch all product links for these review IDs in one query.
+  let productIdByReview: Record<string, string> = {}
+  if (rawReviews.length > 0) {
+    const reviewIds = rawReviews.map((r: any) => r.id)
+    try {
+      const { data: productLinks } = await query.graph({
+        entity: "product_review",
+        fields: ["product.id", "review.id"],
+        filters: { review_id: reviewIds },
+      })
+      for (const link of productLinks as any[]) {
+        if (link.review?.id && link.product?.id) {
+          productIdByReview[link.review.id] = link.product.id
+        }
+      }
+    } catch {
+      // product_review link sorgusu başarısız olursa reference_id null kalır
+    }
+  }
+
   return res.json({
-    reviews: reviews.map((relation: any) => relation.review),
-    count: metadata?.count ?? reviews.length,
+    reviews: rawReviews.map((review: any) => {
+      const avatar_url = (review.customer?.metadata as any)?.avatar_url ?? undefined
+      const enrichedCustomer = review.customer
+        ? { ...review.customer, avatar_url }
+        : review.customer
+      const reference_id = productIdByReview[review.id] ?? review.reference_id ?? null
+      return { ...review, customer: enrichedCustomer, reference_id }
+    }),
+    count: metadata?.count ?? rawReviews.length,
     offset,
     limit,
   })

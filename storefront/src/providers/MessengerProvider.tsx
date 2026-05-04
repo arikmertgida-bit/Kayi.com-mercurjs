@@ -93,9 +93,11 @@ interface MessengerProviderProps {
   authToken: string | null
   /** Customer's display name — sent in socket handshake so messenger can enrich notifications */
   userName?: string | null
+  /** When false, browser push notifications and notification sounds are suppressed. Socket connection stays active. Defaults to true. */
+  notifyEnabled?: boolean
 }
 
-export function MessengerProvider({ children, userId, authToken, userName }: MessengerProviderProps) {
+export function MessengerProvider({ children, userId, authToken, userName, notifyEnabled = true }: MessengerProviderProps) {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
@@ -114,6 +116,7 @@ export function MessengerProvider({ children, userId, authToken, userName }: Mes
 
   // ── Browser Push Notification ────────────────────────────────────────────
   const showBrowserNotification = useCallback((payload: NotificationPayload) => {
+    if (!notifyEnabled) return // user disabled all notifications
     if (typeof window === "undefined") return
     if (document.visibilityState === "visible") return // tab is active, no push needed
     if (Notification.permission !== "granted") return
@@ -122,7 +125,7 @@ export function MessengerProvider({ children, userId, authToken, userName }: Mes
       body: payload.preview,
       icon: "/favicon.ico",
     })
-  }, [])
+  }, [notifyEnabled])
 
   // ── Socket Setup ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -226,8 +229,8 @@ export function MessengerProvider({ children, userId, authToken, userName }: Mes
       getUnreadCount().then((r) => setUnreadCount(r.count)),
     ]).catch(console.error)
 
-    // Request notification permission
-    if (Notification.permission === "default") {
+    // Request notification permission only when notifications are enabled
+    if (notifyEnabled && Notification.permission === "default") {
       Notification.requestPermission().catch(() => {})
     }
 

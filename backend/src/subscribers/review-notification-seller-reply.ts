@@ -30,6 +30,15 @@ export default async function reviewNotificationSellerReplySubscriber({
     const customerId = (relations as any[])?.[0]?.customer_id
     if (!customerId) return
 
+    // Check customer's notification preference; default is enabled (true)
+    const { data: customers } = await query.graph({
+      entity: "customer",
+      fields: ["id", "metadata"],
+      filters: { id: customerId },
+    })
+    const customerMeta = (customers as any[])?.[0]?.metadata as Record<string, unknown> | null | undefined
+    if (customerMeta?.notify_on_review_reply === false) return
+
     notifyMessengerUser({
       targetUserId: customerId,
       targetUserType: "CUSTOMER",

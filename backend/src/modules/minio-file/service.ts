@@ -12,8 +12,8 @@ import { ulid } from 'ulid';
 import sharp from 'sharp';
 
 const IMAGE_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"])
-const MAX_IMAGE_DIMENSION = 1200
-const WEBP_QUALITY = 80
+const MAX_IMAGE_DIMENSION = 1920
+const WEBP_QUALITY = 85
 
 type InjectedDependencies = {
   logger: Logger

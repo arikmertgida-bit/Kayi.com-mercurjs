@@ -12,10 +12,14 @@ export const Accordion = ({
   children,
   heading,
   defaultOpen = true,
+  durationMs = 300,
+  customHeader,
 }: {
   children: React.ReactNode
   heading: string
   defaultOpen?: boolean
+  durationMs?: number
+  customHeader?: React.ReactNode
 }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen)
   const [height, setHeight] = useState<number | null>(null)
@@ -48,7 +52,7 @@ export const Accordion = ({
         onClick={openHandler}
         className="flex justify-between items-center cursor-pointer px-2"
       >
-        <h4 className="label-lg uppercase">{heading}</h4>
+        {customHeader ?? <h4 className="label-lg uppercase">{heading}</h4>}
         <CollapseIcon
           size={20}
           className={cn("transition-all duration-300", isOpen && "rotate-180")}
@@ -59,7 +63,7 @@ export const Accordion = ({
         style={{
           maxHeight: isOpen ? (height !== null ? `${height}px` : "none") : "0px",
           opacity: isOpen ? 1 : 0,
-          transition: "max-height 0.3s ease-in-out, opacity 0.2s ease-in-out",
+          transition: `max-height ${durationMs / 1000}s ease-in-out, opacity ${(durationMs * 0.67) / 1000}s ease-in-out`,
         }}
       >
         <div ref={contentRef} className="pt-4">

@@ -201,3 +201,36 @@ export const listProductsWithSort = async ({
     queryParams,
   }
 }
+
+export const batchGetProducts = async (
+  ids: string[]
+): Promise<Array<{ id: string; title: string; thumbnail: string | null; handle: string | null }>> => {
+  if (!ids.length) return []
+
+  const backendUrl = process.env.MEDUSA_BACKEND_URL ?? ""
+  const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? ""
+
+  try {
+    const results = await Promise.allSettled(
+      ids.map(async (id) => {
+        const res = await fetch(
+          `${backendUrl}/store/products/${encodeURIComponent(id)}?fields=id,title,thumbnail,handle`,
+          {
+            headers: { "x-publishable-api-key": publishableKey },
+            cache: "no-store",
+          }
+        )
+        if (!res.ok) return null
+        const data = await res.json()
+        return (data.product ?? null) as { id: string; title: string; thumbnail: string | null; handle: string | null } | null
+      })
+    )
+    return results
+      .filter((r): r is PromiseFulfilledResult<{ id: string; title: string; thumbnail: string | null; handle: string | null }> =>
+        r.status === "fulfilled" && r.value !== null
+      )
+      .map((r) => r.value)
+  } catch {
+    return []
+  }
+}

@@ -59,17 +59,29 @@ export type Order = HttpTypes.StoreOrder & {
 }
 
 const getReviews = async () => {
-  const headers = {
-    ...(await getAuthHeaders()),
+  const authHeaders = await getAuthHeaders()
+  const fields = encodeURIComponent(
+    "*seller,*customer,+reference,+reference_id,+customer_note,+seller_note,+likes_count,+is_liked_by_me,+images.id,+images.url,+images.is_hidden"
+  )
+  try {
+    const res = await fetch(
+      `${process.env.MEDUSA_BACKEND_URL}/store/reviews?fields=${fields}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY as string,
+          ...(authHeaders as Record<string, string>),
+        },
+        cache: "no-store",
+      }
+    )
+    if (!res.ok) return { ok: false, status: res.status, data: null, error: { message: "Failed" } }
+    const data = await res.json()
+    return { ok: true, status: res.status, data, error: null }
+  } catch {
+    return { ok: false, status: 500, data: null, error: { message: "Network error" } }
   }
-
-  const res = await fetchQuery("/store/reviews", {
-    headers,
-    method: "GET",
-    query: { fields: "*seller,+customer.id,+order_id" },
-  })
-
-  return res
 }
 
 const getProductReviews = async (productId: string): Promise<{
