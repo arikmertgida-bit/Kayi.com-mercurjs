@@ -124,7 +124,7 @@
     "onlyVerifiedBuyers": "Yalnızca satın almış kullanıcılar bu ürünü değerlendirebilir.",
     "shareExperience": "Ürün deneyiminizi paylaşın",
     "writeReview": "Değerlendirme Yaz",
-    "reviewCount": "{count} değerlendirme",
+    "reviewCount": "{count} Değlendirme",
     "shippingTitle": "Kargo ve İade",
     "shippingLine1": "Türkiye genelinde tüm siparişlerde ücretsiz standart kargo. Acil kargo seçenekleri ek ücretle mevcuttur. Siparişler genellikle 3-5 iş günü içinde kargoya verilir.",
     "shippingLine2": "30 günlük iade politikamız vardır. Satın aldığınız üründen tamamen memnun değilseniz, orijinal durumunda ve ambalajında olması koşuluyla tam para iadesi veya değişim için iade edebilirsiniz.",
@@ -191,8 +191,9 @@
     "noResultsDesc": "Üzgünüz, arama kriterlerinize uygun sonuç bulunamadı",
     "clearAll": "Tümünü temizle",
     "viewResults": "Sonuçları gör",
-    "listingsCount": "{total} ilan",
-    "seeMore": "Daha Fazla Gör"
+    "listingsCount": "{total} İlan",
+    "seeMore": "Daha Fazla Gör",
+    "relatedProducts": "Bunlar da İlginizi Çekebilir"
   },
   "header": {
     "shippingTo": "Gönderim Yeri:",
@@ -202,11 +203,11 @@
     "products": "Ürünler",
     "reviews": "Değerlendirmeler",
     "sellerScore": "Satıcı Puanı",
-    "sellerReviews": "Satıcı Değerlendirmeleri",
+    "sellerReviews": "Değlendirme",
     "replyFrom": "{name} yanıtladı",
     "productCount": "{count} ürün",
     "noProducts": "Bu satıcının henüz yayınlanmış ürünü bulunmuyor.",
-    "reviewCountLabel": "{count} değerlendirme",
+    "reviewCountLabel": "{count} Değlendirme",
     "seeMore": "Daha Fazla Gör"
   },
   "addresses": {

@@ -181,8 +181,6 @@ async function Category({
         <Breadcrumbs items={breadcrumbsItems} />
       </div>
 
-      <h1 className="heading-xl uppercase">{category.name}</h1>
-
       <div>
         <Suspense fallback={<ProductListingSkeleton />}>
           {bot || !MEILISEARCH_HOST ? (

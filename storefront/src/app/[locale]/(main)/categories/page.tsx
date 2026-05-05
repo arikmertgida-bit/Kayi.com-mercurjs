@@ -152,8 +152,6 @@ async function AllCategories({
         <Breadcrumbs items={breadcrumbsItems} />
       </div>
 
-      <h1 className="heading-xl uppercase">{t('allProducts')}</h1>
-
       <Suspense fallback={<ProductListingSkeleton />}>
         {bot || !MEILISEARCH_HOST ? (
           <ProductListing showSidebar locale={locale} page={page} />

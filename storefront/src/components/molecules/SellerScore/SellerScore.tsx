@@ -1,14 +1,16 @@
-import { StarRating } from "@/components/atoms"
-import { getTranslations } from "next-intl/server"
+"use client"
 
-export const SellerScore = async ({
+import { StarRating } from "@/components/atoms"
+import { useTranslations } from "next-intl"
+
+export const SellerScore = ({
   rate,
   reviewCount,
 }: {
   rate: number
   reviewCount: number
 }) => {
-  const t = await getTranslations('seller')
+  const t = useTranslations('seller')
   return (
     <div className="flex items-center flex-col label-md h-full py-12">
       <h3 className="heading-sm uppercase mb-2">{t('sellerScore')}</h3>

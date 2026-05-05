@@ -65,7 +65,9 @@ export const SellerTabs = ({
       </div>
       <div className="col-span-3 border rounded-sm p-4">
         <h3 className="heading-sm uppercase border-b pb-4">{t('sellerReviews')}</h3>
-        <SellerReviewList reviews={seller.reviews} productMap={productMap} />
+        <Suspense fallback={<div className="p-4 text-secondary">Yükleniyor...</div>}>
+          <SellerReviewList reviews={seller.reviews} productMap={productMap} />
+        </Suspense>
       </div>
     </div>
   )

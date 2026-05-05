@@ -192,7 +192,8 @@
     "clearAll": "Clear all",
     "viewResults": "View results",
     "listingsCount": "{total} listings",
-    "seeMore": "See More"
+    "seeMore": "See More",
+    "relatedProducts": "You May Also Like"
   },
   "header": {
     "shippingTo": "Shipping to",
@@ -202,7 +203,7 @@
     "products": "Products",
     "reviews": "Reviews",
     "sellerScore": "Seller score",
-    "sellerReviews": "Seller reviews",
+    "sellerReviews": "Reviews",
     "replyFrom": "Reply from {name}",
     "productCount": "{count} products",
     "noProducts": "This seller has no published products yet.",

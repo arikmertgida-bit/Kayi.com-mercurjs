@@ -1,6 +1,9 @@
+"use client"
+
 import { StarRating } from "@/components/atoms"
 import { SellerAvatar } from "@/components/cells/SellerAvatar/SellerAvatar"
 import { SellerProps } from "@/types/seller"
+import { useTranslations } from "next-intl"
 
 export const SellerInfo = ({
   seller,
@@ -8,6 +11,7 @@ export const SellerInfo = ({
   seller: SellerProps
   header?: boolean
 }) => {
+  const t = useTranslations('seller')
   const ownerMember =
     seller.members?.find((m) => m.role === "owner" || m.role === "admin") ??
     seller.members?.[0]
@@ -35,7 +39,7 @@ export const SellerInfo = ({
         <h3 className="heading-sm text-primary">{name}</h3>
         <div className="flex items-center gap-2 pb-4">
           <StarRating starSize={16} rate={rating || 0} />
-          <span className="text-md text-secondary">{reviewCount} reviews</span>
+          <span className="text-md text-secondary">{t('reviewCountLabel', { count: reviewCount })}</span>
         </div>
       </div>
     </div>

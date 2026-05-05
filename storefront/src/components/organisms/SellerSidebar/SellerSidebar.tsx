@@ -77,8 +77,8 @@ export function SellerSidebar({ seller, categories, productCount }: SellerSideba
           )}
         </div>
         <StarDisplay rating={rating} />
-        <p className="text-xs text-secondary mt-1">{reviewCount} değerlendirme</p>
-        <p className="text-xs text-secondary mt-1">{productCount} ürün</p>
+        <p className="text-xs text-secondary mt-1">{reviewCount} Değlendirme</p>
+        <p className="text-xs text-secondary mt-1">{productCount} Ürün</p>
       </div>
 
       {/* Category Filter */}

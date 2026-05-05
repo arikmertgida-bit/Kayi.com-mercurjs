@@ -2,6 +2,7 @@ import { HomeSlider } from "@/components/organisms/HomeProductsCarousel/HomeSlid
 import { listProducts } from "@/lib/data/products"
 import { HttpTypes } from "@medusajs/types"
 import { SellerProps } from "@/types/seller"
+import { getTranslations } from "next-intl/server"
 
 interface Props {
   product: HttpTypes.StoreProduct & { seller?: SellerProps }
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export const RelatedProductsSection = async ({ product, locale }: Props) => {
+  const t = await getTranslations('listing')
   const categoryId = product.categories?.[0]?.id
   const categoryHandle = product.categories?.[0]?.handle
 
@@ -32,7 +34,7 @@ export const RelatedProductsSection = async ({ product, locale }: Props) => {
   return (
     <section className="py-4 w-full">
       <HomeSlider
-        heading="Bunlar da İlginizi Çekebilir"
+        heading={t('relatedProducts')}
         initialProducts={related}
         allProductsHref={categoryHandle ? `/categories/${categoryHandle}` : "/categories"}
       />

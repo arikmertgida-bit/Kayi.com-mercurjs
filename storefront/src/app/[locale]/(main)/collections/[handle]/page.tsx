@@ -44,8 +44,6 @@ const SingleCollectionsPage = async ({
         <Breadcrumbs items={breadcrumbsItems} />
       </div>
 
-      <h1 className="heading-xl uppercase">{collection.title}</h1>
-
       <Suspense fallback={<ProductListingSkeleton />}>
         {bot || !MEILISEARCH_HOST ? (
           <ProductListing collection_id={collection.id} showSidebar page={page} />

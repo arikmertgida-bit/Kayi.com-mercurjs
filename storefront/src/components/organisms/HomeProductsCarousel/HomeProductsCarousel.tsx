@@ -33,7 +33,7 @@ export const HomeProductsCarousel = async ({
   if (!products.length && !sellerProducts.length) return null
 
   const displayProducts = (
-    home ? products : sellerProducts.length ? sellerProducts : products
+    home ? products : products.length ? products : sellerProducts
   ) as HttpTypes.StoreProduct[]
 
   return (

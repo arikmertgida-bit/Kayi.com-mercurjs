@@ -36,6 +36,7 @@ export default async function initMeilisearch() {
       "variants.prices.amount",
       "categories.id",
       "categories.handle",
+      "categories.name",
       "collection.id",
       "collection.handle",
       "variants.condition",

@@ -1,19 +1,21 @@
+"use client"
+
 import { StarRating } from "@/components/atoms"
 import { SingleProductReview } from "@/types/product"
 import { Divider } from "@medusajs/ui"
 import { formatDistanceToNow } from "date-fns"
 import { tr } from "date-fns/locale"
 import Image from "next/image"
-import { getTranslations } from "next-intl/server"
+import { useTranslations } from "next-intl"
 
-export const SellerReview = async ({
+export const SellerReview = ({
   review,
   productMap = {},
 }: {
   review: SingleProductReview
   productMap?: Record<string, { title: string; thumbnail: string | null }>
 }) => {
-  const t = await getTranslations('seller')
+  const t = useTranslations('seller')
   const product =
     review.reference === "product" && review.reference_id
       ? productMap[review.reference_id]
