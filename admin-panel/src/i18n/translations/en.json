@@ -1325,7 +1325,10 @@
       },
       "error": {
         "quantityNotAllocated": "There are unallocated items."
-      }
+      },
+      "noItemsToAllocate": "No items require allocation.",
+      "noItemsFound": "No items match your search.",
+      "noItemsFoundHint": "Try a different search term."
     },
     "shipment": {
       "title": "Mark fulfillment shipped",
@@ -3221,7 +3224,7 @@
   "configuration": {
     "domain": "Product Catalog Settings"
   },
-  "algolia": {
+  "meilisearch": {
     "domain": "Meilisearch"
   },
   "commission": {

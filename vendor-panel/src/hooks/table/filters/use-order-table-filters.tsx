@@ -5,44 +5,17 @@ import type { Filter } from "../../../components/table/data-table"
 export const useOrderTableFilters = (): Filter[] => {
   const { t } = useTranslation()
 
-  let filters: Filter[] = []
-
-  // Note: paymentStatusFilter is defined but not currently used
-  // @ts-ignore - Filter preserved for future use
-  const _paymentStatusFilter: Filter = {
-    key: "payment_status",
-    label: t("orders.payment.statusLabel"),
+  const fulfillmentStatusFilter: Filter = {
+    key: "fulfillment_status",
+    label: t("orders.fulfillment.statusLabel"),
     type: "select",
-    multiple: true,
+    multiple: false,
     options: [
-      {
-        label: t("orders.payment.status.notPaid"),
-        value: "not_paid",
-      },
-      {
-        label: t("orders.payment.status.awaiting"),
-        value: "awaiting",
-      },
-      {
-        label: t("orders.payment.status.captured"),
-        value: "captured",
-      },
-      {
-        label: t("orders.payment.status.refunded"),
-        value: "refunded",
-      },
-      {
-        label: t("orders.payment.status.partiallyRefunded"),
-        value: "partially_refunded",
-      },
-      {
-        label: t("orders.payment.status.canceled"),
-        value: "canceled",
-      },
-      {
-        label: t("orders.payment.status.requiresAction"),
-        value: "requires_action",
-      },
+      { label: t("orders.fulfillment.status.notFulfilled"), value: "not_fulfilled" },
+      { label: t("orders.fulfillment.status.fulfilled"), value: "fulfilled" },
+      { label: t("orders.fulfillment.status.partiallyFulfilled"), value: "partially_fulfilled" },
+      { label: t("orders.fulfillment.status.returned"), value: "returned" },
+      { label: t("orders.fulfillment.status.canceled"), value: "canceled" },
     ],
   }
 
@@ -55,13 +28,6 @@ export const useOrderTableFilters = (): Filter[] => {
     type: "date",
   }))
 
-  filters = [
-    ...filters,
-    // TODO: enable when Payment, Fulfillments <> Orders are linked
-    // paymentStatusFilter,
-    // fulfillmentStatusFilter,
-    ...dateFilters,
-  ]
-
-  return filters
+  return [fulfillmentStatusFilter, ...dateFilters]
 }
+

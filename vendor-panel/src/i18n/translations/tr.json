@@ -1238,7 +1238,10 @@
       },
       "error": {
         "quantityNotAllocated": "Tahsis edilmemiş ürünler var."
-      }
+      },
+      "noItemsToAllocate": "Tahsis gerektiren ürün yok.",
+      "noItemsFound": "Aramanızla eşleşen ürün bulunamadı.",
+      "noItemsFoundHint": "Farklı bir arama terimi deneyin."
     },
     "shipment": {
       "title": "Gönderimi İşaretle",

@@ -103,15 +103,15 @@ export const DashboardCharts = ({
   const from = new Date(fromStr)
   const to = new Date(toStr)
 
-  const updateDateRange = async (newFrom: string, newTo: string) => {
+  const updateDateRange = (newFrom: string, newTo: string) => {
     const newSearchParams = new URLSearchParams(searchParams)
     newSearchParams.set("from", format(new Date(newFrom), "yyyy-MM-dd"))
     newSearchParams.set("to", format(new Date(newTo), "yyyy-MM-dd"))
-    await setSearchParams(newSearchParams)
-    refetch()
+    setSearchParams(newSearchParams)
+    // queryKey includes from/to — TanStack Query re-fetches automatically
   }
 
-  const { customers, orders, isPending, refetch } = useStatistics({
+  const { customers, orders, isPending } = useStatistics({
     from: fromStr,
     to: toStr,
   })

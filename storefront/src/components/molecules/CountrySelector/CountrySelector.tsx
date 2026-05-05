@@ -90,7 +90,6 @@ const CountrySelect = ({ regions }: CountrySelectProps) => {
             <div className="txt-compact-small flex items-start mx-auto">
               {current && (
                 <span className="txt-compact-small flex items-center gap-x-2">
-                  {/* @ts-ignore */}
                   <ReactCountryFlag
                     alt={`${current.country?.toUpperCase()} flag`}
                     svg
@@ -121,7 +120,6 @@ const CountrySelect = ({ regions }: CountrySelectProps) => {
                       className="cursor-pointer select-none relative w-16 hover:bg-gray-50 py-2 border-b"
                     >
                       <span className="flex items-center gap-x-2 pl-2">
-                        {/* @ts-ignore */}
                         <ReactCountryFlag
                           svg
                           style={{

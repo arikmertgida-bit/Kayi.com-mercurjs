@@ -11,6 +11,7 @@ import { ReturnMethodsTab } from "./ReturnMethodsTab"
 import { StepProgressBar } from "@/components/cells/StepProgressBar/StepProgressBar"
 import { createReturnRequest } from "@/lib/data/orders"
 import { useRouter } from "next/navigation"
+import { toast } from "@medusajs/ui"
 
 export const OrderReturnSection = ({
   order,
@@ -72,7 +73,8 @@ export const OrderReturnSection = ({
     const { order_return_request } = await createReturnRequest(data)
 
     if (!order_return_request.id) {
-      return console.log("Error creating return request")
+      toast.error("Failed to create return request. Please try again.")
+      return
     }
 
     router.push(`/user/orders/${order_return_request.id}/request-success`)

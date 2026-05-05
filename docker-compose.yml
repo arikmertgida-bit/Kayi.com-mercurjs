@@ -155,6 +155,7 @@ services:
         VITE_MEDUSA_BASE: /
         VITE_MEDUSA_BACKEND_URL: http://localhost:9000
         VITE_MEDUSA_STOREFRONT_URL: http://localhost:3000
+        VITE_MESSENGER_URL: ${MESSENGER_URL:-http://localhost:4000}
     restart: unless-stopped
     mem_limit: 64m
     cpus: '0.25'
@@ -185,6 +186,7 @@ services:
         VITE_MEDUSA_STOREFRONT_URL: http://localhost:3000
         VITE_MEDUSA_PUBLISHABLE_KEY: ${MEDUSA_PUBLISHABLE_KEY:-pk_fe7220c20ab9f3cc9b0fbb86f6c2e126e621d17f7c176584cbdd7fe8b04c67af}
         VITE_DISABLE_SELLERS_REGISTRATION: "false"
+        VITE_MESSENGER_URL: ${MESSENGER_URL:-http://localhost:4000}
     restart: unless-stopped
     mem_limit: 64m
     cpus: '0.25'
@@ -218,6 +220,7 @@ services:
         NEXT_PUBLIC_VENDOR_URL: http://localhost:7001
         NEXT_PUBLIC_MESSENGER_URL: http://localhost:4000
         NEXT_PUBLIC_MEILISEARCH_HOST: http://localhost:7700
+        NEXT_PUBLIC_MINIO_ENDPOINT: ${MINIO_PUBLIC_ENDPOINT:-}
         MEDUSA_BACKEND_URL: http://backend:9000
     restart: unless-stopped
     mem_limit: 512m

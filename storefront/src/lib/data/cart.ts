@@ -16,6 +16,11 @@ import {
 import { getRegion } from "./regions"
 import { parseVariantIdsFromError } from "@/lib/helpers/parse-variant-error"
 
+type CartPromotion = { code: string; id: string }
+type StoreCartWithPromotions = HttpTypes.StoreCart & {
+  promotions?: CartPromotion[]
+}
+
 /**
  * Retrieves a cart by its ID. If no ID is provided, it will use the cart ID from the cookies.
  * @param cartId - optional - The ID of the cart to retrieve.
@@ -292,9 +297,9 @@ export async function applyPromotions(codes: string[]) {
     .then(async ({ cart }) => {
       const cartCacheTag = await getCacheTag("carts")
       revalidateTag(cartCacheTag)
-      // @ts-ignore
-      const applied = cart.promotions?.some((promotion: any) =>
-        codes.includes(promotion.code)
+      const cartWithPromotions = cart as StoreCartWithPromotions
+      const applied = cartWithPromotions.promotions?.some((promotion) =>
+        promotion.code != null && codes.includes(promotion.code)
       )
       return applied
     })

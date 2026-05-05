@@ -12022,7 +12022,7 @@
       "required": ["domain"],
       "additionalProperties": false
     },
-    "algolia": {
+    "meilisearch": {
       "type": "object",
       "properties": {
         "domain": {
@@ -12114,7 +12114,7 @@
     "sellers",
     "messages",
     "configuration",
-    "algolia",
+    "meilisearch",
     "commission",
     "commissionLines"
   ],

@@ -130,7 +130,7 @@ export const useSellerMembers = () => {
     queryKey: ["seller-members"],
     queryFn: () =>
       sdk.client.fetch("/admin/seller-members", { method: "GET" }),
-    staleTime: 0,
+    staleTime: 60 * 60 * 1000, // 60 dakika — mağaza ismi sık değişmez
   })
   return { members: data?.members ?? [], ...rest }
 }
@@ -171,12 +171,14 @@ export const useSellers = (
 export const useSeller = (id: string) => {
   return useQuery<{ seller: VendorSeller }, Error, { seller: VendorSeller }>({
     queryKey: sellerQueryKeys.detail(id),
+    enabled: !!id,
+    staleTime: 20 * 60 * 1000, // 20 dakika
     queryFn: () =>
       sdk.client.fetch(`/admin/sellers/${id}`, {
         method: "GET",
         query: {
           fields:
-            "id,email,name,created_at,store_status,description,handle,phone,address_line,city,country_code,postal_code,tax_id",
+            "id,email,name,created_at,store_status,description,handle,phone,address_line,city,state,country_code,postal_code,tax_id,photo,*members",
         },
       }),
   });
@@ -190,6 +192,7 @@ export const useSeller = (id: string) => {
 export const useSellerByHandle = (handle: string | undefined) => {
   const { data: seller, ...rest } = useQuery<VendorSeller | null>({
     queryKey: ["seller-by-handle", handle],
+    staleTime: 20 * 60 * 1000, // 20 dakika — satıcı bilgisi sık değişmez
     queryFn: async () => {
       const res = await sdk.client.fetch<{ sellers: VendorSeller[] }>(
         "/admin/sellers",

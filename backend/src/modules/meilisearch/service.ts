@@ -45,7 +45,7 @@ export default class MeilisearchModuleService {
     const index: Index = this.client.index(indexName)
     const task = await index.addDocuments(data)
     // Log task UID for observability — MeiliSearch processes writes asynchronously
-    console.log(
+    console.info(
       `[MEILISEARCH] indexData enqueued ${data.length} documents — taskUid: ${task.taskUid}`
     )
   }
@@ -83,7 +83,7 @@ export default class MeilisearchModuleService {
     const indexName = await this.getIndexName(type)
     const index: Index = this.client.index(indexName)
     const task = await index.deleteDocuments(documentIds)
-    console.log(
+    console.info(
       `[MEILISEARCH] deleteFromIndex enqueued ${documentIds.length} deletions — taskUid: ${task.taskUid}`
     )
   }

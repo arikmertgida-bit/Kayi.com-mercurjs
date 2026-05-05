@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { StoreStatus } from "../seller";
 
-export type AlgoliaProduct = z.infer<typeof AlgoliaProductValidator>;
-export const AlgoliaProductValidator = z.object({
+export type MeilisearchProduct = z.infer<typeof MeilisearchProductValidator>;
+export const MeilisearchProductValidator = z.object({
   id: z.string(),
   title: z.string(),
   handle: z.string(),
@@ -86,7 +86,7 @@ export const AlgoliaProductValidator = z.object({
     .nullable(),
 });
 
-export const AlgoliaVariantValidator = z.object({
+export const MeilisearchVariantValidator = z.object({
   id: z.string(),
   title: z.string().nullish(),
   sku: z.string().nullish(),

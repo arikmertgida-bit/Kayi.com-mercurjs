@@ -27,7 +27,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export async function getConversations(): Promise<{ conversations: Conversation[] }> {
-  return request("/api/conversations")
+  return request("/api/conversations?limit=100")
 }
 
 export async function getMessages(conversationId: string): Promise<{ messages: Message[] }> {

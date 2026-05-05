@@ -92,8 +92,8 @@ const useDeveloperRoutes = (): INavItem[] => {
   return useMemo(
     () => [
       {
-        label: t("algolia.domain"),
-        to: "/settings/algolia",
+        label: t("meilisearch.domain"),
+        to: "/settings/meilisearch",
       },
       {
         label: t("apiKeyManagement.domain.publishable"),

@@ -27,7 +27,7 @@ export default function CartPromotionCode({
       }
       setPromotionCode("")
     } catch (err) {
-      console.log(err)
+      console.error("[CartPromotionCode] Failed to apply promotion:", err)
     } finally {
       setIsLoading(false)
     }

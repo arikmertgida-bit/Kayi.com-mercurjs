@@ -23,7 +23,7 @@ export const ProductAdditionalAttributesForm = () => {
     id!
   )
 
-  // @ts-ignore
+  // @ts-expect-error TS2339: attribute_values is a custom field added via additional_data — not in base MedusaJS StoreProduct type
   const defaultValues = product?.attribute_values?.reduce(
     (acc: any, curr: any) => {
       acc[curr.attribute_id] = curr.value
@@ -52,7 +52,7 @@ export const ProductAdditionalAttributesForm = () => {
 
     await updateProduct(
       {
-        // @ts-ignore
+      // @ts-expect-error TS2345: additional_data is a custom extension field accepted by the update product endpoint but not in SDK types
         additional_data: { values },
       },
       {

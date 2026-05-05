@@ -89,7 +89,8 @@ const StripePaymentButton = ({
   )
 
   useEffect(() => {
-    //@ts-ignore
+    // Stripe's `_complete` is an internal field not exposed in public types
+    // @ts-expect-error TS2339: _complete is a valid internal Stripe CardElement property
     setDisabled(!card?._complete)
   }, [card, stripe, elements, cart])
 

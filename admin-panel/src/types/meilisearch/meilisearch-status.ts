@@ -1,4 +1,4 @@
-export type AlgoliaStatus = {
+export type MeilisearchStatus = {
   appId: string;
   productIndex: boolean;
 };

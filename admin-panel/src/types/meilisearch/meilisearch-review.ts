@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
-export type AlgoliaReview = z.infer<typeof AlgoliaReviewValidator>
-export const AlgoliaReviewValidator = z.object({
+export type MeilisearchReview = z.infer<typeof MeilisearchReviewValidator>
+export const MeilisearchReviewValidator = z.object({
   id: z.string(),
   reference: z.string(),
   reference_id: z.string(),

@@ -6,13 +6,38 @@ import { useState } from "react"
 import Image from "next/image"
 import { convertToLocale } from "@/lib/helpers/money"
 import { cn } from "@/lib/utils"
+import { toast } from "@medusajs/ui"
 
 export const OrderCancel = ({ order }: { order: any }) => {
   const [open, setOpen] = useState(false)
   const [selectedItems, setSelectedItems] = useState<any[]>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleCancel = () => {
-    console.log("cancel")
+  const handleCancel = async () => {
+    if (selectedItems.length === 0) {
+      toast.error("Please select at least one item to cancel.")
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      const response = await fetch(`/api/orders/${order.id}/cancel`, {
+        method: "POST",
+      })
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok) {
+        toast.error(data?.message ?? "Failed to cancel order. Please try again.")
+        return
+      }
+
+      setOpen(false)
+      toast.success("Order cancelled successfully.")
+    } catch {
+      toast.error("An unexpected error occurred. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleSelectItem = (item: any) => {
@@ -142,8 +167,8 @@ export const OrderCancel = ({ order }: { order: any }) => {
 
             <Divider className="my-4" />
             <div className="px-4">
-              <Button className="uppercase w-full" onClick={handleCancel}>
-                Request cancelation
+              <Button className="uppercase w-full" onClick={handleCancel} disabled={isSubmitting}>
+                {isSubmitting ? "Cancelling..." : "Request cancellation"}
               </Button>
             </div>
           </div>

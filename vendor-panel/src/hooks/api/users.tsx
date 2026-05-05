@@ -143,7 +143,9 @@ export const useStatistics = ({ from, to }: { from: string; to: string }) => {
           method: "GET",
         }
       ),
-    queryKey: [USERS_QUERY_KEY, "statistics"],
+    queryKey: [USERS_QUERY_KEY, "statistics", from, to],
+    staleTime: 15 * 60 * 1000,
+    refetchOnWindowFocus: false,
   })
 
   return { ...data, ...rest }

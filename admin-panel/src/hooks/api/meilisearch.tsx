@@ -2,11 +2,11 @@ import { sdk } from "@lib/client";
 import { queryKeysFactory } from "@lib/query-key-factory";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
-import type { AlgoliaStatus } from "@custom-types/algolia";
+import type { MeilisearchStatus } from "@custom-types/meilisearch";
 
-export const algoliaQueryKeys = queryKeysFactory("algolia");
+export const meilisearchQueryKeys = queryKeysFactory("meilisearch");
 
-export const useSyncAlgolia = () => {
+export const useSyncMeilisearch = () => {
   return useMutation({
     mutationFn: () =>
       sdk.client.fetch("/admin/meilisearch", {
@@ -15,9 +15,9 @@ export const useSyncAlgolia = () => {
   });
 };
 
-export const useAlgolia = () => {
-  return useQuery<AlgoliaStatus>({
-    queryKey: ["algolia"],
+export const useMeilisearch = () => {
+  return useQuery<MeilisearchStatus>({
+    queryKey: ["meilisearch"],
     queryFn: () => sdk.client.fetch("/admin/meilisearch", { method: "GET" }),
   });
 };

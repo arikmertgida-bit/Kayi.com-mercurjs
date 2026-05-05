@@ -82,7 +82,7 @@ const Form = ({
           toast.error(res.error || "Something went wrong")
         }
       } catch (err) {
-        console.log(err)
+        console.error("[ProfilePasswordForm] Failed to update password:", err)
         return
       }
     }

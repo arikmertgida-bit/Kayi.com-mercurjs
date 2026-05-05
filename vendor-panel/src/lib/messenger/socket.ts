@@ -28,11 +28,11 @@ export function connectSocket(displayName?: string | null): Socket {
   })
 
   socketInstance.on("connect", () => {
-    console.log("[messenger] Connected to socket server")
+    console.info("[messenger] Connected to socket server")
   })
 
   socketInstance.on("disconnect", (reason: string) => {
-    console.log("[messenger] Disconnected:", reason)
+    console.info("[messenger] Disconnected:", reason)
   })
 
   socketInstance.on("connect_error", (err: Error) => {

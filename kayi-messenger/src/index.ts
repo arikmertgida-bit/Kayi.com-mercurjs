@@ -109,7 +109,7 @@ app.use("/api/upload", createUploadRouter(io))
 async function main() {
   // Verify DB connection
   await prisma.$connect()
-  console.log("[db] Connected to PostgreSQL (kayi_messenger)")
+  console.info("[db] Connected to PostgreSQL (kayi_messenger)")
 
   // Ensure MinIO bucket exists
   try {
@@ -119,8 +119,8 @@ async function main() {
   }
 
   httpServer.listen(PORT, () => {
-    console.log(`[kayi-messenger] Listening on port ${PORT}`)
-    console.log(`[kayi-messenger] CORS origins: ${CORS_ORIGINS.join(", ")}`)
+    console.info(`[kayi-messenger] Listening on port ${PORT}`)
+    console.info(`[kayi-messenger] CORS origins: ${CORS_ORIGINS.join(", ")}`)
   })
 }
 
@@ -131,7 +131,7 @@ main().catch((err) => {
 
 // ── Graceful Shutdown ──────────────────────────────────────────────────────
 async function shutdown(signal: string) {
-  console.log(`[kayi-messenger] Received ${signal}, shutting down gracefully…`)
+  console.info(`[kayi-messenger] Received ${signal}, shutting down gracefully…`)
   try {
     // Stop accepting new connections; let in-flight requests finish (30 s max)
     await new Promise<void>((resolve, reject) => {
@@ -139,7 +139,7 @@ async function shutdown(signal: string) {
       setTimeout(() => resolve(), 30_000)
     })
     await prisma.$disconnect()
-    console.log("[kayi-messenger] Shutdown complete")
+    console.info("[kayi-messenger] Shutdown complete")
     process.exit(0)
   } catch (err) {
     console.error("[kayi-messenger] Error during shutdown:", err)

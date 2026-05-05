@@ -288,15 +288,30 @@ export function OrderAllocateItemsForm({ order }: OrderAllocateItemsFormProps) {
                     )}
 
                     <div className="flex flex-col gap-y-1">
-                      {filteredItems.map((item) => (
-                        <OrderAllocateItemsItem
-                          key={item.id}
-                          form={form}
-                          item={item}
-                          locationId={selectedLocationId}
-                          onQuantityChange={onQuantityChange}
-                        />
-                      ))}
+                      {filteredItems.length > 0 ? (
+                        filteredItems.map((item) => (
+                          <OrderAllocateItemsItem
+                            key={item.id}
+                            form={form}
+                            item={item}
+                            locationId={selectedLocationId}
+                            onQuantityChange={onQuantityChange}
+                          />
+                        ))
+                      ) : (
+                        <div className="flex flex-col items-center justify-center gap-y-2 py-10 text-center">
+                          <p className="txt-small text-ui-fg-subtle font-medium">
+                            {filterTerm
+                              ? t("orders.allocateItems.noItemsFound")
+                              : t("orders.allocateItems.noItemsToAllocate")}
+                          </p>
+                          {filterTerm && (
+                            <p className="txt-small text-ui-fg-muted">
+                              {t("orders.allocateItems.noItemsFoundHint")}
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </Form.Item>
                 </div>

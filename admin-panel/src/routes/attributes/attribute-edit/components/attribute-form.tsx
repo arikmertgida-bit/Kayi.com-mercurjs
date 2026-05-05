@@ -67,11 +67,11 @@ export const AttributeForm = ({
       ui_component: initialData?.ui_component || AttributeUIComponent.SELECT,
       is_filterable: initialData?.is_filterable ?? true,
       is_required: initialData?.is_required ?? false,
-      //@ts-ignore
+      //@ts-expect-error TS2322: possible_values type from API does not exactly match the form schema type
       possible_values: initialData?.possible_values || [],
       product_category_ids:
         initialData?.product_categories?.map((c) => c.id) || [],
-      //@ts-ignore
+      //@ts-expect-error TS2322: metadata type from API does not exactly match the form schema type
       metadata: initialData?.metadata || {},
     },
   });

@@ -56,7 +56,7 @@ export const ApiKeyCreateForm = ({ keyType }: ApiKeyCreateFormProps) => {
 
   const handleSubmit = form.handleSubmit(async (values) => {
     await mutateAsync(
-      // @ts-ignore
+      // @ts-expect-error TS2345: MedusaJS SDK type omits `type` from the create payload but the API accepts it
       { title: values.title, type: keyType },
       {
         onSuccess: ({ api_key }) => {

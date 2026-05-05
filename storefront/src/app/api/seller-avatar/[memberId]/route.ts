@@ -9,9 +9,9 @@ import { NextResponse } from "next/server"
  */
 export async function GET(
   _req: Request,
-  { params }: { params: { memberId: string } }
+  { params }: { params: Promise<{ memberId: string }> }
 ) {
-  const { memberId } = params
+  const { memberId } = await params
 
   if (!memberId) {
     return NextResponse.json({ avatarUrl: null, displayName: null })

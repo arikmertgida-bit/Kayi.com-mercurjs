@@ -1,7 +1,9 @@
 'use client';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { toast } from '@medusajs/ui';
 import { Button, Textarea } from '@/components/atoms';
 import { SelectField } from '../SelectField/SelectField';
 import { cn } from '@/lib/utils';
@@ -22,14 +24,17 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 export const ReportSellerForm = ({
+  sellerId,
   onClose,
 }: {
+  sellerId: string
   onClose: () => void;
 }) => {
+  const [isSuccess, setIsSuccess] = useState(false)
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitted },
+    formState: { errors, isSubmitting },
     setValue,
     clearErrors,
   } = useForm<FormData>({
@@ -40,13 +45,27 @@ export const ReportSellerForm = ({
     },
   });
 
-  const onSubmit = (data: FormData) => {
-    console.log('Form Data:', data);
+  const onSubmit = async (data: FormData) => {
+    try {
+      const res = await fetch('/api/seller-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sellerId, ...data }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({})) as { error?: string }
+        toast.error(err.error ?? 'Failed to submit report. Please try again.')
+        return
+      }
+      setIsSuccess(true)
+    } catch {
+      toast.error('Network error. Please check your connection and try again.')
+    }
   };
 
   return (
     <div>
-      {!isSubmitted ? (
+      {!isSuccess ? (
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className='px-4 pb-5'>
             <label className='label-sm'>
@@ -103,8 +122,9 @@ export const ReportSellerForm = ({
             <Button
               type='submit'
               className='w-full py-3 uppercase'
+              disabled={isSubmitting}
             >
-              Report Seller
+              {isSubmitting ? 'Submitting...' : 'Report Seller'}
             </Button>
           </div>
         </form>

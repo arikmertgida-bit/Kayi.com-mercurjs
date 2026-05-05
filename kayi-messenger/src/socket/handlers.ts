@@ -14,7 +14,7 @@ export function registerSocketHandlers(io: SocketServer, socket: Socket): void {
   // Join a personal room for notifications
   socket.join(`user:${userId}`)
 
-  console.log(`[socket] Connected: ${userId} (${userType}) — socket ${socket.id}`)
+  console.info(`[socket] Connected: ${userId} (${userType}) — socket ${socket.id}`)
 
   // ── Join Conversation ──────────────────────────────────────────────────────
   socket.on("join_conversation", async (conversationId: string) => {
@@ -173,7 +173,7 @@ export function registerSocketHandlers(io: SocketServer, socket: Socket): void {
 
   // ── Disconnect ─────────────────────────────────────────────────────────────
   socket.on("disconnect", () => {
-    console.log(`[socket] Disconnected: ${userId} — socket ${socket.id}`)
+    console.info(`[socket] Disconnected: ${userId} — socket ${socket.id}`)
     // Clean up all typing indicators for this user
     for (const [convId, users] of typingUsers.entries()) {
       if (users.has(userId)) {

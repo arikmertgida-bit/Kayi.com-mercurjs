@@ -32,13 +32,13 @@ const CreateAccountSchema = z
     }
   })
 
-// TODO: Update to V2 format
+// MedusaJS v2 invite JWT payload — contains jti (invite ID), exp, and iat.
+// Email is not embedded in the token; it lives on the invite record server-side.
 type DecodedInvite = {
-  id: string
-  jti: any
-  exp: string
+  id?: string
+  jti: string
+  exp: number
   iat: number
-  email: string
 }
 
 export const Invite = () => {
@@ -181,7 +181,7 @@ const CreateView = ({
   const form = useForm<z.infer<typeof CreateAccountSchema>>({
     resolver: zodResolver(CreateAccountSchema),
     defaultValues: {
-      email: isFirstRun ? "" : invite.email || "",
+      email: isFirstRun ? "" : "",
       first_name: "",
       last_name: "",
       password: "",
@@ -405,7 +405,7 @@ const SuccessView = () => {
 }
 
 const InviteSchema = z.object({
-  id: z.string(),
+  id: z.string().optional(),
   jti: z.string(),
   exp: z.number(),
   iat: z.number(),

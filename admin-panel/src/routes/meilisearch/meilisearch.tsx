@@ -8,11 +8,11 @@ import {
   toast,
 } from "@medusajs/ui";
 
-import { useAlgolia, useSyncAlgolia } from "@hooks/api/algolia";
+import { useMeilisearch, useSyncMeilisearch } from "@hooks/api/meilisearch";
 
-export const Algolia = () => {
-  const { data: algolia } = useAlgolia();
-  const { mutateAsync: triggerSynchronization } = useSyncAlgolia();
+export const Meilisearch = () => {
+  const { data: meilisearch } = useMeilisearch();
+  const { mutateAsync: triggerSynchronization } = useSyncMeilisearch();
 
   const handleTriggerSynchronization = async () => {
     try {
@@ -41,12 +41,12 @@ export const Algolia = () => {
         <Table.Body>
           <Table.Row>
             <Table.Cell>Host</Table.Cell>
-            <Table.Cell>{algolia?.appId}</Table.Cell>
+            <Table.Cell>{meilisearch?.appId}</Table.Cell>
           </Table.Row>
           <Table.Row>
             <Table.Cell>Product Index</Table.Cell>
             <Table.Cell>
-              {algolia?.productIndex ? (
+              {meilisearch?.productIndex ? (
                 <StatusBadge color="green">Exists</StatusBadge>
               ) : (
                 <StatusBadge color="red">Doesn&apos;t exist</StatusBadge>

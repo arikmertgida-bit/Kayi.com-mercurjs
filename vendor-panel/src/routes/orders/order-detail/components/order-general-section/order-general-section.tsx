@@ -102,7 +102,7 @@ export const OrderGeneralSection = ({ order }: OrderGeneralSectionProps) => {
                 {
                   label: t("actions.cancel"),
                   onClick: handleCancel,
-                  //@ts-ignore
+                  //@ts-expect-error TS2339: canceled_at is present on the order at runtime but is not declared in the MedusaJS AdminOrder TypeScript type
                   disabled: !!order.canceled_at,
                   icon: <XCircle />,
                 },

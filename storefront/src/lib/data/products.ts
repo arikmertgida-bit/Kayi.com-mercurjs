@@ -90,21 +90,19 @@ export const listProducts = async ({
       cache: useCached ? "force-cache" : "no-cache",
     })
     .then(({ products: productsRaw, count }) => {
-      const products = productsRaw.filter(
+      const typedProducts = productsRaw as (HttpTypes.StoreProduct & { seller?: SellerProps })[]
+      const products = typedProducts.filter(
         (product) => product.seller?.store_status !== "SUSPENDED"
       )
 
       const nextPage = count > offset + limit ? pageParam + 1 : null
 
       const response = products.map((prod) => {
-        // @ts-ignore Property 'seller' exists but TypeScript doesn't recognize it
         if (!prod.seller) return prod
-        // @ts-ignore Property 'seller' exists but TypeScript doesn't recognize it
         const reviews = prod.seller?.reviews?.filter((item) => !!item) ?? []
         return {
           ...prod,
           seller: {
-            // @ts-ignore Property 'seller' exists but TypeScript doesn't recognize it
             ...prod.seller,
             reviews,
           },

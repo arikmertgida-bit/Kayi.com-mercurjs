@@ -32,7 +32,7 @@ export async function ensureBucket(): Promise<void> {
   const exists = await minioClient.bucketExists(BUCKET)
   if (!exists) {
     await minioClient.makeBucket(BUCKET)
-    console.log(`[minio] Created bucket: ${BUCKET}`)
+    console.info(`[minio] Created bucket: ${BUCKET}`)
   }
 }
 
