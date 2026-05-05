@@ -5,8 +5,9 @@ import { filterValidCartItems } from "@/lib/helpers/filter-valid-cart-items"
 import { DeleteCartItemButton } from "@/components/molecules"
 import LocalizedClientLink from "@/components/molecules/LocalizedLink/LocalizedLink"
 import { UpdateCartItemButton } from "@/components/molecules/UpdateCartItemButton/UpdateCartItemButton"
+import { getTranslations } from "next-intl/server"
 
-export const CartItemsProducts = ({
+export const CartItemsProducts = async ({
   products,
   currency_code,
   delete_item = true,
@@ -17,6 +18,7 @@ export const CartItemsProducts = ({
   delete_item?: boolean
   change_quantity?: boolean
 }) => {
+  const t = await getTranslations('cart')
   // Filter out items with invalid data (missing prices/variants)
   const validProducts = filterValidCartItems(products)
 
@@ -74,7 +76,10 @@ export const CartItemsProducts = ({
               </div>
               <div className="lg:flex justify-between -mt-4 lg:mt-0">
                 <div className="label-md text-secondary">
-                  {options?.map(({ option, id, value }) => (
+                  {options?.filter(({ option, value }) =>
+                    !(option?.title?.toLowerCase() === 'default option' ||
+                      value?.toLowerCase() === 'default option value')
+                  ).map(({ option, id, value }) => (
                     <p key={id}>
                       {option?.title}:{" "}
                       <span className="text-primary">{value}</span>
@@ -87,7 +92,7 @@ export const CartItemsProducts = ({
                     />
                   ) : (
                     <p>
-                      Quantity:{" "}
+                      {t('quantity')}{" "}
                       <span className="text-primary">{product.quantity}</span>
                     </p>
                   )}

@@ -22,10 +22,13 @@ export const ProductVariants = ({
   } = useProductVariants()
 
   const productOptions = product.options ?? []
+  const DEFAULT_OPTION = 'default option'
 
   return (
     <div className="my-4 space-y-3">
-      {productOptions.map((opt) => {
+      {productOptions
+        .filter((opt) => opt.title?.toLowerCase() !== DEFAULT_OPTION)
+        .map((opt) => {
         const titleLower = opt.title.toLowerCase()
         const isColor = COLOR_TITLES.includes(titleLower)
 

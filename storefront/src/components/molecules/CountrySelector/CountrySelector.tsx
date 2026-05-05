@@ -16,6 +16,7 @@ import { HttpTypes } from "@medusajs/types"
 import { updateRegionWithValidation } from "@/lib/data/cart"
 import { Label } from "@medusajs/ui"
 import { toast } from "@/lib/helpers/toast"
+import { useTranslations } from "next-intl"
 
 type CountryOption = {
   country: string
@@ -31,6 +32,7 @@ const CountrySelect = ({ regions }: CountrySelectProps) => {
   const { locale: countryCode } = useParams()
   const router = useRouter()
   const currentPath = usePathname().split(`/${countryCode}`)[1]
+  const t = useTranslations('header')
 
   const options = useMemo(() => {
     return regions
@@ -76,7 +78,7 @@ const CountrySelect = ({ regions }: CountrySelectProps) => {
 
   return (
     <div className="md:flex gap-2 items-center justify-end relative">
-      <Label className="label-md hidden md:block">Shipping to</Label>
+      <Label className="label-md hidden md:block">{t('shippingTo')}</Label>
       <div>
         <Listbox
           onChange={handleChange}

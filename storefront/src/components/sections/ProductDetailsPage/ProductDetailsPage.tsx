@@ -7,6 +7,7 @@ import { HomeProductSection } from "../HomeProductSection/HomeProductSection"
 import { RelatedProductsSection } from "../RelatedProductsSection/RelatedProductsSection"
 import NotFound from "@/app/not-found"
 import { Suspense } from "react"
+import { getTranslations } from "next-intl/server"
 
 function RelatedProductsSkeleton() {
   return (
@@ -33,6 +34,7 @@ export const ProductDetailsPage = async ({
   handle: string
   locale: string
 }) => {
+  const t = await getTranslations('productDetails')
   const prod = await listProducts({
     countryCode: locale,
     queryParams: { handle: [handle], limit: 1 },
@@ -67,7 +69,7 @@ export const ProductDetailsPage = async ({
       </div>
       <div className="my-8">
         <HomeProductSection
-          heading="More from this seller"
+          heading={t('moreFromSeller')}
           products={prod.seller?.products}
           seller_handle={prod.seller?.handle}
           locale={locale}

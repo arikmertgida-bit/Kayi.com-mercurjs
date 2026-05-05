@@ -6,32 +6,23 @@ import { z } from 'zod';
 import { Button, Textarea } from '@/components/atoms';
 import { SelectField } from '../SelectField/SelectField';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
-const REASON_OPTIONS = [
-  { label: '', value: '', hidden: true },
-  { label: 'Inaccurate Product Details', value: 'inaccurate_product_details' },
-  { label: 'Pricing Irregularities', value: 'pricing_irregularities' },
-  { label: 'Prohibited Item', value: 'prohibited_item' },
-  { label: 'Counterfeit / Trademark Violation', value: 'counterfeit_trademark' },
-  { label: 'Incorrect Categorization', value: 'incorrect_categorization' },
-  { label: 'Inappropriate Media', value: 'inappropriate_media' },
-  { label: 'DMCA / Copyright Violation', value: 'dmca_violation' },
-  { label: 'Other', value: 'other' },
-];
+const VALID_REASONS = [
+  'inaccurate_product_details',
+  'pricing_irregularities',
+  'prohibited_item',
+  'counterfeit_trademark',
+  'incorrect_categorization',
+  'inappropriate_media',
+  'dmca_violation',
+  'other',
+] as const;
 
-const VALID_REASONS = REASON_OPTIONS.filter((o) => o.value !== '').map(
-  (o) => o.value
-) as [string, ...string[]];
-
-const formSchema = z.object({
-  reason: z.enum(VALID_REASONS, { errorMap: () => ({ message: 'Please select a reason' }) }),
-  comment: z
-    .string()
-    .min(1, 'Please add a comment')
-    .max(1000, 'Comment must be at most 1000 characters'),
-});
-
-type FormData = z.infer<typeof formSchema>;
+type FormData = {
+  reason: typeof VALID_REASONS[number];
+  comment: string;
+};
 
 export const ReportListingForm = ({
   onClose,
@@ -40,8 +31,29 @@ export const ReportListingForm = ({
   onClose: () => void;
   productId: string;
 }) => {
+  const t = useTranslations('reportForm');
   const [submitted, setSubmitted] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+
+  const formSchema = z.object({
+    reason: z.enum(VALID_REASONS, { errorMap: () => ({ message: t('selectReason') }) }),
+    comment: z
+      .string()
+      .min(1, t('addComment'))
+      .max(1000, t('commentMaxLength')),
+  });
+
+  const REASON_OPTIONS = [
+    { label: '', value: '', hidden: true },
+    { label: t('inaccurateDetails'), value: 'inaccurate_product_details' },
+    { label: t('pricingIrregularities'), value: 'pricing_irregularities' },
+    { label: t('prohibitedItem'), value: 'prohibited_item' },
+    { label: t('counterfeit'), value: 'counterfeit_trademark' },
+    { label: t('incorrectCategorization'), value: 'incorrect_categorization' },
+    { label: t('inappropriateMedia'), value: 'inappropriate_media' },
+    { label: t('dmca'), value: 'dmca_violation' },
+    { label: t('other'), value: 'other' },
+  ];
 
   const {
     register,
@@ -67,26 +79,26 @@ export const ReportListingForm = ({
       });
 
       if (res.status === 401) {
-        setServerError('You must be logged in to report a listing.');
+        setServerError(t('loggedInError'));
         return;
       }
       if (res.status === 403) {
-        setServerError('You can only report products you have purchased.');
+        setServerError(t('purchaseRequiredError'));
         return;
       }
       if (res.status === 409) {
-        setServerError('You have already reported this listing.');
+        setServerError(t('alreadyReported'));
         return;
       }
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        setServerError((body as { message?: string }).message ?? 'Something went wrong. Please try again.');
+        setServerError((body as { message?: string }).message ?? t('failedSubmit'));
         return;
       }
 
       setSubmitted(true);
     } catch {
-      setServerError('Network error. Please check your connection and try again.');
+      setServerError(t('networkError'));
     }
   };
 
@@ -100,7 +112,7 @@ export const ReportListingForm = ({
             )}
 
             <label className='label-sm'>
-              <p className={cn(errors?.reason && 'text-negative')}>Reason</p>
+              <p className={cn(errors?.reason && 'text-negative')}>{t('reason')}</p>
               <SelectField
                 options={REASON_OPTIONS}
                 {...register('reason')}
@@ -116,7 +128,7 @@ export const ReportListingForm = ({
             </label>
 
             <label className='label-sm'>
-              <p className={cn('mt-5', errors?.comment && 'text-negative')}>Comment</p>
+              <p className={cn('mt-5', errors?.comment && 'text-negative')}>{t('comment')}</p>
               <Textarea
                 rows={5}
                 {...register('comment')}
@@ -134,24 +146,22 @@ export const ReportListingForm = ({
               className='w-full py-3 uppercase'
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Submitting…' : 'Report Listing'}
+              {isSubmitting ? t('submitting') : t('submitListing')}
             </Button>
           </div>
         </form>
       ) : (
         <div className='text-center'>
           <div className='px-4 pb-5'>
-            <h4 className='heading-lg uppercase'>Thank you!</h4>
+            <h4 className='heading-lg uppercase'>{t('thankYou')}</h4>
             <p className='max-w-[466px] mx-auto mt-4 text-lg text-secondary'>
-              We&apos;ll check the listing to see if it violates our guidelines and take the
-              necessary action to ensure a safe shopping experience for everyone. Thank you for
-              helping us maintain a trusted community.
+              {t('thankYouMessage')}
             </p>
           </div>
 
           <div className='border-t px-4 pt-5'>
             <Button className='w-full py-3 uppercase' onClick={onClose}>
-              Got it
+              {t('gotIt')}
             </Button>
           </div>
         </div>

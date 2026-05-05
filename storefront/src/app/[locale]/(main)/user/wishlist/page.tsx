@@ -7,10 +7,11 @@ import { Button } from "@/components/atoms"
 import { WishlistItem } from "@/components/cells"
 import { getUserWishlists } from "@/lib/data/wishlist"
 import { HttpTypes } from "@medusajs/types"
-
+import { getTranslations } from "next-intl/server"
 
 export default async function Wishlist() {
   const user = await retrieveCustomer()
+  const t = await getTranslations('wishlist')
 
   let wishlist: WishlistType[] = []
   if (user) {
@@ -30,20 +31,20 @@ export default async function Wishlist() {
           {isEmpty(wishlist?.[0]?.products) ? (
             <div className="w-96 mx-auto flex flex-col items-center justify-center">
               <h2 className="heading-lg text-primary uppercase mb-2">
-                Wishlist
+                {t('title')}
               </h2>
               <p className="text-lg text-secondary mb-6">
-                Your wishlist is currently empty.
+                {t('empty')}
               </p>
               <LocalizedClientLink href="/categories" className="w-full">
-                <Button className="w-full">Explore</Button>
+                <Button className="w-full">{t('explore')}</Button>
               </LocalizedClientLink>
             </div>
           ) : (
             <div className="flex flex-col gap-6">
-              <h2 className="heading-lg text-primary uppercase">Wishlist</h2>
+              <h2 className="heading-lg text-primary uppercase">{t('title')}</h2>
               <div className="flex justify-between items-center">
-                <p>{count} listings</p>
+                <p>{t('count', { count })}</p>
               </div>
               <div className="flex flex-wrap max-md:justify-center gap-4">
                 {wishlist?.[0].products?.map((product) => (

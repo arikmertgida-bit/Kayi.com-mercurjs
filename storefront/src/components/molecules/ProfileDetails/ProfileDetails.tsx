@@ -7,9 +7,11 @@ import { ProfileDetailsForm } from "../ProfileDetailsForm/ProfileDetailsForm"
 import { Divider, Heading } from "@medusajs/ui"
 import { PencilSquare } from "@medusajs/icons"
 import { updateGlobalNotificationPreference } from "@/lib/data/customer"
+import { useTranslations } from "next-intl"
 
 export const ProfileDetails = ({ user }: { user: HttpTypes.StoreCustomer }) => {
   const [showForm, setShowForm] = useState(false)
+  const t = useTranslations('settings')
   const notifyInit =
     ((user.metadata as Record<string, unknown> | null | undefined)
       ?.notify_enabled as boolean | undefined) ?? true
@@ -32,7 +34,7 @@ export const ProfileDetails = ({ user }: { user: HttpTypes.StoreCustomer }) => {
     <>
       <Card className="bg-secondary p-4 flex justify-between items-center">
         <Heading level="h2" className="heading-sm uppercase">
-          Profile details
+          {t('profileDetails')}
         </Heading>
         <Button
           variant="tonal"
@@ -40,30 +42,30 @@ export const ProfileDetails = ({ user }: { user: HttpTypes.StoreCustomer }) => {
           className="uppercase flex items-center gap-2 font-semibold"
         >
           <PencilSquare />
-          Edit details
+          {t('editDetails')}
         </Button>
       </Card>
       <Card className="p-0">
         <div className="p-4">
-          <p className="label-md text-secondary">Name</p>
+          <p className="label-md text-secondary">{t('name')}</p>
           <p className="label-lg text-primary">
             {`${user.first_name} ${user.last_name}`}
           </p>
         </div>
         <Divider />
         <div className="p-4">
-          <p className="label-md text-secondary">Email</p>
+          <p className="label-md text-secondary">{t('email')}</p>
           <p className="label-lg text-primary">{user.email}</p>
         </div>
         <Divider />
         <div className="p-4">
-          <p className="label-md text-secondary">Phone number</p>
+          <p className="label-md text-secondary">{t('phoneNumber')}</p>
           <p className="label-lg text-primary">{user.phone}</p>
         </div>
       </Card>
       {showForm && (
         <Modal
-          heading="Edit profile details"
+          heading={t('editProfileModal')}
           onClose={() => setShowForm(false)}
         >
           <ProfileDetailsForm
@@ -76,7 +78,7 @@ export const ProfileDetails = ({ user }: { user: HttpTypes.StoreCustomer }) => {
             }}
             notificationToggle={
               <div className="flex items-center justify-between mb-2">
-                <span className="label-md font-medium">Bildirimler</span>
+                <span className="label-md font-medium">{t('notifications')}</span>
                 <button
                   type="button"
                   role="switch"

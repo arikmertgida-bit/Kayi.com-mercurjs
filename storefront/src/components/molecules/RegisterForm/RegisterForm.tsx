@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation"
 import { Container } from "@medusajs/ui"
 import Link from "next/link"
 import { PasswordValidator } from "@/components/cells/PasswordValidator/PasswordValidator"
+import { useTranslations } from "next-intl"
 
 export const RegisterForm = () => {
   const methods = useForm<RegisterFormData>({
@@ -47,6 +48,7 @@ const Form = () => {
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [error, setError] = useState<string>("")
   const router = useRouter()
+  const t = useTranslations('auth')
   const {
     handleSubmit,
     register,
@@ -58,8 +60,7 @@ const Form = () => {
     setError("")
 
     if (!passwordError.isValid) {
-      setError("Please fix the password errors before submitting.")
-      return
+      setError(t('passwordError'))
     }
 
     const formData = new FormData()
@@ -72,7 +73,7 @@ const Form = () => {
     const res = await signup(formData)
 
     if (!res || typeof res === "string") {
-      setError(res || "Something went wrong. Please try again.")
+      setError(res || t('signupError'))
       return
     }
 
@@ -84,22 +85,22 @@ const Form = () => {
     <main className="container">
       <Container className="border max-w-xl mx-auto mt-8 p-4">
         <h1 className="heading-md text-primary uppercase mb-8">
-          Create account
+          {t('registerTitle')}
         </h1>
         <form onSubmit={handleSubmit(submit)}>
           <div className="flex flex-col md:flex-row gap-4 mb-4">
             <LabeledInput
               className="md:w-1/2"
-              label="First name"
-              placeholder="Your first name"
+              label={t('firstNameLabel')}
+              placeholder={t('firstNamePlaceholder')}
               error={errors.firstName as FieldError}
               autoComplete="given-name"
               {...register("firstName")}
             />
             <LabeledInput
               className="md:w-1/2"
-              label="Last name"
-              placeholder="Your last name"
+              label={t('lastNameLabel')}
+              placeholder={t('lastNamePlaceholder')}
               error={errors.lastName as FieldError}
               autoComplete="family-name"
               {...register("lastName")}
@@ -108,16 +109,16 @@ const Form = () => {
           <div className="flex flex-col md:flex-row gap-4 mb-4">
             <LabeledInput
               className="md:w-1/2"
-              label="E-mail"
-              placeholder="Your e-mail address"
+              label={t('emailLabel')}
+              placeholder={t('emailPlaceholder')}
               error={errors.email as FieldError}
               autoComplete="email"
               {...register("email")}
             />
             <LabeledInput
               className="md:w-1/2"
-              label="Phone"
-              placeholder="Your phone number"
+              label={t('phoneLabel')}
+              placeholder={t('phonePlaceholder')}
               error={errors.phone as FieldError}
               autoComplete="tel"
               {...register("phone")}
@@ -126,8 +127,8 @@ const Form = () => {
           <div>
             <LabeledInput
               className="mb-4"
-              label="Password"
-              placeholder="Your password"
+              label={t('passwordLabelReg')}
+              placeholder={t('passwordPlaceholder')}
               type="password"
               error={errors.password as FieldError}
               autoComplete="new-password"
@@ -177,13 +178,13 @@ const Form = () => {
             disabled={isSubmitting || !termsAccepted}
             loading={isSubmitting}
           >
-            Create account
+            {t('registerButton')}
           </Button>
         </form>
       </Container>
       <Container className="border max-w-xl mx-auto p-4">
         <h1 className="heading-md text-primary uppercase mb-8">
-          Already have an account?
+          {t('alreadyHaveAccount')}
         </h1>
         <p className="text-center label-md">
           <Link href="/user">
@@ -191,7 +192,7 @@ const Form = () => {
               variant="tonal"
               className="w-full flex justify-center mt-8 uppercase"
             >
-              Log in
+              {t('loginButton')}
             </Button>
           </Link>
         </p>

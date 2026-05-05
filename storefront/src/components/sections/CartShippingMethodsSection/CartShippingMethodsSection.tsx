@@ -13,6 +13,7 @@ import { Button } from "@/components/atoms"
 import { CartShippingMethodRow } from "./CartShippingMethodRow"
 import { Listbox, Transition } from "@headlessui/react"
 import clsx from "clsx"
+import { useTranslations } from "next-intl"
 
 // Extended cart item product type to include seller
 type ExtendedStoreProduct = HttpTypes.StoreProduct & {
@@ -189,6 +190,7 @@ const CartShippingMethodsSection: React.FC<ShippingProps> = ({
   const handleEdit = () => {
     router.replace(pathname + "?step=delivery")
   }
+  const t = useTranslations('checkout')
 
   const missingSellers = cart.items
     ?.filter((item) =>
@@ -235,7 +237,7 @@ const CartShippingMethodsSection: React.FC<ShippingProps> = ({
           {!isOpen && (cart.shipping_methods?.length ?? 0) > 0 && (
             <CheckCircleSolid />
           )}
-          Delivery
+          {t('delivery')}
         </Heading>
         {isEditEnabled && (
           <Text>
@@ -271,7 +273,7 @@ const CartShippingMethodsSection: React.FC<ShippingProps> = ({
                             {({ open }) => (
                               <>
                                 <span className="block truncate">
-                                  Choose delivery option
+                                  {t('chooseDelivery')}
                                 </span>
                                 <ChevronUpDown
                                   className={clx(
@@ -353,7 +355,7 @@ const CartShippingMethodsSection: React.FC<ShippingProps> = ({
               disabled={!cart.shipping_methods?.[0]}
               loading={isLoadingPrices}
             >
-              Continue to payment
+              {t('continueToPayment')}
             </Button>
           </div>
         </>
@@ -365,7 +367,7 @@ const CartShippingMethodsSection: React.FC<ShippingProps> = ({
                 {cart.shipping_methods?.map((method) => (
                   <div key={method.id} className="mb-4 border rounded-md p-4">
                     <Text className="txt-medium-plus text-ui-fg-base mb-1">
-                      Method
+                      {t('method')}
                     </Text>
                     <Text className="txt-medium text-ui-fg-subtle">
                       {method.name}{" "}

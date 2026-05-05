@@ -1,5 +1,6 @@
 import { EllipsisHorizontal, PencilSquare, Trash } from "@medusajs/icons";
 import { DropdownMenu, toast } from "@medusajs/ui";
+import { useTranslation } from "react-i18next";
 
 import {
   useDeleteCommisionRule,
@@ -17,24 +18,25 @@ export function CommissionActionMenu({
 }) {
   const { mutateAsync: deleteCommissionRule } = useDeleteCommisionRule({});
   const { mutateAsync: updateCommissionRule } = useUpdateCommisionRule({});
+  const { t } = useTranslation();
 
   const onDeleteClick = async () => {
     try {
       await deleteCommissionRule({ id });
-      toast.success("Deleted!");
+      toast.success(t("commission.deleted"));
       onSuccess?.();
     } catch {
-      toast.error("Error!");
+      toast.error(t("commission.error"));
     }
   };
 
   const onSwitchEnableClick = async () => {
     try {
       await updateCommissionRule({ id, is_active: !is_active });
-      toast.success("Updated!");
+      toast.success(t("commission.updated"));
       onSuccess?.();
     } catch {
-      toast.error("Error!");
+      toast.error(t("commission.error"));
     }
   };
 
@@ -46,12 +48,12 @@ export function CommissionActionMenu({
       <DropdownMenu.Content>
         <DropdownMenu.Item className="gap-x-2" onClick={onSwitchEnableClick}>
           <PencilSquare className="text-ui-fg-subtle" />
-          {is_active ? "Disable" : "Enable"}
+            {is_active ? t("commission.disable") : t("commission.enable")}
         </DropdownMenu.Item>
         <DropdownMenu.Separator />
         <DropdownMenu.Item className="gap-x-2" onClick={onDeleteClick}>
           <Trash className="text-ui-fg-subtle" />
-          Delete
+          {t("commission.delete")}
         </DropdownMenu.Item>
       </DropdownMenu.Content>
     </DropdownMenu>

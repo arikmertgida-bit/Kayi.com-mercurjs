@@ -7,6 +7,7 @@ import { SellerProps } from "@/types/seller"
 import { SellerTabsSwitcher } from "./SellerTabsSwitcher"
 import { SellerScore, SellerReviewList } from "@/components/molecules"
 import { SellerSidebar } from "../SellerSidebar/SellerSidebar"
+import { useTranslations } from "next-intl"
 
 export const SellerTabs = ({
   seller_handle,
@@ -30,6 +31,7 @@ export const SellerTabs = ({
   productMap?: Record<string, { title: string; thumbnail: string | null }>
   page?: number
 }) => {
+  const t = useTranslations('seller')
   const filteredReviews = seller.reviews?.filter((r) => r !== null) ?? []
   const reviewCount = filteredReviews.length
   const rating =
@@ -62,7 +64,7 @@ export const SellerTabs = ({
         <SellerScore rate={rating} reviewCount={reviewCount} />
       </div>
       <div className="col-span-3 border rounded-sm p-4">
-        <h3 className="heading-sm uppercase border-b pb-4">Seller reviews</h3>
+        <h3 className="heading-sm uppercase border-b pb-4">{t('sellerReviews')}</h3>
         <SellerReviewList reviews={seller.reviews} productMap={productMap} />
       </div>
     </div>

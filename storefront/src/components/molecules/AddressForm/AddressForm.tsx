@@ -14,6 +14,7 @@ import { addCustomerAddress, updateCustomerAddress } from "@/lib/data/customer"
 import { HttpTypes } from "@medusajs/types"
 import CountrySelect from "@/components/cells/CountrySelect/CountrySelect"
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 
 interface Props {
   defaultValues?: AddressFormData
@@ -51,6 +52,7 @@ export const AddressForm: React.FC<Props> = ({ defaultValues, ...props }) => {
 
 const Form: React.FC<Props> = ({ regions, handleClose }) => {
   const [error, setError] = useState<string>()
+  const t = useTranslations('form')
   const {
     handleSubmit,
     register,
@@ -95,51 +97,51 @@ const Form: React.FC<Props> = ({ regions, handleClose }) => {
       <div className="px-4 space-y-4">
         <div className="max-w-full grid grid-cols-2 items-top gap-4 mb-4">
           <LabeledInput
-            label="Address name"
-            placeholder="Type address name"
+            label={t('addressName')}
+            placeholder={t('addressNamePlaceholder')}
             className="col-span-2"
             error={errors.firstName as FieldError}
             {...register("addressName")}
           />
           <LabeledInput
-            label="First name"
-            placeholder="Type first name"
+            label={t('firstName')}
+            placeholder={t('firstNamePlaceholder')}
             error={errors.firstName as FieldError}
             {...register("firstName")}
           />
           <LabeledInput
-            label="Last name"
-            placeholder="Type last name"
+            label={t('lastName')}
+            placeholder={t('lastNamePlaceholder')}
             error={errors.firstName as FieldError}
             {...register("lastName")}
           />
           <LabeledInput
-            label="Company (optional)"
-            placeholder="Type company"
+            label={t('company')}
+            placeholder={t('companyPlaceholder')}
             error={errors.company as FieldError}
             {...register("company")}
           />
           <LabeledInput
-            label="Address"
-            placeholder="Type address"
+            label={t('address')}
+            placeholder={t('addressPlaceholder')}
             error={errors.address as FieldError}
             {...register("address")}
           />
           <LabeledInput
-            label="City"
-            placeholder="Type city"
+            label={t('city')}
+            placeholder={t('cityPlaceholder')}
             error={errors.city as FieldError}
             {...register("city")}
           />
           <LabeledInput
-            label="Postal code"
-            placeholder="Type postal code"
+            label={t('postalCode')}
+            placeholder={t('postalCodePlaceholder')}
             error={errors.postalCode as FieldError}
             {...register("postalCode")}
           />
           <LabeledInput
-            label="State / Province"
-            placeholder="Type state / province"
+            label={t('province')}
+            placeholder={t('provincePlaceholder')}
             error={errors.province as FieldError}
             {...register("province")}
           />
@@ -158,14 +160,14 @@ const Form: React.FC<Props> = ({ regions, handleClose }) => {
           </div>
 
           <LabeledInput
-            label="Phone"
-            placeholder="Type phone number"
+            label={t('phone')}
+            placeholder={t('phonePlaceholder')}
             error={errors.phone as FieldError}
             {...register("phone")}
           />
         </div>
         {error && <p className="label-md text-negative">{error}</p>}
-        <Button className="w-full ">Save address</Button>
+        <Button className="w-full ">{t('saveAddress')}</Button>
       </div>
     </form>
   )

@@ -3,6 +3,7 @@ import { HttpTypes } from "@medusajs/types"
 import LocalizedClientLink from "@/components/molecules/LocalizedLink/LocalizedLink"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 // Items that get the red dot indicator on the left
 const DOT_HANDLES = new Set(["all-products", "collections"])
@@ -27,6 +28,7 @@ export default function NavbarLinks({
   collections?: HttpTypes.StoreCollection[]
 }) {
   const pathname = usePathname()
+  const t = useTranslations('categories')
 
   // Active detection helpers
   const isActive = (href: string) => {
@@ -47,7 +49,7 @@ export default function NavbarLinks({
         className={cn(baseClass, isActive("/categories") && activeClass)}
       >
         <RedDot />
-        All Products
+        {t('allProducts')}
       </LocalizedClientLink>
 
       {/* Collections (Sezonluk Ürünler, İndirimli Ürünler, …) */}

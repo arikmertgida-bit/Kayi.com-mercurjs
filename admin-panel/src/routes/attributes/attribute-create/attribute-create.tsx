@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { FocusModal, Button, toast, ProgressTabs } from "@medusajs/ui";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AdminProductCategory } from "@medusajs/types";
 import { AttributeForm } from "../attribute-edit/components/attribute-form";
 import { z } from "zod";
@@ -11,6 +12,7 @@ import { CreateAttributeFormSchema } from "../attribute-edit/schema";
 
 export const AttributeCreate = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [categories, setCategories] = useState<AdminProductCategory[]>([]);
   const [activeTab, setActiveTab] = useState<"details" | "type">("details");
   const [tabStatuses, setTabStatuses] = useState<{
@@ -51,7 +53,7 @@ export const AttributeCreate = () => {
 
       queryClient.invalidateQueries({ queryKey: attributeQueryKeys.lists() });
 
-      toast.success("Attribute was successfully created.");
+        toast.success(t("attributes.create.successToast"));
       navigate(-1);
     } catch (error) {
       toast.error((error as Error).message);
@@ -83,13 +85,13 @@ export const AttributeCreate = () => {
                   value="details"
                   status={tabStatuses.detailsStatus}
                 >
-                  Details
+                  {t("attributes.create.details")}
                 </ProgressTabs.Trigger>
                 <ProgressTabs.Trigger
                   value="type"
                   status={tabStatuses.typeStatus}
                 >
-                  Type
+                  {t("attributes.create.type")}
                 </ProgressTabs.Trigger>
               </ProgressTabs.List>
             </div>
@@ -109,10 +111,10 @@ export const AttributeCreate = () => {
         </ProgressTabs>
         <FocusModal.Footer>
           <Button variant="secondary" onClick={handleClose}>
-            Cancel
+            {t("actions.cancel")}
           </Button>
           <Button type="submit" form="attribute-form">
-            Save
+            {t("actions.save")}
           </Button>
         </FocusModal.Footer>
       </FocusModal.Content>

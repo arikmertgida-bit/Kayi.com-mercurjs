@@ -1,6 +1,7 @@
 "use client"
 import { signout } from "@/lib/data/customer"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 type LogoutButtonProps = {
   unstyled?: boolean
@@ -14,6 +15,7 @@ export const LogoutButton: React.FC<LogoutButtonProps> = ({
   const handleLogout = async () => {
     await signout()
   }
+  const t = useTranslations('user')
 
   return (
     <button
@@ -23,7 +25,7 @@ export const LogoutButton: React.FC<LogoutButtonProps> = ({
         className
       )}
     >
-      {children || "Logout"}
+      {children || t('logout')}
     </button>
   )
 }

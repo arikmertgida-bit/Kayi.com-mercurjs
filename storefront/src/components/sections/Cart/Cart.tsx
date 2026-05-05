@@ -4,9 +4,11 @@ import LocalizedClientLink from "@/components/molecules/LocalizedLink/LocalizedL
 import { retrieveCart } from "@/lib/data/cart"
 import CartPromotionCode from "../CartReview/CartPromotionCode"
 import { EmptyCart } from "@/components/organisms/CartItems/EmptyCart"
+import { getTranslations } from "next-intl/server"
 
 export const Cart = async () => {
   const cart = await retrieveCart()
+  const t = await getTranslations('cart')
 
   if (!cart || !cart.items?.length) {
     return <CartEmpty />
@@ -33,7 +35,7 @@ export const Cart = async () => {
           />
           <LocalizedClientLink href="/checkout?step=address">
             <Button className="w-full py-3 flex justify-center items-center">
-              Go to checkout
+              {t('goToCheckout')}
             </Button>
           </LocalizedClientLink>
         </div>

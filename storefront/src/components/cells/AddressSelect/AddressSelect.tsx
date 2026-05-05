@@ -1,3 +1,4 @@
+"use client"
 import { Listbox, Transition } from "@headlessui/react"
 import { ChevronUpDown } from "@medusajs/icons"
 import { clx } from "@medusajs/ui"
@@ -8,6 +9,7 @@ import { Radio } from "@/components/atoms/Radio/Radio"
 import { HttpTypes } from "@medusajs/types"
 import compareAddresses from "@/lib/helpers/compare-addresses"
 import clsx from "clsx"
+import { useTranslations } from "next-intl"
 
 type AddressSelectProps = {
   addresses: HttpTypes.StoreCustomerAddress[]
@@ -23,6 +25,7 @@ const AddressSelect = ({
   addressInput,
   onSelect,
 }: AddressSelectProps) => {
+  const t = useTranslations('filters')
   const handleSelect = (id: string) => {
     const savedAddress = addresses.find((a) => a.id === id)
     if (savedAddress) {
@@ -48,7 +51,7 @@ const AddressSelect = ({
               <span className="block truncate">
                 {selectedAddress
                   ? selectedAddress.address_name
-                  : "Choose an address"}
+                  : t('chooseAddress')}
               </span>
               <ChevronUpDown
                 className={clx("transition-rotate duration-200", {

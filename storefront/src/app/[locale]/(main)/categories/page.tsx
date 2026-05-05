@@ -13,6 +13,7 @@ import { listRegions } from "@/lib/data/regions"
 import { listProducts } from "@/lib/data/products"
 import { listMegaMenuCategories } from "@/lib/data/categories"
 import { toHreflang } from "@/lib/helpers/hreflang"
+import { getTranslations } from "next-intl/server"
 
 export const revalidate = 60
 
@@ -43,7 +44,8 @@ export async function generateMetadata({
     languages = { [toHreflang(locale)]: `${baseUrl}/${locale}/categories` }
   }
 
-  const title = "All Products"
+  const t = await getTranslations('categories')
+  const title = t('allProducts')
   const description = `Browse all products on ${
     process.env.NEXT_PUBLIC_SITE_NAME || "our store"
   }`
@@ -83,10 +85,11 @@ async function AllCategories({
   const ua = (await headers()).get("user-agent") || ""
   const bot = isBot(ua)
 
+  const t = await getTranslations('categories')
   const breadcrumbsItems = [
     {
       path: "/",
-      label: "All Products",
+      label: t('allProducts'),
     },
   ]
 
@@ -127,7 +130,7 @@ async function AllCategories({
               {
                 "@type": "ListItem",
                 position: 1,
-                name: "Tüm Ürünler",
+                name: t('allProducts'),
                 item: `${baseUrl}/${locale}/categories`,
               },
             ],
@@ -149,7 +152,7 @@ async function AllCategories({
         <Breadcrumbs items={breadcrumbsItems} />
       </div>
 
-      <h1 className="heading-xl uppercase">Tüm Ürünler</h1>
+      <h1 className="heading-xl uppercase">{t('allProducts')}</h1>
 
       <Suspense fallback={<ProductListingSkeleton />}>
         {bot || !MEILISEARCH_HOST ? (

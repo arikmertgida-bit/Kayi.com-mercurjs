@@ -14,6 +14,7 @@ import { useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { createReview, uploadReviewImages, Order } from "@/lib/data/reviews"
+import { useTranslations } from "next-intl"
 
 type ImageSlotStatus = "empty" | "uploading" | "uploaded" | "error"
 
@@ -55,6 +56,7 @@ const MAX_IMAGES = 4
 const Form: React.FC<Props> = ({ handleClose, seller, referenceType = "seller", referenceId }) => {
   const router = useRouter()
   const [error, setError] = useState<string>()
+  const t = useTranslations('form')
   const [imageSlots, setImageSlots] = useState<ImageSlot[]>([
     { status: "empty" },
     { status: "empty" },
@@ -154,7 +156,7 @@ const Form: React.FC<Props> = ({ handleClose, seller, referenceType = "seller", 
     const response = await createReview(body)
 
     if (response.error || response.message) {
-      setError(response.message || "Bir sorun oluştu. Lütfen tekrar deneyin.")
+      setError(response.message || t('somethingWentWrong'))
       return
     }
 

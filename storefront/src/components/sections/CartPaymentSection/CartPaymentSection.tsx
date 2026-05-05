@@ -15,6 +15,7 @@ import PaymentContainer, {
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 import { Button } from "@/components/atoms"
+import { useTranslations } from "next-intl"
 
 type StoreCardPaymentMethod = any & {
   service_zone?: {
@@ -119,6 +120,7 @@ const CartPaymentSection = ({
 
   const isEditEnabled =
     !isOpen && !!cart?.payment_collection?.payment_sessions?.length
+  const t = useTranslations('checkout')
 
   return (
     <div className="border p-4 rounded-sm bg-ui-bg-interactive">
@@ -128,7 +130,7 @@ const CartPaymentSection = ({
           className="flex flex-row text-3xl-regular gap-x-2 items-baseline items-center"
         >
           {!isOpen && paymentReady && <CheckCircleSolid />}
-          Payment
+          {t('payment')}
         </Heading>
         {isEditEnabled && (
           <Text>
@@ -173,13 +175,13 @@ const CartPaymentSection = ({
           {paidByGiftcard && (
             <div className="flex flex-col w-1/3">
               <Text className="txt-medium-plus text-ui-fg-base mb-1">
-                Payment method
+                {t('paymentMethod')}
               </Text>
               <Text
                 className="txt-medium text-ui-fg-subtle"
                 data-testid="payment-method-summary"
               >
-                Gift card
+                {t('giftCard')}
               </Text>
             </div>
           )}
@@ -199,8 +201,8 @@ const CartPaymentSection = ({
             }
           >
             {!activeSession && isStripeFunc(selectedPaymentMethod)
-              ? " Enter card details"
-              : "Continue to review"}
+              ? t('enterCardDetails')
+              : t('continueToReview')}
           </Button>
         </div>
 
@@ -209,7 +211,7 @@ const CartPaymentSection = ({
             <div className="flex items-start gap-x-1 w-full">
               <div className="flex flex-col w-1/3">
                 <Text className="txt-medium-plus text-ui-fg-base mb-1">
-                  Payment method
+                  {t('paymentMethod')}
                 </Text>
                 <Text
                   className="txt-medium text-ui-fg-subtle"
@@ -221,7 +223,7 @@ const CartPaymentSection = ({
               </div>
               <div className="flex flex-col w-1/3">
                 <Text className="txt-medium-plus text-ui-fg-base mb-1">
-                  Payment details
+                  {t('paymentDetails')}
                 </Text>
                 <div
                   className="flex gap-2 txt-medium text-ui-fg-subtle items-center"
@@ -235,7 +237,7 @@ const CartPaymentSection = ({
                   <Text>
                     {isStripeFunc(selectedPaymentMethod) && cardBrand
                       ? cardBrand
-                      : "Another step will appear"}
+                      : t('nextStep')}
                   </Text>
                 </div>
               </div>
@@ -243,13 +245,13 @@ const CartPaymentSection = ({
           ) : paidByGiftcard ? (
             <div className="flex flex-col w-1/3">
               <Text className="txt-medium-plus text-ui-fg-base mb-1">
-                Payment method
+                {t('paymentMethod')}
               </Text>
               <Text
                 className="txt-medium text-ui-fg-subtle"
                 data-testid="payment-method-summary"
               >
-                Gift card
+                {t('giftCard')}
               </Text>
             </div>
           ) : null}

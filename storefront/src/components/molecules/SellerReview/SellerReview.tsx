@@ -2,15 +2,18 @@ import { StarRating } from "@/components/atoms"
 import { SingleProductReview } from "@/types/product"
 import { Divider } from "@medusajs/ui"
 import { formatDistanceToNow } from "date-fns"
+import { tr } from "date-fns/locale"
 import Image from "next/image"
+import { getTranslations } from "next-intl/server"
 
-export const SellerReview = ({
+export const SellerReview = async ({
   review,
   productMap = {},
 }: {
   review: SingleProductReview
   productMap?: Record<string, { title: string; thumbnail: string | null }>
 }) => {
+  const t = await getTranslations('seller')
   const product =
     review.reference === "product" && review.reference_id
       ? productMap[review.reference_id]
@@ -26,6 +29,7 @@ export const SellerReview = ({
         <p className="text-sm text-secondary mt-2">
           {formatDistanceToNow(new Date(review.created_at), {
             addSuffix: true,
+            locale: tr,
           })}
         </p>
       </div>
@@ -54,11 +58,12 @@ export const SellerReview = ({
             <Divider orientation="vertical" className="h-auto" />
             <div>
               <p className="label-md text-primary">
-                Reply from {review.seller.name}{" "}
+                {t('replyFrom', { name: review.seller.name })}{" "}
                 <span className="text-secondary">
                   |{" "}
                   {formatDistanceToNow(new Date(review.updated_at), {
                     addSuffix: true,
+                    locale: tr,
                   })}
                 </span>
               </p>

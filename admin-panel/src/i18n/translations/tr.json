@@ -55,7 +55,9 @@
     "unsavedChangesDescription": "Kaydedilmemiş değişiklikleriniz kaybolacak.",
     "includesTaxTooltip": "Bu sütundaki fiyatlar vergiler dahil fiyatlardır.",
     "excludesTaxTooltip": "Bu sütundaki fiyatlar vergiler hariç fiyatlardır.",
-    "noMoreData": "Daha fazla veri yok"
+    "noMoreData": "Daha fazla veri yok",
+    "areYouSureDescription": "{{entity}} {{title}} öğesini silmek üzeresiniz. Bu işlem geri alınamaz.",
+    "noRecordsMessageFiltered": "Filtrelerle eşleşen kayıt bulunamadı"
   },
   "json": {
     "header": "JSON",
@@ -363,7 +365,8 @@
       "sameAsShipping": "Teslimat adresi ile aynı"
     },
     "contactHeading": "İletişim",
-    "locationHeading": "Konum"
+    "locationHeading": "Konum",
+    "title": "Adresler"
   },
   "email": {
     "editHeader": "E-postayı Düzenle",
@@ -713,6 +716,18 @@
           "required": "Kargo yapılandırması gereklidir"
         }
       }
+    },
+    "columns": {
+      "product_display": "Ürün",
+      "variants_count": "Varyantlar",
+      "sales_channels_display": "Satış Kanalları",
+      "collection": "Koleksiyon",
+      "status": "Durum",
+      "thumbnail": "Küçük Resim",
+      "title": "Başlık",
+      "handle": "Handle",
+      "created_at": "Oluşturuldu",
+      "updated_at": "Güncellendi"
     }
   },
   "collections": {
@@ -867,7 +882,10 @@
       "disablePrompt_other": "{{count}} konum seviyesini devre dışı bırakmak üzeresiniz. Bu işlem geri alınamaz.",
       "disabledToggleTooltip": "Devre dışı bırakılamaz: devre dışı bırakmadan önce gelen ve/veya rezerve edilmiş miktarı temizleyin.",
       "successToast": "Stok seviyeleri başarıyla güncellendi."
-    }
+    },
+    "manageLocationQuantity": "Konum stok miktarını yönet",
+    "quantityAcrossLocations": "{{locations}} konumda {{quantity}} adet",
+    "levelDeleted": "Envanter seviyesi başarıyla silindi."
   },
   "giftCards": {
     "domain": "Hediye Kartları",
@@ -935,7 +953,28 @@
     },
     "registered": "Kayıtlı",
     "guest": "Misafir",
-    "hasAccount": "Hesabı var"
+    "hasAccount": "Hesabı var",
+    "addresses": {
+      "title": "Adresler",
+      "fields": {
+        "addressName": "Adres adı",
+        "address1": "Adres 1",
+        "address2": "Adres 2",
+        "city": "Şehir",
+        "province": "İl",
+        "postalCode": "Posta kodu",
+        "country": "Ülke",
+        "phone": "Telefon",
+        "company": "Şirket",
+        "countryCode": "Ülke kodu",
+        "provinceCode": "İl kodu"
+      },
+      "create": {
+        "header": "Adres Oluştur",
+        "hint": "Müşteri için yeni bir adres oluşturun.",
+        "successToast": "Adres başarıyla oluşturuldu."
+      }
+    }
   },
   "customerGroups": {
     "domain": "Müşteri Grupları",
@@ -1007,7 +1046,8 @@
       "itemSubtotal": "Ürün Ara Toplamı",
       "shippingSubtotal": "Kargo Ara Toplamı",
       "discountSubtotal": "İndirim Ara Toplamı",
-      "taxTotal": "Vergi Toplamı"
+      "taxTotal": "Vergi Toplamı",
+      "totalAfterDiscount": "İndirim Sonrası Toplam"
     },
     "transfer": {
       "title": "Mülkiyeti Devret",
@@ -1048,7 +1088,8 @@
       "createRefundWrongQuantity": "Miktar 1 ile {{number}} arasında bir sayı olmalıdır",
       "refundAmount": "{{ amount }} tutarını iade et",
       "paymentLink": "{{ amount }} için ödeme bağlantısını kopyala",
-      "selectPaymentToRefund": "İade edilecek ödemeyi seçin"
+      "selectPaymentToRefund": "İade edilecek ödemeyi seçin",
+      "totalStoreCreditRefunds": "Toplam mağaza kredisi iadeleri"
     },
     "edits": {
       "title": "Siparişi düzenle",
@@ -1148,7 +1189,8 @@
       "panel": {
         "title": "İade başlatıldı",
         "description": "Tamamlanması gereken açık bir iade talebi var"
-      }
+      },
+      "estDifference": "Tahmini fark"
     },
     "claims": {
       "create": "Talep Oluştur",
@@ -1230,7 +1272,8 @@
       "consistsOf": "{{num}}x envanter öğesinden oluşur",
       "requires": "Her bir varyant için {{num}} gerektirir",
       "toast": {
-        "created": "Ürünler başarıyla tahsis edildi"
+        "created": "Ürünler başarıyla tahsis edildi",
+        "error": "Şu ürünler tahsis edilemedi: {{items}}"
       },
       "error": {
         "quantityNotAllocated": "Tahsis edilmemiş ürünler var."
@@ -1291,13 +1334,15 @@
         "created": "Tamamlama başarıyla oluşturuldu",
         "canceled": "Tamamlama başarıyla iptal edildi",
         "fulfillmentShipped": "Gönderilmiş bir tamamlamayı iptal edemezsiniz",
-        "fulfillmentDelivered": "Tamamlama başarıyla teslim edildi olarak işaretlendi"
+        "fulfillmentDelivered": "Tamamlama başarıyla teslim edildi olarak işaretlendi",
+        "fulfillmentPickedUp": "Teslimat başarıyla teslim alındı olarak işaretlendi"
       },
       "trackingLabel": "Takip",
       "shippingFromLabel": "Gönderen",
       "itemsLabel": "Ürünler",
       "differentOptionSelected": "Seçilen kargo seçeneği müşterinin seçtiğinden farklı.",
-      "disabledItemTooltip": "Seçtiğiniz kargo seçeneği bu ürünün tamamlanmasına izin vermiyor"
+      "disabledItemTooltip": "Seçtiğiniz kargo seçeneği bu ürünün tamamlanmasına izin vermiyor",
+      "markAsPickedUp": "Teslim alındı olarak işaretle"
     },
     "refund": {
       "title": "İade Oluştur",
@@ -1422,6 +1467,31 @@
         "title": "Fatura adresini düzenle",
         "requestSuccess": "Sipariş fatura adresi güncellendi."
       }
+    },
+    "giftCardsStoreCreditLines": "Hediye kartları ve kredi kalemleri",
+    "creditLines": {
+      "title": "Kredi kalemleri",
+      "total": "Tüm kredi kalemlerinin toplamı",
+      "creditOrDebit": "Kredi / Borç",
+      "createCreditLine": "Kredi kalemi oluştur",
+      "createCreditLineSuccess": "Kredi kalemi başarıyla oluşturuldu",
+      "createCreditLineError": "Kredi kalemi oluşturulurken hata oluştu",
+      "createCreditLineDescription": "{{amount}} tutarında kredi kalemi oluştur",
+      "operation": "İşlem",
+      "credit": "Kredi",
+      "creditDescription": "Siparişe pozitif tutar ekler",
+      "debit": "Borç",
+      "debitDescription": "Siparişten negatif tutar çıkarır"
+    },
+    "balanceSettlement": {
+      "title": "Bakiye uzlaşması",
+      "settlementType": "Uzlaşma türü",
+      "settlementTypes": {
+        "paymentMethod": "Ödeme yöntemi",
+        "paymentMethodDescription": "Tutarı ödeme yöntemine iade et",
+        "creditLine": "Mağaza kredisi",
+        "creditLineDescription": "Tutarı mağaza kredisi olarak iade et"
+      }
     }
   },
   "draftOrders": {
@@ -1470,7 +1540,10 @@
   "stockLocations": {
     "domain": "Konumlar ve teslimat",
     "list": {
-      "description": "Mağazanızın stok konumlarını ve teslimat seçeneklerini yönetin."
+      "description": "Mağazanızın stok konumlarını ve teslimat seçeneklerini yönetin.",
+      "noRecordsMessage": "Kayıt yok",
+      "noRecordsMessageEmpty": "Konum bulunamadı",
+      "noRecordsMessageFiltered": "Filtrelerle eşleşen konum bulunamadı"
     },
     "create": {
       "header": "Stok Konumu Oluştur",
@@ -1483,7 +1556,8 @@
       "successToast": "Konum {{name}} başarıyla güncellendi."
     },
     "delete": {
-      "confirmation": "Stok konumu {{name}} silinmek üzere. Bu işlem geri alınamaz."
+      "confirmation": "Stok konumu {{name}} silinmek üzere. Bu işlem geri alınamaz.",
+      "successToast": "\"{{name}}\" konumu başarıyla silindi."
     },
     "fulfillmentProviders": {
       "header": "Tamamlama Sağlayıcıları",
@@ -1516,6 +1590,10 @@
       "shippingProfiles": {
         "label": "Teslimat Profilleri",
         "description": "Ürünleri teslimat gereksinimlerine göre gruplayın"
+      },
+      "shippingOptionTypes": {
+        "label": "Kargo Seçenek Türleri",
+        "description": "Kargo seçeneklerini türlerine göre gruplandırın"
       }
     },
     "salesChannels": {
@@ -1524,7 +1602,8 @@
       "connectedTo": "{{total}} satış kanalından {{count}}'ine bağlı",
       "noChannels": "Konum hiçbir satış kanalına bağlı değil.",
       "action": "Satış kanallarını bağla",
-      "successToast": "Satış kanalları başarıyla güncellendi."
+      "successToast": "Satış kanalları başarıyla güncellendi.",
+      "hint": "Bu konuma bağlı satış kanallarını yönetin."
     },
     "shippingOptions": {
       "conditionalPrices": {
@@ -1579,7 +1658,13 @@
           "details": "Detaylar",
           "prices": "Fiyatlar"
         },
-        "action": "Seçenek oluştur"
+        "action": "Seçenek oluştur",
+        "pickup": {
+          "header": "{{zone}} için Teslim Alma Seçeneği Oluştur",
+          "hint": "Ürünlerin bu konumdan nasıl teslim alınacağını tanımlamak için yeni bir teslim alma seçeneği oluşturun.",
+          "label": "Teslim alma seçenekleri",
+          "successToast": "{{name}} teslim alma seçeneği başarıyla oluşturuldu."
+        }
       },
       "delete": {
         "confirmation": "Kargo seçeneği {{name}} silinmek üzere. Bu işlem geri alınamaz.",
@@ -1598,7 +1683,9 @@
           "shipping_one": "{{count}} kargo seçeneği",
           "shipping_other": "{{count}} kargo seçeneği",
           "returns_one": "{{count}} iade seçeneği",
-          "returns_other": "{{count}} iade seçeneği"
+          "returns_other": "{{count}} iade seçeneği",
+          "pickup_one": "{{count}} teslim alma seçeneği",
+          "pickup_other": "{{count}} teslim alma seçeneği"
         },
         "priceType": {
           "label": "Fiyat türü",
@@ -1619,7 +1706,8 @@
         },
         "provider": "Tamamlama sağlayıcısı",
         "profile": "Kargo profili",
-        "fulfillmentOption": "Tamamlama seçeneği"
+        "fulfillmentOption": "Tamamlama seçeneği",
+        "type": "Kargo seçeneği türü"
       }
     },
     "serviceZones": {
@@ -1647,6 +1735,11 @@
       "fields": {
         "noRecords": "Ekleyebileceğiniz teslimat seçeneklerine sahip hizmet bölgeleri yok.",
         "tip": "Bir hizmet bölgesi, coğrafi bölgeler veya alanlardan oluşur. Bu, belirli konumlara sunulabilir teslimat seçeneklerini sınırlamak için kullanılır."
+      }
+    },
+    "pickupOptions": {
+      "edit": {
+        "header": "Teslim Alma Seçeneğini Düzenle"
       }
     }
   },
@@ -1681,7 +1774,9 @@
       "hint": "Belirli bir ülke için vergi oranlarını tanımlamak üzere yeni bir vergi bölgesi oluşturun.",
       "errors": {
         "rateIsRequired": "Varsayılan bir vergi oranı oluştururken vergi oranı gereklidir.",
-        "nameIsRequired": "Varsayılan bir vergi oranı oluştururken isim gereklidir."
+        "nameIsRequired": "Varsayılan bir vergi oranı oluştururken isim gereklidir.",
+        "missingProvider": "Vergi bölgesi oluştururken sağlayıcı zorunludur.",
+        "missingCountry": "Vergi bölgesi oluştururken ülke zorunludur."
       },
       "successToast": "Vergi bölgesi başarıyla oluşturuldu."
     },
@@ -1825,7 +1920,8 @@
           "productCollection": "Ürün koleksiyonları",
           "productTag": "Ürün etiketleri",
           "productType": "Ürün türleri",
-          "customerGroup": "Müşteri grupları"
+          "customerGroup": "Müşteri grupları",
+          "shippingOption": "Kargo seçenekleri"
         },
         "operators": {
           "in": "içinde",
@@ -1837,14 +1933,16 @@
           "productCollection": "Ürün koleksiyonlarını ara",
           "productTag": "Ürün etiketlerini ara",
           "productType": "Ürün türlerini ara",
-          "customerGroup": "Müşteri gruplarını ara"
+          "customerGroup": "Müşteri gruplarını ara",
+          "shippingOption": "Kargo seçeneklerinde ara"
         },
         "tags": {
           "product": "Ürün",
           "productCollection": "Ürün koleksiyonu",
           "productTag": "Ürün etiketi",
           "productType": "Ürün türü",
-          "customerGroup": "Müşteri grubu"
+          "customerGroup": "Müşteri grubu",
+          "shippingOption": "Kargo seçeneği"
         },
         "modal": {
           "header": "Hedef ekle"
@@ -1900,7 +1998,16 @@
       "noDefaultRate": {
         "label": "Varsayılan oran yok",
         "tooltip": "Bu vergi bölgesinde varsayılan bir vergi oranı bulunmuyor. Örneğin, bir ülkenin standart KDV'si gibi bir oran varsa, lütfen bu bölgeye ekleyin."
-      }
+      },
+      "taxProvider": "Vergi sağlayıcısı"
+    },
+    "edit": {
+      "header": "Vergi Bölgesini Düzenle",
+      "hint": "Vergi bölgesi bilgilerini düzenleyin.",
+      "successToast": "Vergi bölgesi başarıyla güncellendi."
+    },
+    "provider": {
+      "header": "Vergi Sağlayıcısı"
     }
   },
   "promotions": {
@@ -1932,13 +2039,26 @@
         },
         "target-rules": {
           "title": "Promosyon hangi ürünlere uygulanacak?",
-          "description": "Promosyon, aşağıdaki koşulları karşılayan ürünlere uygulanacaktır."
+          "description": "Promosyon, aşağıdaki koşulları karşılayan ürünlere uygulanacaktır.",
+          "order": {
+            "title": "Promosyon hangi ürünlere uygulanacak?",
+            "description": "Promosyon, aşağıdaki koşullarla eşleşen ürünlere uygulanacak."
+          },
+          "shipping_methods": {
+            "title": "Promosyon hangi kargo yöntemlerine uygulanacak?",
+            "description": "Promosyon, aşağıdaki koşullarla eşleşen kargo yöntemlerine uygulanacak."
+          },
+          "items": {
+            "title": "Promosyon hangi ürünlere uygulanacak?",
+            "description": "Promosyon, aşağıdaki koşullarla eşleşen ürünlere uygulanacak."
+          }
         },
         "buy-rules": {
           "title": "Promosyonu açmak için sepette ne olmalı?",
           "description": "Bu koşullar sağlandığında, hedef ürünlerde promosyon etkinleştirilir."
         }
-      }
+      },
+      "taxInclusive": "Vergi Dahil"
     },
     "tooltips": {
       "campaignType": "Bir harcama bütçesi belirlemek için promosyonda para birimi kodu seçilmelidir."
@@ -2038,7 +2158,8 @@
         "description": "Müşterilerinizin ödeme sırasında gireceği kod."
       },
       "value": {
-        "title": "Promosyon Değeri"
+        "title": "Promosyon Değeri",
+        "invalid": "Geçersiz promosyon değeri"
       },
       "value_type": {
         "fixed": {
@@ -2064,6 +2185,10 @@
           "title": "Pasif",
           "description": "Promosyon devre dışı bırakıldı."
         }
+      },
+      "taxInclusive": {
+        "title": "Promosyon vergi dahil mi?",
+        "description": "Promosyonu vergiler sonrasında uygulamak için bu alanı etkinleştirin"
       }
     },
     "deleteWarning": "Promosyon {{code}}'u silmek üzeresiniz. Bu işlem geri alınamaz.",
@@ -2119,7 +2244,8 @@
       "budget_limit": "Bütçe limiti",
       "campaign_id": {
         "hint": "Sadece promosyon ile aynı para birimine sahip kampanyalar bu listede gösterilir."
-      }
+      },
+      "totalUsedByAttribute": "Toplam kullanım"
     },
     "budget": {
       "create": {
@@ -2131,7 +2257,10 @@
         "type": "Tür",
         "currency": "Para birimi",
         "limit": "Limit",
-        "used": "Kullanıldı"
+        "used": "Kullanıldı",
+        "budgetAttribute": "Kullanımı sınırla",
+        "budgetAttributeTooltip": "Bir müşteri veya e-posta tarafından promosyonun kaç kez kullanılabileceğini tanımlayın.",
+        "totalUsedByAttribute": "Bütçe limiti: {{attribute}}"
       },
       "type": {
         "spend": {
@@ -2141,6 +2270,10 @@
         "usage": {
           "title": "Kullanım",
           "description": "Promosyonun kaç kez kullanılabileceğine bir sınır koyun."
+        },
+        "useByAttribute": {
+          "title": "Özelliğe göre kullanım (müşteri kimliği, e-posta vb.)",
+          "description": "Belirli bir özellik değerine göre promosyonun kaç kez kullanılabileceğini sınırlayın."
         }
       },
       "edit": {
@@ -2502,6 +2635,16 @@
     },
     "tooltip": {
       "cannotDeleteDefault": "Varsayılan satış kanalı silinemez"
+    },
+    "list": {
+      "empty": {
+        "heading": "Satış kanalı bulunamadı",
+        "description": "Bir satış kanalı oluşturulduğunda burada görünecek."
+      },
+      "filtered": {
+        "heading": "Sonuç yok",
+        "description": "Mevcut filtrelerle eşleşen satış kanalı bulunamadı."
+      }
     }
   },
   "apiKeyManagement": {
@@ -2785,7 +2928,9 @@
     "from": "Kimden",
     "to": "Kime",
     "beaware": "Dikkat",
-    "loading": "Yükleniyor"
+    "loading": "Yükleniyor",
+    "selectValue": "Değer Seç",
+    "selectValues": "Değerleri Seç"
   },
   "fields": {
     "amount": "Miktar",
@@ -2943,7 +3088,14 @@
     "endDate": "Bitiş Tarihi",
     "draft": "Taslak",
     "values": "Değerler",
-    "by": "Tarafından"
+    "by": "Tarafından",
+    "reference": "Referans",
+    "reference_id": "Referans ID",
+    "enabledInStore": "Mağazada etkin",
+    "isReturn": "İade mi",
+    "promotionCode": "Promosyon kodu",
+    "serviceZone": "Hizmet Bölgesi",
+    "creditTotal": "Kredi Kalemleri Toplamı"
   },
   "dateTime": {
     "years_one": "Yıl",
@@ -2960,5 +3112,151 @@
     "minutes_other": "Dakikalar",
     "seconds_one": "Saniye",
     "seconds_other": "Saniyeler"
+  },
+  "attributes": {
+    "domain": "Ürün Özellikleri",
+    "create": {
+      "successToast": "Özellik başarıyla oluşturuldu.",
+      "details": "Detaylar",
+      "type": "Tür"
+    }
+  },
+  "requests": {
+    "domain": "Talepler",
+    "seller": "Satıcı",
+    "product": "Ürün",
+    "review-remove": "Yorum Kaldırma",
+    "return": "Sipariş İadesi",
+    "product-collection": "Ürün Koleksiyonu",
+    "product-category": "Ürün Kategorisi",
+    "product-tag": "Ürün Etiketi",
+    "product-type": "Ürün Türü",
+    "product-update": "Ürün Güncelleme"
+  },
+  "sellers": {
+    "domain": "Satıcılar",
+    "fields": {
+      "name": "Ad",
+      "email": "E-posta",
+      "phone": "Telefon",
+      "description": "Açıklama",
+      "address": "Adres",
+      "address_line": "Adres Satırı",
+      "postal_code": "Posta Kodu",
+      "city": "Şehir",
+      "country_code": "Ülke Kodu",
+      "tax_id": "Vergi Kimliği"
+    },
+    "edit": {
+      "header": "Satıcıyı Düzenle",
+      "successToast": "Satıcı {{name}} başarıyla güncellendi."
+    }
+  },
+  "messages": {
+    "domain": "Mesajlar"
+  },
+  "configuration": {
+    "domain": "Ürün Kataloğu Ayarları"
+  },
+  "meilisearch": {
+    "domain": "Meilisearch",
+    "checkStatus": "Meilisearch durumunu kontrol edin",
+    "triggerSync": "Senkronizasyonu Başlat",
+    "syncSuccess": "Senkronizasyon başlatıldı!",
+    "host": "Sunucu",
+    "productIndex": "Ürün İndeksi",
+    "exists": "Mevcut",
+    "doesNotExist": "Mevcut değil",
+    "error": "Hata!"
+  },
+  "commission": {
+    "domain": "Komisyon Ayarları",
+    "deleted": "Silindi!",
+    "updated": "Güncellendi!",
+    "created": "Oluşturuldu!",
+    "error": "Hata!",
+    "disable": "Devre dışı bırak",
+    "enable": "Etkinleştir",
+    "delete": "Sil"
+  },
+  "commissionLines": {
+    "domain": "Komisyon Satırları"
+  },
+  "refundReasons": {
+    "domain": "İade Nedenleri",
+    "subtitle": "İade için nedenleri yönetin.",
+    "calloutHint": "İadeleri kategorize etmek için nedenleri yönetin.",
+    "editReason": "İade Nedenini Düzenle",
+    "create": {
+      "header": "İade Nedeni Ekle",
+      "subtitle": "İadeler için en yaygın nedenleri belirtin.",
+      "hint": "İadeleri kategorize etmek için yeni bir iade nedeni oluşturun.",
+      "successToast": "{{label}} iade nedeni başarıyla oluşturuldu."
+    },
+    "edit": {
+      "header": "İade Nedenini Düzenle",
+      "subtitle": "İade nedeninin değerini düzenleyin.",
+      "successToast": "{{label}} iade nedeni başarıyla güncellendi."
+    },
+    "delete": {
+      "confirmation": "\"{{label}}\" iade nedenini silmek üzeresiniz. Bu işlem geri alınamaz.",
+      "successToast": "İade nedeni başarıyla silindi."
+    },
+    "fields": {
+      "label": {
+        "label": "Etiket",
+        "placeholder": "İyi niyet jesti"
+      },
+      "code": {
+        "label": "Kod",
+        "placeholder": "good_will_gesture"
+      },
+      "description": {
+        "label": "Açıklama",
+        "placeholder": "Müşteri kötü bir alışveriş deneyimi yaşadı"
+      }
+    }
+  },
+  "shippingOptionTypes": {
+    "domain": "Kargo Seçeneği Türleri",
+    "subtitle": "Kargo seçeneklerinizi türlerine göre düzenleyin.",
+    "create": {
+      "header": "Kargo Seçeneği Türü Oluştur",
+      "hint": "Kargo seçeneklerinizi kategorize etmek için yeni bir tür oluşturun.",
+      "successToast": "{{label}} kargo seçeneği türü başarıyla oluşturuldu."
+    },
+    "edit": {
+      "header": "Kargo Seçeneği Türünü Düzenle",
+      "successToast": "{{label}} kargo seçeneği türü başarıyla güncellendi."
+    },
+    "delete": {
+      "confirmation": "\"{{label}}\" kargo seçeneği türünü silmek üzeresiniz. Bu işlem geri alınamaz.",
+      "successToast": "\"{{label}}\" kargo seçeneği türü başarıyla silindi."
+    },
+    "fields": {
+      "label": "Etiket",
+      "code": "Kod",
+      "description": "Açıklama"
+    }
+  },
+  "views": {
+    "save": "Kaydet",
+    "saveAsNew": "Yeni görünüm olarak kaydet",
+    "updateDefaultForEveryone": "Herkese varsayılan olarak güncelle",
+    "updateViewName": "Görünümü güncelle",
+    "prompts": {
+      "updateDefault": {
+        "title": "Varsayılan görünümü güncelle",
+        "description": "Bu işlem tüm kullanıcılar için varsayılan görünümü güncelleyecek. Emin misiniz?",
+        "confirmText": "Herkes için güncelle",
+        "cancelText": "İptal"
+      },
+      "updateView": {
+        "title": "Görünümü güncelle",
+        "description": "\"{{name}}\" görünümünü güncellemek istediğinizden emin misiniz?",
+        "confirmText": "Güncelle",
+        "cancelText": "İptal"
+      }
+    }
   }
 }

@@ -7,6 +7,7 @@ import { SellNowButton } from '@/components/cells/SellNowButton/SellNowButton';
 import { useState } from 'react';
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { useTranslations } from 'next-intl'
 
 export const MobileNavbar = ({
   childrenCategories,
@@ -22,6 +23,7 @@ export const MobileNavbar = ({
   const [openMenu, setOpenMenu] = useState(false);
   const [openAccordion, setOpenAccordion] = useState<string | null>(null);
   const pathname = usePathname()
+  const t = useTranslations('categories')
 
   const closeMenuHandler = () => setOpenMenu(false);
 
@@ -129,7 +131,7 @@ export const MobileNavbar = ({
               )}
             >
               <span className='w-2 h-2 rounded-full bg-[#e30a17] flex-shrink-0' />
-              All Products
+              {t('allProducts')}
             </LocalizedClientLink>
 
             {collections.map((collection) => {

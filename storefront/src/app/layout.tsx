@@ -8,6 +8,8 @@ import Head from "next/head"
 import { Suspense } from "react"
 import { CartInitializer } from "./cart-initializer"
 import { Providers } from "./providers"
+import { NextIntlClientProvider } from "next-intl"
+import { getMessages } from "next-intl/server"
 
 const funnelDisplay = Funnel_Display({
   variable: "--font-funnel-sans",
@@ -71,6 +73,8 @@ export default async function RootLayout({
       key: data.key,
     }))
     .catch(() => ({ host: "", key: "" }))
+
+  const messages = await getMessages()
 
   return (
     <html lang={htmlLang} className="">
@@ -139,16 +143,18 @@ export default async function RootLayout({
         className={`${funnelDisplay.className} antialiased bg-primary text-secondary relative`}
       >
         <Providers cart={null} meiliConfig={meiliConfig}>
-          {/*
-            CartInitializer fetches cart data server-side and injects it via
-            CartSynchronizer (a client component). It does NOT wrap children,
-            so children are mounted exactly once and event handlers are never
-            detached during the cart fetch — eliminating the double-click issue.
-          */}
-          <Suspense fallback={null}>
-            <CartInitializer />
-          </Suspense>
-          {children}
+          <NextIntlClientProvider messages={messages}>
+            {/*
+              CartInitializer fetches cart data server-side and injects it via
+              CartSynchronizer (a client component). It does NOT wrap children,
+              so children are mounted exactly once and event handlers are never
+              detached during the cart fetch — eliminating the double-click issue.
+            */}
+            <Suspense fallback={null}>
+              <CartInitializer />
+            </Suspense>
+            {children}
+          </NextIntlClientProvider>
         </Providers>
         <Toaster position="top-right" />
         <CookieConsentBannerWrapper />

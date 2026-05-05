@@ -3,12 +3,14 @@ import { SingleProductSeller } from "@/types/product"
 import { format } from "date-fns"
 import { SellerAvatar } from "../SellerAvatar/SellerAvatar"
 import LocalizedClientLink from "@/components/molecules/LocalizedLink/LocalizedLink"
+import { getTranslations } from "next-intl/server"
 
-export const CartItemsHeader = ({
+export const CartItemsHeader = async ({
   seller,
 }: {
   seller: SingleProductSeller
 }) => {
+  const t = await getTranslations('cart');
   return (
     <LocalizedClientLink href={`/sellers/${seller.handle}`}>
       <div className="border rounded-sm p-4 flex gap-4 items-center">
@@ -20,7 +22,7 @@ export const CartItemsHeader = ({
             <div className="flex items-center gap-2">
               <Divider square />
               <p className="label-md text-secondary">
-                Joined: {format(seller.created_at || "", "yyyy-MM-dd")}
+                {t('joined')} {format(seller.created_at || "", "yyyy-MM-dd")}
               </p>
             </div>
           )}

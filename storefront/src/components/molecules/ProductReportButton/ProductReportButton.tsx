@@ -4,9 +4,11 @@ import { Button } from '@/components/atoms';
 import { useState } from 'react';
 import { Modal } from '../Modal/Modal';
 import { ReportListingForm } from '../ReportListingForm/ReportListingForm';
+import { useTranslations } from 'next-intl';
 
 export const ProductReportButton = ({ productId }: { productId: string }) => {
   const [openModal, setOpenModal] = useState(false);
+  const t = useTranslations('productDetails');
   return (
     <>
       <Button
@@ -14,11 +16,11 @@ export const ProductReportButton = ({ productId }: { productId: string }) => {
         variant='tonal'
         onClick={() => setOpenModal(true)}
       >
-        Report listing
+        {t('reportListing')}
       </Button>
       {openModal && (
         <Modal
-          heading='Report listing'
+          heading={t('reportListing')}
           onClose={() => setOpenModal(false)}
         >
           <ReportListingForm

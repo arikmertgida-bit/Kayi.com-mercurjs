@@ -3,6 +3,8 @@ import { retrieveCustomer } from "@/lib/data/customer"
 import { OrdersPagination } from "@/components/sections"
 import { isEmpty } from "lodash"
 import { listOrders } from "@/lib/data/orders"
+import { getTranslations } from "next-intl/server"
+import LocalizedClientLink from "@/components/molecules/LocalizedLink/LocalizedLink"
 
 const LIMIT = 10
 
@@ -12,6 +14,7 @@ export default async function UserPage({
   searchParams: Promise<{ page: string }>
 }) {
   const user = await retrieveCustomer()
+  const t = await getTranslations('orders')
 
   if (!user) return <LoginForm />
 
@@ -53,14 +56,17 @@ export default async function UserPage({
   return (
     <main className="container">
       <div className="mt-6 space-y-8">
-          <h1 className="heading-md uppercase">Orders</h1>
+          <h1 className="heading-md uppercase">{t('title')}</h1>
           {isEmpty(orders) ? (
             <div className="text-center">
-              <h3 className="heading-lg text-primary uppercase">No orders</h3>
-              <p className="text-lg text-secondary mt-2">
-                You haven&apos;t placed any order yet. Once you place an order,
-                it will appear here.
-              </p>
+              <h3 className="heading-lg text-primary uppercase">{t('noOrders')}</h3>
+              <p className="text-lg text-secondary mt-2">{t('noOrdersDesc')}</p>
+              <LocalizedClientLink
+                href="/categories"
+                className="inline-block mt-6 px-6 py-3 bg-action text-action-on-primary label-md uppercase rounded-sm"
+              >
+                {t('exploreShop')}
+              </LocalizedClientLink>
             </div>
           ) : (
             <>

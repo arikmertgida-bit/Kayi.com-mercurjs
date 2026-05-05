@@ -9,6 +9,7 @@ import LocalizedClientLink from "@/components/molecules/LocalizedLink/LocalizedL
 import { getProductPrice } from "@/lib/helpers/get-product-price"
 import { WishlistButton } from "@/components/cells/WishlistButton/WishlistButton"
 import { useAgeVerification } from "@/providers/AgeVerificationProvider"
+import { useTranslations } from "next-intl"
 
 export const ProductCard = ({
   product,
@@ -22,6 +23,7 @@ export const ProductCard = ({
   sliderCard?: boolean
 }) => {
   const { isVerified, verify } = useAgeVerification()
+  const t = useTranslations('listing')
 
   if (!api_product) {
     return null
@@ -125,7 +127,7 @@ export const ProductCard = ({
           title={`See more about ${productName}`}
         >
           <Button className="absolute rounded-sm bg-action text-action-on-primary h-auto lg:h-[48px] lg:group-hover:block hidden w-full uppercase bottom-1 z-10">
-            See More
+            {t('seeMore')}
           </Button>
         </LocalizedClientLink>
       </div>

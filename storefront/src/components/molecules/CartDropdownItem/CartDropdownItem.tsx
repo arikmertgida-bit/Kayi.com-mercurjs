@@ -45,7 +45,10 @@ export const CartDropdownItem = ({
       <div className="py-2">
         <h4 className="heading-xs">{item.product_title}</h4>
         <div className="label-md text-secondary">
-          {item.variant?.options?.map(({ option, id, value }) => (
+          {item.variant?.options?.filter(({ option, value }) =>
+            !(option?.title?.toLowerCase() === 'default option' ||
+              value?.toLowerCase() === 'default option value')
+          ).map(({ option, id, value }) => (
             <p key={id}>
               {option?.title}: <span className="text-primary">{value}</span>
             </p>

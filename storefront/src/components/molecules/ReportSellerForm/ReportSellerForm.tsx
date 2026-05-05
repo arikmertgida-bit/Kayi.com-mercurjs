@@ -7,21 +7,12 @@ import { toast } from '@medusajs/ui';
 import { Button, Textarea } from '@/components/atoms';
 import { SelectField } from '../SelectField/SelectField';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
-const reasonOptions = [
-  { label: '', value: '', hidden: true },
-  {
-    label: 'Trademark, Copyright or DMCA Violation',
-    value: 'Trademark, Copyright or DMCA Violation',
-  },
-];
-
-const formSchema = z.object({
-  reason: z.string().nonempty('Please select reason'),
-  comment: z.string().nonempty('Please add comment'),
-});
-
-type FormData = z.infer<typeof formSchema>;
+type FormData = {
+  reason: string;
+  comment: string;
+};
 
 export const ReportSellerForm = ({
   sellerId,
@@ -30,7 +21,22 @@ export const ReportSellerForm = ({
   sellerId: string
   onClose: () => void;
 }) => {
+  const t = useTranslations('reportForm');
   const [isSuccess, setIsSuccess] = useState(false)
+
+  const reasonOptions = [
+    { label: '', value: '', hidden: true },
+    {
+      label: t('trademarkDmca'),
+      value: 'Trademark, Copyright or DMCA Violation',
+    },
+  ];
+
+  const formSchema = z.object({
+    reason: z.string().nonempty(t('selectReason')),
+    comment: z.string().nonempty(t('addComment')),
+  });
+
   const {
     register,
     handleSubmit,
@@ -54,12 +60,12 @@ export const ReportSellerForm = ({
       })
       if (!res.ok) {
         const err = await res.json().catch(() => ({})) as { error?: string }
-        toast.error(err.error ?? 'Failed to submit report. Please try again.')
+        toast.error(err.error ?? t('failedSubmit'))
         return
       }
       setIsSuccess(true)
     } catch {
-      toast.error('Network error. Please check your connection and try again.')
+      toast.error(t('networkError'))
     }
   };
 
@@ -74,7 +80,7 @@ export const ReportSellerForm = ({
                   errors?.reason && 'text-negative'
                 )}
               >
-                Reason
+                {t('reason')}
               </p>
               <SelectField
                 options={reasonOptions}
@@ -101,7 +107,7 @@ export const ReportSellerForm = ({
                   errors?.comment && 'text-negative'
                 )}
               >
-                Comment
+                {t('comment')}
               </p>
               <Textarea
                 rows={5}
@@ -124,7 +130,7 @@ export const ReportSellerForm = ({
               className='w-full py-3 uppercase'
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Submitting...' : 'Report Seller'}
+              {isSubmitting ? t('submitting') : t('submitSeller')}
             </Button>
           </div>
         </form>
@@ -132,14 +138,10 @@ export const ReportSellerForm = ({
         <div className='text-center'>
           <div className='px-4 pb-5'>
             <h4 className='heading-lg uppercase'>
-              Thank you!
+              {t('thankYou')}
             </h4>
             <p className='max-w-[466px] mx-auto mt-4 text-lg text-secondary'>
-              We&apos;ll check the listing to see if it
-              violates our guidelines and take the necessary
-              action to ensure a safe shopping experience
-              for everyone. Thank you for helping us
-              maintain a trusted community.
+              {t('thankYouMessage')}
             </p>
           </div>
 
@@ -148,7 +150,7 @@ export const ReportSellerForm = ({
               className='w-full py-3 uppercase'
               onClick={onClose}
             >
-              Got it
+              {t('gotIt')}
             </Button>
           </div>
         </div>

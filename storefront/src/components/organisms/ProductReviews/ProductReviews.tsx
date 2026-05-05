@@ -6,6 +6,7 @@ import { HttpTypes } from "@medusajs/types"
 import { ProductReviewCard } from "./ProductReviewCard"
 import { ProductReviewFormSection } from "./ProductReviewFormSection"
 import { ReviewsShareButton } from "./ReviewsShareButton"
+import { getTranslations } from "next-intl/server"
 
 interface Props {
   product: HttpTypes.StoreProduct & { seller?: any }
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export const ProductReviews = async ({ product, locale }: Props) => {
+  const t = await getTranslations('productDetails')
   const [{ reviews, count, average_rating }, customer] = await Promise.all([
     getProductReviews(product.id!),
     retrieveCustomer(),
@@ -53,7 +55,7 @@ export const ProductReviews = async ({ product, locale }: Props) => {
       className="my-10 overflow-hidden rounded-[28px] border border-white/70 bg-[radial-gradient(circle_at_top_left,_rgba(245,133,41,0.18),_transparent_24%),radial-gradient(circle_at_top_right,_rgba(221,42,123,0.16),_transparent_22%),linear-gradient(135deg,_#fff7ed_0%,_#fff7fb_52%,_#fff1f2_100%)] p-5 md:p-8"
     >
       <div className="flex items-center justify-between mb-6">
-        <h2 className="heading-md uppercase text-[#8a1d54]">Reviews ({count})</h2>
+        <h2 className="heading-md uppercase text-[#8a1d54]">{t('reviewsTitle', { count })}</h2>
         {count > 0 && (
           <ReviewsShareButton
             productTitle={product.title ?? "Ürün"}
@@ -69,7 +71,7 @@ export const ProductReviews = async ({ product, locale }: Props) => {
           <div className="flex flex-col items-center justify-center gap-2 rounded-[24px] border border-white/70 bg-white/80 p-6 shadow-[0_16px_40px_rgba(221,42,123,0.08)] backdrop-blur">
             <p className="text-4xl font-bold text-[#c13584]">{average_rating.toFixed(1)}</p>
             <StarRating rate={average_rating} starSize={16} />
-            <p className="label-sm text-secondary">{count} reviews</p>
+            <p className="label-sm text-secondary">{t('reviewCount', { count })}</p>
           </div>
 
           {/* Star distribution */}
@@ -96,7 +98,7 @@ export const ProductReviews = async ({ product, locale }: Props) => {
         {reviews.length === 0 && (
           <div className="rounded-[24px] border border-dashed border-[#efbdd1] bg-white/70 p-8 text-center">
             <p className="label-md text-secondary">
-              No reviews yet. Be the first to review this product!
+              {t('noReviewsYet')}
             </p>
           </div>
         )}

@@ -4,9 +4,9 @@ import { BlogCard } from '@/components/organisms';
 export const blogPosts: BlogPost[] = [
   {
     id: 1,
-    title: '14 Günde Para İade',
+    title: '14 Gün Para İade Garantisi',
     excerpt:
-      'İçinize sinmeyen bir durum olursa bizi hemen bilgilendirin. 14 gün boyunca iade hakkınız güvencemiz altındadır ve paranız en kısa sürede hesabınıza aktarılır.',
+      'Memnun kalmazsanız hemen bize bildirin. 14 günlük iade garantimiz kapsamında ödediğiniz tutar en kısa sürede hesabınıza iade edilir.',
     image: '/images/blog/para-iade.jpeg',
     category: 'İADE',
     href: '#',
@@ -15,7 +15,7 @@ export const blogPosts: BlogPost[] = [
     id: 2,
     title: 'Ücretsiz Kargo ve İade',
     excerpt:
-      'Alışverişiniz belirli bir tutarı geçtiğinde kargo ve iade tamamen bizden! Daha uygun ve güvenli bir alışveriş için ekstra ücret ödemenize gerek yok.',
+      'Siparişiniz belirli bir tutarı aşadığında hem kargo hem de iade ücretsiz! Daha kolaylık ve güvenli bir alışveriş deneyimi için ekstra ödeme yok.',
     image: '/images/blog/ucretsiz-kargo.jpeg',
     category: 'KARGO',
     href: '#',
@@ -24,7 +24,7 @@ export const blogPosts: BlogPost[] = [
     id: 3,
     title: 'Hızlı E-Posta Desteği',
     excerpt:
-      'Her türlü sorunuz için e-posta ile bize ulaşabilirsiniz. Destek ekibimiz taleplerinizi hızlıca değerlendirip en kısa sürede dönüş sağlar.',
+      'Her türlü sorunuz için bize e-posta gönderin. Destek ekibimiz talebinizi hızla inceler ve en kısa sürede size geri döner.',
     image: '/images/blog/eposta-destek.jpeg',
     category: 'DESTEK',
     href: '#',

@@ -5,6 +5,7 @@ import { Heading, Label } from "@medusajs/ui"
 import { useState } from "react"
 import { applyPromotions } from "@/lib/data/cart"
 import { toast } from "@/lib/helpers/toast"
+import { useTranslations } from "next-intl"
 
 export default function CartPromotionCode({
   cart,
@@ -15,15 +16,16 @@ export default function CartPromotionCode({
 }) {
   const [promotionCode, setPromotionCode] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const t = useTranslations('promotionCode')
 
   const handleApplyPromotionCode = async () => {
     setIsLoading(true)
     try {
       const res = await applyPromotions([promotionCode])
       if (res) {
-        toast.success({ title: "Promotion code applied" })
+        toast.success({ title: t('applied') })
       } else {
-        toast.error({ title: "Promotion code not found" })
+        toast.error({ title: t('notFound') })
       }
       setPromotionCode("")
     } catch (err) {
@@ -39,7 +41,7 @@ export default function CartPromotionCode({
         level="h2"
         className="flex flex-row text-3xl-regular gap-x-2 items-baseline items-center"
       >
-        Promotion codes
+        {t('heading')}
       </Heading>
       <div>
         {cart?.promotions?.map((promo) => (
@@ -52,7 +54,7 @@ export default function CartPromotionCode({
         ))}
       </div>
       <Input
-        placeholder="Enter your promotion code"
+        placeholder={t('placeholder')}
         value={promotionCode}
         onChange={(e) => setPromotionCode(e.target.value)}
       />
@@ -64,7 +66,7 @@ export default function CartPromotionCode({
           loading={isLoading}
           variant="tonal"
         >
-          Use promotion code
+          {t('apply')}
         </Button>
       </div>
     </div>

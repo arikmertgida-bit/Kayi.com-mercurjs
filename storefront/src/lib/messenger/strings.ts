@@ -9,25 +9,25 @@ export const MSG = {
   MESSAGES_TITLE: "Mesajlar",
 
   // Search
-  SEARCH_PLACEHOLDER: "Mesajlarda ara",
+  SEARCH_PLACEHOLDER: "Mesaj ara",
 
   // Conversation list
   NO_SEARCH_RESULTS: "Sonuç bulunamadı",
-  NO_MESSAGES_EMPTY: "Henüz mesajınız yok",
-  UNKNOWN_USER: "Bilinmiyor",
+  NO_MESSAGES_EMPTY: "Henüz mesaj yok",
+  UNKNOWN_USER: "Bilinmeyen",
 
   // Last message preview
   IMAGE_MESSAGE: "📷 Fotoğraf",
   NO_MESSAGE_YET: "Henüz mesaj yok",
 
   // Chat area — empty state
-  INBOX_TITLE: "Mesajlarınız",
-  INBOX_DESCRIPTION: "Satıcılarla özel mesajlaşmak için soldaki bir konuşmayı seçin.",
+  INBOX_TITLE: "Mesajlarım",
+  INBOX_DESCRIPTION: "Satıcılarla özel sohbet etmek için soldaki bir konuşmayı seçin.",
 
   // Time labels used by formatRelativeTime
   TIME_JUST_NOW: "Az önce",
-  TIME_MINUTES: "dk",
-  TIME_HOURS: "sa",
+  TIME_MINUTES: "d",
+  TIME_HOURS: "s",
   TIME_DAYS: "g",
 
   // Actions / accessibility

@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Button, Input, Textarea, toast } from "@medusajs/ui"
+import { Button, Input, Select, Textarea, toast } from "@medusajs/ui"
 import { useFieldArray, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import * as zod from "zod"
@@ -17,6 +17,8 @@ import {
 import { useCallback } from "react"
 import { uploadFilesQuery } from "../../../../../lib/client"
 import { HttpTypes } from "@medusajs/types"
+import { languages } from "../../../../../i18n/languages"
+import { useDocumentDirection } from "../../../../../hooks/use-document-direction"
 
 type EditProfileProps = {
   user: TeamMemberProps
@@ -27,6 +29,7 @@ const EditProfileSchema = zod.object({
   media: zod.array(MediaSchema).optional(),
   phone: zod.string().optional(),
   bio: zod.string().optional(),
+  language: zod.string(),
 })
 
 const SUPPORTED_FORMATS = [
@@ -43,8 +46,9 @@ const SUPPORTED_FORMATS_FILE_EXTENSIONS = [
 const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
 
 export const EditProfileForm = ({ user }: EditProfileProps) => {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { handleSuccess } = useRouteModal()
+  const direction = useDocumentDirection()
 
   const form = useForm<zod.infer<typeof EditProfileSchema>>({
     defaultValues: {
@@ -52,9 +56,18 @@ export const EditProfileForm = ({ user }: EditProfileProps) => {
       phone: user.phone ?? "",
       bio: user.bio ?? "",
       media: [],
+      language: i18n.language,
     },
     resolver: zodResolver(EditProfileSchema),
   })
+
+  const changeLanguage = async (code: string) => {
+    await i18n.changeLanguage(code)
+  }
+
+  const sortedLanguages = languages.sort((a, b) =>
+    a.display_name.localeCompare(b.display_name)
+  )
 
   const { fields } = useFieldArray({
     name: "media",
@@ -103,6 +116,8 @@ export const EditProfileForm = ({ user }: EditProfileProps) => {
       }
     )
 
+    await changeLanguage(values.language)
+
     toast.success(t("profile.toast.edit"))
     handleSuccess()
   })
@@ -128,7 +143,9 @@ export const EditProfileForm = ({ user }: EditProfileProps) => {
       if (oversizedFile) {
         form.setError("media", {
           type: "too_large",
-          message: `"${oversizedFile.file.name}" dosya boyutu 2MB’ı geçemez.`,
+          message: t("products.media.fileSizeExceeded", {
+            name: oversizedFile.file.name,
+          }),
         })
         return true
       }
@@ -163,14 +180,14 @@ export const EditProfileForm = ({ user }: EditProfileProps) => {
                   <Form.Item>
                     <div className="flex flex-col gap-y-2">
                       <div className="flex flex-col gap-y-1">
-                        <Form.Label>Profile picture</Form.Label>
+                        <Form.Label>{t("profile.fields.profilePicture")}</Form.Label>
                       </div>
                       <Form.Control>
                         <FileUpload
                           uploadedImage={fields[0]?.url || user.photo || ""}
                           multiple={false}
                           label={t("products.media.uploadImagesLabel")}
-                          hint="JPG, JPEG veya PNG • Maks. 2MB • 1:1 oran önerilir"
+                          hint={t("products.media.profileHint")}
                           hasError={!!form.formState.errors.media}
                           formats={SUPPORTED_FORMATS}
                           onUploaded={onUploaded}
@@ -187,7 +204,7 @@ export const EditProfileForm = ({ user }: EditProfileProps) => {
               name="name"
               render={({ field }) => (
                 <Form.Item>
-                  <Form.Label>Name</Form.Label>
+                  <Form.Label>{t("fields.name")}</Form.Label>
                   <Form.Control>
                     <Input {...field} />
                   </Form.Control>
@@ -200,7 +217,7 @@ export const EditProfileForm = ({ user }: EditProfileProps) => {
               name="phone"
               render={({ field }) => (
                 <Form.Item>
-                  <Form.Label>Phone</Form.Label>
+                  <Form.Label>{t("fields.phone")}</Form.Label>
                   <Form.Control>
                     <Input {...field} />
                   </Form.Control>
@@ -213,11 +230,55 @@ export const EditProfileForm = ({ user }: EditProfileProps) => {
               name="bio"
               render={({ field }) => (
                 <Form.Item>
-                  <Form.Label>Bio</Form.Label>
+                  <Form.Label>{t("profile.fields.bio")}</Form.Label>
                   <Form.Control>
                     <Textarea {...field} />
                   </Form.Control>
                   <Form.ErrorMessage />
+                </Form.Item>
+              )}
+            />
+            <Form.Field
+              control={form.control}
+              name="language"
+              render={({ field: { ref, ...field } }) => (
+                <Form.Item className="gap-y-4">
+                  <div>
+                    <Form.Label>{t("profile.fields.languageLabel")}</Form.Label>
+                    <Form.Hint>{t("profile.edit.languageHint")}</Form.Hint>
+                  </div>
+                  <div>
+                    <Form.Control>
+                      <Select
+                        dir={direction}
+                        {...field}
+                        onValueChange={field.onChange}
+                      >
+                        <Select.Trigger ref={ref} className="py-1 text-[13px]">
+                          <Select.Value
+                            placeholder={t("profile.edit.languagePlaceholder")}
+                          >
+                            {
+                              sortedLanguages.find(
+                                (language) => language.code === field.value
+                              )?.display_name
+                            }
+                          </Select.Value>
+                        </Select.Trigger>
+                        <Select.Content>
+                          {languages.map((language) => (
+                            <Select.Item
+                              key={language.code}
+                              value={language.code}
+                            >
+                              {language.display_name}
+                            </Select.Item>
+                          ))}
+                        </Select.Content>
+                      </Select>
+                    </Form.Control>
+                    <Form.ErrorMessage />
+                  </div>
                 </Form.Item>
               )}
             />

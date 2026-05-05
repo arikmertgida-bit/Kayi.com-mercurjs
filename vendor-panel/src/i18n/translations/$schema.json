@@ -11199,6 +11199,15 @@
         "seconds_other"
       ],
       "additionalProperties": false
+    },
+    "messenger": {
+      "type": "object"
+    },
+    "dashboard": {
+      "type": "object"
+    },
+    "sellerAgreement": {
+      "type": "object"
     }
   },
   "required": [

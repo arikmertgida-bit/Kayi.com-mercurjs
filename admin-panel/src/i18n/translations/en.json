@@ -3185,7 +3185,12 @@
     }
   },
   "attributes": {
-    "domain": "Product Attributes"
+    "domain": "Product Attributes",
+    "create": {
+      "successToast": "Attribute was successfully created.",
+      "details": "Details",
+      "type": "Type"
+    }
   },
   "requests": {
     "domain": "Requests",
@@ -3225,10 +3230,25 @@
     "domain": "Product Catalog Settings"
   },
   "meilisearch": {
-    "domain": "Meilisearch"
+    "domain": "Meilisearch",
+    "checkStatus": "Check Meilisearch status",
+    "triggerSync": "Trigger Synchronization",
+    "syncSuccess": "Synchronization triggered!",
+    "host": "Host",
+    "productIndex": "Product Index",
+    "exists": "Exists",
+    "doesNotExist": "Doesn't exist",
+    "error": "Error!"
   },
   "commission": {
-    "domain": "Commission Settings"
+    "domain": "Commission Settings",
+    "deleted": "Deleted!",
+    "updated": "Updated!",
+    "created": "Created!",
+    "error": "Error!",
+    "disable": "Disable",
+    "enable": "Enable",
+    "delete": "Delete"
   },
   "commissionLines": {
     "domain": "Commission Lines"

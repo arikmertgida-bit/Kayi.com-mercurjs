@@ -3,6 +3,8 @@ import { StarIcon } from "@/icons"
 import { Review } from "@/lib/data/reviews"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
+import { formatDistanceToNow } from "date-fns"
+import { tr } from "date-fns/locale"
 
 // Pre-built star arrays for ratings 0-5, avoiding repeated array allocation per render
 const STAR_ARRAYS: readonly number[][] = [[], [0], [0, 1], [0, 1, 2], [0, 1, 2, 3], [0, 1, 2, 3, 4]]
@@ -40,18 +42,7 @@ export const ReviewCard = ({ review }: { review: Review }) => {
             </div>
             <div className="h-2.5 w-px bg-action" />
             <p className="text-md text-primary">
-              {new Date(review.updated_at).getTime() >
-              Date.now() - 7 * 24 * 60 * 60 * 1000
-                ? `${Math.ceil(
-                    (Date.now() - new Date(review.updated_at).getTime()) /
-                      (24 * 60 * 60 * 1000)
-                  )} day${Date.now() - 2 * 24 * 60 * 60 * 1000 ? "" : "s"} ago`
-                : `${Math.floor(
-                    (Date.now() - new Date(review.updated_at).getTime()) /
-                      (7 * 24 * 60 * 60 * 1000)
-                  )} week${
-                    Date.now() - 2 * 24 * 60 * 60 * 1000 ? "" : "s"
-                  } ago`}
+              {formatDistanceToNow(new Date(review.updated_at), { addSuffix: true, locale: tr })}
             </p>
           </div>
           <div className="col-span-5 flex flex-col lg:flex-row justify-between lg:items-center gap-4">

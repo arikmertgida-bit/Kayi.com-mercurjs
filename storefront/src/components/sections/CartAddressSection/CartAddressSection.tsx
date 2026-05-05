@@ -12,6 +12,7 @@ import Spinner from "@/icons/spinner"
 import ShippingAddress from "@/components/organisms/ShippingAddress/ShippingAddress"
 import { CheckCircleSolid } from "@medusajs/icons"
 import LocalizedClientLink from "@/components/molecules/LocalizedLink/LocalizedLink"
+import { useTranslations } from "next-intl"
 
 export const CartAddressSection = ({
   cart,
@@ -52,6 +53,7 @@ export const CartAddressSection = ({
   const handleEdit = () => {
     router.replace(pathname + "?step=address")
   }
+  const t = useTranslations('checkout')
 
   return (
     <div className="border p-4 rounded-sm bg-ui-bg-interactive">
@@ -60,7 +62,7 @@ export const CartAddressSection = ({
           level="h2"
           className="flex flex-row text-3xl-regular gap-x-2 items-baseline items-center"
         >
-          {!isOpen && <CheckCircleSolid />} Shipping Address
+          {!isOpen && <CheckCircleSolid />} {t('shippingAddress')}
         </Heading>
         {!isOpen && isAddress && (
           <Text>
@@ -90,7 +92,7 @@ export const CartAddressSection = ({
               data-testid="submit-address-button"
               variant="tonal"
             >
-              Save
+              {t('save')}
             </Button>
             <ErrorMessage
               error={message !== "success" && message}

@@ -9,6 +9,7 @@ import React, { useEffect, useState } from "react"
 import { Button } from "@/components/atoms"
 import { orderErrorFormatter } from "@/lib/helpers/order-error-formatter"
 import { toast } from "@/lib/helpers/toast"
+import { useTranslations } from "next-intl"
 
 type PaymentButtonProps = {
   cart: HttpTypes.StoreCart
@@ -62,6 +63,7 @@ const StripePaymentButton = ({
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [disabled, setDisabled] = useState(true)
+  const t = useTranslations('checkout')
 
   const onPaymentCompleted = async () => {
     try {
@@ -158,7 +160,7 @@ const StripePaymentButton = ({
         loading={submitting}
         className="w-full"
       >
-        Place order
+        {t('placeOrder')}
       </Button>
       <ErrorMessage
         error={errorMessage}
@@ -168,9 +170,10 @@ const StripePaymentButton = ({
   )
 }
 
-const ManualTestPaymentButton = ({ notReady }: { notReady: boolean }) => {
+const ManualTestPaymentButton = ({ notReady, "data-testid": dataTestId }: { notReady: boolean; "data-testid"?: string }) => {
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const t = useTranslations('checkout')
 
   const onPaymentCompleted = async () => {
     try {
@@ -201,7 +204,7 @@ const ManualTestPaymentButton = ({ notReady }: { notReady: boolean }) => {
         className="w-full"
         loading={submitting}
       >
-        Place order
+        {t('placeOrder')}
       </Button>
       <ErrorMessage
         error={errorMessage}

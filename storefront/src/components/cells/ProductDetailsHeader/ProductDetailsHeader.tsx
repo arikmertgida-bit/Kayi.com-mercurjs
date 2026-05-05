@@ -13,6 +13,7 @@ import { Wishlist } from "@/types/wishlist"
 import { toast } from "@/lib/helpers/toast"
 import { useCartContext } from "@/components/providers"
 import { AdditionalAttributeProps } from "@/types/product"
+import { useTranslations } from "next-intl"
 
 export const ProductDetailsHeader = ({
   product,
@@ -31,6 +32,7 @@ export const ProductDetailsHeader = ({
 }) => {
   const { onAddToCart, cart } = useCartContext()
   const [isAdding, setIsAdding] = useState(false)
+  const t = useTranslations('productDetails')
 
   const {
     selectedVariant,
@@ -79,8 +81,8 @@ export const ProductDetailsHeader = ({
       })
     } catch (error) {
       toast.error({
-        title: "Error adding to cart",
-        description: "Some variant does not have the required inventory",
+        title: t('addToCartError'),
+        description: t('addToCartErrorDesc'),
       })
     } finally {
       setIsAdding(false)
@@ -108,11 +110,11 @@ export const ProductDetailsHeader = ({
               </>
             ) : hasAnyPrice && hasVariants && !allOptionsSelected ? (
               <span className="label-md text-secondary pt-2 pb-4">
-                Select options to see price
+                {t('selectOptionsPrice')}
               </span>
             ) : (
               <span className="label-md text-secondary pt-2 pb-4">
-                Not available in your region
+                {t('notAvailableRegion')}
               </span>
             )}
           </div>
@@ -141,12 +143,12 @@ export const ProductDetailsHeader = ({
         size="large"
       >
         {!hasAnyPrice
-          ? "NOT AVAILABLE IN YOUR REGION"
+          ? t('notAvailableRegionUpper')
           : hasVariants && !allOptionsSelected
-          ? "PLEASE SELECT OPTIONS"
+          ? t('pleaseSelectOptions')
           : isOutOfStock || !variantHasPrice
-          ? "STOKTA YOK"
-          : "ADD TO CART"}
+          ? t('outOfStock')
+          : t('addToCart')}
       </Button>
 
       {/* Seller message */}

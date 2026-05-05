@@ -28,7 +28,7 @@ export const convertToLocale = ({
 
   if (currency_code.toUpperCase() === "TRY") {
     return formatted
-      .replace(/^([+-]?)\s*(TRY|TL)\s*/i, "$1₺")
+      .replace(/^([+-]?)\s*(TRY|TL)\s*/i, "$1₺ ")
       .replace(/\s*(TRY|TL)\s*$/i, "₺")
   }
 

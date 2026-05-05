@@ -7,6 +7,7 @@ import { useProductVariants } from "@/hooks/useProductVariants"
 import { useCartContext } from "@/components/providers"
 import { addToCart } from "@/lib/data/cart"
 import { toast } from "@/lib/helpers/toast"
+import { useTranslations } from "next-intl"
 
 export const StickyAddToCart = ({
   locale,
@@ -15,6 +16,7 @@ export const StickyAddToCart = ({
 }) => {
   const { onAddToCart, cart } = useCartContext()
   const [isAdding, setIsAdding] = useState(false)
+  const t = useTranslations('productDetails')
 
   const {
     selectedVariant,
@@ -63,8 +65,8 @@ export const StickyAddToCart = ({
       })
     } catch {
       toast.error({
-        title: "Error adding to cart",
-        description: "Some variant does not have the required inventory",
+        title: t('addToCartError'),
+        description: t('addToCartErrorDesc'),
       })
     } finally {
       setIsAdding(false)
@@ -78,12 +80,12 @@ export const StickyAddToCart = ({
     !variantHasPrice
 
   const buttonLabel = !hasAnyPrice
-    ? "NOT AVAILABLE"
+    ? t('notAvailable')
     : hasVariants && !allOptionsSelected
-    ? "SELECT OPTIONS"
+    ? t('selectOptions')
     : isOutOfStock || !variantHasPrice
-    ? "STOKTA YOK"
-    : "ADD TO CART"
+    ? t('outOfStock')
+    : t('addToCart')
 
   // Only render on mobile (md:hidden) — desktop uses the inline button
   return (

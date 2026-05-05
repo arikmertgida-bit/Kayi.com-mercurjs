@@ -14,6 +14,7 @@ import { loginFormSchema, LoginFormData } from "./schema"
 import { useState } from "react"
 import { login } from "@/lib/data/customer"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 
 // Only allow same-origin relative paths — prevents open redirect attacks
 const getSafeRedirect = (returnTo?: string | null): string => {
@@ -40,6 +41,7 @@ export const LoginForm = ({ returnTo }: { returnTo?: string }) => {
 
 const Form = ({ returnTo }: { returnTo?: string }) => {
   const [error, setError] = useState("")
+  const t = useTranslations('auth')
   const {
     handleSubmit,
     register,
@@ -64,20 +66,20 @@ const Form = ({ returnTo }: { returnTo?: string }) => {
   return (
     <main className="container">
       <h1 className="heading-xl text-center uppercase my-6">
-        Log in to your account
+        {t('loginTitle')}
       </h1>
       <form onSubmit={handleSubmit(submit)}>
         <div className="w-96 max-w-full mx-auto space-y-4">
           <LabeledInput
-            label="E-mail"
-            placeholder="Your e-mail address"
+            label={t('emailLabel')}
+            placeholder={t('emailPlaceholder')}
             error={errors.email as FieldError}
             autoComplete="email"
             {...register("email")}
           />
           <LabeledInput
-            label="Password"
-            placeholder="Your password"
+            label={t('passwordLabel')}
+            placeholder={t('passwordPlaceholder')}
             type="password"
             error={errors.password as FieldError}
             autoComplete="current-password"
@@ -85,12 +87,12 @@ const Form = ({ returnTo }: { returnTo?: string }) => {
           />
           {error && <p className="label-md text-negative">{error}</p>}
           <Button className="w-full" disabled={isSubmitting}>
-            Log in
+            {t('loginButton')}
           </Button>
           <p className="text-center label-md">
-            Don&apos;t have an account yet?{" "}
+            {t('noAccount')}{" "}
             <LocalizedClientLink href="/user/register" className="underline">
-              Sign up!
+              {t('signUp')}
             </LocalizedClientLink>
           </p>
         </div>

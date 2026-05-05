@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 import { HttpTypes } from "@medusajs/types"
 import { isEmpty } from "lodash"
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 
 export const Addresses = ({
   user,
@@ -18,6 +19,7 @@ export const Addresses = ({
 }) => {
   const [showForm, setShowForm] = useState(false)
   const [deleteAddress, setDeleteAddress] = useState<string | null>(null)
+  const t = useTranslations('addresses')
 
   const [defaultValues, setDefaultValues] = useState<AddressFormData | null>(
     null
@@ -64,18 +66,17 @@ export const Addresses = ({
           isEmpty(user.addresses) ? "space-y-8" : "space-y-4"
         )}
       >
-        <h1 className="heading-md uppercase">Addresses</h1>
+        <h1 className="heading-md uppercase">{t('title')}</h1>
         {isEmpty(user.addresses) ? (
           <div className="text-center">
             <h3 className="heading-lg text-primary uppercase">
-              No saved shipping addresses
+              {t('noSavedTitle')}
             </h3>
             <p className="text-lg text-secondary mt-2">
-              You currently have no saved shipping addresses. <br />
-              Add an address to make your checkout process quicker and easier.
+              {t('noSavedDesc')}
             </p>
             <Button onClick={handleAdd} className="mt-4">
-              Add address
+              {t('addAddress')}
             </Button>
           </div>
         ) : (
@@ -115,19 +116,19 @@ export const Addresses = ({
                     className="text-negative"
                     onClick={() => setDeleteAddress(address.id)}
                   >
-                    Delete
+                    {t('delete')}
                   </Button>
                   <Button
                     variant="tonal"
                     onClick={() => handleEdit(address.id)}
                   >
-                    Edit
+                    {t('edit')}
                   </Button>
                 </div>
               </Card>
             ))}
             {user.addresses.length < 6 && (
-              <Button onClick={handleAdd}>Add address</Button>
+              <Button onClick={handleAdd}>{t('addAddress')}</Button>
             )}
           </>
         )}
@@ -136,8 +137,8 @@ export const Addresses = ({
         <Modal
           heading={
             defaultValues?.addressId
-              ? `Edit adddress: ${defaultValues.addressName}`
-              : "Add address"
+              ? t('editAddressTitle', { name: defaultValues.addressName })
+              : t('addAddress')
           }
           onClose={() => setShowForm(false)}
         >
@@ -150,20 +151,20 @@ export const Addresses = ({
       )}
       {deleteAddress && (
         <Modal
-          heading="Confirm your action"
+          heading={t('confirmDelete')}
           onClose={() => setDeleteAddress(null)}
         >
           <div className="px-4 flex flex-col gap-4">
-            <p>Are you sure you want to delete this address?</p>
+            <p>{t('confirmDeleteDesc')}</p>
             <div className="flex justify-end gap-4">
               <Button variant="tonal" onClick={() => setDeleteAddress(null)}>
-                Cancel
+                {t('cancel')}
               </Button>
               <Button
                 variant="destructive"
                 onClick={() => handleDelete(deleteAddress)}
               >
-                Delete
+                {t('delete')}
               </Button>
             </div>
           </div>

@@ -1,3 +1,5 @@
+"use client"
+
 import {
   forwardRef,
   useImperativeHandle,
@@ -14,14 +16,16 @@ import clsx from "clsx"
 import { Listbox, Transition } from "@headlessui/react"
 import { clx } from "@medusajs/ui"
 import { ChevronUpDown } from "@medusajs/icons"
+import { useTranslations } from "next-intl"
 
 const CountrySelect = forwardRef<
   HTMLSelectElement,
   NativeSelectProps & {
     region?: HttpTypes.StoreRegion
   }
->(({ placeholder = "Country", region, defaultValue, ...props }, ref) => {
+>(({ placeholder, region, defaultValue, ...props }, ref) => {
   const innerRef = useRef<HTMLSelectElement>(null)
+  const t = useTranslations('addresses')
 
   useImperativeHandle<HTMLSelectElement | null, HTMLSelectElement | null>(
     ref,
@@ -50,7 +54,7 @@ const CountrySelect = forwardRef<
 
   return (
     <label className="label-md">
-      <p className="mb-2">Country</p>
+      <p className="mb-2">{t('country')}</p>
       <Listbox onChange={handleSelect} value={props.value as string | undefined}>
         <div className="relative">
           <Listbox.Button
@@ -64,7 +68,7 @@ const CountrySelect = forwardRef<
                 <span className="block truncate">
                   {countryOptions?.find(
                     (country) => country.value === props.value
-                  )?.label || "Choose a country"}
+                  )?.label || t('chooseCountry')}
                 </span>
                 <ChevronUpDown
                   className={clx("transition-rotate duration-200", {
@@ -101,7 +105,7 @@ const CountrySelect = forwardRef<
       <div className="hidden">
         <NativeSelect
           ref={innerRef}
-          placeholder={placeholder}
+          placeholder={placeholder || t('chooseCountry')}
           defaultValue={defaultValue}
           className={clsx(
             "hidden w-full h-12 items-center bg-component-secondary"

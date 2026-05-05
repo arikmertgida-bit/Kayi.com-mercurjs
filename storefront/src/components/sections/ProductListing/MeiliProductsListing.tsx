@@ -16,6 +16,7 @@ import { listProducts } from "@/lib/data/products"
 import { sortProducts } from "@/lib/helpers/sort-products"
 import { SortOptions } from "@/types/product"
 import { FiltersProvider, useFiltersContext } from "@/providers/FiltersProvider"
+import { useTranslations } from "next-intl"
 
 // ─── Build Meilisearch facet filter string from context state ─────────────────
 function buildFacetFiltersFromMap(filterMap: Record<string, string[]>): string {
@@ -176,6 +177,7 @@ const ProductsListing = ({
   const [apiProducts, setApiProducts] = useState<HttpTypes.StoreProduct[] | null>(null)
   const { items, results } = useHits()
   const { status } = useInstantSearch()
+  const t = useTranslations('listing')
 
   // Use a stable string of IDs as the effect dependency to prevent re-firing when
   // react-instantsearch returns a new array reference with the same content.
@@ -253,7 +255,7 @@ const ProductsListing = ({
   return (
     <div className="min-h-[70vh]">
       <div className="flex justify-between w-full items-center">
-        <div className="my-4 label-md">{isLoading ? "" : `${count} listings`}</div>
+        <div className="my-4 label-md">{isLoading ? "" : t('listingsCount', { total: count })}</div>
       </div>
       <div className="md:flex gap-4">
         <div className="w-[280px] flex-shrink-0 hidden md:block" style={{ backgroundColor: 'rgb(240, 225, 243)', borderRadius: '8px', padding: '8px' }}>
@@ -278,9 +280,9 @@ const ProductsListing = ({
             </ul>
           ) : !items.length ? (
             <div className="text-center w-full my-10">
-              <h2 className="uppercase text-primary heading-lg">no results</h2>
+              <h2 className="uppercase text-primary heading-lg">{t('noResults')}</h2>
               <p className="mt-4 text-lg">
-                Sorry, we can&apos;t find any results for your criteria
+                {t('noResultsDesc')}
               </p>
             </div>
           ) : (

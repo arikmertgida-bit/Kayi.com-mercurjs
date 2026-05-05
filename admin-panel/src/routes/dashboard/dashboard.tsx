@@ -64,13 +64,14 @@ const CustomTooltip = ({
   label?: string
   payload?: { dataKey: string; stroke: string; value: number }[]
 }) => {
+  const { t } = useTranslation()
   if (!active || !payload?.length) return null
   return (
     <div className="bg-ui-bg-base border border-ui-border-base rounded-lg p-3 shadow-md">
       <p className="text-ui-fg-subtle text-xs mb-1">{label}</p>
       {payload.map((p) => (
         <p key={p.dataKey} className="text-sm font-medium" style={{ color: p.stroke }}>
-          {p.dataKey === "orders" ? "Siparişler" : "Müşteriler"}: {p.value}
+          {p.dataKey === "orders" ? t("orders.domain") : t("customers.domain")}: {p.value}
         </p>
       ))}
     </div>

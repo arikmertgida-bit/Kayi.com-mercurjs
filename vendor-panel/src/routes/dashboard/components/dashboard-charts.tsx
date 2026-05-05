@@ -21,6 +21,7 @@ import { Link, useSearchParams } from "react-router-dom"
 import { useFollowers, useStatistics } from "../../../hooks/api"
 import { ChartSkeleton } from "./chart-skeleton"
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 import { addDays, differenceInDays, format, subDays } from "date-fns"
 import { Calendar } from "../../../components/common/calendar/calendar"
 import { useMessengerUnreads } from "../../../providers/messenger-provider/MessengerProvider"
@@ -95,6 +96,7 @@ export const DashboardCharts = ({
 
   const [filters, setFilters] = useState(["customers", "orders"])
 
+  const { t } = useTranslation()
   const unreadMessages = useMessengerUnreads()
   const { count: followersCount } = useFollowers({ limit: 1 })
 
@@ -145,9 +147,9 @@ export const DashboardCharts = ({
       <Container className="divide-y p-0">
         <div className="flex items-center justify-between px-6 py-4">
           <div>
-            <Heading>Actions</Heading>
+            <Heading>{t("dashboard.actions")}</Heading>
             <Text className="text-ui-fg-subtle" size="small">
-              Check out new events and manage your store
+              {t("dashboard.storeSubtitle")}
             </Text>
           </div>
         </div>
@@ -159,7 +161,7 @@ export const DashboardCharts = ({
             >
               <div className="flex gap-4 items-center">
                 <Badge>{notFulfilledOrders}</Badge>
-                Orders to be fulfilled
+                {t("dashboard.ordersToFulfill")}
               </div>
               <TriangleRightMini color="grey" />
             </Button>
@@ -171,7 +173,7 @@ export const DashboardCharts = ({
             >
               <div className="flex gap-4 items-center">
                 <Badge>{fulfilledOrders}</Badge>
-                Orders to be shipped
+                {t("dashboard.ordersToShip")}
               </div>
               <TriangleRightMini color="grey" />
             </Button>
@@ -183,7 +185,7 @@ export const DashboardCharts = ({
             >
               <div className="flex gap-4 items-center">
                 <Badge>{reviewsToReply}</Badge>
-                Reviews to reply
+                {t("dashboard.reviewsToReply")}
               </div>
               <TriangleRightMini color="grey" />
             </Button>
@@ -194,7 +196,7 @@ export const DashboardCharts = ({
               className="w-full justify-between py-4 h-full h-full"
             >
               <div className="flex gap-4 items-center">
-                <Badge>{unreadMessages?.length || 0}</Badge>Unread messages
+                <Badge>{unreadMessages?.length || 0}</Badge>{t("dashboard.unreadMessages")}
               </div>
               <TriangleRightMini color="grey" />
             </Button>
@@ -205,7 +207,7 @@ export const DashboardCharts = ({
               className="w-full justify-between py-4 h-full"
             >
               <div className="flex gap-4 items-center">
-                <Badge>{followersCount || 0}</Badge>Takipçiler
+                <Badge>{followersCount || 0}</Badge>{t("dashboard.followers")}
               </div>
               <TriangleRightMini color="grey" />
             </Button>
@@ -215,9 +217,9 @@ export const DashboardCharts = ({
       <Container className="divide-y p-0 mt-2">
         <div className="flex items-center justify-between px-6 py-4">
           <div>
-            <Heading>Analytics</Heading>
+            <Heading>{t("dashboard.analytics")}</Heading>
             <Text className="text-ui-fg-subtle" size="small">
-              See your store's progress
+              {t("dashboard.analyticsSubtitle")}
             </Text>
           </div>
           <div>
@@ -234,7 +236,7 @@ export const DashboardCharts = ({
                       format(from, "LLL dd, y")
                     )
                   ) : (
-                    <span>Pick a date</span>
+                    <span>{t("dashboard.pickDate")}</span>
                   )}
                 </Button>
               </Popover.Trigger>
@@ -257,7 +259,7 @@ export const DashboardCharts = ({
             {isPending ? (
               <ChartSkeleton />
             ) : chartData.length === 0 ? (
-              <div className="flex items-center justify-center h-full text-ui-fg-muted">No data available</div>
+              <div className="flex items-center justify-center h-full text-ui-fg-muted">{t("dashboard.noData")}</div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
@@ -287,7 +289,7 @@ export const DashboardCharts = ({
                   className="p-4 border rounded-lg w-full flex-col items-start my-2"
                   onClick={() => handleFilter("orders")}
                 >
-                  <Heading level="h3">Orders</Heading>
+                  <Heading level="h3">{t("dashboard.orders")}</Heading>
                   <div className="flex gap-2 items-center mt-2">
                     <div
                       className="h-8 w-1"
@@ -307,7 +309,7 @@ export const DashboardCharts = ({
                   className="p-4 border rounded-lg w-full flex-col items-start my-2"
                   onClick={() => handleFilter("customers")}
                 >
-                  <Heading level="h3">Customers</Heading>
+                  <Heading level="h3">{t("dashboard.customers")}</Heading>
                   <div className="flex gap-2 items-center mt-2">
                     <div
                       className="h-8 w-1"

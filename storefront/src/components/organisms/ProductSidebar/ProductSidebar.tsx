@@ -12,10 +12,12 @@ import { useState } from "react"
 import { ProductListingActiveFilters } from "../ProductListingActiveFilters/ProductListingActiveFilters"
 
 import useFilters from "@/hooks/useFilters"
+import { useTranslations } from "next-intl"
 
 export const ProductSidebar = () => {
   const [filterModal, setFilterModal] = useState(false)
   const { clearAllFilters } = useFilters("")
+  const t = useTranslations('listing')
 
   return (
     <aside className="relative w-full">
@@ -56,13 +58,13 @@ export const ProductSidebar = () => {
             variant="tonal"
             onClick={() => clearAllFilters()}
           >
-            Clear all
+            {t('clearAll')}
           </Button>
           <Button
             className="label-sm w-1/2 rounded-full border border-white/30 bg-white text-[#c13584] uppercase hover:bg-white/90"
             onClick={() => setFilterModal(false)}
           >
-            View 222 listings
+            {t('viewResults')}
           </Button>
         </div>
       </div>

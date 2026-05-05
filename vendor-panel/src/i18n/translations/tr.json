@@ -396,7 +396,8 @@
   "products": {
     "domain": "Ürünler",
     "list": {
-      "noRecordsMessage": "Satışa başlamak için ilk ürününüzü oluşturun."
+      "noRecordsMessage": "Satışa başlamak için ilk ürününüzü oluşturun.",
+      "noRecordsTitle": "Henüz ürün yok"
     },
     "edit": {
       "header": "Ürünü Düzenle",
@@ -494,6 +495,11 @@
       "filtered": {
         "heading": "Sonuç yok",
         "description": "Varyantlar mevcut filtrelerle eşleşmiyor."
+      },
+      "editStocksAndPrices": {
+        "header": "Stok seviyeleri ve fiyatları düzenle",
+        "description": "Ürün varyantlarının stok seviyelerini ve fiyatlarını düzenleyin.",
+        "successToast": "Stok seviyeleri ve fiyatlar başarıyla güncellendi."
       }
     },
     "attributes": "Öznitelikler",
@@ -507,6 +513,8 @@
       "uploadImagesLabel": "Resimleri yükle",
       "uploadImagesHint": "Resimleri buraya sürükleyip bırakın veya yüklemek için tıklayın.",
       "invalidFileType": "'{{name}}' desteklenmeyen bir dosya türüdür. Desteklenen dosya türleri: {{types}}.",
+      "fileSizeExceeded": "\"{{name}}\" dosya boyutu 2MB'ı geçemez.",
+      "profileHint": "JPG, JPEG veya PNG • Maks. 2MB • 1:1 oran önerilir",
       "failedToUpload": "Eklenen medya yüklenemedi. Lütfen tekrar deneyin.",
       "deleteWarning_one": "{{count}} resmi silmek üzeresiniz. Bu işlem geri alınamaz.",
       "deleteWarning_other": "{{count}} resmi silmek üzeresiniz. Bu işlem geri alınamaz.",
@@ -717,6 +725,12 @@
           "required": "Kargo yapılandırması gereklidir"
         }
       }
+    },
+    "bulkDelete": {
+      "title": "Ürünleri Sil",
+      "description": "Katalogdan {{count}} ürünü silmek üzeresiniz. Bu işlem geri alınamaz.",
+      "success": "{{count}} ürün başarıyla silindi.",
+      "error": "Ürünler silinemedi"
     }
   },
   "collections": {
@@ -1295,13 +1309,15 @@
         "created": "Tamamlama başarıyla oluşturuldu",
         "canceled": "Tamamlama başarıyla iptal edildi",
         "fulfillmentShipped": "Gönderilmiş bir tamamlamayı iptal edemezsiniz",
-        "fulfillmentDelivered": "Tamamlama başarıyla teslim edildi olarak işaretlendi"
+        "fulfillmentDelivered": "Tamamlama başarıyla teslim edildi olarak işaretlendi",
+        "fulfillmentPickedUp": "Teslimat başarıyla teslim alındı olarak işaretlendi"
       },
       "trackingLabel": "Takip",
       "shippingFromLabel": "Gönderen",
       "itemsLabel": "Ürünler",
       "differentOptionSelected": "Seçilen kargo seçeneği müşterinin seçtiğinden farklı.",
-      "disabledItemTooltip": "Seçtiğiniz kargo seçeneği bu ürünün tamamlanmasına izin vermiyor"
+      "disabledItemTooltip": "Seçtiğiniz kargo seçeneği bu ürünün tamamlanmasına izin vermiyor",
+      "markAsPickedUp": "Teslim alındı olarak işaretle"
     },
     "refund": {
       "title": "İade Oluştur",
@@ -1528,7 +1544,8 @@
       "connectedTo": "{{total}} satış kanalından {{count}}'ine bağlı",
       "noChannels": "Konum hiçbir satış kanalına bağlı değil.",
       "action": "Satış kanallarını bağla",
-      "successToast": "Satış kanalları başarıyla güncellendi."
+      "successToast": "Satış kanalları başarıyla güncellendi.",
+      "hint": "Bu konuma bağlı satış kanallarını yönetin."
     },
     "shippingOptions": {
       "conditionalPrices": {
@@ -1583,7 +1600,13 @@
           "details": "Detaylar",
           "prices": "Fiyatlar"
         },
-        "action": "Seçenek oluştur"
+        "action": "Seçenek oluştur",
+        "pickup": {
+          "header": "{{zone}} için Teslim Alma Seçeneği Oluştur",
+          "hint": "Ürünlerin bu konumdan nasıl teslim alınacağını tanımlamak için yeni bir teslim alma seçeneği oluşturun.",
+          "label": "Teslim alma seçenekleri",
+          "successToast": "{{name}} teslim alma seçeneği başarıyla oluşturuldu."
+        }
       },
       "delete": {
         "confirmation": "Kargo seçeneği {{name}} silinmek üzere. Bu işlem geri alınamaz.",
@@ -1602,7 +1625,9 @@
           "shipping_one": "{{count}} kargo seçeneği",
           "shipping_other": "{{count}} kargo seçeneği",
           "returns_one": "{{count}} iade seçeneği",
-          "returns_other": "{{count}} iade seçeneği"
+          "returns_other": "{{count}} iade seçeneği",
+          "pickup_one": "{{count}} teslim alma seçeneği",
+          "pickup_other": "{{count}} teslim alma seçeneği"
         },
         "priceType": {
           "label": "Fiyat türü",
@@ -1651,6 +1676,11 @@
       "fields": {
         "noRecords": "Ekleyebileceğiniz teslimat seçeneklerine sahip hizmet bölgeleri yok.",
         "tip": "Bir hizmet bölgesi, coğrafi bölgeler veya alanlardan oluşur. Bu, belirli konumlara sunulabilir teslimat seçeneklerini sınırlamak için kullanılır."
+      }
+    },
+    "pickupOptions": {
+      "edit": {
+        "header": "Teslim Alma Seçeneğini Düzenle"
       }
     }
   },
@@ -2277,7 +2307,9 @@
     "manageYourProfileDetails": "Profil detaylarınızı yönetin.",
     "fields": {
       "languageLabel": "Dil",
-      "usageInsightsLabel": "Kullanım istatistikleri"
+      "usageInsightsLabel": "Kullanım istatistikleri",
+      "profilePicture": "Profil fotoğrafı",
+      "bio": "Hakkımda"
     },
     "edit": {
       "header": "Profili Düzenle",
@@ -2506,6 +2538,16 @@
     },
     "tooltip": {
       "cannotDeleteDefault": "Varsayılan satış kanalı silinemez"
+    },
+    "list": {
+      "empty": {
+        "heading": "Satış kanalı bulunamadı",
+        "description": "Bir satış kanalı oluşturulduğunda burada görünecek."
+      },
+      "filtered": {
+        "heading": "Sonuç yok",
+        "description": "Mevcut filtrelerle eşleşen satış kanalı bulunamadı."
+      }
     }
   },
   "apiKeyManagement": {
@@ -2962,7 +3004,10 @@
     "endDate": "Bitiş Tarihi",
     "draft": "Taslak",
     "values": "Değerler",
-    "by": "Tarafından"
+    "by": "Tarafından",
+    "taxId": "Vergi Kimlik No",
+    "currentPriceTemplate": "Mevcut fiyat {{regionOrCurrency}}",
+    "stockTemplate": "Stok Konumu {{stockLocation}}"
   },
   "dateTime": {
     "years_one": "Yıl",
@@ -2990,6 +3035,102 @@
     "image": "Görsel",
     "close": "Kapat",
     "noConversations": "Mesaj yok",
-    "participants": "katılımcı"
+    "participants": "katılımcı",
+    "searchConversations": "Konuşma ara...",
+    "typeMessage": "Mesaj yaz...",
+    "selectConversation": "Bir konuşma seçin",
+    "startMessaging": "Müşterilerinizle veya destek ekibiyle mesajlaşmaya başlayın"
+  },
+  "dashboard": {
+    "followers": "Takipçiler",
+    "actions": "İşlemler",
+    "storeSubtitle": "Yeni olayları kontrol edin ve mağazanızı yönetin",
+    "ordersToFulfill": "Karşılanacak siparişler",
+    "ordersToShip": "Gönderilecek siparişler",
+    "reviewsToReply": "Yanıt bekleyen yorumlar",
+    "unreadMessages": "Okunmamış mesajlar",
+    "analytics": "Analitik",
+    "analyticsSubtitle": "Mağazanızın ilerleme durumunu görün",
+    "pickDate": "Tarih seçin",
+    "noData": "Veri yok",
+    "orders": "Siparişler",
+    "customers": "Müşteriler"
+  },
+  "sellerAgreement": {
+    "title": "Kayı.com Satıcı İş Ortaklığı ve Kullanım Esasları",
+    "backToRegister": "← Kayıt Sayfasına Dön",
+    "lastUpdated": "Son Güncelleme: 01 Mayıs 2026",
+    "tabs": {
+      "platformStatus": "Platform Statüsü",
+      "storeDocuments": "Mağaza & Belge",
+      "productStandards": "Ürün Standartları",
+      "stockOperations": "Stok ve Operasyon",
+      "paymentSystem": "Ödeme Sistemi",
+      "returnDispute": "İade & Uyuşmazlık",
+      "privacyKVKK": "KVKK & Gizlilik",
+      "systemSecurity": "Sistem Güvenliği",
+      "platformReputation": "Platform İtibarı",
+      "approvalEnactment": "Onay ve Yürürlük",
+      "commissionTable": "Komisyon Tablosu"
+    },
+    "sections": {
+      "platformStatus": {
+        "content": "Kayi.com, 6563 sayili Elektronik Ticaretin Duzenlenmesi Hakkinda Kanun kapsaminda Araci Hizmet Saglayici statusundedir. Platform, saticlar ile alicilar arasinda guvenli bir kopru kurar. Listelenen urunlerin mulkiyeti saticiya ait olup; urunlere iliskin tum hukuki, teknik ve ticari sorumluluk dogrudan ilgili saticiya aittir."
+      },
+      "storeDocuments": {
+        "content": "Saticlar, Turkiye Cumhuriyeti mevzuatina uygun sekilde yasal vergi mukellefi olduklarini ve ticari faaliyet yurutme yetkisine sahip olduklarini beyan ederler. Kayi.com, uyelik asamasinda veya sonrasinda saticlardan gerekli belgeleri talep etme hakkini sakli tutar."
+      },
+      "productStandards": {
+        "content": "Sahte, taklit, kacak veya mevzuata aykiri urun satisi kesinlikle yasaktir. Fikri ve sinai mulkiyet haklarini ihlal eden urunlerin tespiti halinde Kayi.com; magazayi tek tarafli feshetme, hakedisleri bloke etme ve yasal yollara basvurma hakkina sahiptir."
+      },
+      "stockOperations": {
+        "subhead1": "Stok Yonetimi:",
+        "content1": "Satici, platformdaki stok bilgilerini guncel tutmakla yukumludur. Gecersiz stok beyani nedeniyle iptal edilen siparisler satici performans puanini etkiler.",
+        "subhead2": "Lojistik Surecleri:",
+        "content2": "Siparisler, magaza panelinde taahhut edilen yasal sureler icinde kargoya verilmelidir. Gecikmeli gonderimlr ve hatali paketleme kaynakli zararlar saticinin sorumlulukundadir."
+      },
+      "paymentSystem": {
+        "content": "Odemeler, Kayi.com'un anlasmal oldugu lisansli odeme kuruluslari nezdindeki Guvenli Havuz Hesabi'nda toplanir. Teslimatın onaylanmasi ve yasal itiraz surelerinin tamamlanmasinin ardindan, belirlenen komisyon ve hizmet bedelleri dusulerek saticinin beyan ettigi IBAN hesabina aktarilir."
+      },
+      "returnDispute": {
+        "content": "Satici, 6502 sayili Tuketicinin Korunmasi Hakkinda Kanun uyarinca alicinin sahip oldugu 14 gunluk cayma hakkini ve diger tum yasal haklarini pesinen kabul eder. Iade surecleri, platformun belirledigi operasyonel kurallar cercevesinde yurutulur."
+      },
+      "privacyKVKK": {
+        "content": "Satici, kendisine iletilen alici verilerini sadece siparis teslimat amacıyla kullanabilir. Bu verilerin platform disi ticari faaliyetlerde kullanilmasi veya ucuncu sahislarla paylasilmasi KVKK kapsaminda agir ihlal sayilir ve sozlesmenin derhal feshine yol acar."
+      },
+      "systemSecurity": {
+        "content": "Satici, sifre guvenligini saglamakla yukumludur. KVKK ve 6563 sayili Kanun geregi veri erisim sorumlulugu saticiya aittir."
+      },
+      "platformReputation": {
+        "content": "Satici, platform ici tum iletisiminde ve ticari faaliyetlerinde genel ahlak kurallarina ve Kayi.com is etigi standartlarina uygun hareket etmelidir. Platformun ticari itibarana zarar verecek eylemlerde bulunulmasi durumunda Kayi.com, sozlesmeyi tek tarafli olarak feshetme hakkini sakli tutar."
+      },
+      "approvalEnactment": {
+        "content": "Kayi.com uzerinde magaza kaydini baslatan ve onay kutucugunu isaretleyen her satici, yukarida belirtilen tum sartlari, kurallari ve ek protokolleri hicbir kisitlama olmaksizin okumuss, anlamis ve kabul etmis sayilir. Bu onay, taraflar arasinda dijital imza hukmunde olup kayit anından itibaren yururluge girer."
+      },
+      "commissionTable": {
+        "description": "Asagidaki tablo, her urun kategorisi icin uygulanan net komisyon oranlarini ve KDV dahil toplam oranlari gostermektedir. Komisyon tutarlari satis bedeli uzerinden hesaplanir.",
+        "col": {
+          "category": "Kategori",
+          "netCommission": "Net Komisyon (%)",
+          "vat": "KDV (%)",
+          "totalInclVat": "Toplam KDV Dahil (%)"
+        },
+        "categories": {
+          "womenFashion": "Kadın Moda",
+          "menFashion": "Erkek Moda",
+          "electronics": "Elektronik",
+          "motherChild": "Anne & Çocuk",
+          "homeLife": "Ev & Yaşam",
+          "supermarket": "Supermarket",
+          "cosmetics": "Kozmetik",
+          "shoesBags": "Ayakkabı & Çanta",
+          "sportsOutdoor": "Spor & Outdoor",
+          "booksHobbies": "Kitap & Hobi",
+          "autoMoto": "Oto & Motosiklet",
+          "privateLife": "Özel Yaşam"
+        },
+        "footnote": "* Komisyon oranlari KDV haric net satis bedeli uzerinden hesaplanir. Kayi.com, oranlari 30 gun onceden bildirmek kaydiyla degistirme hakkini sakli tutar. Son guncelleme: 01 Mayis 2026."
+      }
+    }
   }
 }

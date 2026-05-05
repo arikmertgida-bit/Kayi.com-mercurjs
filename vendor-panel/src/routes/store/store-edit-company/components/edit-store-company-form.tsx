@@ -7,6 +7,7 @@ import { KeyboundForm } from "../../../../components/utilities/keybound-form"
 import { Form } from "../../../../components/common/form"
 import { Button, Input, toast } from "@medusajs/ui"
 import { useUpdateMe } from "../../../../hooks/api"
+import { useTranslation } from "react-i18next"
 
 const EditStoreSchema = z.object({
   address_line: z.string().optional(),
@@ -18,6 +19,7 @@ const EditStoreSchema = z.object({
 
 export const EditStoreCompanyForm = ({ seller }: { seller: StoreVendor }) => {
   const { handleSuccess } = useRouteModal()
+  const { t } = useTranslation()
 
   const form = useForm<z.infer<typeof EditStoreSchema>>({
     defaultValues: {
@@ -39,7 +41,7 @@ export const EditStoreCompanyForm = ({ seller }: { seller: StoreVendor }) => {
       },
       {
         onSuccess: () => {
-          toast.success("Store updated")
+          toast.success(t("store.toast.update"))
           handleSuccess()
         },
         onError: (error) => {
@@ -59,7 +61,7 @@ export const EditStoreCompanyForm = ({ seller }: { seller: StoreVendor }) => {
               control={form.control}
               render={({ field }) => (
                 <Form.Item>
-                  <Form.Label>Address</Form.Label>
+                  <Form.Label>{t("fields.address")}</Form.Label>
                   <Form.Control>
                     <Input {...field} />
                   </Form.Control>
@@ -72,7 +74,7 @@ export const EditStoreCompanyForm = ({ seller }: { seller: StoreVendor }) => {
               control={form.control}
               render={({ field }) => (
                 <Form.Item>
-                  <Form.Label>Postal Code</Form.Label>
+                  <Form.Label>{t("fields.postalCode")}</Form.Label>
                   <Form.Control>
                     <Input {...field} />
                   </Form.Control>
@@ -85,7 +87,7 @@ export const EditStoreCompanyForm = ({ seller }: { seller: StoreVendor }) => {
               control={form.control}
               render={({ field }) => (
                 <Form.Item>
-                  <Form.Label>City</Form.Label>
+                  <Form.Label>{t("fields.city")}</Form.Label>
                   <Form.Control>
                     <Input {...field} />
                   </Form.Control>
@@ -98,7 +100,7 @@ export const EditStoreCompanyForm = ({ seller }: { seller: StoreVendor }) => {
               control={form.control}
               render={({ field }) => (
                 <Form.Item>
-                  <Form.Label>Country</Form.Label>
+                  <Form.Label>{t("fields.country")}</Form.Label>
                   <Form.Control>
                     <Input {...field} />
                   </Form.Control>
@@ -111,7 +113,7 @@ export const EditStoreCompanyForm = ({ seller }: { seller: StoreVendor }) => {
               control={form.control}
               render={({ field }) => (
                 <Form.Item>
-                  <Form.Label>Tax ID</Form.Label>
+                  <Form.Label>{t("fields.taxId")}</Form.Label>
                   <Form.Control>
                     <Input {...field} />
                   </Form.Control>
@@ -124,11 +126,11 @@ export const EditStoreCompanyForm = ({ seller }: { seller: StoreVendor }) => {
         <RouteDrawer.Footer>
           <RouteDrawer.Close asChild>
             <Button size="small" variant="secondary">
-              Cancel
+              {t("actions.cancel")}
             </Button>
           </RouteDrawer.Close>
           <Button type="submit" size="small" isLoading={isPending}>
-            Save
+            {t("actions.save")}
           </Button>
         </RouteDrawer.Footer>
       </KeyboundForm>

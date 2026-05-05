@@ -137,7 +137,7 @@ export const EditStoreForm = ({ seller }: { seller: StoreVendor }) => {
       },
       {
         onSuccess: () => {
-          toast.success("Store updated")
+          toast.success(t("store.toast.update"))
 
           handleSuccess()
         },
@@ -185,7 +185,7 @@ export const EditStoreForm = ({ seller }: { seller: StoreVendor }) => {
               control={form.control}
               render={({ field }) => (
                 <Form.Item>
-                  <Form.Label>Name</Form.Label>
+                  <Form.Label>{t("fields.name")}</Form.Label>
                   <Form.Control>
                     <Input {...field} />
                   </Form.Control>
@@ -198,7 +198,7 @@ export const EditStoreForm = ({ seller }: { seller: StoreVendor }) => {
               control={form.control}
               render={({ field }) => (
                 <Form.Item>
-                  <Form.Label>Email</Form.Label>
+                  <Form.Label>{t("fields.email")}</Form.Label>
                   <Form.Control>
                     <Input {...field} />
                   </Form.Control>
@@ -211,7 +211,7 @@ export const EditStoreForm = ({ seller }: { seller: StoreVendor }) => {
               control={form.control}
               render={({ field }) => (
                 <Form.Item>
-                  <Form.Label>Phone Number</Form.Label>
+                  <Form.Label>{t("fields.phone")}</Form.Label>
                   <Form.Control>
                     <Input {...field} />
                   </Form.Control>
@@ -224,7 +224,7 @@ export const EditStoreForm = ({ seller }: { seller: StoreVendor }) => {
               control={form.control}
               render={({ field }) => (
                 <Form.Item>
-                  <Form.Label>Description</Form.Label>
+                  <Form.Label>{t("fields.description")}</Form.Label>
                   <Form.Control>
                     <Textarea {...field} />
                   </Form.Control>

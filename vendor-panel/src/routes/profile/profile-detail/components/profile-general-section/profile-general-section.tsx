@@ -5,13 +5,14 @@ import { useTranslation } from "react-i18next"
 import { ActionMenu } from "../../../../../components/common/action-menu"
 import { TeamMemberProps } from "../../../../../types/user"
 import { ImageAvatar } from "../../../../../components/common/image-avatar"
+import { languages } from "../../../../../i18n/languages"
 
 type ProfileGeneralSectionProps = {
   user: TeamMemberProps
 }
 
 export const ProfileGeneralSection = ({ user }: ProfileGeneralSectionProps) => {
-  const { t } = useTranslation()
+  const { i18n, t } = useTranslation()
 
   const { name, email, photo, phone, bio } = user
 
@@ -40,7 +41,7 @@ export const ProfileGeneralSection = ({ user }: ProfileGeneralSectionProps) => {
       </div>
       <div className="text-ui-fg-subtle grid grid-cols-2 items-center px-6 py-4">
         <Text size="small" leading="compact" weight="plus">
-          Photo
+          {t("profile.fields.profilePicture")}
         </Text>
         <div className="flex items-center gap-x-3">
           <ImageAvatar src={photo || "/logo.svg"} size={8} rounded />
@@ -59,7 +60,7 @@ export const ProfileGeneralSection = ({ user }: ProfileGeneralSectionProps) => {
       </div>
       <div className="grid grid-cols-2 items-center px-6 py-4">
         <Text size="small" leading="compact" weight="plus">
-          Phone
+          {t("fields.phone")}
         </Text>
         <Text size="small" leading="compact">
           {phone}
@@ -67,10 +68,19 @@ export const ProfileGeneralSection = ({ user }: ProfileGeneralSectionProps) => {
       </div>
       <div className="grid grid-cols-2 items-center px-6 py-4">
         <Text size="small" leading="compact" weight="plus">
-          Bio
+          {t("profile.fields.bio")}
         </Text>
         <Text size="small" leading="compact">
           {bio}
+        </Text>
+      </div>
+      <div className="grid grid-cols-2 items-center px-6 py-4">
+        <Text size="small" leading="compact" weight="plus">
+          {t("profile.fields.languageLabel")}
+        </Text>
+        <Text size="small" leading="compact">
+          {languages.find((lang) => lang.code === i18n.language)
+            ?.display_name || "-"}
         </Text>
       </div>
     </Container>

@@ -271,7 +271,7 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
         <div className="p-3 border-b border-ui-border-base">
           <div className="flex items-center justify-between mb-2">
             <Heading level="h3" className="text-sm font-semibold text-ui-fg-base">
-              Messages
+              {t("messages.domain")}
             </Heading>
             <span
               className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-500" : "bg-ui-fg-muted"}`}
@@ -280,7 +280,7 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
           </div>
           <input
             type="text"
-            placeholder="Search conversations..."
+            placeholder={t("messenger.searchConversations")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full px-2 py-1 text-sm rounded border border-ui-border-base bg-ui-bg-base text-ui-fg-base focus:outline-none focus:border-ui-border-interactive"
@@ -288,7 +288,7 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
         </div>
         <div className="flex-1 overflow-y-auto">
           {filtered.length === 0 ? (
-            <p className="text-center text-ui-fg-muted text-sm mt-8">No conversations</p>
+            <p className="text-center text-ui-fg-muted text-sm mt-8">{t("messenger.noConversations")}</p>
           ) : (
             filtered.map((conv) => (
               <ThreadListItem
@@ -509,7 +509,7 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
               value={text}
               onChange={handleTextChange}
               onKeyDown={handleKeyDown}
-              placeholder="Type a message..."
+              placeholder={t("messenger.typeMessage")}
               rows={1}
               className="flex-1 px-3 py-2 text-sm rounded-2xl border border-ui-border-base bg-ui-bg-subtle text-ui-fg-base placeholder:text-ui-fg-muted focus:outline-none focus:border-ui-border-interactive resize-none leading-5 max-h-24 overflow-y-auto"
               style={{ minHeight: "36px" }}
@@ -534,8 +534,8 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
                 d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
           </div>
-          <p className="text-sm font-medium text-ui-fg-base mb-1">Select a conversation</p>
-          <p className="text-xs text-ui-fg-muted">Start messaging your customers or support team</p>
+          <p className="text-sm font-medium text-ui-fg-base mb-1">{t("messenger.selectConversation")}</p>
+          <p className="text-xs text-ui-fg-muted">{t("messenger.startMessaging")}</p>
         </div>
       )}
     </div>
