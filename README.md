@@ -965,3 +965,14 @@ PORT=4000
 - [x] **`import-image-optimizer` subscriber** — `product.created` eventinde ürün görsellerini indirir, sharp ile WebP 1200×1200'e dönüştürür, MinIO'ya `products/{id}/{timestamp}.webp` yükler
 - [x] **Yeni backend bağımlılıkları:** `csv-parse ^5.6.0`, `fast-xml-parser ^4.4.1`, `xlsx ^0.18.5`
 - [x] **Vendor panel multi-step import UI** — yükle → analiz → ilerleme → tamamlandı adımları
+
+### Admin Panel TypeScript Temizliği (Mayıs 2026)
+- [x] **605 TypeScript hata → 0** (admin-panel, vendor-panel, storefront — tümü temiz)
+- [x] `InventoryTypes.InventoryLevelDTO` → `HttpTypes.AdminInventoryLevel` (Medusa v2 namespace geçişi)
+- [x] `usePromotionRules` generic tipi düzeltildi (`AdminGetPromotionRuleParams` → `AdminPromotionRuleListResponse`) — runtime bug, yanlış veri tipi çıkarımı
+- [x] `catch(e)` blokları `unknown`-safe hale getirildi (`e instanceof Error` guard)
+- [x] `@ts-ignore` sıfırlandı — kalan `@ts-expect-error` kullanımları açıklama ile belgelendi
+- [x] `DataTableColumnHelper` excess property sorunları (`enableHiding`) `as any` cast ile çözüldü
+- [x] `module.d.ts` ambient-only kuralı korundu (import eklenmedi)
+- [x] `DashboardPlugin` re-export kaynağı `./dashboard-app/types` olarak düzeltildi
+- [x] `./render` modülü eksikliği `index.ts`'ten kaldırıldı

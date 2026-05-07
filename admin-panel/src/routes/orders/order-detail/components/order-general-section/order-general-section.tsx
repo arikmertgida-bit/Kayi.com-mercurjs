@@ -1,5 +1,5 @@
 import { XCircle } from "@medusajs/icons"
-import { HttpTypes } from "@medusajs/types"
+import { AdminOrder, HttpTypes } from "@medusajs/types"
 import {
   Container,
   Copy,
@@ -81,7 +81,7 @@ export const OrderGeneralSection = ({ order }: OrderGeneralSectionProps) => {
                 {
                   label: t("actions.cancel"),
                   onClick: handleCancel,
-                  disabled: !!order.canceled_at,
+                  disabled: !!(order as AdminOrder & { canceled_at?: string | null }).canceled_at,
                   icon: <XCircle />,
                 },
               ],

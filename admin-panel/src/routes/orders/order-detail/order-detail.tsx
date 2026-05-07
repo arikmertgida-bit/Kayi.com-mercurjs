@@ -1,4 +1,5 @@
 import { useLoaderData, useParams } from "react-router-dom";
+import { HttpTypes } from "@medusajs/types";
 
 import { TwoColumnPageSkeleton } from "../../../components/common/skeleton";
 import { TwoColumnPage } from "../../../components/layout/pages";
@@ -40,7 +41,7 @@ export const OrderDetail = () => {
 
   // TODO: Retrieve endpoints don't have an order ability, so a JS sort until this is available
   if (order) {
-    order.items = order.items.sort((itemA, itemB) => {
+    order.items = order.items.sort((itemA: HttpTypes.AdminOrderLineItem, itemB: HttpTypes.AdminOrderLineItem) => {
       if (itemA.created_at > itemB.created_at) {
         return 1;
       }

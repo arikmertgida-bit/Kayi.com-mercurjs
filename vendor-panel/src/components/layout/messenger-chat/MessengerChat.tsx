@@ -1,30 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { useMessenger } from "../../../providers/messenger-provider/MessengerProvider"
 import { fetchQuery } from "../../../lib/client"
 import type { Message } from "../../../lib/messenger/types"
 
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString("tr-TR", {
+function formatTime(iso: string, locale: string): string {
+  return new Date(iso).toLocaleTimeString(locale, {
     hour: "2-digit",
     minute: "2-digit",
   })
-}
-
-function Avatar({ name, size = 32 }: { name: string; size?: number }) {
-  const initials = name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2)
-  return (
-    <div
-      className="rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white font-semibold flex-shrink-0"
-      style={{ width: size, height: size, fontSize: size * 0.35 }}
-    >
-      {initials}
-    </div>
-  )
 }
 
 function TypingDots() {
@@ -55,14 +39,14 @@ export function MessengerChat({
   otherName = "Destek",
 }: MessengerChatProps) {
   const {
-    messages,
+    pinnedMessages,
     typingUserIds,
     isLoadingMessages,
-    sendMessage,
+    sendSidebarMessage,
     uploadImage,
     startTyping,
     stopTyping,
-    openConversation,
+    openSidebarConversation,
     startConversation,
   } = useMessenger()
 
@@ -73,6 +57,7 @@ export function MessengerChat({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const initializedRef = useRef(false)
+  const { i18n } = useTranslation()
   void typingTimerRef
 
   // ── On mount: fetch real admin ID and open/create support conversation ──
@@ -92,7 +77,7 @@ export function MessengerChat({
         })
       })
       .then((cid) => {
-        if (cid) openConversation(cid)
+        if (cid) openSidebarConversation(cid)
       })
       .catch((err) => {
         console.error(err)
@@ -105,7 +90,7 @@ export function MessengerChat({
   // ── Scroll to bottom ─────────────────────────────────────────────────────
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages, typingUserIds])
+  }, [pinnedMessages, typingUserIds])
 
   const handleSend = useCallback(async () => {
     const content = text.trim()
@@ -114,11 +99,11 @@ export function MessengerChat({
     setText("")
     stopTyping()
     try {
-      await sendMessage(content)
+      await sendSidebarMessage(content)
     } finally {
       setIsSending(false)
     }
-  }, [text, isSending, sendMessage, stopTyping])
+  }, [text, isSending, sendSidebarMessage, stopTyping])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -145,10 +130,10 @@ export function MessengerChat({
   }
 
   const isOtherTyping = typingUserIds.length > 0
-  const myMessages = messages.filter((m) => m.senderType === "SELLER")
+  const myMessages = pinnedMessages.filter((m) => m.senderType === "SELLER")
   const lastMyMessageId = myMessages[myMessages.length - 1]?.id
 
-  if (isInitializing && messages.length === 0) {
+  if (isInitializing && pinnedMessages.length === 0) {
     return (
       <div className="flex justify-center items-center h-full py-12">
         <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
@@ -164,14 +149,14 @@ export function MessengerChat({
           <div className="flex justify-center items-center h-full">
             <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
           </div>
-        ) : messages.length === 0 ? (
+        ) : pinnedMessages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center py-6">
             <p className="text-sm text-gray-400">
               Destek ekibimizle mesajlaşabilirsiniz.
             </p>
           </div>
         ) : (
-          messages.map((msg: Message) => {
+          pinnedMessages.map((msg: Message) => {
             const isMine = msg.senderType === "SELLER"
             const isNotification = msg.messageType === "NOTIFICATION"
             const isLastMine = msg.id === lastMyMessageId
@@ -210,7 +195,7 @@ export function MessengerChat({
                       isMine ? "text-ui-fg-on-inverted" : "text-ui-fg-muted"
                     }`}
                   >
-                    {formatTime(msg.createdAt)}
+                    {formatTime(msg.createdAt, i18n.language)}
                     {isMine && isLastMine && msg.readAt && (
                       <span className="ml-1">· Görüldü</span>
                     )}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { BuildingStorefront, Plus, Trash } from "@medusajs/icons";
 import { Badge, Button, Container, Heading, Text, toast, usePrompt } from "@medusajs/ui";
+import { useTranslation } from "react-i18next";
 
 import {
   useAssignSellerStockLocation,
@@ -15,6 +16,7 @@ type Props = {
 
 export const SellerStockLocationsSection = ({ sellerId }: Props) => {
   const prompt = usePrompt();
+  const { t } = useTranslation();
   const [isAdding, setIsAdding] = useState(false);
   const [selectedToAdd, setSelectedToAdd] = useState("");
 
@@ -32,33 +34,33 @@ export const SellerStockLocationsSection = ({ sellerId }: Props) => {
     if (!selectedToAdd) return;
     try {
       await assign(selectedToAdd);
-      toast.success("Stock location assigned");
+      toast.success(t("sellers.stockLocations.assignSuccess"));
       setIsAdding(false);
       setSelectedToAdd("");
     } catch {
-      toast.error("Failed to assign stock location");
+      toast.error(t("sellers.stockLocations.assignError"));
     }
   };
 
   const handleRemove = async (locationId: string, locationName: string) => {
     const confirmed = await prompt({
-      title: "Remove stock location",
-      description: `Remove "${locationName}" from this seller? The seller will no longer be able to manage stock at this location.`,
+      title: t("sellers.stockLocations.removeTitle"),
+      description: t("sellers.stockLocations.removeDesc", { name: locationName }),
       verificationText: locationName,
     });
     if (!confirmed) return;
     try {
       await remove(locationId);
-      toast.success("Stock location removed");
+      toast.success(t("sellers.stockLocations.removeSuccess"));
     } catch {
-      toast.error("Failed to remove stock location");
+      toast.error(t("sellers.stockLocations.removeError"));
     }
   };
 
   return (
     <Container className="mt-2 px-0">
       <div className="flex items-center justify-between px-8 pb-4">
-        <Heading>Stock Locations</Heading>
+        <Heading>{t("sellers.stockLocations.heading")}</Heading>
         {unassigned.length > 0 && !isAdding && (
           <Button
             variant="secondary"
@@ -66,7 +68,7 @@ export const SellerStockLocationsSection = ({ sellerId }: Props) => {
             onClick={() => setIsAdding(true)}
           >
             <Plus className="mr-1" />
-            Assign
+            {t("sellers.stockLocations.assign")}
           </Button>
         )}
       </div>

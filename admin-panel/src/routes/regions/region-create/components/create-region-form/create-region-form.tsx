@@ -11,13 +11,11 @@ import {
   clx,
   toast,
 } from "@medusajs/ui"
-import { RowSelectionState, createColumnHelper } from "@tanstack/react-table"
+import { ColumnDef, RowSelectionState, createColumnHelper } from "@tanstack/react-table"
 import { useMemo, useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import * as zod from "zod"
-
-import { RegionCountryDTO } from "@medusajs/types"
 
 import { Form } from "../../../../../components/common/form"
 import { Combobox } from "../../../../../components/inputs/combobox"
@@ -31,7 +29,7 @@ import { _DataTable } from "../../../../../components/table/data-table"
 import { KeyboundForm } from "../../../../../components/utilities/keybound-form"
 import { useCreateRegion } from "../../../../../hooks/api/regions"
 import { useDataTable } from "../../../../../hooks/use-data-table"
-import { countries as staticCountries } from "../../../../../lib/data/countries"
+import { countries as staticCountries, StaticCountry } from "../../../../../lib/data/countries"
 import { CurrencyInfo } from "../../../../../lib/data/currencies"
 import { formatProvider } from "../../../../../lib/format-provider"
 import { useCountries } from "../../../common/hooks/use-countries"
@@ -367,8 +365,8 @@ export const CreateRegionForm = ({ currencies }: CreateRegionFormProps) => {
                       </StackedFocusModal.Header>
                       <StackedFocusModal.Body className="overflow-hidden">
                         <_DataTable
-                          table={table}
-                          columns={columns}
+                          table={table as any}
+                          columns={columns as any}
                           count={count}
                           pageSize={PAGE_SIZE}
                           orderBy={[
@@ -455,7 +453,7 @@ export const CreateRegionForm = ({ currencies }: CreateRegionFormProps) => {
   )
 }
 
-const columnHelper = createColumnHelper<RegionCountryDTO>()
+const columnHelper = createColumnHelper<StaticCountry>()
 
 const useColumns = () => {
   const base = useCountryTableColumns()
@@ -496,7 +494,7 @@ const useColumns = () => {
       ...base,
     ],
     [base]
-  )
+  ) as ColumnDef<StaticCountry, any>[]
 }
 
 const CountryTag = ({

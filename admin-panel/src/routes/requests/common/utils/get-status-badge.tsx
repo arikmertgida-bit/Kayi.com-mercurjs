@@ -1,3 +1,4 @@
+import { t } from "i18next";
 import { StatusBadge } from "@medusajs/ui";
 
 export const getRequestStatusBadge = (status: string) => {
@@ -14,5 +15,7 @@ export const getRequestStatusBadge = (status: string) => {
     color = "red";
   }
 
-  return <StatusBadge color={color}>{status}</StatusBadge>;
+  const label = String(t(`requests.status.${status}` as never, { defaultValue: status }));
+
+  return <StatusBadge color={color}>{label}</StatusBadge>;
 };

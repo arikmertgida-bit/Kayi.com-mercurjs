@@ -5,7 +5,7 @@ export type TQueryKey<TKey, TListQuery = any, TDetailQuery = string> = {
   lists: () => readonly [...TQueryKey<TKey>["all"], "list"]
   list: (
     query?: TListQuery
-  ) => readonly [...ReturnType<TQueryKey<TKey>["lists"]>, { query: TListQuery }]
+  ) => readonly [...ReturnType<TQueryKey<TKey>["lists"]>, ...({ query: TListQuery } | undefined)[]]
   details: () => readonly [...TQueryKey<TKey>["all"], "detail"]
   detail: (
     id: TDetailQuery,
@@ -13,7 +13,7 @@ export type TQueryKey<TKey, TListQuery = any, TDetailQuery = string> = {
   ) => readonly [
     ...ReturnType<TQueryKey<TKey>["details"]>,
     TDetailQuery,
-    { query: TListQuery }
+    ...({ query: TListQuery } | undefined)[]
   ]
 }
 
@@ -40,14 +40,10 @@ export const queryKeysFactory = <
     all: [globalKey],
     lists: () => [...queryKeyFactory.all, "list"],
     list: (query?: TListQueryType) =>
-      [...queryKeyFactory.lists(), query ? { query } : undefined].filter(
-        (k) => !!k
-      ),
-    details: () => [...queryKeyFactory.all, "detail"],
+      [...queryKeyFactory.lists(), ...(query ? [{ query }] : [])] as readonly [T, "list", ...({ query: TListQueryType } | undefined)[]],
+    details: () => [...queryKeyFactory.all, "detail"] as const,
     detail: (id: TDetailQueryType, query?: TListQueryType) =>
-      [...queryKeyFactory.details(), id, query ? { query } : undefined].filter(
-        (k) => !!k
-      ),
+      [...queryKeyFactory.details(), id, ...(query ? [{ query }] : [])] as readonly [T, "detail", TDetailQueryType, ...({ query: TListQueryType } | undefined)[]],
   }
   return queryKeyFactory
 }

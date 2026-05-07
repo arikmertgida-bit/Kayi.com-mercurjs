@@ -8,7 +8,7 @@ import { ActionMenu } from "../../../../../components/common/action-menu"
 
 type ProductShippingProfileSectionProps = {
   product: HttpTypes.AdminProduct & {
-    shipping_profile: HttpTypes.AdminShippingProfile
+    shipping_profile?: HttpTypes.AdminShippingProfile
   }
 }
 
@@ -17,7 +17,7 @@ export const ProductShippingProfileSection = ({
 }: ProductShippingProfileSectionProps) => {
   const { t } = useTranslation()
 
-  const shippingProfile = product.shipping_profile
+  const shippingProfile = product.shipping_profile ?? null
 
   return (
     <Container className="p-0">

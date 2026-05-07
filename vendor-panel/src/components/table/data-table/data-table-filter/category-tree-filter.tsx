@@ -151,7 +151,7 @@ export const CategoryTreeFilter = ({
         hadPreviousValue={!!previousValue?.length}
         readonly={readonly}
         label={label}
-        value={labelValues.length ? labelValues.join(", ") : null}
+        value={labelValues.length ? labelValues.join(", ") : undefined}
         onRemove={handleRemove}
       />
       {!readonly && (

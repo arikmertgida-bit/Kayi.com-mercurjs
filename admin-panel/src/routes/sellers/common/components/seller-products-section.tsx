@@ -38,6 +38,7 @@ export const SellerProductsSection = ({
     prefix: PREFIX,
   });
 
+  const { t } = useTranslation();
   const columns = useColumns(refetch);
   const filters = useProductTableFilters();
 
@@ -54,7 +55,7 @@ export const SellerProductsSection = ({
   return (
     <Container className="mt-2 px-0">
       <div className="px-8 pb-4">
-        <Heading>Products</Heading>
+        <Heading>{t("products.domain")}</Heading>
       </div>
       <Divider />
       <_DataTable
@@ -69,9 +70,9 @@ export const SellerProductsSection = ({
         pagination
         navigateTo={(row) => `/products/${row.id}`}
         orderBy={[
-          { key: "title", label: "Title" },
-          { key: "created_at", label: "Created" },
-          { key: "updated_at", label: "Updated" },
+          { key: "title", label: t("fields.title") },
+          { key: "created_at", label: t("fields.createdAt") },
+          { key: "updated_at", label: t("fields.updatedAt") },
         ]}
         prefix={PREFIX}
       />
@@ -85,7 +86,6 @@ const useColumns = (refetch: () => void) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const prompt = usePrompt();
-
   const handleDelete = async (product: AdminProduct) => {
     const res = await prompt({
       title: t("general.areYouSure"),
@@ -121,7 +121,7 @@ const useColumns = (refetch: () => void) => {
     () => [
       columnHelper.display({
         id: "product",
-        header: "Product",
+        header: t("fields.product"),
         cell: ({ row }) => {
           return (
             <div className="flex h-full w-full max-w-[250px] items-center gap-x-3 overflow-hidden">
@@ -137,24 +137,24 @@ const useColumns = (refetch: () => void) => {
       }),
       columnHelper.display({
         id: "collection",
-        header: "Collection",
+        header: t("fields.collection"),
         cell: ({ row }) => {
           return row.original.collection?.title;
         },
       }),
       columnHelper.display({
         id: "variants",
-        header: "Variants",
+        header: t("fields.variants"),
         cell: ({ row }) => {
           const variants = row.original.variants?.length || 0;
-          const suffix = variants > 1 ? "variants" : "variant";
+          const suffix = variants > 1 ? t("fields.variants") : t("fields.variant");
 
           return `${variants} ${suffix}`;
         },
       }),
       columnHelper.display({
         id: "status",
-        header: "Status",
+        header: t("fields.status"),
         cell: ({ row }) => <ProductStatusBadge status={row.original.status} />,
       }),
       columnHelper.display({
@@ -164,12 +164,12 @@ const useColumns = (refetch: () => void) => {
           <ActionsButton
             actions={[
               {
-                label: "Edit",
+                label: t("actions.edit"),
                 onClick: () => navigate(`/products/${row.original.id}/edit`),
                 icon: <PencilSquare />,
               },
               {
-                label: "Delete",
+                label: t("actions.delete"),
                 onClick: () => handleDelete(row.original),
                 icon: <Trash />,
               },

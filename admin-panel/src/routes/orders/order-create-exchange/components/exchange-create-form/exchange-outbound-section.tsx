@@ -1,8 +1,8 @@
 import {
   AdminExchange,
+  AdminInventoryLevel,
   AdminOrder,
   AdminOrderPreview,
-  InventoryLevelDTO,
 } from "@medusajs/types"
 import { Alert, Button, Heading, Text, toast } from "@medusajs/ui"
 import { useEffect, useMemo, useState } from "react"
@@ -52,7 +52,7 @@ export const ExchangeOutboundSection = ({
 
   const { setIsOpen } = useStackedModal()
   const [inventoryMap, setInventoryMap] = useState<
-    Record<string, InventoryLevelDTO[]>
+    Record<string, AdminInventoryLevel[]>
   >({})
 
   /**
@@ -143,7 +143,7 @@ export const ExchangeOutboundSection = ({
           {
             item_id: i.id,
             quantity: i.detail.quantity,
-            variant_id: i.variant_id,
+            variant_id: i.variant_id ?? undefined,
           },
           { shouldFocus: false }
         )
@@ -168,7 +168,7 @@ export const ExchangeOutboundSection = ({
             variant_id: variantId,
             quantity: 1,
           })),
-        },
+        } as import("@medusajs/types").HttpTypes.AdminAddExchangeOutboundItems,
         {
           onError: (error) => {
             toast.error(error.message)
@@ -247,7 +247,7 @@ export const ExchangeOutboundSection = ({
 
     const allItemsHaveLocation = outboundItems
       .map((i) => {
-        const item = variantItemMap.get(i.variant_id)
+        const item = variantItemMap.get(i.variant_id ?? "")
         if (!item?.variant_id || !item?.variant) {
           return true
         }
@@ -267,7 +267,7 @@ export const ExchangeOutboundSection = ({
 
   useEffect(() => {
     const getInventoryMap = async () => {
-      const ret: Record<string, InventoryLevelDTO[]> = {}
+      const ret: Record<string, AdminInventoryLevel[]> = {}
 
       if (!outboundItems.length) {
         return ret
@@ -275,7 +275,7 @@ export const ExchangeOutboundSection = ({
 
       const variantIds = outboundItems
         .map((item) => item?.variant_id)
-        .filter(Boolean)
+        .filter((id): id is string => !!id)
 
       const variants = (
         await sdk.admin.productVariant.list({
@@ -285,7 +285,7 @@ export const ExchangeOutboundSection = ({
       ).variants
 
       variants.forEach((variant) => {
-        ret[variant.id] = variant.inventory?.[0]?.location_levels || []
+        ret[variant.id] = (variant.inventory_items?.[0]?.inventory?.location_levels || []) as AdminInventoryLevel[]
       })
 
       return ret
@@ -311,17 +311,16 @@ export const ExchangeOutboundSection = ({
             <StackedFocusModal.Header />
 
             <AddExchangeOutboundItemsTable
-              selectedItems={outboundItems.map((i) => i.variant_id)}
+              selectedItems={outboundItems.map((i) => i.variant_id ?? "")}
               currencyCode={order.currency_code}
               onSelectionChange={(finalSelection) => {
-                const alreadySelected = outboundItems.map((i) => i.variant_id)
+                const alreadySelected = outboundItems.map((i) => i.variant_id ?? "")
 
                 itemsToAdd = finalSelection.filter(
                   (selection) => !alreadySelected.includes(selection)
                 )
-                itemsToRemove = alreadySelected.filter(
-                  (selection) => !finalSelection.includes(selection)
-                )
+                itemsToRemove = alreadySelected
+                  .filter((selection): selection is string => selection !== "" && !finalSelection.includes(selection))
               }}
             />
 
@@ -354,10 +353,10 @@ export const ExchangeOutboundSection = ({
 
       {outboundItems.map(
         (item, index) =>
-          variantOutboundMap.get(item.variant_id) && (
+          variantOutboundMap.get(item.variant_id ?? "") && (
             <ExchangeOutboundItem
               key={item.id}
-              previewItem={variantOutboundMap.get(item.variant_id)!}
+              previewItem={variantOutboundMap.get(item.variant_id ?? "")!}
               currencyCode={order.currency_code}
               form={form}
               onRemove={() => {

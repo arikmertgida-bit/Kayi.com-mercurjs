@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { Button, Label, Select, Switch, toast } from "@medusajs/ui";
+import { useTranslation } from "react-i18next";
 
 import type { ConfigurationRuleType } from "@custom-types/configuration";
 
@@ -17,6 +18,7 @@ type Props = {
 };
 
 const CreateConfigurationRuleForm = ({ onSuccess }: Props) => {
+  const { t } = useTranslation();
   const [type, setType] = useState<RuleType>("global_product_catalog");
   const [enabled, setEnabled] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -43,7 +45,7 @@ const CreateConfigurationRuleForm = ({ onSuccess }: Props) => {
   return (
     <form onSubmit={onSubmit}>
       <fieldset className="my-4">
-        <legend className="mb-2">Rule type</legend>
+        <legend className="mb-2">{t("configuration.ruleType")}</legend>
         <Select
           value={type}
           onValueChange={(value) => {
@@ -51,7 +53,7 @@ const CreateConfigurationRuleForm = ({ onSuccess }: Props) => {
           }}
         >
           <Select.Trigger>
-            <Select.Value placeholder="Type" />
+            <Select.Value placeholder={t("fields.type")} />
           </Select.Trigger>
           <Select.Content>
             <Select.Item value="global_product_catalog">
@@ -77,11 +79,11 @@ const CreateConfigurationRuleForm = ({ onSuccess }: Props) => {
               setEnabled(val);
             }}
           />
-          <Label>Is rule enabled</Label>
+          <Label>{t("configuration.isRuleEnabled")}</Label>
         </div>
       </fieldset>
       <Button type="submit" isLoading={loading}>
-        Create
+        {t("actions.create")}
       </Button>
     </form>
   );

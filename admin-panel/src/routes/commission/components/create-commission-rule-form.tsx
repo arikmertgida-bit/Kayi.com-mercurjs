@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Button, Input, Label, Select, Switch, toast } from "@medusajs/ui";
 
@@ -13,6 +14,7 @@ type Props = {
 type Price = { amount: number; currency_code: string };
 
 const CreateCommissionRuleForm = ({ onSuccess }: Props) => {
+  const { t } = useTranslation();
   const [name, setName] = useState("");
   const [reference, setReference] = useState("seller");
   const [rateType, setRateType] = useState("flat");
@@ -98,10 +100,10 @@ const CreateCommissionRuleForm = ({ onSuccess }: Props) => {
 
       await createCommissionRule(rule_payload);
       setLoading(false);
-      toast.success("Created!");
+      toast.success(t("commission.created"));
       onSuccess?.();
     } catch (e: unknown) {
-      toast.error("Error!");
+      toast.error(t("commission.error"));
       console.error(e);
       setLoading(false);
     }
@@ -141,17 +143,17 @@ const CreateCommissionRuleForm = ({ onSuccess }: Props) => {
   return (
     <form onSubmit={onSubmit}>
       <fieldset>
-        <legend className="mb-2">Rule Name</legend>
+        <legend className="mb-2">{t("commission.ruleName")}</legend>
         <Input
           name="name"
-          placeholder="Name"
+          placeholder={t("fields.name")}
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
       </fieldset>
       <fieldset className="my-4">
-        <legend className="mb-2">Rule Type</legend>
+        <legend className="mb-2">{t("commission.ruleType")}</legend>
         <Select
           value={reference}
           onValueChange={(value) => {
@@ -159,23 +161,23 @@ const CreateCommissionRuleForm = ({ onSuccess }: Props) => {
           }}
         >
           <Select.Trigger>
-            <Select.Value placeholder="Type" />
+            <Select.Value placeholder={t("fields.type")} />
           </Select.Trigger>
           <Select.Content>
-            <Select.Item value="seller">Seller</Select.Item>
-            <Select.Item value="product_type">Product type</Select.Item>
-            <Select.Item value="product_category">Product category</Select.Item>
+            <Select.Item value="seller">{t("commission.refTypeSeller")}</Select.Item>
+            <Select.Item value="product_type">{t("commission.refTypeProductType")}</Select.Item>
+            <Select.Item value="product_category">{t("commission.refTypeProductCategory")}</Select.Item>
             <Select.Item value="seller+product_type">
-              Seller + Product type
+              {t("commission.refTypeSellerProductType")}
             </Select.Item>
             <Select.Item value="seller+product_category">
-              Seller + Product category
+              {t("commission.refTypeSellerProductCategory")}
             </Select.Item>
           </Select.Content>
         </Select>
       </fieldset>
       <fieldset className="my-4">
-        <legend className="mb-2">Attribute</legend>
+        <legend className="mb-2">{t("commission.attribute")}</legend>
         {showSellers && sellers && (
           <Select
             value={seller}
@@ -184,7 +186,7 @@ const CreateCommissionRuleForm = ({ onSuccess }: Props) => {
             }}
           >
             <Select.Trigger>
-              <Select.Value placeholder="Seller" />
+              <Select.Value placeholder={t("commission.refTypeSeller")} />
             </Select.Trigger>
             <Select.Content>
               {sellers.map((s) => {
@@ -205,7 +207,7 @@ const CreateCommissionRuleForm = ({ onSuccess }: Props) => {
             }}
           >
             <Select.Trigger>
-              <Select.Value placeholder="Product category" />
+              <Select.Value placeholder={t("commission.refTypeProductCategory")} />
             </Select.Trigger>
             <Select.Content>
               {product_categories.map((s) => {
@@ -226,7 +228,7 @@ const CreateCommissionRuleForm = ({ onSuccess }: Props) => {
             }}
           >
             <Select.Trigger>
-              <Select.Value placeholder="Product type" />
+              <Select.Value placeholder={t("commission.refTypeProductType")} />
             </Select.Trigger>
             <Select.Content>
               {product_types.map((s) => {
@@ -248,24 +250,24 @@ const CreateCommissionRuleForm = ({ onSuccess }: Props) => {
               setIncludeTax(val);
             }}
           />
-          <Label>Commission charged including tax</Label>
+          <Label>{t("commission.includingTax")}</Label>
         </div>
       </fieldset>
       <fieldset className="my-4">
-        <legend className="mb-2">Fee type</legend>
+        <legend className="mb-2">{t("commission.feeType")}</legend>
         <div className="flex items-center gap-x-2">
-          <Label>Flat fee</Label>
+          <Label>{t("commission.flatFee")}</Label>
           <Switch
             id="rate_type"
             onCheckedChange={(val) => {
               setRateType(val ? "percentage" : "flat");
             }}
           />
-          <Label>Percentage</Label>
+          <Label>{t("fields.percentage")}</Label>
         </div>
       </fieldset>
       <fieldset className="my-4">
-        <legend className="mb-2">Fee value</legend>
+        <legend className="mb-2">{t("commission.feeValue")}</legend>
         {rateType === "percentage" && (
           <Input
             name="rate_percent_value"
@@ -309,7 +311,7 @@ const CreateCommissionRuleForm = ({ onSuccess }: Props) => {
         <>
           <fieldset className="my-4">
             <div className="flex items-center gap-x-2">
-              <Label>Minimum commission value</Label>
+              <Label>{t("commission.minValue")}</Label>
               <Switch
                 id="min_com"
                 checked={minCommissionEnabled}
@@ -352,7 +354,7 @@ const CreateCommissionRuleForm = ({ onSuccess }: Props) => {
           </fieldset>
           <fieldset className="my-4">
             <div className="flex items-center gap-x-2">
-              <Label>Maximum commission value</Label>
+              <Label>{t("commission.maxValue")}</Label>
               <Switch
                 id="max_com"
                 checked={maxCommissionEnabled}
@@ -396,7 +398,7 @@ const CreateCommissionRuleForm = ({ onSuccess }: Props) => {
         </>
       )}
       <Button type="submit" isLoading={loading}>
-        Create
+        {t("actions.create")}
       </Button>
     </form>
   );

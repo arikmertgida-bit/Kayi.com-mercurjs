@@ -1,4 +1,4 @@
-import { zodResolver } from "@hookform/resolvers/zod"
+﻿import { zodResolver } from "@hookform/resolvers/zod"
 import { PencilSquare } from "@medusajs/icons"
 import { AdminExchange, AdminOrder, AdminOrderPreview } from "@medusajs/types"
 import {
@@ -142,7 +142,7 @@ export const ExchangeCreateForm = ({
 
           return {
             item_id: i.id,
-            variant_id: i.variant_id,
+            variant_id: i.variant_id ?? undefined,
             quantity: i.detail.return_requested_quantity,
             note: inboundAction?.internal_note,
             reason_id: inboundAction?.details?.reason_id as string | undefined,
@@ -150,7 +150,7 @@ export const ExchangeCreateForm = ({
         }),
         outbound_items: outboundPreviewItems.map((i) => ({
           item_id: i.id,
-          variant_id: i.variant_id,
+          variant_id: i.variant_id ?? undefined,
           quantity: i.detail.quantity,
         })),
         inbound_option_id: inboundShippingMethod
@@ -178,13 +178,15 @@ export const ExchangeCreateForm = ({
 
   useEffect(() => {
     if (inboundShipping) {
-      setCustomInboundShippingAmount(inboundShipping.total)
+      const total = inboundShipping.total as number
+      setCustomInboundShippingAmount({ value: String(total), float: total })
     }
   }, [inboundShipping])
 
   useEffect(() => {
     if (outboundShipping) {
-      setCustomOutboundShippingAmount(outboundShipping.total)
+      const total = outboundShipping.total as number
+      setCustomOutboundShippingAmount({ value: String(total), float: total })
     }
   }, [outboundShipping])
 
@@ -212,7 +214,7 @@ export const ExchangeCreateForm = ({
       handleSuccess()
     } catch (e) {
       toast.error(t("general.error"), {
-        description: e.message,
+        description: (e as Error).message,
       })
     }
   })
@@ -306,7 +308,7 @@ export const ExchangeCreateForm = ({
                       const action = item.actions?.find(
                         (act) => act.action === "RETURN_ITEM"
                       )
-                      acc = acc + (action?.amount || 0)
+                      acc = acc + ((action as unknown as { amount?: number })?.amount || 0)
 
                       return acc
                     }, 0) * -1,
@@ -326,7 +328,7 @@ export const ExchangeCreateForm = ({
                       const action = item.actions?.find(
                         (act) => act.action === "ITEM_ADD"
                       )
-                      acc = acc + (action?.amount || 0)
+                      acc = acc + ((action as unknown as { amount?: number })?.amount || 0)
 
                       return acc
                     }, 0),
@@ -380,7 +382,7 @@ export const ExchangeCreateForm = ({
                             {
                               actionId,
                               custom_amount: customPrice,
-                            },
+                            } as import("@medusajs/types").HttpTypes.AdminExchangeUpdateInboundShipping & { actionId: string },
                             {
                               onError: (error) => {
                                 toast.error(error.message)
@@ -395,7 +397,7 @@ export const ExchangeCreateForm = ({
                           .symbol_native
                       }
                       code={order.currency_code}
-                      onValueChange={(value, name, values) =>
+                      onValueChange={(_value, _name, values) =>
                         setCustomInboundShippingAmount({
                           value: values?.value ?? "",
                           float: values?.float ?? null,
@@ -453,7 +455,7 @@ export const ExchangeCreateForm = ({
                             {
                               actionId,
                               custom_amount: customPrice,
-                            },
+                            } as import("@medusajs/types").HttpTypes.AdminExchangeUpdateOutboundShipping & { actionId: string },
                             {
                               onError: (error) => {
                                 toast.error(error.message)
@@ -468,7 +470,7 @@ export const ExchangeCreateForm = ({
                           .symbol_native
                       }
                       code={order.currency_code}
-                      onValueChange={(value, name, values) =>
+                      onValueChange={(_value, _name, values) =>
                         setCustomOutboundShippingAmount({
                           value: values?.value ?? "",
                           float: values?.float ?? null,

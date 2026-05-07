@@ -1,5 +1,5 @@
 import { CalendarMini, ShoppingCart, Tag, Users, Shopping } from "@medusajs/icons"
-import { Button, Container, DatePicker, Heading, Popover, Text } from "@medusajs/ui"
+import { Button, Container, DatePicker, Heading, Text } from "@medusajs/ui"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, useSearchParams } from "react-router-dom"
@@ -198,7 +198,7 @@ export const AdminDashboard = () => {
         {/* Header + date picker */}
         <div className="flex items-center justify-between px-6 py-4">
           <div>
-            <Heading>Analytics</Heading>
+            <Heading>{t("dashboard.analyticsTitle")}</Heading>
             <Text className="text-ui-fg-subtle" size="small">
               {t("dashboard.analyticsSubtitle", "See your store's progress")}
             </Text>
@@ -253,7 +253,7 @@ export const AdminDashboard = () => {
               className="p-4 border rounded-lg w-full flex-col items-start"
               onClick={() => toggleLine("orders")}
             >
-              <Heading level="h3">Siparişler</Heading>
+              <Heading level="h3">{t("orders.domain")}</Heading>
               <div className="flex gap-2 items-center mt-2">
                 <div
                   className="h-8 w-1 rounded"
@@ -275,7 +275,7 @@ export const AdminDashboard = () => {
               className="p-4 border rounded-lg w-full flex-col items-start"
               onClick={() => {}}
             >
-              <Heading level="h3">Ürünler</Heading>
+              <Heading level="h3">{t("products.domain")}</Heading>
               <div className="flex gap-2 items-center mt-2">
                 <div className="h-8 w-1 rounded bg-ui-fg-muted" />
                 <Text className="text-ui-fg-subtle">
@@ -290,7 +290,7 @@ export const AdminDashboard = () => {
               className="p-4 border rounded-lg w-full flex-col items-start"
               onClick={() => {}}
             >
-              <Heading level="h3">Sellers</Heading>
+              <Heading level="h3">{t("sellers.domain")}</Heading>
               <div className="flex gap-2 items-center mt-2">
                 <div className="h-8 w-1 rounded bg-ui-fg-muted" />
                 <Text className="text-ui-fg-subtle">
@@ -305,7 +305,7 @@ export const AdminDashboard = () => {
               className="p-4 border rounded-lg w-full flex-col items-start"
               onClick={() => toggleLine("customers")}
             >
-              <Heading level="h3">Müşteriler</Heading>
+              <Heading level="h3">{t("customers.domain")}</Heading>
               <div className="flex gap-2 items-center mt-2">
                 <div
                   className="h-8 w-1 rounded"

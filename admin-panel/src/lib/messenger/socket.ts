@@ -9,17 +9,30 @@ function getToken(): string | null {
   return window.localStorage.getItem("medusa_auth_token")
 }
 
-export function connectSocket(): Socket {
+export function connectSocket(displayName?: string): Socket {
   if (socketInstance?.connected) return socketInstance
   const token = getToken()
   socketInstance = io(BASE_URL, {
-    auth: { token },
+    auth: { token, displayName: displayName ?? undefined },
     transports: ["websocket", "polling"],
     autoConnect: true,
     reconnection: true,
     reconnectionDelay: 1000,
     reconnectionAttempts: 10,
   })
+
+  socketInstance.on("connect", () => {
+    console.info("[messenger] Connected to socket server")
+  })
+
+  socketInstance.on("disconnect", (reason: string) => {
+    console.info("[messenger] Disconnected:", reason)
+  })
+
+  socketInstance.on("connect_error", (err: Error) => {
+    console.error("[messenger] Connection error:", err.message)
+  })
+
   return socketInstance
 }
 

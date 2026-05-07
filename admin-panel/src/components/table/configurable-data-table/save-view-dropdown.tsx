@@ -14,7 +14,6 @@ interface SaveViewDropdownProps {
 
 export const SaveViewDropdown: React.FC<SaveViewDropdownProps> = ({
   isDefaultView,
-  currentViewId,
   currentViewName,
   onSaveAsDefault,
   onUpdateExisting,

@@ -207,7 +207,7 @@ const InnerForm = <TRes,>({
                                   {...field}
                                   value={isDisabled ? placeholder : value}
                                   disabled={isDisabled}
-                                  placeholder="Value"
+                                  placeholder={t("metadata.edit.labels.value")}
                                 />
                               </Form.Control>
                             </Form.Item>

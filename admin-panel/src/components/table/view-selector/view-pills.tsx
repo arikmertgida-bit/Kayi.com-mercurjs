@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react"
+import React, { useEffect, useState } from "react"
 import {
   Badge,
   usePrompt,
@@ -10,6 +10,7 @@ import {
   PencilSquare,
   ArrowUturnLeft,
 } from "@medusajs/icons"
+import { useTranslation } from "react-i18next"
 import { useViewConfigurations, useViewConfiguration } from "../../../hooks/use-view-configurations"
 import type { ViewConfiguration } from "../../../hooks/use-view-configurations"
 import { SaveViewDialog } from "../save-view-dialog"
@@ -47,6 +48,7 @@ export const ViewPills: React.FC<ViewPillsProps> = ({
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 })
   const [deletingViewId, setDeletingViewId] = useState<string | null>(null)
   const prompt = usePrompt()
+  const { t } = useTranslation()
 
   const currentActiveView = activeView?.view_configuration || null
 
@@ -72,10 +74,10 @@ export const ViewPills: React.FC<ViewPillsProps> = ({
 
   const handleDeleteView = async (view: ViewConfiguration) => {
     const result = await prompt({
-      title: "Delete view",
-      description: `Are you sure you want to delete "${view.name}"? This action cannot be undone.`,
-      confirmText: "Delete",
-      cancelText: "Cancel",
+      title: t("views.deleteView"),
+      description: `${t("views.deleteViewDescription")} "${view.name}"?`,
+      confirmText: t("actions.delete"),
+      cancelText: t("actions.cancel"),
     })
 
     if (result) {
@@ -103,10 +105,10 @@ export const ViewPills: React.FC<ViewPillsProps> = ({
 
   const handleResetSystemDefault = async (systemDefaultView: ViewConfiguration) => {
     const result = await prompt({
-      title: "Reset system default",
-      description: "This will delete the saved system default and revert to the original code-level defaults. All users will be affected. Are you sure?",
-      confirmText: "Reset",
-      cancelText: "Cancel",
+      title: t("views.resetSystemDefault"),
+      description: t("views.resetSystemDefaultDescription"),
+      confirmText: t("views.resetToCodeDefaults"),
+      cancelText: t("actions.cancel"),
     })
 
     if (result) {
@@ -120,7 +122,7 @@ export const ViewPills: React.FC<ViewPillsProps> = ({
 
   // Determine if we're showing default
   const isDefaultActive = isDefaultViewActive
-  const defaultLabel = "Default"
+  const defaultLabel = t("views.default")
 
   return (
     <>
@@ -222,7 +224,7 @@ export const ViewPills: React.FC<ViewPillsProps> = ({
                     className="flex items-center gap-x-2"
                   >
                     <PencilSquare className="text-ui-fg-subtle" />
-                    <span>Edit name</span>
+                    <span>{t("actions.edit")} {t("fields.name")}</span>
                   </DropdownMenu.Item>
                   <DropdownMenu.Item
                     onClick={() => {
@@ -232,7 +234,7 @@ export const ViewPills: React.FC<ViewPillsProps> = ({
                     className="flex items-center gap-x-2 text-ui-fg-error"
                   >
                     <Trash />
-                    <span>Delete</span>
+                    <span>{t("actions.delete")}</span>
                   </DropdownMenu.Item>
                 </DropdownMenu.Content>
               </DropdownMenu>

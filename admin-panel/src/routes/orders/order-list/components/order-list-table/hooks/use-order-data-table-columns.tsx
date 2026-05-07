@@ -1,4 +1,4 @@
-import React, { useMemo } from "react"
+import { useMemo } from "react"
 import { createDataTableColumnHelper, StatusBadge } from "@medusajs/ui"
 import { HttpTypes } from "@medusajs/types"
 import { useDate } from "../../../../../../hooks/use-date"
@@ -19,7 +19,7 @@ export function useOrderDataTableColumns(apiColumns: any[] | undefined) {
         return columnHelper.accessor("display_id", {
           id: apiColumn.field,
           header: () => apiColumn.name,
-          cell: ({ getValue }) => {
+          cell: ({ getValue }: { getValue: () => any }) => {
             const value = getValue()
             return (
               <div className="flex items-center gap-x-2">
@@ -32,16 +32,15 @@ export function useOrderDataTableColumns(apiColumns: any[] | undefined) {
             name: apiColumn.name,
             column: apiColumn,
           },
-          enableHiding: apiColumn.hideable,
-          enableSorting: false,
-        })
+          enableSorting: false as const,
+        } as any)
       }
 
       if (apiColumn.field === "created_at" || apiColumn.field === "updated_at") {
         return columnHelper.accessor(apiColumn.field as any, {
           id: apiColumn.field,
           header: () => apiColumn.name,
-          cell: ({ getValue }) => {
+          cell: ({ getValue }: { getValue: () => any }) => {
             const value = getValue()
             if (!value) return null
             return getFullDate({ date: value })
@@ -50,54 +49,33 @@ export function useOrderDataTableColumns(apiColumns: any[] | undefined) {
             name: apiColumn.name,
             column: apiColumn,
           },
-          enableHiding: apiColumn.hideable,
-          enableSorting: false,
-        })
+          enableSorting: false as const,
+        } as any)
       }
 
       if (apiColumn.field === "payment_status") {
         return columnHelper.accessor("payment_status", {
           id: apiColumn.field,
           header: () => apiColumn.name,
-          cell: ({ getValue }) => {
+          cell: ({ getValue }: { getValue: () => any }) => {
             const value = getValue()
             return value ? (
-              <StatusBadge variant="default">{value}</StatusBadge>
+              <StatusBadge color="grey">{value}</StatusBadge>
             ) : null
           },
           meta: {
             name: apiColumn.name,
             column: apiColumn,
           },
-          enableHiding: apiColumn.hideable,
-          enableSorting: false,
-        })
-      }
-
-      if (apiColumn.field === "fulfillment_status") {
-        return columnHelper.accessor("fulfillment_status", {
-          id: apiColumn.field,
-          header: () => apiColumn.name,
-          cell: ({ getValue }) => {
-            const value = getValue()
-            return value ? (
-              <StatusBadge variant="default">{value}</StatusBadge>
-            ) : null
-          },
-          meta: {
-            name: apiColumn.name,
-            column: apiColumn,
-          },
-          enableHiding: apiColumn.hideable,
-          enableSorting: false,
-        })
+          enableSorting: false as const,
+        } as any)
       }
 
       if (apiColumn.field === "total") {
         return columnHelper.accessor("total", {
           id: apiColumn.field,
           header: () => apiColumn.name,
-          cell: ({ getValue }) => {
+          cell: ({ getValue }: { getValue: () => any }) => {
             const value = getValue()
             // Format as currency if we have the value
             return value !== null && value !== undefined ? `$${(value / 100).toFixed(2)}` : null
@@ -106,9 +84,8 @@ export function useOrderDataTableColumns(apiColumns: any[] | undefined) {
             name: apiColumn.name,
             column: apiColumn,
           },
-          enableHiding: apiColumn.hideable,
-          enableSorting: false,
-        })
+          enableSorting: false as const,
+        } as any)
       }
 
       // Handle nested fields with dot notation
@@ -125,7 +102,7 @@ export function useOrderDataTableColumns(apiColumns: any[] | undefined) {
         {
           id: apiColumn.field,
           header: () => apiColumn.name,
-          cell: ({ getValue }) => {
+          cell: ({ getValue }: { getValue: () => any }) => {
             const value = getValue()
             if (value === null || value === undefined) return null
             
@@ -144,10 +121,10 @@ export function useOrderDataTableColumns(apiColumns: any[] | undefined) {
             name: apiColumn.name,
             column: apiColumn,
           },
-          enableHiding: apiColumn.hideable,
-          enableSorting: false,
-        }
+          enableSorting: false as const,
+        } as any
       )
     })
   }, [apiColumns, getFullDate])
 }
+

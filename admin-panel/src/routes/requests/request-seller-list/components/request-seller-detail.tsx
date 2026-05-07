@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import { InformationCircle } from "@medusajs/icons";
 import { Button, Container, Drawer, Text } from "@medusajs/ui";
+import { useTranslation } from "react-i18next";
 
 import type { AdminSellerRequest } from "@custom-types/requests";
 
@@ -20,6 +21,7 @@ export function RequestSellerDetail({ request, open, close }: Props) {
     return null;
   }
   const requestData = request.data;
+  const { t } = useTranslation();
 
   const [promptOpen, setPromptOpen] = useState(false);
   const [requestAccept, setRequestAccept] = useState(false);
@@ -44,23 +46,23 @@ export function RequestSellerDetail({ request, open, close }: Props) {
       />
       <Drawer.Content>
         <Drawer.Header>
-          <Drawer.Title>Review seller request</Drawer.Title>
+          <Drawer.Title>{t("requests.sellerList.detail.title")}</Drawer.Title>
         </Drawer.Header>
         <Drawer.Body className="p-4">
           <fieldset>
-            <legend className="mb-2">Seller name</legend>
+            <legend className="mb-2">{t("requests.sellerList.detail.sellerName")}</legend>
             <Container>
               <Text>{requestData?.seller?.name ?? "-"}</Text>
             </Container>
           </fieldset>
           <fieldset className="mt-2">
-            <legend className="mb-2">Member</legend>
+            <legend className="mb-2">{t("requests.sellerList.detail.member")}</legend>
             <Container>
               <Text>{requestData?.member?.name ?? "-"}</Text>
             </Container>
           </fieldset>
           <fieldset className="mt-2">
-            <legend className="mb-2">Email</legend>
+            <legend className="mb-2">{t("fields.email")}</legend>
             <Container>
               <Text>{requestData?.provider_identity_id ?? "N/A"}</Text>
             </Container>
@@ -68,14 +70,14 @@ export function RequestSellerDetail({ request, open, close }: Props) {
           <Container className="mt-4">
             <div className="flex items-center gap-2">
               <InformationCircle />
-              <Text className="font-semibold">Request information</Text>
+              <Text className="font-semibold">{t("requests.detail.requestInformation")}</Text>
             </div>
-            <Text>{`Submitted on ${formatDate(request.created_at)}`}</Text>
+            <Text>{t("requests.detail.submittedOn", { date: formatDate(request.created_at) })}</Text>
             {request.reviewer_id && (
-              <Text>{`Reviewed on ${formatDate(request.updated_at)}`}</Text>
+              <Text>{t("requests.detail.reviewedOn", { date: formatDate(request.updated_at) })}</Text>
             )}
             {request.reviewer_note && (
-              <Text>{`Reviewer note: ${request.reviewer_note}`}</Text>
+              <Text>{t("requests.detail.reviewerNote", { note: request.reviewer_note })}</Text>
             )}
           </Container>
         </Drawer.Body>

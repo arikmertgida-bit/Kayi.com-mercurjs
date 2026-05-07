@@ -66,7 +66,7 @@ export function getEntityDefaultFields(entity: string) {
   const config =
     ENTITY_DEFAULT_FIELDS[entity as EntityType] || ENTITY_DEFAULT_FIELDS.default
   return {
-    properties: config.properties,
+    properties: config.properties as readonly string[],
     relations: config.relations,
     formatted: [...config.properties, ...config.relations].join(","),
   }

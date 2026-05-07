@@ -115,7 +115,7 @@ export function CreateShippingOptionsForm({
         value?.map((rule) => ({
           region_id: region_id,
           amount: castNumber(rule.amount),
-          rules: buildShippingOptionPriceRules(rule),
+          rules: buildShippingOptionPriceRules(rule) as HttpTypes.AdminCreateShippingOptionPriceWithRegion["rules"],
         })) || []
 
       return prices?.filter(Boolean)
@@ -128,7 +128,7 @@ export function CreateShippingOptionsForm({
         value?.map((rule) => ({
           currency_code,
           amount: castNumber(rule.amount),
-          rules: buildShippingOptionPriceRules(rule),
+          rules: buildShippingOptionPriceRules(rule) as HttpTypes.AdminCreateShippingOptionPriceWithCurrency["rules"],
         })) || []
 
       return prices?.filter(Boolean)

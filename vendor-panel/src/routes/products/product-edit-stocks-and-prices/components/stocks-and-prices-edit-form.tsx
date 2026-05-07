@@ -138,13 +138,12 @@ const useStocksAndPricesGridColumns = ({
         ProductCreateSchemaType
       >({
         currencies: currencies.map((c) => c.currency_code),
-        regions,
         pricePreferences,
         isReadyOnly: (context) => (context.row.original as any).isProductInfo,
         getFieldName: (context, value) => {
           const entity = context.row.original as any
           if (entity.isProductInfo) return null
-          return `variants.${context.row.index - 1}.prices.${value}`
+          return `variants.${context.row.index - 1}.prices.${value}` as any
         },
         t,
       }),

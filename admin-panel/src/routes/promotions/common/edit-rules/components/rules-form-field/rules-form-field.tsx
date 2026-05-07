@@ -1,5 +1,9 @@
 import { XMarkMini } from "@medusajs/icons"
-import { PromotionDTO } from "@medusajs/types"
+import {
+  AdminPromotion,
+  AdminPromotionRule,
+  ApplicationMethodTargetTypeValues,
+} from "@medusajs/types"
 import { Badge, Button, Heading, IconButton, Select, Text } from "@medusajs/ui"
 import { forwardRef, Fragment, useEffect, useRef } from "react"
 import {
@@ -21,9 +25,9 @@ import { RuleValueFormField } from "../rule-value-form-field"
 import { requiredProductRule } from "./constants"
 
 type RulesFormFieldType = {
-  promotion?: PromotionDTO
+  promotion?: AdminPromotion
   form: UseFormReturn<CreatePromotionSchemaType>
-  ruleType: "rules" | "target-rules" | "buy-rules"
+  ruleType: "rules" | "target_rules" | "buy_rules"
   setRulesToRemove?: any
   rulesToRemove?: any
   scope?:
@@ -113,24 +117,24 @@ export const RulesFormField = ({
       replace(generateRuleAttributes(rules) as any)
     }
 
-    if (ruleType === "buy-rules" && !fields.length) {
+    if (ruleType === "buy_rules" && !fields.length) {
       form.resetField("application_method.buy_rules")
       const rulesToAppend =
         promotion?.id || promotionType === "standard"
           ? rules
-          : [...rules, requiredProductRule]
+          : [...(rules ?? []), requiredProductRule]
 
-      replace(generateRuleAttributes(rulesToAppend) as any)
+      replace(generateRuleAttributes(rulesToAppend as AdminPromotionRule[]) as any)
     }
 
-    if (ruleType === "target-rules" && !fields.length) {
+    if (ruleType === "target_rules" && !fields.length) {
       form.resetField("application_method.target_rules")
       const rulesToAppend =
         promotion?.id || promotionType === "standard"
           ? rules
-          : [...rules, requiredProductRule]
+          : [...(rules ?? []), requiredProductRule]
 
-      replace(generateRuleAttributes(rulesToAppend) as any)
+      replace(generateRuleAttributes(rulesToAppend as AdminPromotionRule[]) as any)
     }
 
     initialRulesSet.current = true
@@ -150,16 +154,16 @@ export const RulesFormField = ({
     <div className="flex flex-col">
       <Heading level="h2" className="mb-2">
         {t(
-          ruleType === "target-rules"
-            ? `promotions.fields.conditions.${ruleType}.${applicationMethodTargetType}.title`
+          ruleType === "target_rules"
+            ? `promotions.fields.conditions.${ruleType}.${applicationMethodTargetType ?? "items"}.title`
             : `promotions.fields.conditions.${ruleType}.title`
         )}
       </Heading>
 
       <Text className="text-ui-fg-subtle txt-small mb-6">
         {t(
-          ruleType === "target-rules"
-            ? `promotions.fields.conditions.${ruleType}.${applicationMethodTargetType}.description`
+          ruleType === "target_rules"
+            ? `promotions.fields.conditions.${ruleType}.${applicationMethodTargetType ?? "items"}.description`
             : `promotions.fields.conditions.${ruleType}.description`
         )}
       </Text>
@@ -306,7 +310,7 @@ export const RulesFormField = ({
                                   ref={ref}
                                   className="bg-ui-bg-base"
                                 >
-                                  <Select.Value placeholder="Select Operator" />
+                                  <Select.Value placeholder={t("labels.selectOperator")} />
                                 </Select.Trigger>
 
                                 <Select.Content>
@@ -338,14 +342,14 @@ export const RulesFormField = ({
 
                   <RuleValueFormField
                     form={form}
-                    identifier={identifier}
+                    identifier={identifier ?? ""}
                     scope={scope}
                     name={`${scope}.${index}.values`}
                     operator={`${scope}.${index}.operator`}
                     fieldRule={fieldRule}
-                    attributes={attributes}
+                    attributes={attributes ?? []}
                     ruleType={ruleType}
-                    applicationMethodTargetType={applicationMethodTargetType}
+                    applicationMethodTargetType={applicationMethodTargetType as ApplicationMethodTargetTypeValues | undefined}
                   />
                 </div>
               </div>
@@ -410,7 +414,7 @@ export const RulesFormField = ({
             onClick={() => {
               const indicesToRemove = fields
                 .map((field: any, index) => (field.required ? null : index))
-                .filter((f) => f !== null)
+                .filter((f): f is number => f !== null)
 
               setRulesToRemove &&
                 setRulesToRemove(fields.filter((field: any) => !field.required))
@@ -427,7 +431,7 @@ export const RulesFormField = ({
 
 type DisabledAttributeProps = {
   label: string
-  field: ControllerRenderProps
+  field: ControllerRenderProps<any, any>
 }
 
 /**

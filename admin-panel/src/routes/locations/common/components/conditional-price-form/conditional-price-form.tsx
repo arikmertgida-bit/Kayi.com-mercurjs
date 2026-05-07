@@ -358,7 +358,7 @@ const ConditionalPriceItem = ({
           render={({ field }) => {
             return (
               <OperatorInput
-                field={field}
+                field={field as any}
                 label={t(
                   "stockLocations.shippingOptions.conditionalPrices.rules.gte"
                 )}
@@ -375,7 +375,7 @@ const ConditionalPriceItem = ({
           render={({ field }) => {
             return (
               <OperatorInput
-                field={field}
+                field={field as any}
                 label={t(
                   "stockLocations.shippingOptions.conditionalPrices.rules.lte"
                 )}

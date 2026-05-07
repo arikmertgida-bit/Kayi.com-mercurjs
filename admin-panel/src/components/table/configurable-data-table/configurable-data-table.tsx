@@ -1,4 +1,4 @@
-import { useState, ReactNode } from "react"
+import { useState } from "react"
 import { Container, Button } from "@medusajs/ui"
 import { useTranslation } from "react-i18next"
 import { DataTable } from "../../data-table"

@@ -41,12 +41,15 @@ interface MessengerContextValue {
   conversations: Conversation[]
   activeConversationId: string | null
   messages: Message[]
+  pinnedMessages: Message[]
   unreadCount: number
   typingUserIds: string[]
   isConnected: boolean
   isLoadingMessages: boolean
 
   openConversation: (conversationId: string) => void
+  openSidebarConversation: (conversationId: string) => Promise<void>
+  sendSidebarMessage: (content: string) => Promise<void>
   closeConversation: () => void
   startConversation: (params: {
     targetUserId: string
@@ -114,15 +117,19 @@ export function MessengerProvider({ children, sellerId, sellerName }: MessengerP
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
+  const [pinnedMessages, setPinnedMessages] = useState<Message[]>([])
+  const [pinnedConvId, setPinnedConvId] = useState<string | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
   const [typingUserIds, setTypingUserIds] = useState<string[]>([])
   const [isConnected, setIsConnected] = useState(false)
   const [isLoadingMessages, setIsLoadingMessages] = useState(false)
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const activeConvRef = useRef<string | null>(null)
+  const pinnedConvIdRef = useRef<string | null>(null)
   const conversationsRef = useRef<Conversation[]>([])
 
   activeConvRef.current = activeConversationId
+  pinnedConvIdRef.current = pinnedConvId
   conversationsRef.current = conversations
 
   // Browser notification
@@ -146,33 +153,52 @@ export function MessengerProvider({ children, sellerId, sellerName }: MessengerP
     const onDisconnect = () => setIsConnected(false)
 
     const onMessage = (msg: Message) => {
+      // If message belongs to the active inbox conversation
       if (msg.conversationId === activeConvRef.current) {
         setMessages((prev) => {
-          // Deduplicate: skip if already present (e.g. from optimistic update)
           if (prev.some((m) => m.id === msg.id)) return prev
           return [...prev, msg]
         })
         emitMessagesRead(msg.conversationId)
-      } else {
-        setUnreadCount((n) => n + 1)
+      }
+      // If message belongs to the pinned sidebar conversation (independent of inbox)
+      if (msg.conversationId === pinnedConvIdRef.current) {
+        setPinnedMessages((prev) => {
+          if (prev.some((m) => m.id === msg.id)) return prev
+          return [...prev, msg]
+        })
+        emitMessagesRead(msg.conversationId)
+      }
+      // Update unread count only if not active in either inbox or sidebar
+      const isActiveAnywhere =
+        msg.conversationId === activeConvRef.current ||
+        msg.conversationId === pinnedConvIdRef.current
+      if (!isActiveAnywhere) {
+        // Refetch from DB to avoid double-count with notification event
+        getUnreadCount().then((r) => setUnreadCount(r.count)).catch(() => {})
       }
       setConversations((prev) => {
         const exists = prev.some((c) => c.id === msg.conversationId)
         if (!exists) {
-          // New conversation arrived (e.g. first customer message) — refresh list
           getConversations()
             .then((r) => {
               setConversations(r.conversations)
-              setUnreadCount((n) => n + 1)
+              getUnreadCount().then((r2) => setUnreadCount(r2.count)).catch(() => {})
             })
             .catch(() => {})
           return prev
         }
-        return prev.map((c) =>
-          c.id === msg.conversationId
-            ? { ...c, messages: [msg], updatedAt: msg.createdAt }
-            : c
-        ).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+        const updated = prev.map((c) => {
+          if (c.id !== msg.conversationId) return c
+          // Update participant unreadCount for ADMIN_SUPPORT badge (useMessengerAdminUnreads)
+          const updatedParticipants = isActiveAnywhere
+            ? c.participants
+            : c.participants.map((p: any) =>
+                p.userType === "SELLER" ? { ...p, unreadCount: (p.unreadCount ?? 0) + 1 } : p
+              )
+          return { ...c, messages: [msg], updatedAt: msg.createdAt, participants: updatedParticipants }
+        })
+        return updated.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
       })
     }
 
@@ -195,36 +221,25 @@ export function MessengerProvider({ children, sellerId, sellerName }: MessengerP
     }
 
     const onMessageDeleted = (payload: { messageId: string; conversationId: string; deleteForAll: boolean; content?: string }) => {
+      setMessages((prev) => prev.filter((m) => m.id !== payload.messageId))
       if (payload.deleteForAll) {
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === payload.messageId
-              ? { ...m, content: payload.content ?? "[Bu mesaj silindi]", deletedForAll: true, imageUrl: null }
-              : m
-          )
-        )
-      } else {
-        setMessages((prev) => prev.filter((m) => m.id !== payload.messageId))
+        setConversations((prev) => prev.map((c) =>
+          c.id === payload.conversationId
+            ? { ...c, messages: (c.messages ?? []).filter((m: any) => m.id !== payload.messageId) }
+            : c
+        ))
       }
     }
 
     const onNotification = (payload: NotificationPayload) => {
       showBrowserNotification(payload)
-      // If the notification references a conversation we don't have yet,
-      // refresh the full list so new conversations (e.g. first customer message) appear
-      if (
-        payload.conversationId &&
-        !conversationsRef.current.some((c) => c.id === payload.conversationId)
-      ) {
-        getConversations()
-          .then((r) => {
-            setConversations(r.conversations)
-            getUnreadCount().then((r2) => setUnreadCount(r2.count)).catch(() => {})
-          })
-          .catch(() => {})
-      } else {
-        setUnreadCount((n) => n + 1)
-      }
+      // Her bildirimde listeyi ve sayacı DB'den refetch et (bilinsin/bilinmesin fark etmez)
+      getConversations()
+        .then((r) => {
+          setConversations(r.conversations)
+          getUnreadCount().then((r2) => setUnreadCount(r2.count)).catch(() => {})
+        })
+        .catch(() => {})
     }
 
     socket.on("connect", onConnect)
@@ -261,7 +276,9 @@ export function MessengerProvider({ children, sellerId, sellerName }: MessengerP
   }, [sellerId])
 
   const openConversation = useCallback(async (conversationId: string) => {
-    if (activeConvRef.current) leaveConversation(activeConvRef.current)
+    if (activeConvRef.current && activeConvRef.current !== pinnedConvIdRef.current) {
+      leaveConversation(activeConvRef.current)
+    }
     setActiveConversationId(conversationId)
     setMessages([])
     setTypingUserIds([])
@@ -272,10 +289,65 @@ export function MessengerProvider({ children, sellerId, sellerName }: MessengerP
       const { messages } = await getMessages(conversationId)
       setMessages([...messages].reverse())
       await markConversationRead(conversationId)
+      // Reset participant unreadCount for this conversation in local state
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.id === conversationId
+            ? {
+                ...c,
+                participants: c.participants.map((p: any) =>
+                  p.userType === "SELLER" ? { ...p, unreadCount: 0 } : p
+                ),
+              }
+            : c
+        )
+      )
       getUnreadCount().then((r) => setUnreadCount(r.count)).catch(() => {})
     } finally {
       setIsLoadingMessages(false)
     }
+  }, [])
+
+  const openSidebarConversation = useCallback(async (conversationId: string) => {
+    setPinnedConvId(conversationId)
+    setPinnedMessages([])
+    joinConversation(conversationId)
+    emitMessagesRead(conversationId)
+    try {
+      const { messages: msgs } = await getMessages(conversationId)
+      setPinnedMessages([...msgs].reverse())
+      await markConversationRead(conversationId)
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.id === conversationId
+            ? {
+                ...c,
+                participants: c.participants.map((p: any) =>
+                  p.userType === "SELLER" ? { ...p, unreadCount: 0 } : p
+                ),
+              }
+            : c
+        )
+      )
+      getUnreadCount().then((r) => setUnreadCount(r.count)).catch(() => {})
+    } catch (_) { /* ignore */ }
+  }, [])
+
+  const sendSidebarMessage = useCallback(async (content: string) => {
+    if (!pinnedConvIdRef.current) return
+    const { message } = await apiSendMessage(pinnedConvIdRef.current, content)
+    setPinnedMessages((prev) => {
+      if (prev.some((m) => m.id === message.id)) return prev
+      return [...prev, message]
+    })
+    // Reflect in conversation list so /messages chatlist shows it immediately
+    setConversations((prev) =>
+      prev.map((c) =>
+        c.id === pinnedConvIdRef.current
+          ? { ...c, messages: [message], updatedAt: message.createdAt }
+          : c
+      ).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+    )
   }, [])
 
   const closeConversation = useCallback(() => {
@@ -319,17 +391,7 @@ export function MessengerProvider({ children, sellerId, sellerName }: MessengerP
   const deleteMessage = useCallback(async (messageId: string, deleteForAll: boolean) => {
     if (!activeConvRef.current) return
     const convId = activeConvRef.current
-    if (deleteForAll) {
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === messageId
-            ? { ...m, content: "[Bu mesaj silindi]", deletedForAll: true, imageUrl: null }
-            : m
-        )
-      )
-    } else {
-      setMessages((prev) => prev.filter((m) => m.id !== messageId))
-    }
+    setMessages((prev) => prev.filter((m) => m.id !== messageId))
     emitDeleteMessage(messageId, convId, deleteForAll)
     await apiDeleteMessage(convId, messageId, deleteForAll).catch((err) => {
       console.error("[deleteMessage] REST fallback error", err)
@@ -384,11 +446,14 @@ export function MessengerProvider({ children, sellerId, sellerName }: MessengerP
         conversations,
         activeConversationId,
         messages,
+        pinnedMessages,
         unreadCount,
         typingUserIds,
         isConnected,
         isLoadingMessages,
         openConversation,
+        openSidebarConversation,
+        sendSidebarMessage,
         closeConversation,
         startConversation,
         sendMessage,

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { InformationCircle } from "@medusajs/icons";
 import type { OrderDTO } from "@medusajs/types";
 import { Button, Container, Drawer, Text } from "@medusajs/ui";
+import { useTranslation } from "react-i18next";
 
 import { formatDate } from "@lib/date";
 
@@ -24,6 +25,7 @@ export function ReturnRequestDetail({ request, open, close }: Props) {
   }
 
   const { order } = useOrder(request.order?.id);
+  const { t } = useTranslation();
 
   const [promptOpen, setPromptOpen] = useState(false);
   const [requestAccept, setRequestAccept] = useState(false);
@@ -48,41 +50,41 @@ export function ReturnRequestDetail({ request, open, close }: Props) {
       />
       <Drawer.Content>
         <Drawer.Header>
-          <Drawer.Title>Order return request</Drawer.Title>
+          <Drawer.Title>{t("requests.returnList.detail.title")}</Drawer.Title>
         </Drawer.Header>
         <Drawer.Body className="flex max-w-full flex-1 flex-col overflow-y-auto">
           <fieldset>
-            <legend className="mb-2">Order ID</legend>
+            <legend className="mb-2">{t("requests.columns.orderId")}</legend>
             <Container>
               <Text>{request.order?.id}</Text>
             </Container>
           </fieldset>
           <fieldset className="mt-2">
-            <legend className="mb-2">Customer</legend>
+            <legend className="mb-2">{t("requests.columns.customer")}</legend>
             <Container>
               <Text>{`${request.order?.customer?.first_name} ${request.order?.customer?.last_name}`}</Text>
             </Container>
           </fieldset>
           <fieldset className="mt-2">
-            <legend className="mb-2">Seller</legend>
+            <legend className="mb-2">{t("requests.columns.seller")}</legend>
             <Container>
               <Text>{request.seller?.name}</Text>
             </Container>
           </fieldset>
           <fieldset className="mt-2">
-            <legend className="mb-2">Return request reason</legend>
+            <legend className="mb-2">{t("requests.returnList.detail.returnReason")}</legend>
             <Container>
               <Text>{request.customer_note}</Text>
             </Container>
           </fieldset>
           <fieldset className="mt-2">
-            <legend className="mb-2">Vendor response</legend>
+            <legend className="mb-2">{t("requests.returnList.detail.vendorResponse")}</legend>
             <Container>
               <Text>{request.vendor_reviewer_note || "-"}</Text>
             </Container>
           </fieldset>
           <fieldset className="mt-2">
-            <legend className="mb-2">Items</legend>
+            <legend className="mb-2">{t("requests.returnList.detail.items")}</legend>
             <Container>
               {request.line_items?.map((item) => {
                 return (
@@ -99,15 +101,15 @@ export function ReturnRequestDetail({ request, open, close }: Props) {
           <Container className="mt-4">
             <div className="flex items-center gap-2">
               <InformationCircle />
-              <Text className="font-semibold">Request information</Text>
+              <Text className="font-semibold">{t("requests.detail.requestInformation")}</Text>
             </div>
-            <Text>{`Submitted on ${formatDate(request.created_at)}`}</Text>
-            <Text>{`Escalated on ${formatDate(request.vendor_reviewer_date)}`}</Text>
+            <Text>{t("requests.detail.submittedOn", { date: formatDate(request.created_at) })}</Text>
+            <Text>{t("requests.returnList.detail.escalatedOn", { date: formatDate(request.vendor_reviewer_date) })}</Text>
             {request.admin_reviewer_id && (
-              <Text>{`Reviewed on ${formatDate(request.admin_reviewer_date)}`}</Text>
+              <Text>{t("requests.detail.reviewedOn", { date: formatDate(request.admin_reviewer_date) })}</Text>
             )}
             {request.admin_reviewer_note && (
-              <Text>{`Reviewer note: ${request.admin_reviewer_note}`}</Text>
+              <Text>{t("requests.detail.reviewerNote", { note: request.admin_reviewer_note })}</Text>
             )}
           </Container>
         </Drawer.Body>

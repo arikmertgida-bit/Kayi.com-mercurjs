@@ -1,4 +1,4 @@
-import { zodResolver } from "@hookform/resolvers/zod"
+﻿import { zodResolver } from "@hookform/resolvers/zod"
 import { AdminOrder, AdminOrderPreview } from "@medusajs/types"
 import { Button, Heading, Input, Switch, toast, usePrompt } from "@medusajs/ui"
 import { useForm } from "react-hook-form"
@@ -58,7 +58,7 @@ export const OrderEditCreateForm = ({
 
   const prompt = usePrompt()
 
-  const handleSubmit = form.handleSubmit(async (data) => {
+  const handleSubmit = form.handleSubmit(async (_data) => {
     try {
       const res = await prompt({
         title: t("general.areYouSure"),
@@ -78,7 +78,7 @@ export const OrderEditCreateForm = ({
       handleSuccess()
     } catch (e) {
       toast.error(t("general.error"), {
-        description: e.message,
+        description: (e as Error).message,
       })
     }
   })

@@ -45,12 +45,12 @@ export const EditCustomerForm = ({ customer }: EditCustomerFormProps) => {
   const handleSubmit = form.handleSubmit(async (data) => {
     await mutateAsync(
       {
-        email: customer.has_account ? undefined : data.email,
-        first_name: data.first_name || null,
-        last_name: data.last_name || null,
-        phone: data.phone || null,
-        company_name: data.company_name || null,
-      },
+        ...(customer.has_account ? {} : { email: data.email || undefined } as Record<string, unknown>),
+        first_name: data.first_name || undefined,
+        last_name: data.last_name || undefined,
+        phone: data.phone || undefined,
+        company_name: data.company_name || undefined,
+      } as HttpTypes.AdminUpdateCustomer,
       {
         onSuccess: ({ customer }) => {
           toast.success(

@@ -1,9 +1,9 @@
-import { zodResolver } from "@hookform/resolvers/zod"
+﻿import { zodResolver } from "@hookform/resolvers/zod"
 import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import * as zod from "zod"
 
-import { AdminOrder, InventoryItemDTO, OrderLineItemDTO } from "@medusajs/types"
+import { AdminInventoryItem, AdminOrder, AdminOrderLineItem } from "@medusajs/types"
 import { Alert, Button, Heading, Input, Select, toast } from "@medusajs/ui"
 import { useForm, useWatch } from "react-hook-form"
 
@@ -41,7 +41,7 @@ export function OrderAllocateItemsForm({ order }: OrderAllocateItemsFormProps) {
       order.items.filter(
         (item) =>
           item.variant?.manage_inventory &&
-          item.variant?.inventory.length &&
+          item.variant?.inventory_items?.length &&
           item.quantity - item.detail.fulfilled_quantity > 0
       ),
     [order.items]
@@ -50,13 +50,13 @@ export function OrderAllocateItemsForm({ order }: OrderAllocateItemsFormProps) {
   const filteredItems = useMemo(() => {
     return itemsToAllocate.filter(
       (i) =>
-        i.variant_title.toLowerCase().includes(filterTerm) ||
-        i.product_title.toLowerCase().includes(filterTerm)
+        i.variant_title?.toLowerCase().includes(filterTerm) ||
+        i.product_title?.toLowerCase().includes(filterTerm)
     )
   }, [itemsToAllocate, filterTerm])
 
   // TODO - empty state UI
-  const noItemsToAllocate = !itemsToAllocate.length
+  // const noItemsToAllocate = !itemsToAllocate.length
 
   const form = useForm<zod.infer<typeof AllocateItemsSchema>>({
     defaultValues: {
@@ -116,20 +116,18 @@ export function OrderAllocateItemsForm({ order }: OrderAllocateItemsFormProps) {
           description: t("orders.allocateItems.toast.error", {
             items: failedItems,
           }),
-          dismissLabel: t("actions.close"),
         })
       }
     } catch (e) {
       toast.error(t("general.error"), {
-        description: e.message,
-        dismissLabel: t("actions.close"),
+        description: (e as Error).message,
       })
     }
   })
 
   const onQuantityChange = (
-    inventoryItem: InventoryItemDTO,
-    lineItem: OrderLineItemDTO,
+    inventoryItem: AdminInventoryItem,
+    lineItem: AdminOrderLineItem,
     hasInventoryKit: boolean,
     value: number | null,
     isRoot?: boolean
@@ -141,14 +139,14 @@ export function OrderAllocateItemsForm({ order }: OrderAllocateItemsFormProps) {
         ? `quantity.${lineItem.id}-`
         : `quantity.${lineItem.id}-${inventoryItem.id}`
 
-    form.setValue(key, value)
+    form.setValue(key as `quantity.${string}`, value ?? 0)
 
     if (value) {
-      const location = inventoryItem.location_levels.find(
+      const location = inventoryItem.location_levels?.find(
         (l) => l.location_id === selectedLocationId
       )
       if (location) {
-        if (location.available_quantity < value) {
+          if ((location.available_quantity ?? 0) < value) {
           shouldDisableSubmit = true
         }
       }
@@ -164,21 +162,22 @@ export function OrderAllocateItemsForm({ order }: OrderAllocateItemsFormProps) {
 
       const item = itemsToAllocate.find((i) => i.id === lineItem.id)
 
-      item.variant?.inventory_items.forEach((ii, ind) => {
+      item?.variant?.inventory_items?.forEach((ii, ind) => {
         const num = value || 0
-        const inventory = item.variant?.inventory[ind]
+        const inventory = item.variant?.inventory_items?.[ind]?.inventory
+        if (!inventory) return
 
         form.setValue(
           `quantity.${lineItem.id}-${inventory.id}`,
-          num * ii.required_quantity
+          num * (ii.required_quantity ?? 1)
         )
 
         if (value) {
-          const location = inventory?.location_levels.find(
+          const location = inventory.location_levels?.find(
             (l) => l.location_id === selectedLocationId
           )
           if (location) {
-            if (location.available_quantity < value) {
+            if ((location.available_quantity ?? 0) < value) {
               shouldDisableSubmit = true
             }
           }
@@ -341,20 +340,24 @@ export function OrderAllocateItemsForm({ order }: OrderAllocateItemsFormProps) {
   )
 }
 
-function defaultAllocations(items: OrderLineItemDTO) {
-  const ret = {}
+function defaultAllocations(items: AdminOrderLineItem[]) {
+  const ret: Record<string, string | number> = {}
 
   items.forEach((item) => {
     const hasInventoryKit = checkInventoryKit(item)
+    const inventoryItems =
+      item.variant?.inventory_items
+        ?.map((link) => link.inventory)
+        .filter((inv): inv is NonNullable<typeof inv> => !!inv) ?? []
 
     ret[
       hasInventoryKit
         ? `${item.id}-`
-        : `${item.id}-${item.variant?.inventory[0].id}`
+        : `${item.id}-${inventoryItems[0]?.id ?? ""}`
     ] = ""
 
     if (hasInventoryKit) {
-      item.variant?.inventory.forEach((i) => {
+      inventoryItems.forEach((i) => {
         ret[`${item.id}-${i.id}`] = ""
       })
     }

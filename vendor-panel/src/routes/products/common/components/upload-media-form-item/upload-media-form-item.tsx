@@ -108,7 +108,7 @@ export const UploadMediaFormItem = ({
     (files: FileType[]) => {
       form.clearErrors("media")
 
-      const currentCount = (form.getValues("media") as Media[] | undefined)?.length ?? 0
+      const currentCount = ((form as any).getValues("media") as any)?.length ?? 0
       if (currentCount + files.length > MAX_IMAGE_COUNT) {
         setShowLimitModal(true)
         return

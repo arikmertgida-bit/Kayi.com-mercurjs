@@ -351,7 +351,7 @@ export const CreatePromotionForm = () => {
             ...DEFAULT_CAMPAIGN_VALUES.budget,
             currency_code: formData.application_method.currency_code,
           },
-        })
+        } as any)
       }
     }
   }, [watchCampaignChoice, getValues, setValue])
@@ -442,8 +442,8 @@ export const CreatePromotionForm = () => {
                                   <RadioGroup.ChoiceBox
                                     key={template.id}
                                     value={template.id}
-                                    label={template.title}
-                                    description={template.description}
+                                    label={t(template.titleKey as any)}
+                                    description={t(template.descriptionKey as any)}
                                   />
                                 )
                               })}
@@ -882,7 +882,7 @@ export const CreatePromotionForm = () => {
                     <>
                       <RulesFormField
                         form={form}
-                        ruleType={"buy-rules"}
+                        ruleType={"buy_rules"}
                         scope="application_method.buy_rules"
                       />
                     </>
@@ -893,7 +893,7 @@ export const CreatePromotionForm = () => {
                       <Divider />
                       <RulesFormField
                         form={form}
-                        ruleType={"target-rules"}
+                        ruleType={"target_rules"}
                         scope="application_method.target_rules"
                       />
                     </>

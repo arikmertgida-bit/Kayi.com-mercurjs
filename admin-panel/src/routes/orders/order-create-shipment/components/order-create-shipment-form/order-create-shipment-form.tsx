@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslation } from "react-i18next"
 import * as zod from "zod"
 
-import { AdminFulfillment, AdminOrder } from "@medusajs/types"
+import { AdminFulfillment, AdminOrder, HttpTypes } from "@medusajs/types"
 import { Button, Heading, Input, Switch, toast } from "@medusajs/ui"
 import { useFieldArray, useForm } from "react-hook-form"
 
@@ -32,7 +32,7 @@ export function OrderCreateShipmentForm({
 
   const form = useForm<zod.infer<typeof CreateShipmentSchema>>({
     defaultValues: {
-      send_notification: !order.no_notification,
+      send_notification: !(order as HttpTypes.AdminOrder & { no_notification?: boolean }).no_notification,
     },
     resolver: zodResolver(CreateShipmentSchema),
   })
@@ -54,7 +54,7 @@ export function OrderCreateShipmentForm({
     await createShipment(
       {
         items: fulfillment?.items?.map((i) => ({
-          id: i.line_item_id,
+          id: i.line_item_id!,
           quantity: i.quantity,
         })),
         labels: [...addedLabels, ...(fulfillment?.labels || [])],

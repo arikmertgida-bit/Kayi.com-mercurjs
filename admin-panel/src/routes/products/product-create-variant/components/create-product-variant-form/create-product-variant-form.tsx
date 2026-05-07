@@ -124,7 +124,7 @@ export const CreateProductVariantForm = ({
       return
     }
 
-    if (tabOrder.indexOf(update) < tabOrder.indexOf(tab)) {
+    if ((tabOrder as readonly Tab[]).indexOf(update) < (tabOrder as readonly Tab[]).indexOf(tab)) {
       const isCurrentTabDirty = false // isTabDirty(tab) TODO
 
       setTabState((prev) => ({
@@ -138,7 +138,7 @@ export const CreateProductVariantForm = ({
     }
 
     // get the tabs from the current tab to the update tab including the current tab
-    const tabs = tabOrder.slice(0, tabOrder.indexOf(update))
+    const tabs = (tabOrder as readonly Tab[]).slice(0, (tabOrder as readonly Tab[]).indexOf(update))
 
     // validate all the tabs from the current tab to the update tab if it fails on any of tabs then set that tab as current tab
     for (const tab of tabs) {
@@ -195,11 +195,11 @@ export const CreateProductVariantForm = ({
   }
 
   const handleNextTab = (tab: Tab) => {
-    if (tabOrder.indexOf(tab) + 1 >= tabOrder.length) {
+    if ((tabOrder as readonly Tab[]).indexOf(tab) + 1 >= tabOrder.length) {
       return
     }
 
-    const nextTab = tabOrder[tabOrder.indexOf(tab) + 1]
+    const nextTab = (tabOrder as readonly Tab[])[(tabOrder as readonly Tab[]).indexOf(tab) + 1]
     handleChangeTab(nextTab)
   }
 
@@ -219,7 +219,7 @@ export const CreateProductVariantForm = ({
               return undefined
             }
 
-            const ret: AdminCreateProductVariantPrice = {}
+            const ret = {} as AdminCreateProductVariantPrice
             const amount = castNumber(value)
 
             if (currencyOrRegion.startsWith("reg_")) {

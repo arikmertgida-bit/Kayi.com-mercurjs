@@ -4,6 +4,7 @@ import { PencilSquare, Trash } from "@medusajs/icons";
 import type { AdminCustomerGroup } from "@medusajs/types";
 import { Container, Divider, Heading, usePrompt } from "@medusajs/ui";
 import { toast } from "@medusajs/ui";
+import { useTranslation } from "react-i18next";
 
 import { sdk } from "@lib/client";
 import { formatDate } from "@lib/date";
@@ -86,13 +87,14 @@ const columnHelper = createColumnHelper<AdminCustomerGroup>();
 const useColumns = (refetch: () => void) => {
   const prompt = usePrompt();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleDelete = async (customer_group: AdminCustomerGroup) => {
     const res = await prompt({
-      title: "Are you sure?",
-      description: `You are about to delete the customer group ${customer_group.name}. This action cannot be undone.`,
-      confirmText: "Delete",
-      cancelText: "Cancel",
+      title: t("general.areYouSure"),
+      description: t("sellers.customerGroups.deleteDesc", { name: customer_group.name }),
+      confirmText: t("actions.delete"),
+      cancelText: t("actions.cancel"),
     });
 
     if (!res) {
@@ -103,13 +105,13 @@ const useColumns = (refetch: () => void) => {
       await sdk.client.fetch(`/admin/customer-groups/${customer_group.id}`, {
         method: "DELETE",
       });
-      toast.success("Customer group deleted successfully", {
-        description: `${customer_group.name} deleted successfully`,
+      toast.success(t("sellers.customerGroups.deleteSuccess"), {
+        description: t("sellers.customerGroups.deleteSuccessDesc", { name: customer_group.name }),
       });
       await refetch();
     } catch {
-      toast.error("Error deleting customer group", {
-        description: "Please try again later",
+      toast.error(t("sellers.customerGroups.deleteError"), {
+        description: t("sellers.customerGroups.deleteErrorDesc"),
       });
     }
   };
@@ -118,7 +120,7 @@ const useColumns = (refetch: () => void) => {
     () => [
       columnHelper.display({
         id: "name",
-        header: "Name",
+        header: t("fields.name"),
         cell: ({ row }) => {
           return (
             <div className="flex h-full w-full max-w-[250px] items-center gap-x-3 overflow-hidden">
@@ -141,12 +143,12 @@ const useColumns = (refetch: () => void) => {
       }),
       columnHelper.display({
         id: "created",
-        header: "Created",
+        header: t("fields.createdAt"),
         cell: ({ row }) => formatDate(row.original.created_at, "MMM d, yyyy"),
       }),
       columnHelper.display({
         id: "updated",
-        header: "Updated",
+        header: t("fields.updatedAt"),
         cell: ({ row }) => formatDate(row.original.updated_at, "MMM d, yyyy"),
       }),
       columnHelper.display({
@@ -156,13 +158,13 @@ const useColumns = (refetch: () => void) => {
           <ActionsButton
             actions={[
               {
-                label: "Edit",
+                label: t("actions.edit"),
                 onClick: () =>
                   navigate(`/customer-groups/${row.original.id}/edit`),
                 icon: <PencilSquare />,
               },
               {
-                label: "Delete",
+                label: t("actions.delete"),
                 onClick: () => handleDelete(row.original),
                 icon: <Trash />,
               },

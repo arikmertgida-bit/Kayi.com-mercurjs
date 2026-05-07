@@ -1,5 +1,6 @@
 import { createColumnHelper } from "@tanstack/react-table"
 import { useMemo } from "react"
+import { useTranslation } from "react-i18next"
 
 import { FirstSeenCell } from "../../../components/table/table-cells/customer/first-seen-cell"
 import { CustomerHeader } from "../../../components/table/table-cells/review/customer-cell"
@@ -20,6 +21,7 @@ import { NameCell } from "../../../components/table/table-cells/common/name-cell
 const columnHelper = createColumnHelper<any>()
 
 export const useReviewTableColumns = () => {
+  const { t } = useTranslation()
   return useMemo(
     () => [
       columnHelper.display({
@@ -37,11 +39,11 @@ export const useReviewTableColumns = () => {
         cell: ({ getValue }) => <StarsCell rating={getValue()} />,
       }),
       columnHelper.accessor("customer_note", {
-        header: () => <TextHeader text="Review" />,
+        header: () => <TextHeader text={t("reviews.detail.general.review")} />,
         cell: ({ getValue }) => <TextCell text={getValue()} />,
       }),
       columnHelper.accessor("created_at", {
-        header: () => <TextHeader text="Added" />,
+        header: () => <TextHeader text={t("reviews.detail.general.added")} />,
         cell: ({ getValue }) => <FirstSeenCell createdAt={getValue()} />,
       }),
       columnHelper.accessor("seller_note", {

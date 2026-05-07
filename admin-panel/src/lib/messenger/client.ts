@@ -48,6 +48,10 @@ export async function markConversationRead(conversationId: string): Promise<void
   await request(`/api/conversations/${conversationId}/read`, { method: "PATCH" })
 }
 
+export async function getUnreadCount(): Promise<{ count: number }> {
+  return request("/api/conversations/unread-count")
+}
+
 export async function findOrCreateConversation(payload: {
   targetUserId: string
   targetUserType: string
@@ -57,6 +61,31 @@ export async function findOrCreateConversation(payload: {
     method: "POST",
     body: JSON.stringify(payload),
   })
+}
+
+// ── Message Deletion ───────────────────────────────────────────────
+
+export async function uploadImage(
+  conversationId: string,
+  file: File
+): Promise<{ message: Message; imageUrl: string }> {
+  const formData = new FormData()
+  formData.append("conversationId", conversationId)
+  formData.append("file", file)
+
+  const res = await fetch(`${BASE_URL}/api/upload`, {
+    method: "POST",
+    headers: getAuthHeader(),
+    body: formData,
+    credentials: "include",
+  })
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body.error ?? `HTTP ${res.status}`)
+  }
+
+  return res.json()
 }
 
 // ── Message Deletion ───────────────────────────────────────────────

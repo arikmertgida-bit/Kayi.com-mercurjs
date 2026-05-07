@@ -251,6 +251,7 @@ type ClearAllFiltersProps = {
 const ClearAllFilters = ({ filters, prefix }: ClearAllFiltersProps) => {
   const { removeAllFilters } = useDataTableFilterContext()
   const [_, setSearchParams] = useSearchParams()
+  const { t } = useTranslation()
 
   const handleRemoveAll = () => {
     setSearchParams((prev) => {
@@ -276,7 +277,7 @@ const ClearAllFilters = ({ filters, prefix }: ClearAllFiltersProps) => {
         "focus-visible:shadow-borders-focus"
       )}
     >
-      Clear all
+      {t("actions.clearAll")}
     </button>
   )
 }

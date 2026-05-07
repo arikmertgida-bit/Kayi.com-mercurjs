@@ -1,7 +1,10 @@
 import { useMemo } from "react"
 import { toast } from "@medusajs/ui"
 import { FetchError } from "@medusajs/js-sdk"
+import type { HttpTypes } from "@medusajs/types"
 import { useFeatureFlag } from "../providers/feature-flag-provider"
+
+export type ViewConfiguration = NonNullable<HttpTypes.AdminViewConfigurationResponse["view_configuration"]>
 import {
   useViewConfigurations as useViewConfigurationsBase,
   useActiveViewConfiguration as useActiveViewConfigurationBase,

@@ -1,16 +1,18 @@
 import { Container, Heading, Text } from "@medusajs/ui"
 import { keepPreviousData } from "@tanstack/react-query"
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 import { useFollowers } from "../../../../hooks/api/followers"
 
 const PAGE_SIZE = 20
 
 export const FollowersListTable = () => {
   const [page, setPage] = useState(0)
+  const { t, i18n } = useTranslation()
 
   const { followers, count, isLoading, isError, error } = useFollowers(
     { offset: page * PAGE_SIZE, limit: PAGE_SIZE },
-    { placeholderData: keepPreviousData }
+    { placeholderData: keepPreviousData } as any
   )
 
   if (isError) {
@@ -20,7 +22,7 @@ export const FollowersListTable = () => {
   const totalPages = Math.ceil(count / PAGE_SIZE) || 1
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("tr-TR", {
+    return new Date(dateStr).toLocaleDateString(i18n.language, {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -31,13 +33,13 @@ export const FollowersListTable = () => {
     <Container className="divide-y p-0">
       <div className="flex items-center justify-between px-6 py-4">
         <div>
-          <Heading>Takipçiler</Heading>
+          <Heading>{t("followers.domain")}</Heading>
           <Text className="text-ui-fg-subtle" size="small">
-            Mağazanızı takip eden müşterilerin listesi
+            {t("followers.subtitle")}
           </Text>
         </div>
         <Text className="text-ui-fg-subtle" size="small">
-          {count} takipçi
+          {count} {t("followers.domain").toLowerCase()}
         </Text>
       </div>
 
@@ -45,10 +47,10 @@ export const FollowersListTable = () => {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-ui-bg-subtle">
-              <th className="px-6 py-3 text-left font-medium text-ui-fg-subtle">Ad Soyad</th>
-              <th className="px-6 py-3 text-left font-medium text-ui-fg-subtle">E-posta</th>
-              <th className="px-6 py-3 text-right font-medium text-ui-fg-subtle">Sipariş Sayısı</th>
-              <th className="px-6 py-3 text-right font-medium text-ui-fg-subtle">Takip Tarihi</th>
+              <th className="px-6 py-3 text-left font-medium text-ui-fg-subtle">{t("followers.columns.name")}</th>
+              <th className="px-6 py-3 text-left font-medium text-ui-fg-subtle">{t("followers.columns.email")}</th>
+              <th className="px-6 py-3 text-right font-medium text-ui-fg-subtle">{t("followers.columns.orderCount")}</th>
+              <th className="px-6 py-3 text-right font-medium text-ui-fg-subtle">{t("followers.columns.followDate")}</th>
             </tr>
           </thead>
           <tbody>
@@ -64,7 +66,7 @@ export const FollowersListTable = () => {
             ) : followers.length === 0 ? (
               <tr>
                 <td colSpan={4} className="px-6 py-16 text-center text-ui-fg-subtle">
-                  Henüz takipçiniz yok.
+                  {t("followers.list.noRecordsMessage")}
                 </td>
               </tr>
             ) : (
@@ -86,7 +88,7 @@ export const FollowersListTable = () => {
       {totalPages > 1 && (
         <div className="flex items-center justify-between px-6 py-4">
           <Text size="small" className="text-ui-fg-subtle">
-            Sayfa {page + 1} / {totalPages}
+            {t("followers.pagination.page")} {page + 1} / {totalPages}
           </Text>
           <div className="flex gap-2">
             <button
@@ -94,14 +96,14 @@ export const FollowersListTable = () => {
               disabled={page === 0}
               className="px-3 py-1 text-sm border rounded disabled:opacity-40 hover:bg-ui-bg-subtle transition-colors"
             >
-              Önceki
+              {t("followers.pagination.prev")}
             </button>
             <button
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
               disabled={page >= totalPages - 1}
               className="px-3 py-1 text-sm border rounded disabled:opacity-40 hover:bg-ui-bg-subtle transition-colors"
             >
-              Sonraki
+              {t("followers.pagination.next")}
             </button>
           </div>
         </div>

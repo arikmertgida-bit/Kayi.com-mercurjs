@@ -22,7 +22,7 @@ export const CategoryEdit = () => {
     <RouteDrawer>
       <RouteDrawer.Header>
         <RouteDrawer.Title asChild>
-          <Heading>Edit Category Request</Heading>
+          <Heading>{t("categories.edit.requestHeader")}</Heading>
         </RouteDrawer.Title>
         <RouteDrawer.Description className="sr-only">
           {t("categories.edit.description")}

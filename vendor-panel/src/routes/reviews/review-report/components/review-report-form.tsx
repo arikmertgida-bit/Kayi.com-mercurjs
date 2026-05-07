@@ -1,4 +1,5 @@
 import { useForm } from "react-hook-form"
+import { useTranslation } from "react-i18next"
 import { Form } from "../../../../components/common/form"
 import { RouteDrawer, useRouteModal } from "../../../../components/modals"
 import { z } from "zod"
@@ -8,14 +9,14 @@ import { useParams } from "react-router-dom"
 import { useCreateVendorRequest, useUpdateRequest } from "../../../../hooks/api"
 
 const reasonList = [
-  "The review comment is not true",
-  "The review comment is insulting",
-  "The review comment is offensive or vulgar",
-  "Other",
+  "notTrue",
+  "insulting",
+  "offensive",
+  "other",
 ]
 
 const ReviewReplySchema = z.object({
-  reason: z.string().min(1, { message: "Please select a reason" }),
+  reason: z.string().min(1),
   comment: z.string().optional(),
 })
 
@@ -46,6 +47,7 @@ export const ReviewReportForm = ({ request }: { request?: any }) => {
   const { mutateAsync: createRequest, isPending } = useCreateVendorRequest()
   const { mutateAsync: updateRequest, isPending: isUpdating } =
     useUpdateRequest(id!)
+  const { t } = useTranslation()
 
   const handleSubmit = form.handleSubmit(async (data) => {
     const reason = `${data.reason}${data.comment ? ` comment: ${data.comment}` : ""}`
@@ -63,8 +65,8 @@ export const ReviewReportForm = ({ request }: { request?: any }) => {
         },
         {
           onSuccess: () => {
-            toast.success("Request is updated", {
-              description: "Please wait for a response from the moderator.",
+            toast.success(t("reviews.report.updateRequest"), {
+              description: t("reviews.report.waitForResponse"),
             })
             handleSuccess(`/requests/reviews`)
           },
@@ -83,8 +85,8 @@ export const ReviewReportForm = ({ request }: { request?: any }) => {
         },
         {
           onSuccess: () => {
-            toast.success("Review is reported", {
-              description: "Please wait for a response from the moderator.",
+            toast.success(t("reviews.report.reported"), {
+              description: t("reviews.report.waitForResponse"),
             })
             handleSuccess(`/reviews/${id}`)
           },
@@ -100,12 +102,12 @@ export const ReviewReportForm = ({ request }: { request?: any }) => {
     <RouteDrawer>
       <RouteDrawer.Header>
         <RouteDrawer.Title asChild>
-          <Heading>{isEditing ? "Edit Request" : "Report Review"}</Heading>
+          <Heading>{isEditing ? t("reviews.report.editHeader") : t("reviews.report.header")}</Heading>
         </RouteDrawer.Title>
         <RouteDrawer.Description>
           {isEditing
-            ? "Edit the request to report the review from customer."
-            : "Report review from customer."}
+            ? t("reviews.report.editDescription")
+            : t("reviews.report.description")}
         </RouteDrawer.Description>
       </RouteDrawer.Header>
       <RouteDrawer.Form form={form}>
@@ -116,7 +118,7 @@ export const ReviewReportForm = ({ request }: { request?: any }) => {
             render={({ field: { ref, onChange, ...field } }) => {
               return (
                 <Form.Item className="mt-4">
-                  <Form.Label>Reason</Form.Label>
+                  <Form.Label>{t("reviews.report.reason")}</Form.Label>
                   <Form.Control>
                     <Select {...field} onValueChange={onChange}>
                       <Select.Trigger ref={ref}>
@@ -128,7 +130,7 @@ export const ReviewReportForm = ({ request }: { request?: any }) => {
                             key={`select-option-${index}`}
                             value={reason}
                           >
-                            {reason}
+                            {t(`reviews.report.reasons.${reason}` as any)}
                           </Select.Item>
                         ))}
                       </Select.Content>
@@ -145,7 +147,7 @@ export const ReviewReportForm = ({ request }: { request?: any }) => {
             render={({ field }) => {
               return (
                 <Form.Item className="mt-8">
-                  <Form.Label>Comment</Form.Label>
+                  <Form.Label>{t("reviews.report.comment")}</Form.Label>
                   <Form.Control>
                     <Textarea autoComplete="off" {...field} />
                   </Form.Control>
@@ -162,7 +164,7 @@ export const ReviewReportForm = ({ request }: { request?: any }) => {
           className="px-6"
           isLoading={isPending || isUpdating}
         >
-          {isEditing ? "Update Request" : "Report review"}
+          {isEditing ? t("reviews.report.updateRequest") : t("reviews.report.submit")}
         </Button>
       </RouteDrawer.Footer>
     </RouteDrawer>

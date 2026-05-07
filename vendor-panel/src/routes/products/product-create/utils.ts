@@ -104,7 +104,7 @@ export const normalizeVariants = (
           } as HttpTypes.AdminCreateProductVariantPrice
         }
       })
-      .filter((v) => v !== undefined),
+      .filter((v): v is HttpTypes.AdminCreateProductVariantPrice => v !== undefined),
   }))
 }
 

@@ -22,7 +22,7 @@ import { requiredProductRule } from "./constants"
 type RulesFormFieldType = {
   promotion?: HttpTypes.AdminPromotion
   form: UseFormReturn<CreatePromotionSchemaType>
-  ruleType: "rules" | "target-rules" | "buy-rules"
+  ruleType: "rules" | "target_rules" | "buy_rules"
   setRulesToRemove?: any
   rulesToRemove?: any
   scope?:
@@ -89,7 +89,7 @@ export const RulesFormField = ({
       replace(formRules)
     }
 
-    if (ruleType === "buy-rules" && !fields.length) {
+    if (ruleType === "buy_rules" && !fields.length) {
       form.resetField("application_method.buy_rules")
       const apiRules = promotion?.id || promotionType === "standard"
         ? rules || []
@@ -99,7 +99,7 @@ export const RulesFormField = ({
       replace(formRules)
     }
 
-    if (ruleType === "target-rules" && !fields.length) {
+    if (ruleType === "target_rules" && !fields.length) {
       form.resetField("application_method.target_rules")
       const apiRules = promotion?.id || promotionType === "standard"
         ? rules || []
@@ -264,7 +264,7 @@ export const RulesFormField = ({
                                   ref={ref}
                                   className="bg-ui-bg-base"
                                 >
-                                  <Select.Value placeholder="Select Operator" />
+                                  <Select.Value placeholder={t("labels.selectOperator")} />
                                 </Select.Trigger>
 
                                 <Select.Content>
@@ -367,7 +367,7 @@ export const RulesFormField = ({
             onClick={() => {
               const indicesToRemove = fields
                 .map((field: any, index) => (field.required ? null : index))
-                .filter((f) => f !== null)
+                .filter((f): f is number => f !== null)
 
               setRulesToRemove &&
                 setRulesToRemove(fields.filter((field: any) => !field.required))

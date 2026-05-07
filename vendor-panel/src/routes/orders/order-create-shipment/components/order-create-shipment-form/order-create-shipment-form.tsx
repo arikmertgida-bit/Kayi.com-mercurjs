@@ -107,7 +107,7 @@ export function OrderCreateShipmentForm({
                         return (
                           <Form.Item className="mb-4">
                             {index === 0 && (
-                              <Form.Label>Tracking URL</Form.Label>
+                            <Form.Label>{t("orders.shipment.trackingUrl")}</Form.Label>
                             )}
                             <Form.Control>
                               <Input
@@ -128,7 +128,7 @@ export function OrderCreateShipmentForm({
                     className="self-end"
                     variant="secondary"
                   >
-                    Add tracking URL
+                    {t("orders.shipment.addTrackingUrl")}
                   </Button>
                 </div>
               </div>

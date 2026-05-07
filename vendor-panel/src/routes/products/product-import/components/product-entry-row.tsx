@@ -1,4 +1,4 @@
-import React, { memo } from "react"
+import { memo } from "react"
 import {
   Button,
   Input,
@@ -28,7 +28,7 @@ const ProductEntryRow = ({
   hasError,
   stockLocations,
   categories,
-  tags,
+  tags: _tags,
   types,
   collections,
   onChange,

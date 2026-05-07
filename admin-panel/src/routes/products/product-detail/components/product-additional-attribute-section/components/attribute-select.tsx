@@ -1,4 +1,5 @@
 import { Select } from "@medusajs/ui";
+import { useTranslation } from "react-i18next";
 
 export const AttributeSelect = ({
   values,
@@ -7,6 +8,7 @@ export const AttributeSelect = ({
   values: any[];
   field: any;
 }) => {
+  const { t } = useTranslation();
   const handleChange = (value: string) => {
     field.onChange({
       target: {
@@ -19,7 +21,7 @@ export const AttributeSelect = ({
   return (
     <Select onValueChange={(value) => handleChange(value)} value={field.value}>
       <Select.Trigger className="bg-ui-bg-base">
-        <Select.Value placeholder="Select value" />
+        <Select.Value placeholder={t("labels.selectValue")} />
       </Select.Trigger>
       <Select.Content>
         {values?.map(({ id, attribute_id, value }) => (

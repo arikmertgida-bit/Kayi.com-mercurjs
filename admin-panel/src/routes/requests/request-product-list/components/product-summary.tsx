@@ -1,6 +1,7 @@
 import { InformationCircle } from "@medusajs/icons";
 import type { ProductDTO } from "@medusajs/types";
 import { Button, Container, Drawer, Text } from "@medusajs/ui";
+import { useTranslation } from "react-i18next";
 
 import { formatDate } from "@lib/date";
 import { useNavigate } from "react-router-dom";
@@ -18,6 +19,7 @@ export function ProductSummaryDetail({ request, open, close }: Props) {
     return null;
   }
 
+  const { t } = useTranslation();
   const product_id = (request.data as Record<string, unknown>).product_id || "";
   const navigate = useNavigate();
   const requestData = request.data as ProductDTO;
@@ -26,23 +28,23 @@ export function ProductSummaryDetail({ request, open, close }: Props) {
     <Drawer open={open} onOpenChange={close}>
       <Drawer.Content>
         <Drawer.Header>
-          <Drawer.Title>Product request</Drawer.Title>
+          <Drawer.Title>{t("requests.productList.detail.title")}</Drawer.Title>
         </Drawer.Header>
         <Drawer.Body className="p-4">
           <fieldset>
-            <legend className="mb-2">Product title</legend>
+            <legend className="mb-2">{t("requests.productList.detail.productTitle")}</legend>
             <Container>
               <Text>{requestData.title}</Text>
             </Container>
           </fieldset>
           <fieldset className="mt-2">
-            <legend className="mb-2">Handle</legend>
+            <legend className="mb-2">{t("fields.handle")}</legend>
             <Container>
               <Text>{`/${requestData.handle}`}</Text>
             </Container>
           </fieldset>
           <fieldset className="mt-2">
-            <legend className="mb-2">Submitted by</legend>
+            <legend className="mb-2">{t("requests.detail.submittedBy")}</legend>
             <Container>
               <Text>{request.seller?.name}</Text>
             </Container>
@@ -50,14 +52,14 @@ export function ProductSummaryDetail({ request, open, close }: Props) {
           <Container className="mt-4">
             <div className="flex items-center gap-2">
               <InformationCircle />
-              <Text className="font-semibold">Request information</Text>
+              <Text className="font-semibold">{t("requests.detail.requestInformation")}</Text>
             </div>
-            <Text>{`Submitted on ${formatDate(request.created_at)}`}</Text>
+            <Text>{t("requests.detail.submittedOn", { date: formatDate(request.created_at) })}</Text>
             {request.reviewer_id && (
-              <Text>{`Reviewed on ${formatDate(request.updated_at)}`}</Text>
+              <Text>{t("requests.detail.reviewedOn", { date: formatDate(request.updated_at) })}</Text>
             )}
             {request.reviewer_note && (
-              <Text>{`Reviewer note: ${request.reviewer_note}`}</Text>
+              <Text>{t("requests.detail.reviewerNote", { note: request.reviewer_note })}</Text>
             )}
           </Container>
         </Drawer.Body>
@@ -67,7 +69,7 @@ export function ProductSummaryDetail({ request, open, close }: Props) {
               navigate(`/products/${product_id}`);
             }}
           >
-            See full product
+            {t("requests.productList.detail.seeFullProduct")}
           </Button>
         </Drawer.Footer>
       </Drawer.Content>

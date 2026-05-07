@@ -1,6 +1,7 @@
 import { Heading } from "@medusajs/ui"
 import { useTranslation } from "react-i18next"
 import { useParams } from "react-router-dom"
+import { HttpTypes } from "@medusajs/types"
 
 import { RouteDrawer } from "../../../components/modals"
 import { useProduct } from "../../../hooks/api/products"
@@ -27,7 +28,7 @@ export const ProductShippingProfile = () => {
         </RouteDrawer.Title>
       </RouteDrawer.Header>
       {!isLoading && product && (
-        <ProductShippingProfileForm product={product} />
+        <ProductShippingProfileForm product={product as HttpTypes.AdminProduct & { shipping_profile?: HttpTypes.AdminShippingProfile }} />
       )}
     </RouteDrawer>
   )

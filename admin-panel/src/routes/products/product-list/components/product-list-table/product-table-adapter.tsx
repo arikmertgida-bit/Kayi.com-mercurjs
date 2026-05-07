@@ -18,14 +18,7 @@ export function createProductTableAdapter(): TableAdapter<HttpTypes.AdminProduct
           is_giftcard: false, // Exclude gift cards from product list
         },
         {
-          placeholderData: (previousData, previousQuery) => {
-            // Only keep placeholder data if the fields haven't changed
-            const prevFields = previousQuery?.[previousQuery.length - 1]?.query?.fields
-            if (prevFields && prevFields !== fields) {
-              // Fields changed, don't use placeholder data
-              return undefined
-            }
-            // Fields are the same, keep previous data for smooth transitions
+          placeholderData: (previousData) => {
             return previousData
           },
         }

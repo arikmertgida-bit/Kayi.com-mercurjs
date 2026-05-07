@@ -25,8 +25,8 @@ export const PromotionDetail = () => {
   }
 
   const { rules } = usePromotionRules(id!, "rules", query)
-  const { rules: targetRules } = usePromotionRules(id!, "target-rules", query)
-  const { rules: buyRules } = usePromotionRules(id!, "buy-rules", query)
+  const { rules: targetRules } = usePromotionRules(id!, "target_rules", query)
+  const { rules: buyRules } = usePromotionRules(id!, "buy_rules", query)
 
   const { getWidgets } = useDashboardExtension()
 
@@ -55,12 +55,12 @@ export const PromotionDetail = () => {
         />
         <PromotionConditionsSection
           rules={targetRules || []}
-          ruleType="target-rules"
+          ruleType="target_rules"
         />
         {promotion.type === "buyget" && (
           <PromotionConditionsSection
             rules={buyRules || []}
-            ruleType="buy-rules"
+            ruleType="buy_rules"
           />
         )}
       </TwoColumnPage.Main>

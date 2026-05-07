@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import { useNavigate, useParams } from "react-router-dom"
 import {
   useOrderReturnRequest,
@@ -14,6 +15,7 @@ const STATUS_OPTIONS = ["refunded", "escalated"]
 export function RequestOrderReturn() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { t } = useTranslation()
 
   const { order_return_request, isLoading } = useOrderReturnRequest(id!)
 
@@ -42,14 +44,14 @@ export function RequestOrderReturn() {
   }
 
   if (isLoading || isStockLocationsLoading) {
-    return <div>Loading...</div>
+    return <div>{t("labels.loading")}</div>
   }
 
   return (
     <RouteDrawer prev="/requests/orders">
       <RouteDrawer.Header>
         <RouteDrawer.Title>
-          Request Return Order #{order_return_request.order.display_id}
+          {t("requests.orderReturns.drawerTitle", { orderId: order_return_request.order.display_id })}
         </RouteDrawer.Title>
       </RouteDrawer.Header>
       <RouteDrawer.Body>
@@ -61,7 +63,7 @@ export function RequestOrderReturn() {
               render={({ field: { onChange, value, ...field } }) => {
                 return (
                   <Form.Item>
-                    <Form.Label>Status</Form.Label>
+                    <Form.Label>{t("requests.detail.status")}</Form.Label>
                     <Form.Control>
                       <Select
                         {...field}
@@ -77,7 +79,7 @@ export function RequestOrderReturn() {
                               key={`select-option-${index}`}
                               value={reason}
                             >
-                              {reason}
+                              {t(`requests.statuses.${reason}`, { defaultValue: reason })}
                             </Select.Item>
                           ))}
                         </Select.Content>
@@ -94,7 +96,7 @@ export function RequestOrderReturn() {
                   name="location_id"
                   render={({ field: { onChange, value, ...field } }) => (
                     <Form.Item className="mt-4">
-                      <Form.Label>Location</Form.Label>
+                      <Form.Label>{t("requests.detail.location")}</Form.Label>
                       <Form.Control>
                         <Select {...field} onValueChange={onChange}>
                           <Select.Trigger>
@@ -122,7 +124,7 @@ export function RequestOrderReturn() {
               render={({ field }) => {
                 return (
                   <Form.Item className="mt-4">
-                    <Form.Label>Vendor Reviewer Note</Form.Label>
+                    <Form.Label>{t("requests.detail.vendorNote")}</Form.Label>
                     <Form.Control>
                       <Textarea {...field} rows={4} />
                     </Form.Control>
@@ -131,7 +133,7 @@ export function RequestOrderReturn() {
               }}
             />
             <div className="flex justify-end mt-8">
-              <Button type="submit">Submit</Button>
+              <Button type="submit">{t("requests.detail.submit")}</Button>
             </div>
           </form>
         </Form>

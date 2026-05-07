@@ -1,4 +1,4 @@
-import { PromotionRuleDTO } from "@medusajs/types"
+import { AdminPromotionRule } from "@medusajs/types"
 import { Heading } from "@medusajs/ui"
 import { useTranslation } from "react-i18next"
 import { useParams } from "react-router-dom"
@@ -8,10 +8,10 @@ import { EditRulesWrapper } from "./components/edit-rules-wrapper"
 
 export enum RuleType {
   RULES = "rules",
-  BUY_RULES = "buy-rules",
-  TARGET_RULES = "target-rules",
+  BUY_RULES = "buy_rules",
+  TARGET_RULES = "target_rules",
 }
-export type RuleTypeValues = "rules" | "buy-rules" | "target-rules"
+export type RuleTypeValues = "rules" | "buy_rules" | "target_rules"
 
 export const EditRules = () => {
   const params = useParams()
@@ -28,7 +28,7 @@ export const EditRules = () => {
   const { t } = useTranslation()
   const ruleType = params.ruleType as RuleTypeValues
   const id = params.id as string
-  const rules: PromotionRuleDTO[] = []
+  const rules: AdminPromotionRule[] = []
   const { promotion, isPending: isLoading, isError, error } = usePromotion(id)
 
   if (promotion) {

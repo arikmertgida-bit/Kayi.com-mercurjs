@@ -8,6 +8,7 @@ import {
   Text,
 } from "@medusajs/ui"
 import { useForm } from "react-hook-form"
+import { useTranslation } from "react-i18next"
 import { useViewConfigurations, useViewConfiguration } from "../../../hooks/use-view-configurations"
 import type { ViewConfiguration } from "../../../hooks/use-view-configurations"
 
@@ -43,6 +44,7 @@ export const SaveViewDialog: React.FC<SaveViewDialogProps> = ({
   const { createView } = useViewConfigurations(entity)
   const { updateView } = useViewConfiguration(entity, editingView?.id || '')
   const [isLoading, setIsLoading] = useState(false)
+  const { t } = useTranslation()
 
   const {
     register,
@@ -73,7 +75,7 @@ export const SaveViewDialog: React.FC<SaveViewDialogProps> = ({
             search: currentConfiguration?.search || editingView.configuration.search || "",
           },
         })
-        onSaved(result.view_configuration)
+        onSaved(result.view_configuration!)
       } else {
         // Create new view
         const result = await createView.mutateAsync({
@@ -87,7 +89,7 @@ export const SaveViewDialog: React.FC<SaveViewDialogProps> = ({
             search: currentConfiguration?.search || "",
           },
         })
-        onSaved(result.view_configuration)
+        onSaved(result.view_configuration!)
       }
     } catch (error) {
       // Error is handled by the hook
@@ -102,14 +104,14 @@ export const SaveViewDialog: React.FC<SaveViewDialogProps> = ({
         <Drawer.Header>
           <Drawer.Title asChild>
             <Heading>
-              {editingView ? "Edit View Name" : "Save as New View"}
+              {editingView ? t("views.editViewName") : t("views.saveAsNewView")}
             </Heading>
           </Drawer.Title>
           <Drawer.Description asChild>
             <Text>
               {editingView
-                ? "Change the name of your saved view"
-                : "Save your current configuration as a new view"}
+                ? t("views.changeViewName")
+                : t("views.saveConfiguration")}
             </Text>
           </Drawer.Description>
         </Drawer.Header>
@@ -118,15 +120,15 @@ export const SaveViewDialog: React.FC<SaveViewDialogProps> = ({
           <Drawer.Body className="flex-1">
             <div className="flex flex-col gap-y-2">
               <Label htmlFor="name" weight="plus">
-                View Name
+                {t("views.viewName")}
               </Label>
               <Input
                 {...register("name", {
-                  required: "Name is required",
-                  validate: value => value.trim().length > 0 || "Name cannot be empty"
+                  required: t("views.nameRequired"),
+                  validate: value => value.trim().length > 0 || t("views.nameNotEmpty")
                 })}
                 type="text"
-                placeholder="Enter view name"
+                placeholder={t("views.enterViewName")}
                 autoFocus
               />
               {errors.name && (
@@ -144,7 +146,7 @@ export const SaveViewDialog: React.FC<SaveViewDialogProps> = ({
                 size="small"
                 type="button"
               >
-                Cancel
+              {t("actions.cancel")}
               </Button>
             </Drawer.Close>
             <Button
@@ -153,7 +155,7 @@ export const SaveViewDialog: React.FC<SaveViewDialogProps> = ({
               type="submit"
               isLoading={isLoading}
             >
-              {editingView ? "Update" : "Save"}
+              {editingView ? t("views.update") : t("actions.save")}
             </Button>
           </Drawer.Footer>
         </form>

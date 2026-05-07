@@ -11,8 +11,8 @@ import { ChatHeader } from "./ChatHeader"
 
 // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString("tr-TR", {
+function formatTime(iso: string, locale: string): string {
+  return new Date(iso).toLocaleTimeString(locale, {
     hour: "2-digit",
     minute: "2-digit",
   })
@@ -66,7 +66,7 @@ interface MessengerVendorInboxProps {
   sellerName?: string
 }
 
-export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
+export function MessengerVendorInbox({ sellerId: _sellerId }: MessengerVendorInboxProps) {
   const {
     conversations,
     activeConversationId,
@@ -78,20 +78,17 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
     closeConversation,
     sendMessage,
     uploadImage,
-    deleteMessage,
     deleteConversation,
     startTyping,
     stopTyping,
   } = useMessenger()
 
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
 
   const [text, setText] = useState("")
   const [search, setSearch] = useState("")
   const [isSending, setIsSending] = useState(false)
   const [sendError, setSendError] = useState<string | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
-  const [deleteMenuPos, setDeleteMenuPos] = useState<{ top: number; left?: number; right?: number } | null>(null)
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('list')
   const [pendingImage, setPendingImage] = useState<File | null>(null)
   const [pendingImagePreview, setPendingImagePreview] = useState<string | null>(null)
@@ -109,7 +106,7 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
   const isOtherCustomer =
     otherParticipant?.userType === "CUSTOMER" || otherParticipant?.userId?.startsWith("cus_")
 
-  const { displayName: customerDisplayName, avatarUrl: customerAvatarUrl } = useCustomerInfo(
+  const { displayName: customerDisplayName } = useCustomerInfo(
     isOtherCustomer ? otherParticipant?.userId : undefined
   )
 
@@ -118,6 +115,9 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
   useEffect(() => {
     const conv = activeConv
     if (!conv) { setActiveContext(null); return }
+
+    // ADMIN_SUPPORT konuşmalarında ürün/mağaza bağlam kartı gösterilmez
+    if (conv.type === "ADMIN_SUPPORT") { setActiveContext(null); return }
 
     const isProduct = conv.contextType === "PRODUCT_BASED" || (conv.contextType !== "VENDOR_BASED" && !!conv.productId)
 
@@ -176,7 +176,7 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
         await uploadImage(file)
       } catch (err) {
         console.error("[MessengerVendorInbox] image upload error:", err)
-        setSendError("Görsel gönderilemedi. Lütfen tekrar deneyin.")
+        setSendError(t("messages.imageUploadFailed"))
       } finally {
         setIsSending(false)
       }
@@ -230,19 +230,13 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
     e.target.value = ""
   }
 
-  const handleDeleteMessage = useCallback(async (messageId: string, deleteForAll: boolean) => {
-    setDeleteTarget(null)
-    setDeleteMenuPos(null)
-    try {
-      await deleteMessage(messageId, deleteForAll)
-    } catch (err) {
-      console.error("[MessengerVendorInbox] delete error:", err)
-    }
-  }, [deleteMessage])
 
   // â”€â”€ Search (min 2 chars) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // Only show DIRECT conversations — ADMIN_SUPPORT traffic lives in the Support drawer
-  const directConversations = conversations.filter((c) => c.type === "DIRECT")
+  // Show ALL conversations that have at least one message, or are currently open.
+  // This prevents ghost rows from sidebar open (findOrCreate creates empty conversations).
+  const directConversations = conversations.filter(
+    (c) => (c.messages?.length ?? 0) > 0 || c.id === activeConversationId
+  )
   const handleOpenConversation = useCallback((id: string) => {
     openConversation(id)
     setMobileView('chat')
@@ -334,15 +328,19 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
               </div>
             ) : messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center mb-3 ${
-                    isOtherAdmin
-                      ? "bg-ui-tag-purple-bg text-ui-tag-purple-text"
-                      : "bg-ui-tag-blue-bg text-ui-tag-blue-text"
-                  }`}
-                >
-                  <span className="text-base font-bold">{(otherName[0] ?? "?").toUpperCase()}</span>
-                </div>
+                {isOtherAdmin ? (
+                  <img src="/logo.png" alt="Yardım Destek" className="w-10 h-10 rounded-full object-cover mb-3" />
+                ) : (
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center mb-3 ${
+                      isOtherAdmin
+                        ? "bg-ui-tag-purple-bg text-ui-tag-purple-text"
+                        : "bg-ui-tag-blue-bg text-ui-tag-blue-text"
+                    }`}
+                  >
+                    <span className="text-base font-bold">{(otherName[0] ?? "?").toUpperCase()}</span>
+                  </div>
+                )}
                 <p className="text-sm font-medium text-ui-fg-base">{otherName}</p>
                 <p className="text-xs text-ui-fg-muted mt-1">{t("messenger.startConversation")}</p>
               </div>
@@ -383,7 +381,7 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
                       }${msg.deletedForAll ? " italic opacity-70" : ""}`}
                     >
                       {!isMe && isFirstInGroup && (
-                        <p className="text-xs font-medium mb-1 opacity-70">{otherName}</p>
+                        <p className="text-xs font-medium mb-1 opacity-70">{isOtherAdmin ? "Yardım Destek" : otherName}</p>
                       )}
                       {msg.messageType === "IMAGE" && msg.imageUrl ? (
                         <button
@@ -399,39 +397,13 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
                           isMe ? "text-ui-fg-on-inverted" : "text-ui-fg-muted"
                         }`}
                       >
-                        {formatTime(msg.createdAt)}
+                        {formatTime(msg.createdAt, i18n.language)}
                         {isMe && isLastMine && msg.readAt && (
                           <span className="ml-1">{" · "}{t("messenger.seen")}</span>
                         )}
                       </p>
 
-                      {/* Three-dots menu trigger */}
-                      {!msg.deletedForAll && (
-                        <>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              if (deleteTarget === msg.id) {
-                                setDeleteTarget(null)
-                                setDeleteMenuPos(null)
-                              } else {
-                                const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect()
-                                setDeleteMenuPos(
-                                  isMe
-                                    ? { top: rect.bottom + 4, right: window.innerWidth - rect.right }
-                                    : { top: rect.bottom + 4, left: rect.left }
-                                )
-                                setDeleteTarget(msg.id)
-                              }
-                            }}
-                            className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-full bg-ui-bg-base/80 shadow text-ui-fg-muted hover:text-ui-fg-base"
-                          >
-                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                              <circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" />
-                            </svg>
-                          </button>
-                        </>
-                      )}
+                      {/* Vendor cannot delete messages — admin only */}
                     </div>
                   </div>
                 )
@@ -456,7 +428,7 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
             {!isConnected && (
               <div className="px-3 py-1.5 bg-yellow-50 border border-yellow-100 rounded-xl text-xs text-yellow-700 flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse flex-shrink-0" />
-                Bağlantı kesildi, yeniden bağlanılıyor…
+                {t("messages.connectionLost")}
               </div>
             )}
             {sendError && (
@@ -540,45 +512,7 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
       )}
     </div>
 
-    {/* Delete message dropdown (fixed, always on top) */}
-    {deleteTarget && deleteMenuPos && (
-      <>
-        <div
-          className="fixed inset-0 z-[9998]"
-          onClick={() => { setDeleteTarget(null); setDeleteMenuPos(null) }}
-        />
-        <div
-          style={{
-            position: "fixed",
-            top: deleteMenuPos.top,
-            ...(deleteMenuPos.right !== undefined ? { right: deleteMenuPos.right } : { left: deleteMenuPos.left }),
-            zIndex: 9999,
-          }}
-          className="bg-ui-bg-overlay rounded-xl shadow-elevation-modal border border-ui-border-base p-1.5 flex flex-col gap-0.5 min-w-[160px]"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <button
-            onClick={() => handleDeleteMessage(deleteTarget, false)}
-            className="text-left text-sm px-3 py-1.5 rounded-lg hover:bg-ui-bg-base-hover text-ui-fg-base transition-colors"
-          >
-            Sil
-          </button>
-          <button
-            disabled={messages.find((m) => m.id === deleteTarget)?.senderId !== sellerId}
-            onClick={() => handleDeleteMessage(deleteTarget, true)}
-            className="text-left text-sm px-3 py-1.5 rounded-lg hover:bg-ui-tag-red-bg text-ui-tag-red-text disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            Herkesten Sil
-          </button>
-          <button
-            onClick={() => { setDeleteTarget(null); setDeleteMenuPos(null) }}
-            className="text-left text-xs px-3 py-1 text-ui-fg-muted hover:text-ui-fg-base transition-colors"
-          >
-            Kapat
-          </button>
-        </div>
-      </>
-    )}
+    {/* Vendor cannot delete messages — admin only */}
 
     {/* Lightbox */}
     {lightboxSrc && (
@@ -589,7 +523,7 @@ export function MessengerVendorInbox({ sellerId }: MessengerVendorInboxProps) {
         <button
           className="absolute top-4 right-4 text-white text-2xl w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors"
           onClick={() => setLightboxSrc(null)}
-          aria-label="Kapat"
+          aria-label={t("messages.close")}
         >
           ✕
         </button>

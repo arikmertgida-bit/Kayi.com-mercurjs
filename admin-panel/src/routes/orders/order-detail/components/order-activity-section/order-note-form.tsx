@@ -29,7 +29,8 @@ export const OrderNoteForm = ({ order }: OrderNoteFormProps) => {
     resolver: zodResolver(OrderNoteSchema),
   })
 
-  const { mutateAsync, isLoading } = {}
+  const mutateAsync = async (_data: unknown, _opts?: unknown) => { /* notes API not implemented */ }
+  const isLoading = false
 
   const handleSubmit = form.handleSubmit(async (values) => {
     mutateAsync(

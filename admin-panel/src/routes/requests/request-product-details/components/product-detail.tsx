@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import type { ProductDTO } from "@medusajs/types";
 import { Badge, Button, Container, Heading, Table } from "@medusajs/ui";
+import { useTranslation } from "react-i18next";
 
 import { Link, useNavigate } from "react-router-dom";
 
@@ -21,6 +22,7 @@ import { SectionRow } from "@routes/requests/common/components/section-row";
 
 export const ProductRequestDetail = ({ id }: { id: string }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { request, isError, isLoading } = useVendorRequest(id!);
   const requestData = request?.data as ProductDTO;
 
@@ -61,7 +63,7 @@ export const ProductRequestDetail = ({ id }: { id: string }) => {
                     handlePrompt(id, true);
                   }}
                 >
-                  Accept
+                  {t("requests.detail.accept")}
                 </Button>
                 <Button
                   onClick={() => {
@@ -69,20 +71,20 @@ export const ProductRequestDetail = ({ id }: { id: string }) => {
                   }}
                   variant="danger"
                 >
-                  Reject
+                  {t("requests.detail.reject")}
                 </Button>
               </div>
             </div>
 
-            <SectionRow title="Description" value={requestData.description} />
-            <SectionRow title="Subtitle" value={requestData.subtitle} />
+            <SectionRow title={t("fields.description")} value={requestData.description} />
+            <SectionRow title={t("fields.subtitle")} value={requestData.subtitle} />
             <SectionRow
-              title="Handle"
+              title={t("fields.handle")}
               value={requestData.handle ? `/${requestData.handle}` : "-"}
             />
             <SectionRow
-              title="Discountable"
-              value={requestData.discountable ? "True" : "False"}
+              title={t("fields.discountable")}
+              value={requestData.discountable ? t("fields.yes") : t("fields.no")}
             />
           </Container>
           <ProductOptionsInfo product={requestData} />
@@ -100,10 +102,11 @@ export const ProductRequestDetail = ({ id }: { id: string }) => {
 };
 
 const ProductOptionsInfo = ({ product }: { product: ProductDTO }) => {
+  const { t } = useTranslation();
   return (
     <Container className="divide-y p-0">
       <div className="flex items-center justify-between px-6 py-4">
-        <Heading level="h2">Options</Heading>
+        <Heading level="h2">{t("requests.detail.options")}</Heading>
       </div>
 
       {product.options?.map((option) => {
@@ -130,19 +133,20 @@ const ProductOptionsInfo = ({ product }: { product: ProductDTO }) => {
 };
 
 const ProductVariantInfo = ({ product }: { product: ProductDTO }) => {
+  const { t } = useTranslation();
   return (
     <Container>
       <div className="flex items-center justify-between px-6 py-4">
         <div>
-          <Heading>Variants</Heading>
+          <Heading>{t("requests.detail.variants")}</Heading>
         </div>
       </div>
       <div className="flex size-full flex-col overflow-hidden">
         <Table>
           <Table.Header>
             <Table.Row>
-              <Table.HeaderCell>Title</Table.HeaderCell>
-              <Table.HeaderCell>SKU</Table.HeaderCell>
+              <Table.HeaderCell>{t("fields.title")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("fields.sku")}</Table.HeaderCell>
             </Table.Row>
           </Table.Header>
           <Table.Body>
@@ -162,6 +166,7 @@ const ProductVariantInfo = ({ product }: { product: ProductDTO }) => {
 };
 
 const ProductOrganizationInfo = ({ product }: { product: ProductDTO }) => {
+  const { t } = useTranslation();
   let category_name = "";
   let category_id = "";
   let collection_name = "";
@@ -195,11 +200,11 @@ const ProductOrganizationInfo = ({ product }: { product: ProductDTO }) => {
   return (
     <Container className="divide-y p-0">
       <div className="flex items-center justify-between px-6 py-4">
-        <Heading level="h2">Organization</Heading>
+        <Heading level="h2">{t("requests.detail.organization")}</Heading>
       </div>
 
       <SectionRow
-        title="Tags"
+        title={t("fields.tags")}
         value={
           productTags
             ? productTags.map((tag) => (
@@ -211,7 +216,7 @@ const ProductOrganizationInfo = ({ product }: { product: ProductDTO }) => {
         }
       />
       <SectionRow
-        title="Type"
+        title={t("fields.type")}
         value={
           type_name ? (
             <Badge size="2xsmall" className="w-fit" asChild>
@@ -224,7 +229,7 @@ const ProductOrganizationInfo = ({ product }: { product: ProductDTO }) => {
       />
 
       <SectionRow
-        title="Collection"
+        title={t("fields.collection")}
         value={
           collection_name ? (
             <Badge size="2xsmall" className="w-fit" asChild>
@@ -237,7 +242,7 @@ const ProductOrganizationInfo = ({ product }: { product: ProductDTO }) => {
       />
 
       <SectionRow
-        title="Category"
+        title={t("fields.category")}
         value={
           category_name ? (
             <Badge key={category_id} className="w-fit" size="2xsmall" asChild>
@@ -251,18 +256,19 @@ const ProductOrganizationInfo = ({ product }: { product: ProductDTO }) => {
 };
 
 const ProductAttributeInfo = ({ product }: { product: ProductDTO }) => {
+  const { t } = useTranslation();
   return (
     <Container className="divide-y p-0">
       <div className="flex items-center justify-between px-6 py-4">
-        <Heading level="h2">Attributes</Heading>
+        <Heading level="h2">{t("requests.detail.attributes")}</Heading>
       </div>
-      <SectionRow title="Height" value={product.height} />
-      <SectionRow title="Width" value={product.width} />
-      <SectionRow title="Length" value={product.length} />
-      <SectionRow title="Weight" value={product.weight} />
-      <SectionRow title="Mid code" value={product.mid_code} />
-      <SectionRow title="Hs code" value={product.hs_code} />
-      <SectionRow title="Country of origin" value={product.origin_country} />
+      <SectionRow title={t("fields.height")} value={product.height} />
+      <SectionRow title={t("fields.width")} value={product.width} />
+      <SectionRow title={t("fields.length")} value={product.length} />
+      <SectionRow title={t("fields.weight")} value={product.weight} />
+      <SectionRow title={t("fields.midCode")} value={product.mid_code} />
+      <SectionRow title={t("fields.hsCode")} value={product.hs_code} />
+      <SectionRow title={t("fields.countryOfOrigin")} value={product.origin_country} />
     </Container>
   );
 };

@@ -1,6 +1,7 @@
 import { Button, Input, Text, Heading, DropdownMenu } from "@medusajs/ui"
 import { useFieldArray, UseFormReturn, FieldValues, Path, FieldError, FieldErrors, ArrayPath, FieldArray } from "react-hook-form"
 import { EllipsisHorizontal, Trash } from "@medusajs/icons"
+import { useTranslation } from "react-i18next"
 
 interface MetadataField {
   key: string
@@ -13,11 +14,13 @@ interface MetadataEditorProps<T extends FieldValues & { metadata: MetadataField[
   title?: string
 }
 
-export const MetadataEditor = <T extends FieldValues & { metadata: MetadataField[] }>({ 
-  form, 
+export const MetadataEditor = <T extends FieldValues & { metadata: MetadataField[] }>({
+  form,
   name = "metadata" as ArrayPath<T>,
-  title = "Metadata" 
+  title,
 }: MetadataEditorProps<T>) => {
+  const { t } = useTranslation()
+  const resolvedTitle = title ?? t("metadata.header")
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name,
@@ -37,7 +40,7 @@ export const MetadataEditor = <T extends FieldValues & { metadata: MetadataField
 
   return (
     <div className="col-span-2 mt-4">
-      <Heading level="h3" className="inter-small-semibold mb-2">{title}</Heading>
+      <Heading level="h3" className="inter-small-semibold mb-2">{resolvedTitle}</Heading>
       <div className="border rounded-lg overflow-hidden">
         <div className="grid grid-cols-[1fr_1fr_40px] bg-ui-bg-subtle border-b py-2 px-3 text-ui-fg-subtle text-sm font-semibold">
           <span className="border-r pr-2">Key</span>

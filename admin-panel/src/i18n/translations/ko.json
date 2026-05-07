@@ -56,7 +56,11 @@
     "unsavedChangesDescription": "저장되지 않은 변경 사항이 있으며, 이 양식을 나가면 변경 사항이 손실됩니다.",
     "includesTaxTooltip": "이 열의 가격은 세금이 포함된 금액입니다.",
     "excludesTaxTooltip": "이 열의 가격은 세금이 제외된 금액입니다.",
-    "noMoreData": "더 이상 데이터가 없습니다"
+    "noMoreData": "더 이상 데이터가 없습니다",
+    "noRecordsMessageFiltered": "There are no records to show matching the filters",
+    "loading": "Loading...",
+    "yes": "Yes",
+    "no": "No"
   },
   "json": {
     "header": "JSON",
@@ -715,6 +719,18 @@
           "header": "제품 삭제 실패"
         }
       }
+    },
+    "columns": {
+      "product_display": "Product",
+      "variants_count": "Variants",
+      "sales_channels_display": "Sales Channels",
+      "collection": "Collection",
+      "status": "Status",
+      "thumbnail": "Thumbnail",
+      "title": "Title",
+      "handle": "Handle",
+      "created_at": "Created",
+      "updated_at": "Updated"
     }
   },
   "collections": {
@@ -871,7 +887,8 @@
       "disablePrompt_other": "{{count}}개의 위치 수준을 비활성화하려고 합니다. 이 작업은 취소할 수 없습니다.",
       "disabledToggleTooltip": "비활성화할 수 없음: 비활성화하기 전에 들어오는 수량 및/또는 예약된 수량을 지우세요.",
       "successToast": "재고 수준이 성공적으로 업데이트되었습니다."
-    }
+    },
+    "levelDeleted": "Inventory level deleted successfully."
   },
   "giftCards": {
     "domain": "기프트 카드",
@@ -1042,7 +1059,8 @@
       "itemSubtotal": "상품 소계",
       "shippingSubtotal": "배송 소계",
       "discountSubtotal": "할인 소계",
-      "taxTotal": "세금 합계"
+      "taxTotal": "세금 합계",
+      "totalAfterDiscount": "Total After Discount"
     },
     "transfer": {
       "title": "소유권 이전",
@@ -1280,11 +1298,15 @@
       "consistsOf": "{{num}}개의 개별 상품으로 구성됨",
       "requires": "변형당 {{num}}개 필요",
       "toast": {
-        "created": "상품이 성공적으로 할당되었습니다"
+        "created": "상품이 성공적으로 할당되었습니다",
+        "error": "Failed to allocate following items: {{items}}"
       },
       "error": {
         "quantityNotAllocated": "할당되지 않은 상품이 있습니다."
-      }
+      },
+      "noItemsToAllocate": "No items require allocation.",
+      "noItemsFound": "No items match your search.",
+      "noItemsFoundHint": "Try a different search term."
     },
     "shipment": {
       "title": "발송 처리",
@@ -1447,6 +1469,31 @@
       "displayId": "표시 ID",
       "refundableAmount": "환불 가능 금액",
       "returnableQuantity": "반품 가능 수량"
+    },
+    "giftCardsStoreCreditLines": "Gift cards & credit lines",
+    "creditLines": {
+      "title": "Credit lines",
+      "total": "Sum of all credit lines",
+      "creditOrDebit": "Credit / Debit",
+      "createCreditLine": "Create credit line",
+      "createCreditLineSuccess": "Credit line created successfully",
+      "createCreditLineError": "Error creating credit line",
+      "createCreditLineDescription": "Create a credit line for amount {{amount}}",
+      "operation": "Operation",
+      "credit": "Credit",
+      "creditDescription": "Adds a positive sum to the order",
+      "debit": "Debit",
+      "debitDescription": "Subtracts a negative sum from the order"
+    },
+    "balanceSettlement": {
+      "title": "Balance settlement",
+      "settlementType": "Settlement type",
+      "settlementTypes": {
+        "paymentMethod": "Payment method",
+        "paymentMethodDescription": "Refund amount to the payment method",
+        "creditLine": "Store credit",
+        "creditLineDescription": "Refund amount as store credit"
+      }
     }
   },
   "draftOrders": {
@@ -1495,7 +1542,10 @@
   "stockLocations": {
     "domain": "위치 및 배송",
     "list": {
-      "description": "스토어의 재고 위치 및 배송 옵션을 관리합니다."
+      "description": "스토어의 재고 위치 및 배송 옵션을 관리합니다.",
+      "noRecordsMessage": "No records",
+      "noRecordsMessageEmpty": "No locations found",
+      "noRecordsMessageFiltered": "No locations found matching the filters"
     },
     "create": {
       "header": "재고 위치 생성",
@@ -1508,7 +1558,8 @@
       "successToast": "위치 {{name}}이(가) 성공적으로 업데이트되었습니다."
     },
     "delete": {
-      "confirmation": "재고 위치 \"{{name}}\"을(를) 삭제하려고 합니다. 이 작업은 취소할 수 없습니다."
+      "confirmation": "재고 위치 \"{{name}}\"을(를) 삭제하려고 합니다. 이 작업은 취소할 수 없습니다.",
+      "successToast": "Location \"{{name}}\" was successfully deleted."
     },
     "fulfillmentProviders": {
       "header": "배송 업체",
@@ -1541,6 +1592,10 @@
       "shippingProfiles": {
         "label": "배송 프로필",
         "description": "배송 요구 사항별로 제품을 그룹화"
+      },
+      "shippingOptionTypes": {
+        "label": "Shipping Option Types",
+        "description": "Group shipping options by types"
       }
     },
     "salesChannels": {
@@ -1658,7 +1713,8 @@
         },
         "provider": "배송 업체",
         "profile": "배송 프로필",
-        "fulfillmentOption": "배송 옵션"
+        "fulfillmentOption": "배송 옵션",
+        "type": "Shipping option type"
       }
     },
     "serviceZones": {
@@ -1870,7 +1926,8 @@
           "productCollection": "제품 컬렉션",
           "productTag": "제품 태그",
           "productType": "제품 유형",
-          "customerGroup": "고객 그룹"
+          "customerGroup": "고객 그룹",
+          "shippingOption": "Shipping options"
         },
         "operators": {
           "in": "포함",
@@ -1882,14 +1939,16 @@
           "productCollection": "제품 컬렉션 검색",
           "productTag": "제품 태그 검색",
           "productType": "제품 유형 검색",
-          "customerGroup": "고객 그룹 검색"
+          "customerGroup": "고객 그룹 검색",
+          "shippingOption": "Search for shipping options"
         },
         "tags": {
           "product": "제품",
           "productCollection": "제품 컬렉션",
           "productTag": "제품 태그",
           "productType": "제품 유형",
-          "customerGroup": "고객 그룹"
+          "customerGroup": "고객 그룹",
+          "shippingOption": "Shipping option"
         },
         "modal": {
           "header": "대상 추가"
@@ -1979,11 +2038,23 @@
           "title": "누가 이 코드를 사용할 수 있나요?",
           "description": "어떤 고객이 프로모션 코드를 사용할 수 있나요? 변경하지 않으면 모든 고객이 프로모션 코드를 사용할 수 있습니다."
         },
-        "target-rules": {
+        "target_rules": {
           "title": "어떤 항목에 프로모션이 적용되나요?",
-          "description": "프로모션은 다음 조건과 일치하는 항목에 적용됩니다."
+          "description": "프로모션은 다음 조건과 일치하는 항목에 적용됩니다.",
+          "order": {
+            "title": "What items will the promotion be applied to?",
+            "description": "The promotion will be applied to items that match the following conditions."
+          },
+          "shipping_methods": {
+            "title": "What shipping methods will the promotion be applied to?",
+            "description": "The promotion will be applied to shipping methods that match the following conditions."
+          },
+          "items": {
+            "title": "What items will the promotion be applied to?",
+            "description": "The promotion will be applied to items that match the following conditions."
+          }
         },
-        "buy-rules": {
+        "buy_rules": {
           "title": "프로모션을 활성화하기 위해 장바구니에 무엇이 필요한가요?",
           "description": "이러한 조건이 일치하면 대상 항목에 프로모션을 활성화합니다."
         }
@@ -2005,10 +2076,10 @@
       "rules": {
         "title": "사용 조건 편집"
       },
-      "target-rules": {
+      "target_rules": {
         "title": "항목 조건 편집"
       },
-      "buy-rules": {
+      "buy_rules": {
         "title": "구매 규칙 편집"
       }
     },
@@ -2020,7 +2091,10 @@
       },
       "actions": {
         "goToCampaign": "캠페인으로 이동"
-      }
+      },
+      "notPartOf": "Not part of a campaign",
+      "addToExisting": "Add this promotion to an existing campaign",
+      "addToCampaign": "Add to Campaign"
     },
     "campaign_currency": {
       "tooltip": "이것은 프로모션의 통화입니다. 상세 정보 탭에서 변경하세요."
@@ -2102,7 +2176,8 @@
         "description": "고객이 결제 중에 입력할 코드입니다."
       },
       "value": {
-        "title": "프로모션 값"
+        "title": "프로모션 값",
+        "invalid": "Invalid promotion value"
       },
       "value_type": {
         "fixed": {
@@ -2126,6 +2201,32 @@
       "add": "조건 추가",
       "list": {
         "noRecordsMessage": "프로모션이 적용되는 항목을 제한하기 위한 조건을 추가하세요."
+      }
+    },
+    "templates": {
+      "amountOffProducts": {
+        "title": "Amount off products",
+        "description": "Discount specific products or collection of products"
+      },
+      "amountOffOrder": {
+        "title": "Amount off order",
+        "description": "Discounts the total order amount"
+      },
+      "percentageOffProduct": {
+        "title": "Percentage off product",
+        "description": "Discounts a percentage off selected products"
+      },
+      "percentageOffOrder": {
+        "title": "Percentage off order",
+        "description": "Discounts a percentage of the total order amount"
+      },
+      "buyXGetY": {
+        "title": "Buy X Get Y",
+        "description": "Buy X product(s), get Y product(s)"
+      },
+      "freeShipping": {
+        "title": "Free shipping",
+        "description": "Provide free shipping to customers"
       }
     }
   },
@@ -2172,7 +2273,8 @@
       "budget_limit": "예산 한도",
       "campaign_id": {
         "hint": "프로모션과 동일한 통화 코드를 가진 캠페인만 이 목록에 표시됩니다."
-      }
+      },
+      "totalUsedByAttribute": "Total used"
     },
     "budget": {
       "create": {
@@ -2184,7 +2286,10 @@
         "type": "유형",
         "currency": "통화",
         "limit": "한도",
-        "used": "사용됨"
+        "used": "사용됨",
+        "budgetAttribute": "Limit usage per",
+        "budgetAttributeTooltip": "Define how many times the promotion can be used by a specific customer or email.",
+        "totalUsedByAttribute": "Budget limit per: {{attribute}}"
       },
       "type": {
         "spend": {
@@ -2194,6 +2299,10 @@
         "usage": {
           "title": "사용량",
           "description": "프로모션이 사용될 수 있는 횟수에 제한을 설정합니다."
+        },
+        "useByAttribute": {
+          "title": "Usage by attribute (customer id, email, etc.)",
+          "description": "Set a limit on how many times the promotion can be used by a specific attribute value."
         }
       },
       "edit": {
@@ -2847,7 +2956,11 @@
     "from": "시작",
     "to": "종료",
     "beaware": "주의",
-    "loading": "로딩 중"
+    "loading": "로딩 중",
+    "selectValue": "Select Value",
+    "selectValues": "Select Values",
+    "selectOperator": "Select Operator",
+    "selectType": "Select type"
   },
   "fields": {
     "amount": "금액",
@@ -3005,7 +3118,21 @@
     "startDate": "시작일",
     "endDate": "종료일",
     "draft": "임시 저장",
-    "values": "값"
+    "values": "값",
+    "reference": "Reference",
+    "reference_id": "Reference ID",
+    "enabledInStore": "Enabled in store",
+    "isReturn": "Is return",
+    "promotionCode": "Promotion code",
+    "serviceZone": "Service Zone",
+    "creditTotal": "Credit Lines Total",
+    "yes": "Yes",
+    "no": "No",
+    "filterable": "Filterable",
+    "global": "Global",
+    "required": "Required",
+    "productCategories": "Product Categories",
+    "options": "Options"
   },
   "dateTime": {
     "years_one": "년",
@@ -3021,6 +3148,477 @@
     "minutes_one": "분",
     "minutes_other": "분",
     "seconds_one": "초",
-    "seconds_other": "초"
+    "seconds_other": "초",
+    "createdAt": "Created At",
+    "updatedAt": "Updated At"
+  },
+  "refundReasons": {
+    "domain": "Refund Reasons",
+    "subtitle": "Manage reasons for issuing refunds.",
+    "calloutHint": "Manage the reasons to categorize refunds.",
+    "editReason": "Edit Refund Reason",
+    "create": {
+      "header": "Add Refund Reason",
+      "subtitle": "Specify the most common reasons for refunds.",
+      "hint": "Create a new refund reason to categorize refunds.",
+      "successToast": "Refund reason {{label}} was successfully created."
+    },
+    "edit": {
+      "header": "Edit Refund Reason",
+      "subtitle": "Edit the value of the refund reason.",
+      "successToast": "Refund reason {{label}} was successfully updated."
+    },
+    "delete": {
+      "confirmation": "You are about to delete the refund reason \"{{label}}\". This action cannot be undone.",
+      "successToast": "Refund reason was successfully deleted."
+    },
+    "fields": {
+      "label": {
+        "label": "Label",
+        "placeholder": "Gesture of goodwill"
+      },
+      "code": {
+        "label": "Code",
+        "placeholder": "gesture_of_goodwill"
+      },
+      "description": {
+        "label": "Description",
+        "placeholder": "Customer had a bad shopping experience"
+      }
+    }
+  },
+  "shippingOptionTypes": {
+    "domain": "Shipping Option Types",
+    "subtitle": "Organize your shipping options into types.",
+    "create": {
+      "header": "Create Shipping Option Type",
+      "hint": "Create a new shipping option type to categorize your shipping options.",
+      "successToast": "Shipping option type {{label}} was successfully created."
+    },
+    "edit": {
+      "header": "Edit Shipping Option Type",
+      "successToast": "Shipping option type {{label}} was successfully updated."
+    },
+    "delete": {
+      "confirmation": "You are about to delete the shipping option type \"{{label}}\". This action cannot be undone.",
+      "successToast": "Shipping option type \"{{label}}\" was successfully deleted."
+    },
+    "fields": {
+      "label": "Label",
+      "code": "Code",
+      "description": "Description"
+    }
+  },
+  "views": {
+    "save": "Save",
+    "saveAsNew": "Save as new view",
+    "updateDefaultForEveryone": "Update default for everyone",
+    "updateViewName": "Update view",
+    "prompts": {
+      "updateDefault": {
+        "title": "Update default view",
+        "description": "This will update the default view for all users. Are you sure?",
+        "confirmText": "Update for everyone",
+        "cancelText": "Cancel"
+      },
+      "updateView": {
+        "title": "Update view",
+        "description": "Are you sure you want to update \"{{name}}\"?",
+        "confirmText": "Update",
+        "cancelText": "Cancel"
+      }
+    },
+    "systemDefault": "System Default",
+    "personalViews": "Personal Views",
+    "saveCurrentView": "Save current view",
+    "editView": "Edit view",
+    "deleteView": "Delete view",
+    "deleteViewDescription": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+    "resetSystemDefault": "Reset system default",
+    "resetSystemDefaultDescription": "This will delete the saved system default and revert to the original code-level defaults. All users will be affected. Are you sure?",
+    "resetToCodeDefaults": "Reset to code defaults",
+    "viewName": "View Name",
+    "enterViewName": "Enter view name",
+    "editViewName": "Edit View Name",
+    "saveAsNewView": "Save as New View",
+    "changeViewName": "Change the name of your saved view",
+    "saveConfiguration": "Save your current configuration as a new view",
+    "nameRequired": "Name is required",
+    "nameNotEmpty": "Name cannot be empty",
+    "saveAsSystemDefault": "Save as system default",
+    "saveAsSystemDefaultDesc": "This will save the current configuration as the system default. All users will see this configuration by default unless they have their own personal views. Are you sure?",
+    "updateExistingView": "Update existing view",
+    "updateExistingViewDesc": "Update \"{{name}}\" with the current configuration?",
+    "update": "Update",
+    "saveAsDefaultBtn": "Save as default",
+    "default": "Default",
+    "updateDefaultView": "Update default view",
+    "updateDefaultViewDesc": "This will update the default view for all users. Are you sure?",
+    "updateConfirmText": "Update for everyone"
+  },
+  "attributes": {
+    "domain": "Product Attributes",
+    "create": {
+      "successToast": "Attribute was successfully created.",
+      "details": "Details",
+      "type": "Type",
+      "enterValue": "Enter value"
+    },
+    "detail": {
+      "notFound": "Attribute not found",
+      "possibleValues": "Possible Values"
+    },
+    "possibleValues": {
+      "search": "Search possible values..."
+    }
+  },
+  "requests": {
+    "domain": "Requests",
+    "seller": "Seller",
+    "product": "Product",
+    "review-remove": "Review Remove",
+    "return": "Order Return",
+    "product-collection": "Product Collection",
+    "product-category": "Product Category",
+    "product-tag": "Product Tag",
+    "product-type": "Product Type",
+    "product-update": "Product Update",
+    "detail": {
+      "accept": "Accept",
+      "reject": "Reject",
+      "variants": "Variants",
+      "options": "Options",
+      "organization": "Organization",
+      "attributes": "Attributes",
+      "requestInformation": "Request information",
+      "submittedOn": "Submitted on {{date}}",
+      "reviewedOn": "Reviewed on {{date}}",
+      "reviewerNote": "Reviewer note: {{note}}",
+      "submittedBy": "Submitted by"
+    },
+    "loading": "Loading...",
+    "columns": {
+      "date": "Date",
+      "status": "Status",
+      "actions": "Actions",
+      "submittedBy": "Submitted By",
+      "reason": "Reason",
+      "orderId": "Order ID",
+      "customer": "Customer",
+      "seller": "Seller",
+      "escalatedDate": "Escalated Date",
+      "title": "Title",
+      "name": "Name",
+      "product": "Product",
+      "variants": "Variants",
+      "value": "Value",
+      "handle": "Handle"
+    },
+    "sellerList": {
+      "heading": "Seller creation requests",
+      "detail": {
+        "title": "Review seller request",
+        "sellerName": "Seller name",
+        "member": "Member"
+      }
+    },
+    "reviewRemoveList": {
+      "heading": "Remove review requests",
+      "detail": {
+        "title": "Remove review request",
+        "reviewNote": "Review note",
+        "reviewRating": "Review rating",
+        "sellerResponse": "Seller response"
+      }
+    },
+    "returnList": {
+      "heading": "Order return requests",
+      "detail": {
+        "title": "Order return request",
+        "returnReason": "Return request reason",
+        "vendorResponse": "Vendor response",
+        "items": "Items",
+        "escalatedOn": "Escalated on {{date}}"
+      }
+    },
+    "productUpdateList": {
+      "heading": "Product update requests"
+    },
+    "productTypeList": {
+      "heading": "Product type requests",
+      "detail": {
+        "title": "Product type request",
+        "productTypeValue": "Product type value"
+      }
+    },
+    "productTagList": {
+      "heading": "Product tag requests",
+      "detail": {
+        "title": "Product tag request",
+        "productTagValue": "Product tag value"
+      }
+    },
+    "productList": {
+      "heading": "Product requests",
+      "variantCount": "{{count}} variant(s)",
+      "detail": {
+        "title": "Product request",
+        "productTitle": "Product title",
+        "seeFullProduct": "See full product"
+      }
+    },
+    "productCollectionList": {
+      "heading": "Product collection requests",
+      "detail": {
+        "title": "Product collection request",
+        "collectionTitle": "Collection title"
+      }
+    },
+    "productCategoryList": {
+      "heading": "Product category requests",
+      "detail": {
+        "title": "Product category request",
+        "categoryName": "Category name"
+      }
+    }
+  },
+  "sellers": {
+    "domain": "Sellers",
+    "fields": {
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "description": "Description",
+      "address": "Address",
+      "address_line": "Address Line",
+      "postal_code": "Postal Code",
+      "city": "City",
+      "country_code": "Country Code",
+      "tax_id": "Tax ID"
+    },
+    "edit": {
+      "header": "Edit Seller",
+      "successToast": "Seller {{name}} was successfully updated."
+    },
+    "stockLocations": {
+      "heading": "Stock Locations",
+      "assign": "Assign",
+      "removeTitle": "Remove stock location",
+      "removeDesc": "Remove \"{{name}}\" from this seller? The seller will no longer be able to manage stock at this location.",
+      "removeSuccess": "Stock location removed",
+      "removeError": "Failed to remove stock location",
+      "assignSuccess": "Stock location assigned",
+      "assignError": "Failed to assign stock location"
+    },
+    "customerGroups": {
+      "deleteDesc": "You are about to delete the customer group {{name}}. This action cannot be undone.",
+      "deleteSuccess": "Customer group deleted successfully",
+      "deleteSuccessDesc": "{{name}} deleted successfully",
+      "deleteError": "Error deleting customer group",
+      "deleteErrorDesc": "Please try again later"
+    },
+    "invite": {
+      "action": "Invite",
+      "title": "Invite Seller",
+      "description": "Invite a new seller to your store",
+      "success": "Invited!",
+      "error": "Error!"
+    },
+    "activate": "Activate account",
+    "suspend": "Suspend account",
+    "activateConfirm": "Are you sure you want to activate this account?",
+    "suspendConfirm": "Are you sure you want to suspend this account?"
+  },
+  "messages": {
+    "domain": "Messages",
+    "delete": "Delete for me",
+    "deleteForEveryone": "Delete for everyone",
+    "close": "Close",
+    "connectionLost": "Connection lost. Reconnecting...",
+    "imageUploadFailed": "Image upload failed"
+  },
+  "messenger": {
+    "searchConversations": "Search conversations...",
+    "noConversations": "No conversations yet",
+    "startConversation": "Start a conversation",
+    "selectConversation": "Select a conversation",
+    "startMessaging": "Choose a conversation from the left to start messaging",
+    "typeMessage": "Type a message...",
+    "seen": "Seen",
+    "image": "Image",
+    "support": "Support",
+    "direct": "Direct",
+    "unknown": "Unknown",
+    "supportTeam": "Support Team"
+  },
+  "configuration": {
+    "domain": "Product Catalog Settings",
+    "header": "Product Catalog Settings",
+    "subtitle": "Manage global product catalog configuration settings",
+    "createRulesTitle": "Create Rules",
+    "ruleType": "Rule type",
+    "ruleTypeColumn": "Rule type",
+    "enabledColumn": "Enabled",
+    "isRuleEnabled": "Is rule enabled",
+    "updated": "Updated!",
+    "error": "Error!",
+    "tooltip": {
+      "global_product_catalog": "Indicates whether sellers can only add inventory to admin-managed global products",
+      "product_request_enabled": "Allow sellers to propose new products for inclusion in the catalog",
+      "require_product_approval": "Indicates whether seller-added products require admin approval before becoming ready to list",
+      "product_import_enabled": "Allow sellers to import products via csv file"
+    }
+  },
+  "meilisearch": {
+    "domain": "Meilisearch",
+    "checkStatus": "Check Meilisearch status",
+    "triggerSync": "Trigger Synchronization",
+    "syncSuccess": "Synchronization triggered!",
+    "host": "Host",
+    "productIndex": "Product Index",
+    "exists": "Exists",
+    "doesNotExist": "Doesn't exist",
+    "error": "Error!"
+  },
+  "commission": {
+    "domain": "Commission Settings",
+    "deleted": "Deleted!",
+    "updated": "Updated!",
+    "created": "Created!",
+    "error": "Error!",
+    "disable": "Disable",
+    "enable": "Enable",
+    "delete": "Delete",
+    "globalTitle": "Global Commission Settings",
+    "globalDescription": "Manage global commission settings for your marketplace.",
+    "rulesTitle": "Commission Rules",
+    "rulesDescription": "View, search, and manage existing commission rules.",
+    "createRule": "Create Rule",
+    "editDefault": "Edit default rule",
+    "defaultCommission": "Default commission",
+    "minCommission": "Minimum commission per order",
+    "maxCommission": "Maximum commission per order",
+    "includingTax": "Commission charged including tax",
+    "ruleName": "Rule Name",
+    "ruleType": "Rule Type",
+    "refTypeSeller": "Seller",
+    "refTypeProductType": "Product type",
+    "refTypeProductCategory": "Product category",
+    "refTypeSellerProductType": "Seller + Product type",
+    "refTypeSellerProductCategory": "Seller + Product category",
+    "attribute": "Attribute",
+    "feeType": "Fee type",
+    "flatFee": "Flat fee",
+    "feeValue": "Fee value",
+    "minValue": "Minimum commission value",
+    "maxValue": "Maximum commission value"
+  },
+  "commissionLines": {
+    "domain": "Commission Lines",
+    "columns": {
+      "order": "Order"
+    },
+    "detail": {
+      "title": "Commission line details",
+      "sellerName": "Seller name",
+      "viewSeller": "View Seller",
+      "orderNumber": "Order number",
+      "viewOrder": "View Order",
+      "calculatedValue": "Calculated commission value",
+      "rateDetails": "Rate details",
+      "ruleNameValue": "Rule name: {{name}}",
+      "referenceValue": "Reference: {{ref}}",
+      "typeValue": "Type: {{type}}",
+      "rateValuePct": "Rate value: {{value}}%",
+      "includeTaxValue": "Include tax: {{value}}",
+      "ruleDeletedAt": "Rule was deleted at {{date}}!"
+    }
+  },
+  "reportedImages": {
+    "domain": "Reported Images",
+    "subtitle": "Review flagged images and decide to remove or publish them.",
+    "list": {
+      "noRecordsMessage": "No reported images found."
+    },
+    "status": {
+      "all": "All",
+      "pending": "Pending",
+      "resolved": "Resolved"
+    },
+    "columns": {
+      "image": "Image",
+      "reportedBy": "Reported By",
+      "reason": "Reason",
+      "date": "Date",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "actions": {
+      "removeImage": "Remove Image",
+      "publishImage": "Publish Image"
+    },
+    "remove": {
+      "title": "Remove Image",
+      "description": "This will permanently hide the image from all users. Continue?",
+      "success": "Image removed successfully."
+    },
+    "publish": {
+      "title": "Publish Image",
+      "description": "This will make the image visible to all users again. Continue?",
+      "success": "Image published successfully."
+    },
+    "errors": {
+      "actionFailed": "Something went wrong. Please try again."
+    }
+  },
+  "productReports": {
+    "domain": "Product Reports",
+    "subtitle": "Review flagged products and resolve or dismiss reports.",
+    "list": {
+      "noRecordsMessage": "No product reports found."
+    },
+    "status": {
+      "all": "All",
+      "pending": "Pending",
+      "resolved": "Resolved",
+      "dismissed": "Dismissed"
+    },
+    "columns": {
+      "product": "Product",
+      "seller": "Seller",
+      "reporter": "Reporter",
+      "reason": "Reason",
+      "comment": "Comment",
+      "date": "Date",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "reasons": {
+      "inaccurate_product_details": "Inaccurate Product Details",
+      "pricing_irregularities": "Pricing Irregularities",
+      "prohibited_item": "Prohibited Item",
+      "counterfeit_trademark": "Counterfeit / Trademark Violation",
+      "incorrect_categorization": "Incorrect Categorization",
+      "inappropriate_media": "Inappropriate Media",
+      "dmca_violation": "DMCA / Copyright Violation",
+      "other": "Other"
+    },
+    "actions": {
+      "resolve": "Mark as Attended",
+      "delete": "Delete",
+      "notificationSent": "Notification sent to user.",
+      "reportDeleted": "Report deleted."
+    },
+    "errors": {
+      "actionFailed": "An error occurred, please try again."
+    }
+  },
+  "team": {
+    "domain": "Team",
+    "subtitle": "Manage your team members and their roles."
+  },
+  "dashboard": {
+    "analyticsTitle": "Analytics",
+    "analyticsSubtitle": "See your store's progress"
   }
 }

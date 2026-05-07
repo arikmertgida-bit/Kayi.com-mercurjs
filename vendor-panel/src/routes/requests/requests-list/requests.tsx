@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import { Badge, Button, Container, Heading, Text } from "@medusajs/ui"
 import { SingleColumnPage } from "../../../components/layout/pages"
 import { useDashboardExtension } from "../../../extensions"
@@ -7,6 +8,7 @@ import { Link } from "react-router-dom"
 
 export const Requests = () => {
   const { getWidgets } = useDashboardExtension()
+  const { t } = useTranslation()
 
   const { requests, isError, error } = useRequests()
   const { count } = useOrderReturnRequests()
@@ -43,9 +45,9 @@ export const Requests = () => {
       <Container className="p-0">
         <div className="flex items-center justify-between px-6 py-4">
           <div>
-            <Heading>Requests</Heading>
+            <Heading>{t("requests.domain")}</Heading>
             <Text className="text-ui-fg-subtle" size="small">
-              Check the status of your requests and add new ones
+              {t("requests.subtitle")}
             </Text>
           </div>
         </div>
@@ -54,7 +56,7 @@ export const Requests = () => {
             <Button variant="secondary" className="w-full justify-between py-4">
               <div className="flex gap-4 items-center">
                 <Badge>{collectionRequestCount}</Badge>
-                Collections requests
+                {t("requests.tabs.collections")}
               </div>
               <TriangleRightMini color="grey" />
             </Button>
@@ -63,7 +65,7 @@ export const Requests = () => {
             <Button variant="secondary" className="w-full justify-between py-4">
               <div className="flex gap-4 items-center">
                 <Badge>{categoryRequestCount}</Badge>
-                Categories requests
+                {t("requests.tabs.categories")}
               </div>
               <TriangleRightMini color="grey" />
             </Button>
@@ -72,7 +74,7 @@ export const Requests = () => {
             <Button variant="secondary" className="w-full justify-between py-4">
               <div className="flex gap-4 items-center">
                 <Badge>{reviewRequestCount}</Badge>
-                Reviews requests
+                {t("requests.tabs.reviews")}
               </div>
               <TriangleRightMini color="grey" />
             </Button>
@@ -81,7 +83,7 @@ export const Requests = () => {
             <Button variant="secondary" className="w-full justify-between py-4">
               <div className="flex gap-4 items-center">
                 <Badge>{ordersRequestsCount}</Badge>
-                Order return requests
+                {t("requests.tabs.orderReturns")}
               </div>
               <TriangleRightMini color="grey" />
             </Button>

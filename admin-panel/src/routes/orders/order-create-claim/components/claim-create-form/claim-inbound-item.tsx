@@ -4,7 +4,7 @@ import { IconButton, Input, Text } from "@medusajs/ui"
 import { UseFormReturn } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
-import { ActionMenu } from "../../../../../components/common/action-menu"
+import { Action, ActionMenu } from "../../../../../components/common/action-menu"
 import { Form } from "../../../../../components/common/form"
 import { Thumbnail } from "../../../../../components/common/thumbnail"
 import { Combobox } from "../../../../../components/inputs/combobox"
@@ -99,7 +99,7 @@ function ClaimInboundItem({
           <div className="text-ui-fg-subtle txt-small mr-2 flex flex-shrink-0">
             <MoneyAmountCell
               currencyCode={currencyCode}
-              amount={previewItem.return_requested_total}
+              amount={previewItem.refundable_total}
             />
           </div>
 
@@ -124,7 +124,7 @@ function ClaimInboundItem({
                     onClick: onRemove,
                     icon: <XCircle />,
                   },
-                ].filter(Boolean),
+                ].filter(Boolean) as Action[],
               },
             ]}
           />

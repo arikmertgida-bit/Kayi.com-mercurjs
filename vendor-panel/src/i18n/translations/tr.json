@@ -55,7 +55,8 @@
     "unsavedChangesDescription": "Kaydedilmemiş değişiklikleriniz kaybolacak.",
     "includesTaxTooltip": "Bu sütundaki fiyatlar vergiler dahil fiyatlardır.",
     "excludesTaxTooltip": "Bu sütundaki fiyatlar vergiler hariç fiyatlardır.",
-    "noMoreData": "Daha fazla veri yok"
+    "noMoreData": "Daha fazla veri yok",
+    "loading": "Yükleniyor..."
   },
   "json": {
     "header": "JSON",
@@ -137,7 +138,8 @@
     "hide": "Gizle",
     "export": "Dışa Aktar",
     "import": "İçe Aktar",
-    "cannotUndo": "Bu işlem geri alınamaz"
+    "cannotUndo": "Bu işlem geri alınamaz",
+    "request": "İstek Gönder"
   },
   "operators": {
     "in": "İçinde"
@@ -545,17 +547,21 @@
     "fields": {
       "title": {
         "label": "Başlık",
+        "placeholder": "Kış ceketi",
         "hint": "Ürününüz için kısa ve net bir başlık verin.<0/> Arama motorları için önerilen uzunluk 50-60 karakterdir."
       },
       "subtitle": {
-        "label": "Alt Başlık"
+        "label": "Alt Başlık",
+        "placeholder": "Sıcak ve rahat"
       },
       "handle": {
         "label": "Tutamak",
+        "placeholder": "kis-ceketi",
         "tooltip": "Tutamak, ürünü mağazanızda referans almak için kullanılır. Belirtilmediğinde, ürün başlığından oluşturulacaktır."
       },
       "description": {
         "label": "Açıklama",
+        "placeholder": "Sıcak ve rahat bir ceket",
         "hint": "Ürününüz için kısa ve net bir açıklama verin.<0/> Arama motorları için önerilen uzunluk 120-160 karakterdir."
       },
       "discountable": {
@@ -731,6 +737,12 @@
       "description": "Katalogdan {{count}} ürünü silmek üzeresiniz. Bu işlem geri alınamaz.",
       "success": "{{count}} ürün başarıyla silindi.",
       "error": "Ürünler silinemedi"
+    },
+    "singleProducts": "Tekli Ürünler",
+    "variantProducts": "Varyantlı Ürünler",
+    "additionalAttributes": {
+      "title": "Ek Özellikler",
+      "successUpdate": "Ürün başarıyla güncellendi"
     }
   },
   "collections": {
@@ -757,7 +769,9 @@
         "successToast_one": "Ürün koleksiyondan başarıyla kaldırıldı.",
         "successToast_other": "Ürünler koleksiyondan başarıyla kaldırıldı."
       }
-    }
+    },
+    "editCollectionRequest": "Ürün Koleksiyonu İsteğini Düzenle",
+    "collectionRequestSuccess": "Koleksiyon talebi başarıyla gönderildi"
   },
   "categories": {
     "domain": "Kategoriler",
@@ -765,16 +779,19 @@
     "create": {
       "header": "Kategori Oluştur",
       "hint": "Ürünlerinizi organize etmek için yeni bir kategori oluşturun.",
+      "subtitle": "Ürünlerinizi düzenlemek için yeni bir kategori talep edin.",
       "tabs": {
         "details": "Detaylar",
         "organize": "Sıralamayı Düzenle"
       },
-      "successToast": "Kategori {{name}} başarıyla oluşturuldu."
+      "successToast": "Kategori {{name}} başarıyla oluşturuldu.",
+      "requestHeader": "Kategori İste"
     },
     "edit": {
       "header": "Kategoriyi Düzenle",
       "description": "Kategoriyi düzenleyerek detaylarını güncelleyin.",
-      "successToast": "Kategori başarıyla güncellendi."
+      "successToast": "Kategori başarıyla güncellendi.",
+      "requestHeader": "Kategori İsteğini Düzenle"
     },
     "delete": {
       "confirmation": "Kategori {{name}}'i silmek üzeresiniz. Bu işlem geri alınamaz.",
@@ -821,7 +838,8 @@
       "new": {
         "label": "Yeni"
       }
-    }
+    },
+    "categoryRequestSuccess": "Talep başarıyla gönderildi"
   },
   "inventory": {
     "domain": "Envanter",
@@ -953,7 +971,8 @@
     },
     "registered": "Kayıtlı",
     "guest": "Misafir",
-    "hasAccount": "Hesabı var"
+    "hasAccount": "Hesabı var",
+    "customerGroupsAddSuccess": "Müşteri grupları başarıyla eklendi"
   },
   "customerGroups": {
     "domain": "Müşteri Grupları",
@@ -1263,7 +1282,9 @@
       "addTracking": "Takip numarası ekle",
       "sendNotification": "Bildirim gönder",
       "sendNotificationHint": "Müşteriye bu gönderim hakkında bilgi ver.",
-      "toastCreated": "Gönderim başarıyla oluşturuldu."
+      "toastCreated": "Gönderim başarıyla oluşturuldu.",
+      "trackingUrl": "Takip URL'si",
+      "addTrackingUrl": "Takip URL'si Ekle"
     },
     "fulfillment": {
       "cancelWarning": "Bir sipariş tamamlamayı iptal etmek üzeresiniz. Bu işlem geri alınamaz.",
@@ -1442,7 +1463,8 @@
         "title": "Fatura adresini düzenle",
         "requestSuccess": "Sipariş fatura adresi güncellendi."
       }
-    }
+    },
+    "orderCompletedSuccess": "Sipariş tamamlandı"
   },
   "draftOrders": {
     "domain": "Taslak Siparişler",
@@ -1964,11 +1986,11 @@
           "title": "Bu kodu kim kullanabilir?",
           "description": "Hangi müşterinin promosyon kodunu kullanmasına izin verilir? Eğer değiştirilmezse, promosyon kodu tüm müşteriler tarafından kullanılabilir."
         },
-        "target-rules": {
+        "target_rules": {
           "title": "Promosyon hangi ürünlere uygulanacak?",
           "description": "Promosyon, aşağıdaki koşulları karşılayan ürünlere uygulanacaktır."
         },
-        "buy-rules": {
+        "buy_rules": {
           "title": "Promosyonu açmak için sepette ne olmalı?",
           "description": "Bu koşullar sağlandığında, hedef ürünlerde promosyon etkinleştirilir."
         }
@@ -1990,10 +2012,10 @@
       "rules": {
         "title": "Kullanım koşullarını düzenle"
       },
-      "target-rules": {
+      "target_rules": {
         "title": "Ürün koşullarını düzenle"
       },
-      "buy-rules": {
+      "buy_rules": {
         "title": "Satın alma kurallarını düzenle"
       }
     },
@@ -2005,7 +2027,10 @@
       },
       "actions": {
         "goToCampaign": "Kampanyaya git"
-      }
+      },
+      "notPartOf": "Kampanyaya dahil değil",
+      "addToExisting": "Bu promosyonu mevcut bir kampanyaya ekle",
+      "addToCampaign": "Kampanyaya Ekle"
     },
     "campaign_currency": {
       "tooltip": "Bu promosyonun para birimi. Detaylar sekmesinden değiştirin."
@@ -2107,6 +2132,20 @@
       "add": "Şart ekle",
       "list": {
         "noRecordsMessage": "Promosyonun uygulanacağı ürünleri kısıtlamak için bir şart ekleyin."
+      }
+    },
+    "templates": {
+      "percentageOffProduct": {
+        "title": "Ürünlerde yüzde indirimi",
+        "description": "Seçili ürünlerde yüzde indirim uygula"
+      },
+      "percentageOffOrder": {
+        "title": "Siparişte yüzde indirimi",
+        "description": "Toplam sipariş tutarında yüzde indirim uygula"
+      },
+      "buyXGetY": {
+        "title": "X Al Y Kazan",
+        "description": "X ürün satın al, Y ürün kazan"
       }
     }
   },
@@ -2300,7 +2339,8 @@
         "placeholder": "Müşteri gruplarını arayın",
         "attribute": "Müşteri grupları"
       }
-    }
+    },
+    "productRemovedSuccess": "Ürün fiyat listesinden kaldırıldı"
   },
   "profile": {
     "domain": "Profil",
@@ -2323,6 +2363,7 @@
   },
   "users": {
     "domain": "Kullanıcılar",
+    "invalidEmail": "Geçersiz e-posta",
     "editUser": "Kullanıcıyı Düzenle",
     "inviteUser": "Kullanıcı Davet Et",
     "inviteUserHint": "Mağazanıza yeni bir kullanıcı davet edin.",
@@ -2384,7 +2425,8 @@
       "updatedTaxInclusivitySuccessfully": "Vergi dahil fiyatlandırma başarıyla güncellendi"
     },
     "defaultSalesChannel": "Varsayılan satış kanalı",
-    "defaultLocation": "Varsayılan konum"
+    "defaultLocation": "Varsayılan konum",
+    "editCompany": "Şirket Bilgilerini Düzenle"
   },
   "regions": {
     "domain": "Bölgeler",
@@ -2502,7 +2544,11 @@
       "create": "Konum başarıyla oluşturuldu",
       "update": "Konum başarıyla güncellendi",
       "removeChannel": "Satış kanalı başarıyla kaldırıldı"
-    }
+    },
+    "shippingOptions": {
+      "typeDescription": "Tür açıklaması"
+    },
+    "locationUpdateSuccess": "Stok konumu başarıyla güncellendi"
   },
   "reservations": {
     "domain": "Rezervasyonlar",
@@ -2770,7 +2816,10 @@
         "dormant": "Beklemede",
         "timeout": "Zaman aşımı"
       }
-    }
+    },
+    "zoomIn": "Yakınlaştır",
+    "zoomOut": "Uzaklaştır",
+    "resetCanvas": "Tuvali sıfırla"
   },
   "productTypes": {
     "domain": "Ürün Türleri",
@@ -2778,7 +2827,9 @@
     "create": {
       "header": "Ürün Türü Oluştur",
       "hint": "Ürünlerinizi kategorize etmek için yeni bir ürün türü oluşturun.",
-      "successToast": "Ürün türü {{value}} başarıyla oluşturuldu."
+      "successToast": "Ürün türü {{value}} başarıyla oluşturuldu.",
+      "requestHeader": "Ürün Türü İste",
+      "successToastRequest": "Ürün türü başarıyla talep edildi"
     },
     "edit": {
       "header": "Ürün Türünü Düzenle",
@@ -2790,14 +2841,17 @@
     },
     "fields": {
       "value": "Değer"
-    }
+    },
+    "loadError": "Ürün türleri yüklenirken hata oluştu."
   },
   "productTags": {
     "domain": "Ürün Etiketleri",
     "create": {
       "header": "Ürün Etiketi Oluştur",
       "subtitle": "Ürünlerinizi kategorize etmek için yeni bir ürün etiketi oluşturun.",
-      "successToast": "Ürün etiketi {{value}} başarıyla oluşturuldu."
+      "successToast": "Ürün etiketi {{value}} başarıyla oluşturuldu.",
+      "requestHeader": "Ürün Etiketi İste",
+      "successToastRequest": "Ürün etiketi başarıyla talep edildi"
     },
     "edit": {
       "header": "Ürün Etiketini Düzenle",
@@ -2820,6 +2874,19 @@
     },
     "accessibility": {
       "description": "Medusa aktiviteleri hakkında bildirimler burada listelenecek."
+    },
+    "templates": {
+      "seller_product_collection_request_accepted_notification": "Koleksiyon talebiniz kabul edildi",
+      "seller_product_collection_request_rejected_notification": "Koleksiyon talebiniz reddedildi",
+      "seller_new_order_notification": "Yeni bir siparişiniz var",
+      "seller_product_category_request_accepted_notification": "Kategori talebiniz kabul edildi",
+      "seller_product_category_request_rejected_notification": "Kategori talebiniz reddedildi",
+      "seller_product_tag_request_accepted_notification": "Ürün etiketi talebiniz kabul edildi",
+      "seller_product_tag_request_rejected_notification": "Ürün etiketi talebiniz reddedildi",
+      "seller_product_type_request_accepted_notification": "Ürün türü talebiniz kabul edildi",
+      "seller_product_type_request_rejected_notification": "Ürün türü talebiniz reddedildi",
+      "seller_product_request_accepted_notification": "Ürün talebiniz kabul edildi",
+      "seller_product_request_rejected_notification": "Ürün talebiniz reddedildi"
     }
   },
   "errors": {
@@ -2845,7 +2912,10 @@
     "from": "Kimden",
     "to": "Kime",
     "beaware": "Dikkat",
-    "loading": "Yükleniyor"
+    "loading": "Yükleniyor",
+    "selectOperator": "Operatör seçin",
+    "selectValue": "Değer seçin",
+    "selectValues": "Değerler seçin"
   },
   "fields": {
     "amount": "Miktar",
@@ -3007,7 +3077,10 @@
     "by": "Tarafından",
     "taxId": "Vergi Kimlik No",
     "currentPriceTemplate": "Mevcut fiyat {{regionOrCurrency}}",
-    "stockTemplate": "Stok Konumu {{stockLocation}}"
+    "stockTemplate": "Stok Konumu {{stockLocation}}",
+    "required": "Zorunlu",
+    "productCategories": "Ürün Kategorileri",
+    "options": "Seçenekler"
   },
   "dateTime": {
     "years_one": "Yıl",
@@ -3027,6 +3100,8 @@
   },
   "messenger": {
     "supportTeam": "Destek Ekibi",
+    "support": "Destek",
+    "adminChatTitle": "Yönetici ile Sohbet",
     "unknown": "Bilinmiyor",
     "imageMessage": "📷 Fotoğraf",
     "noMessages": "Henüz mesaj yok",
@@ -3049,12 +3124,23 @@
     "ordersToShip": "Gönderilecek siparişler",
     "reviewsToReply": "Yanıt bekleyen yorumlar",
     "unreadMessages": "Okunmamış mesajlar",
-    "analytics": "Analitik",
+    "analytics": "Analizler",
     "analyticsSubtitle": "Mağazanızın ilerleme durumunu görün",
     "pickDate": "Tarih seçin",
     "noData": "Veri yok",
     "orders": "Siparişler",
-    "customers": "Müşteriler"
+    "customers": "Müşteriler",
+    "domain": "Dashboard",
+    "onboarding": {
+      "title": "Mercur pazaryerine hoş geldiniz",
+      "description": "Pazaryerinde satışa başlamak için bu adımları tamamlayın",
+      "completeStore": "Mağaza bilgilerini tamamlayın",
+      "setupShipping": "Konum ve Kargo Ayarları",
+      "addProducts": "Ürün ekleyin ve satışa başlayın",
+      "manage": "Yönet",
+      "setup": "Ayarla",
+      "add": "Ekle"
+    }
   },
   "sellerAgreement": {
     "title": "Kayı.com Satıcı İş Ortaklığı ve Kullanım Esasları",
@@ -3132,5 +3218,228 @@
         "footnote": "* Komisyon oranlari KDV haric net satis bedeli uzerinden hesaplanir. Kayi.com, oranlari 30 gun onceden bildirmek kaydiyla degistirme hakkini sakli tutar. Son guncelleme: 01 Mayis 2026."
       }
     }
+  },
+  "reviews": {
+    "domain": "Yorumlar",
+    "subtitle": "Yorumlarınızı yönetin",
+    "list": {
+      "noRecordsMessage": "Yorumlarınız burada görünecek."
+    },
+    "columns": {
+      "date": "Tarih",
+      "status": "Durum",
+      "rating": "Puan"
+    },
+    "detail": {
+      "customer": {
+        "header": "Müşteri",
+        "name": "Ad",
+        "email": "E-posta"
+      },
+      "general": {
+        "header": "Yorum",
+        "stars": "Yıldızlar",
+        "review": "Yorum",
+        "reportReview": "Yorumu şikayet et",
+        "requestedToRemove": "Kaldırma talep edildi",
+        "reply": "Yanıtınız",
+        "replyButton": "Yanıtınız",
+        "editReply": "Yanıtı Düzenle",
+        "added": "Eklendi"
+      },
+      "order": "Sipariş"
+    },
+    "reply": {
+      "customerPhotos": "Müşteri Fotoğrafları",
+      "reviewPhoto": "Yorum fotoğrafı",
+      "expandView": "Görünümü genişlet",
+      "description": "Müşteri yorumuna yanıt verin.",
+      "editDescription": "Müşteri yorumuna yanıtınızı düzenleyin.",
+      "customerReplies": "Müşteri Yanıtları",
+      "noReplies": "Henüz yanıt yok.",
+      "maxLength": "Yanıt en fazla 500 karakter olabilir.",
+      "replySent": "Yanıt gönderildi",
+      "replyFailed": "Yanıt gönderilemedi",
+      "edit": "Düzenle",
+      "delete": "Sil",
+      "save": "Kaydet",
+      "cancel": "İptal",
+      "deleteReply": "Yanıtı sil",
+      "close": "Kapat",
+      "send": "Gönder",
+      "reportReview": "Yorumu şikayet et"
+    },
+    "report": {
+      "header": "Yorumu Şikayet Et",
+      "editHeader": "Talebi Düzenle",
+      "description": "Müşterinin yorumunu şikayet edin.",
+      "editDescription": "Müşteri yorumu şikayeti talebini düzenleyin.",
+      "reason": "Neden",
+      "comment": "Açıklama",
+      "selectReason": "Lütfen bir neden seçin",
+      "reported": "Yorum şikayet edildi",
+      "waitForResponse": "Lütfen moderatörün yanıtını bekleyin.",
+      "updateRequest": "Talebi Güncelle",
+      "submit": "Yorumu Şikayet Et",
+      "reasons": {
+        "notTrue": "Yorum doğru değil",
+        "insulting": "Yorum hakaret içeriyor",
+        "offensive": "Yorum saldırgan veya kaba",
+        "other": "Diğer"
+      }
+    },
+    "statuses": {
+      "waitingForReply": "Yanıt Bekliyor",
+      "replied": "Yanıtlandı"
+    },
+    "countLabel": "yorum"
+  },
+  "requests": {
+    "domain": "Talepler",
+    "subtitle": "Taleplerinizin durumunu kontrol edin ve yeni talepler ekleyin",
+    "tabs": {
+      "collections": "Koleksiyon talepleri",
+      "categories": "Kategori talepleri",
+      "reviews": "Yorum talepleri",
+      "orderReturns": "Sipariş iade talepleri"
+    },
+    "collections": {
+      "title": "Koleksiyon Talepleri",
+      "subtitle": "Yeni koleksiyon ekleme talepleriniz",
+      "requestAction": "Koleksiyon İste"
+    },
+    "categories": {
+      "title": "Kategori Talepleri",
+      "subtitle": "Yeni kategori ekleme talepleriniz",
+      "requestAction": "Kategori İste"
+    },
+    "reviewRemovals": {
+      "title": "Yorum Kaldırma Talepleri",
+      "subtitle": "Yorum iptali için talepleriniz"
+    },
+    "orderReturns": {
+      "title": "Sipariş İade Talepleri",
+      "subtitle": "Sipariş iadesi için talepleriniz",
+      "drawerTitle": "Sipariş #{{orderId}} İade Talebi"
+    },
+    "columns": {
+      "title": "Başlık",
+      "handle": "Tanımlayıcı",
+      "date": "Tarih",
+      "status": "Durum"
+    },
+    "reviewColumns": {
+      "review": "Yorum",
+      "reason": "Neden",
+      "date": "Tarih",
+      "status": "Durum"
+    },
+    "orderColumns": {
+      "order": "Sipariş",
+      "customer": "Müşteri",
+      "customerEmail": "Müşteri E-postası",
+      "reason": "Neden",
+      "date": "Tarih",
+      "status": "Durum"
+    },
+    "statuses": {
+      "pending": "Beklemede",
+      "refunded": "İade Edildi",
+      "withdrawn": "Geri Çekildi",
+      "escalated": "Üst Kademeye İletildi",
+      "accepted": "Kabul Edildi",
+      "rejected": "Reddedildi"
+    },
+    "detail": {
+      "loading": "Yükleniyor...",
+      "vendorNote": "Satıcı İnceleme Notu",
+      "location": "Konum",
+      "status": "Durum",
+      "submit": "Gönder"
+    }
+  },
+  "followers": {
+    "domain": "Takipçiler",
+    "subtitle": "Mağazanızı takip eden müşteriler",
+    "columns": {
+      "name": "Ad Soyad",
+      "email": "E-posta",
+      "orderCount": "Sipariş Sayısı",
+      "followDate": "Takip Tarihi"
+    },
+    "list": {
+      "noRecordsMessage": "Henüz takipçiniz yok."
+    },
+    "pagination": {
+      "page": "Sayfa",
+      "prev": "Önceki",
+      "next": "Sonraki"
+    }
+  },
+  "messages": {
+    "domain": "Mesajlar",
+    "productQuestion": "Ürün sorusu",
+    "storeQuestion": "Genel mağaza sorusu",
+    "imageUploadFailed": "Resim gönderilemedi. Lütfen tekrar deneyin.",
+    "connectionLost": "Bağlantı kesildi, yeniden bağlanıyor…",
+    "delete": "Sil",
+    "deleteForEveryone": "Herkes için sil",
+    "close": "Kapat",
+    "customer": "Müşteri",
+    "store": "Mağaza",
+    "back": "Geri",
+    "participant": "katılımcı",
+    "noMessages": "Henüz mesaj yok",
+    "chatOptions": "Sohbet seçenekleri",
+    "deleteOnlyForMe": "Sadece benim için sil",
+    "storeContext": "Müşteri mağazanız hakkında yazıyor, belirli bir ürün hakkında değil.",
+    "product": "Ürün"
+  },
+  "team": {
+    "domain": "Ekip",
+    "subtitle": "Mağaza ekip üyelerinizi yönetin."
+  },
+  "stripeConnect": {
+    "title": "Stripe Connect",
+    "description": "Pazaryerinden otomatik ödemeler almak için Stripe'ı bağlayın",
+    "notConnected": {
+      "title": "Bağlı değil",
+      "description": "Stripe bağlantısı yok",
+      "action": "Stripe'ı Bağla"
+    },
+    "connected": {
+      "ready": "Stripe Hesabınız Hazır",
+      "goToStripe": "Stripe'a Git",
+      "notOnboardedTitle": "Katılım tamamlanmadı",
+      "notOnboardedDesc": "Stripe Katılım sayfasına gidin",
+      "onboardingButton": "Stripe Katılımı"
+    },
+    "error": "Bağlantı hatası. Lütfen tekrar deneyin."
+  },
+  "views": {
+    "viewName": "Görünüm Adı",
+    "enterViewName": "Görünüm adı girin",
+    "editViewName": "Görünüm Adını Düzenle",
+    "saveAsNewView": "Yeni Görünüm Olarak Kaydet",
+    "changeViewName": "Kaydedilen görünümünüzün adını değiştirin",
+    "saveConfiguration": "Mevcut yapılandırmanızı yeni bir görünüm olarak kaydedin",
+    "nameRequired": "Ad zorunludur",
+    "nameNotEmpty": "Ad boş olamaz",
+    "saveAsSystemDefault": "Sistem varsayılanı olarak kaydet",
+    "saveAsSystemDefaultDesc": "Bu, mevcut yapılandırmayı sistem varsayılanı olarak kaydeder. Emin misiniz?",
+    "updateExistingView": "Mevcut görünümü güncelle",
+    "updateExistingViewDesc": "\"{{name}}\" mevcut yapılandırmayla güncellensin mi?",
+    "update": "Güncelle",
+    "saveAsDefaultBtn": "Varsayılan olarak kaydet",
+    "default": "Varsayılan"
+  },
+  "attributes": {
+    "detail": {
+      "notFound": "Öznitelik bulunamadı"
+    },
+    "create": {
+      "enterValue": "Değer girin"
+    },
+    "domain": "Özellikler"
   }
 }

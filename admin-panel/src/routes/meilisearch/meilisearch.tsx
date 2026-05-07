@@ -35,7 +35,7 @@ export const Meilisearch = () => {
           </Text>
         </div>
         <Button onClick={handleTriggerSynchronization}>
-          Trigger Synchronization
+          {t("meilisearch.triggerSync")}
         </Button>
       </div>
 

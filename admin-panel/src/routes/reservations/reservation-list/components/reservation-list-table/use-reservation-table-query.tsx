@@ -13,17 +13,18 @@ export const useReservationTableQuery = ({
     prefix
   )
 
-  const { location_id, created_at, updated_at, order, offset, ...rest } = raw
+  const { location_id, created_at, updated_at, order, offset, quantity, ...rest } = raw
 
-  const searchParams: HttpTypes.AdminGetReservationsParams = {
+  const searchParams = {
     limit: pageSize,
     offset: offset ? parseInt(offset) : undefined,
     location_id: location_id,
     created_at: created_at ? JSON.parse(created_at) : undefined,
     updated_at: updated_at ? JSON.parse(updated_at) : undefined,
     order: order ?? "-created_at",
+    ...(quantity ? { quantity: parseInt(quantity) } : {}),
     ...rest,
-  }
+  } as HttpTypes.AdminGetReservationsParams
 
   return {
     searchParams,

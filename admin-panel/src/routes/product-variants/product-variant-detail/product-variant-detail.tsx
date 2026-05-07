@@ -65,12 +65,13 @@ export const ProductVariantDetail = () => {
           <InventorySectionPlaceholder />
         ) : (
           <VariantInventorySection
-            inventoryItems={variant.inventory_items.map((i) => {
-              return {
+            inventoryItems={(variant.inventory_items ?? []).flatMap((i) => {
+              if (!i.inventory) return []
+              return [{
                 ...i.inventory,
                 required_quantity: i.required_quantity,
                 variant,
-              }
+              }]
             })}
           />
         )}

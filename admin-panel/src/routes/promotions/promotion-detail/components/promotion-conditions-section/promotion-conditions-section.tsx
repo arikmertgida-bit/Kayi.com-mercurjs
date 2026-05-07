@@ -1,17 +1,19 @@
 import { PencilSquare } from "@medusajs/icons"
-import { ApplicationMethodTargetTypeValues, HttpTypes, PromotionRuleTypes, } from "@medusajs/types"
+import { AdminPromotionRule, ApplicationMethodTargetTypeValues, PromotionRuleTypes } from "@medusajs/types"
 import { Badge, Container, Heading } from "@medusajs/ui"
 import { useTranslation } from "react-i18next"
 
 import { ActionMenu } from "../../../../../components/common/action-menu"
 import { BadgeListSummary } from "../../../../../components/common/badge-list-summary"
 import { NoRecords } from "../../../../../components/common/empty-table-content"
+import { ExtendedAdminPromotionRule, ExtendedPromotionRuleValue } from "../../../common/edit-rules/types"
 
 type RuleProps = {
-  rule: HttpTypes.AdminPromotionRule
+  rule: AdminPromotionRule
 }
 
 function RuleBlock({ rule }: RuleProps) {
+  const extended = rule as ExtendedAdminPromotionRule
   return (
     <div className="bg-ui-bg-subtle shadow-borders-base align-center flex justify-around rounded-md p-2">
       <div className="text-ui-fg-subtle txt-compact-xsmall flex items-center whitespace-nowrap">
@@ -20,20 +22,20 @@ function RuleBlock({ rule }: RuleProps) {
           key="rule-attribute"
           className="txt-compact-xsmall-plus tag-neutral-text mx-1 inline-block truncate"
         >
-          {rule.attribute_label}
+          {extended.attribute_label ?? rule.attribute}
         </Badge>
 
         <span className="txt-compact-2xsmall mx-1 inline-block">
-          {rule.operator_label}
+          {extended.operator_label ?? rule.operator}
         </span>
 
         <BadgeListSummary
           inline
           className="!txt-compact-small-plus"
           list={
-            rule.field_type === "number"
-              ? [rule.values]
-              : rule.values?.map((v) => v.label)
+            extended.field_type === "number"
+              ? [rule.values as unknown as string]
+              : rule.values?.map((v) => (v as ExtendedPromotionRuleValue).label ?? v.value ?? "")
           }
         />
       </div>
@@ -42,9 +44,9 @@ function RuleBlock({ rule }: RuleProps) {
 }
 
 type PromotionConditionsSectionProps = {
-  rules: HttpTypes.AdminPromotionRule[]
+  rules: AdminPromotionRule[]
   ruleType: PromotionRuleTypes
-  applicationMethodTargetType: ApplicationMethodTargetTypeValues
+  applicationMethodTargetType?: ApplicationMethodTargetTypeValues
 }
 
 export const PromotionConditionsSection = ({
@@ -60,8 +62,8 @@ export const PromotionConditionsSection = ({
         <div className="flex flex-col">
           <Heading>
             {t(
-              ruleType === "target-rules"
-                ? `promotions.fields.conditions.${ruleType}.${applicationMethodTargetType}.title`
+              ruleType === "target_rules"
+                ? `promotions.fields.conditions.${ruleType}.${applicationMethodTargetType ?? "items"}.title`
                 : `promotions.fields.conditions.${ruleType}.title`
             )}
           </Heading>

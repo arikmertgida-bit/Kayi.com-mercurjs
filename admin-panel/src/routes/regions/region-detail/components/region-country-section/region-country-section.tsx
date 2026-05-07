@@ -15,6 +15,7 @@ import { useDataTable } from "../../../../../hooks/use-data-table"
 import { useCountries } from "../../../common/hooks/use-countries"
 import { useCountryTableColumns } from "../../../common/hooks/use-country-table-columns"
 import { useCountryTableQuery } from "../../../common/hooks/use-country-table-query"
+import { StaticCountry } from "../../../../../lib/data/countries"
 
 type RegionCountrySectionProps = {
   region: HttpTypes.AdminRegion
@@ -34,7 +35,7 @@ export const RegionCountrySection = ({ region }: RegionCountrySectionProps) => {
     prefix: PREFIX,
   })
   const { countries, count } = useCountries({
-    countries: region.countries || [],
+    countries: (region.countries || []) as unknown as StaticCountry[],
     ...searchParams,
   })
 
@@ -116,8 +117,8 @@ export const RegionCountrySection = ({ region }: RegionCountrySectionProps) => {
         />
       </div>
       <_DataTable
-        table={table}
-        columns={columns}
+        table={table as any}
+        columns={columns as any}
         pageSize={PAGE_SIZE}
         count={count}
         orderBy={[
@@ -153,7 +154,7 @@ const CountryActions = ({
 
   const payload = region.countries
     ?.filter((c) => c.iso_2 !== country.iso_2)
-    .map((c) => c.iso_2)
+    .map((c) => c.iso_2).filter((iso2): iso2 is string => !!iso2)
 
   const handleRemove = async () => {
     const res = await prompt({
@@ -203,7 +204,7 @@ const CountryActions = ({
   )
 }
 
-const columnHelper = createColumnHelper<HttpTypes.AdminRegionCountry>()
+const columnHelper = createColumnHelper<StaticCountry>()
 
 const useColumns = () => {
   const base = useCountryTableColumns()
@@ -246,10 +247,10 @@ const useColumns = () => {
             region: HttpTypes.AdminRegion
           }
 
-          return <CountryActions country={row.original} region={region} />
+          return <CountryActions country={row.original as unknown as HttpTypes.AdminRegionCountry} region={region} />
         },
       }),
     ],
     [base]
-  ) as ColumnDef<HttpTypes.AdminRegionCountry>[]
+  ) as ColumnDef<StaticCountry>[]
 }

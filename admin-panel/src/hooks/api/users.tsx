@@ -81,26 +81,7 @@ export const useUsers = (
   return { ...data, ...rest }
 }
 
-export const useCreateUser = (
-  query?: HttpTypes.AdminUserParams,
-  options?: UseMutationOptions<
-    HttpTypes.AdminUserResponse,
-    FetchError,
-    HttpTypes.AdminCreateUser,
-    QueryKey
-  >
-) => {
-  return useMutation({
-    mutationFn: (payload) => sdk.admin.user.create(payload, query),
-    onSuccess: (data, variables, context) => {
-      queryClient.invalidateQueries({ queryKey: usersQueryKeys.lists() })
-
-      options?.onSuccess?.(data, variables, context)
-    },
-    ...options,
-  })
-}
-
+// useCreateUser removed - sdk.admin.user.create does not exist in MedusaJS v2 (user creation is invite-based)
 export const useUpdateUser = (
   id: string,
   query?: HttpTypes.AdminUserParams,

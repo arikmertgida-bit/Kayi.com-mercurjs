@@ -55,7 +55,12 @@
     "unsavedChangesDescription": "Имате незачувани промени што ќе се изгубат ако излезете од овој формулар.",
     "includesTaxTooltip": "Цените во оваа колона се со вклучен данок.",
     "excludesTaxTooltip": "Цените во оваа колона се без данок.",
-    "noMoreData": "Нема повеќе податоци"
+    "noMoreData": "Нема повеќе податоци",
+    "areYouSureDescription": "You are about to delete the {{entity}} {{title}}. This action cannot be undone.",
+    "noRecordsMessageFiltered": "There are no records to show matching the filters",
+    "loading": "Loading...",
+    "yes": "Yes",
+    "no": "No"
   },
   "json": {
     "header": "JSON",
@@ -363,7 +368,8 @@
       "sameAsShipping": "Исто како и адресата за испорака"
     },
     "contactHeading": "Контакт",
-    "locationHeading": "Локација"
+    "locationHeading": "Локација",
+    "title": "Addresses"
   },
   "email": {
     "editHeader": "Уреди е-пошта",
@@ -610,6 +616,10 @@
       },
       "hs_code": {
         "label": "HS код"
+      },
+      "shipping_profile": {
+        "label": "Shipping profile",
+        "hint": "Connect the product to a shipping profile"
       }
     },
     "variant": {
@@ -693,6 +703,32 @@
         },
         "error": {
           "header": "Не успеа да се избрише производот"
+        }
+      }
+    },
+    "columns": {
+      "product_display": "Product",
+      "variants_count": "Variants",
+      "sales_channels_display": "Sales Channels",
+      "collection": "Collection",
+      "status": "Status",
+      "thumbnail": "Thumbnail",
+      "title": "Title",
+      "handle": "Handle",
+      "created_at": "Created",
+      "updated_at": "Updated"
+    },
+    "shippingProfile": {
+      "header": "Shipping configuration",
+      "edit": {
+        "header": "Shipping Configuration",
+        "toasts": {
+          "success": "Successfully updated the shipping profile for {{title}}."
+        }
+      },
+      "create": {
+        "errors": {
+          "required": "Shipping profile is required"
         }
       }
     }
@@ -849,7 +885,10 @@
       "disablePrompt_other": "Ќе се оневозможите {{count}} нивоа на локација. ",
       "disabledToggleTooltip": "Не може да се оневозможи: исчистете ја дојдовната и/или резервираната количина пред да се оневозможи.",
       "successToast": "Нивоата на залиха се ажурирани успешно."
-    }
+    },
+    "manageLocationQuantity": "Manage location quantity",
+    "quantityAcrossLocations": "{{quantity}} across {{locations}} locations",
+    "levelDeleted": "Inventory level deleted successfully."
   },
   "giftCards": {
     "domain": "Картички за подароци",
@@ -917,7 +956,28 @@
     },
     "registered": "Регистриран",
     "guest": "Гостин",
-    "hasAccount": "Има сметка"
+    "hasAccount": "Има сметка",
+    "addresses": {
+      "title": "Addresses",
+      "fields": {
+        "addressName": "Address name",
+        "address1": "Address 1",
+        "address2": "Address 2",
+        "city": "City",
+        "province": "Province",
+        "postalCode": "Postal code",
+        "country": "Country",
+        "phone": "Phone",
+        "company": "Company",
+        "countryCode": "Country code",
+        "provinceCode": "Province code"
+      },
+      "create": {
+        "header": "Create Address",
+        "hint": "Create a new address for the customer.",
+        "successToast": "Address was successfully created."
+      }
+    }
   },
   "customerGroups": {
     "domain": "Групи на клиенти",
@@ -999,7 +1059,8 @@
       "itemSubtotal": "Ставка Подзбир",
       "shippingSubtotal": "Подзбир на испорака",
       "discountSubtotal": "Подзбир на попуст",
-      "taxTotal": "Вкупен данок"
+      "taxTotal": "Вкупен данок",
+      "totalAfterDiscount": "Total After Discount"
     },
     "transfer": {
       "title": "Пренесете ја сопственоста",
@@ -1040,7 +1101,8 @@
       "createRefundWrongQuantity": "Количеството треба да биде број помеѓу 1 и {{number}}",
       "refundAmount": "Рефундирање {{ amount }}",
       "paymentLink": "Копирај го линкот за плаќање за {{ amount }}",
-      "selectPaymentToRefund": "Изберете плаќање за рефундирање"
+      "selectPaymentToRefund": "Изберете плаќање за рефундирање",
+      "totalStoreCreditRefunds": "Total store credit refunds"
     },
     "edits": {
       "title": "Уреди редослед",
@@ -1154,7 +1216,8 @@
       "panel": {
         "title": "Враќањето започна",
         "description": "Постои отворено барање за враќање што треба да се заврши"
-      }
+      },
+      "estDifference": "Estimated difference"
     },
     "claims": {
       "create": "Креирај приговор",
@@ -1236,11 +1299,15 @@
       "consistsOf": "Се состои од {{num}}x инвентар артикли",
       "requires": "Бара {{num}} по варијанта",
       "toast": {
-        "created": "Ставките се успешно распределени"
+        "created": "Ставките се успешно распределени",
+        "error": "Failed to allocate following items: {{items}}"
       },
       "error": {
         "quantityNotAllocated": "Има нераспределени ставки."
-      }
+      },
+      "noItemsToAllocate": "No items require allocation.",
+      "noItemsFound": "No items match your search.",
+      "noItemsFoundHint": "Try a different search term."
     },
     "shipment": {
       "title": "Исполнувањето на ознаката е испратено",
@@ -1273,7 +1340,9 @@
       "error": {
         "wrongQuantity": "Само една ставка е достапна за исполнување",
         "wrongQuantity_other": "Количеството треба да биде број помеѓу 1 и {{number}}",
-        "noItems": "Нема ставки за исполнување."
+        "noItems": "Нема ставки за исполнување.",
+        "noShippingOption": "Shipping option is required",
+        "noLocation": "Location is required"
       },
       "status": {
         "notFulfilled": "Не е исполнето",
@@ -1292,11 +1361,15 @@
         "created": "Исполнувањето е успешно создадено",
         "canceled": "Исполнувањето е успешно откажано",
         "fulfillmentShipped": "Не може да се откаже веќе доставена испорака",
-        "fulfillmentDelivered": "Испораката е означена како успешно доставена"
+        "fulfillmentDelivered": "Испораката е означена како успешно доставена",
+        "fulfillmentPickedUp": "Fulfillment marked as picked up successfully"
       },
       "trackingLabel": "Следење",
       "shippingFromLabel": "Испорака од",
-      "itemsLabel": "Ставки"
+      "itemsLabel": "Ставки",
+      "differentOptionSelected": "The selected shipping option is different from the one selected by the customer.",
+      "disabledItemTooltip": "The shipping option you have selected donâ€™t allow fulfillment of this item",
+      "markAsPickedUp": "Mark as picked up"
     },
     "refund": {
       "title": "Креирај рефундирање",
@@ -1397,6 +1470,31 @@
       "displayId": "Прикажи ID",
       "refundableAmount": "Повратен износ",
       "returnableQuantity": "Количина што може да се врати"
+    },
+    "giftCardsStoreCreditLines": "Gift cards & credit lines",
+    "creditLines": {
+      "title": "Credit lines",
+      "total": "Sum of all credit lines",
+      "creditOrDebit": "Credit / Debit",
+      "createCreditLine": "Create credit line",
+      "createCreditLineSuccess": "Credit line created successfully",
+      "createCreditLineError": "Error creating credit line",
+      "createCreditLineDescription": "Create a credit line for amount {{amount}}",
+      "operation": "Operation",
+      "credit": "Credit",
+      "creditDescription": "Adds a positive sum to the order",
+      "debit": "Debit",
+      "debitDescription": "Subtracts a negative sum from the order"
+    },
+    "balanceSettlement": {
+      "title": "Balance settlement",
+      "settlementType": "Settlement type",
+      "settlementTypes": {
+        "paymentMethod": "Payment method",
+        "paymentMethodDescription": "Refund amount to the payment method",
+        "creditLine": "Store credit",
+        "creditLineDescription": "Refund amount as store credit"
+      }
     }
   },
   "draftOrders": {
@@ -1445,7 +1543,10 @@
   "stockLocations": {
     "domain": "Локации и испорака",
     "list": {
-      "description": "Управувајте со локациите на акциите на вашата продавница и опциите за испорака."
+      "description": "Управувајте со локациите на акциите на вашата продавница и опциите за испорака.",
+      "noRecordsMessage": "No records",
+      "noRecordsMessageEmpty": "No locations found",
+      "noRecordsMessageFiltered": "No locations found matching the filters"
     },
     "create": {
       "header": "Создадете локација за акции",
@@ -1458,7 +1559,8 @@
       "successToast": "Локација {{name}} беше успешно ажуриран."
     },
     "delete": {
-      "confirmation": "Ќе ја избришете локацијата на акциите {{name}}. "
+      "confirmation": "Ќе ја избришете локацијата на акциите {{name}}. ",
+      "successToast": "Location \"{{name}}\" was successfully deleted."
     },
     "fulfillmentProviders": {
       "header": "Даватели на исполнување",
@@ -1491,6 +1593,10 @@
       "shippingProfiles": {
         "label": "Профили за испорака",
         "description": "Групирајте ги производите според барањата за испорака"
+      },
+      "shippingOptionTypes": {
+        "label": "Shipping Option Types",
+        "description": "Group shipping options by types"
       }
     },
     "salesChannels": {
@@ -1499,7 +1605,8 @@
       "connectedTo": "Поврзан со {{count}} на {{total}} продажни канали",
       "noChannels": "Локацијата не е поврзана со ниту еден продажен канал.",
       "action": "Поврзете ги продажните канали",
-      "successToast": "Продажните канали беа успешно ажурирани."
+      "successToast": "Продажните канали беа успешно ажурирани.",
+      "hint": "Manage the sales channels that are connected to this location."
     },
     "shippingOptions": {
       "create": {
@@ -1519,7 +1626,13 @@
           "details": "Детали",
           "prices": "Цените"
         },
-        "action": "Креирај опција"
+        "action": "Креирај опција",
+        "pickup": {
+          "header": "Create Pickup Option for {{zone}}",
+          "hint": "Create a new pickup option to define how products are picked up from this location.",
+          "label": "Pickup options",
+          "successToast": "Pickup option {{name}} was successfully created."
+        }
       },
       "delete": {
         "confirmation": "Ќе ја избришете опцијата за испорака {{name}}. ",
@@ -1573,7 +1686,9 @@
           "shipping_one": "{{count}} опција за испорака",
           "shipping_other": "{{count}} опции за испорака",
           "returns_one": "{{count}} опција за враќање",
-          "returns_other": "{{count}} опции за враќање"
+          "returns_other": "{{count}} опции за враќање",
+          "pickup_one": "{{count}} pickup option",
+          "pickup_other": "{{count}} pickup options"
         },
         "priceType": {
           "label": "Тип на цена",
@@ -1594,7 +1709,8 @@
         },
         "provider": "Доставувач",
         "profile": "Профил на испорака",
-        "fulfillmentOption": "Опција за исполнување"
+        "fulfillmentOption": "Опција за исполнување",
+        "type": "Shipping option type"
       }
     },
     "serviceZones": {
@@ -1622,6 +1738,11 @@
       "fields": {
         "noRecords": "Нема услужни зони за додавање опции за испорака.",
         "tip": "Услужна зона е збир на географски зони или области. "
+      }
+    },
+    "pickupOptions": {
+      "edit": {
+        "header": "Edit Pickup Option"
       }
     }
   },
@@ -1656,7 +1777,9 @@
       "hint": "Создадете нов даночен регион за да ги дефинирате даночните стапки за одредена земја.",
       "errors": {
         "rateIsRequired": "Даночната стапка е потребна кога се креира стандардна даночна стапка.",
-        "nameIsRequired": "Името е потребно кога се креира стандардна даночна стапка."
+        "nameIsRequired": "Името е потребно кога се креира стандардна даночна стапка.",
+        "missingProvider": "Provider is required when creating a tax region.",
+        "missingCountry": "Country is required when creating a tax region."
       },
       "successToast": "Даночниот регион беше успешно создаден."
     },
@@ -1800,7 +1923,8 @@
           "productCollection": "Колекции на производи",
           "productTag": "Ознаки на производи",
           "productType": "Видови производи",
-          "customerGroup": "Групи на клиенти"
+          "customerGroup": "Групи на клиенти",
+          "shippingOption": "Shipping options"
         },
         "operators": {
           "in": "во",
@@ -1812,14 +1936,16 @@
           "productCollection": "Пребарајте колекции на производи",
           "productTag": "Пребарајте ознаки на производи",
           "productType": "Пребарајте типови на производи",
-          "customerGroup": "Пребарајте групи на клиенти"
+          "customerGroup": "Пребарајте групи на клиенти",
+          "shippingOption": "Search for shipping options"
         },
         "tags": {
           "product": "Производ",
           "productCollection": "Колекција на производи",
           "productTag": "Ознака на производот",
           "productType": "Тип на производ",
-          "customerGroup": "Група на клиенти"
+          "customerGroup": "Група на клиенти",
+          "shippingOption": "Shipping option"
         },
         "modal": {
           "header": "Додадете цели"
@@ -1875,7 +2001,16 @@
       "noDefaultRate": {
         "label": "Нема стандардна стапка",
         "tooltip": "Овој даночен регион нема стандардна даночна стапка. "
-      }
+      },
+      "taxProvider": "Tax provider"
+    },
+    "edit": {
+      "header": "Edit Tax Region",
+      "hint": "Edit the tax region details.",
+      "successToast": "The tax region was successfully updated."
+    },
+    "provider": {
+      "header": "Tax Provider"
     }
   },
   "promotions": {
@@ -1905,15 +2040,28 @@
           "title": "Кој може да го користи овој код?",
           "description": "На кој клиент му е дозволено да го користи кодот за промоција? "
         },
-        "target-rules": {
+        "target_rules": {
           "title": "На кои ставки ќе се применува промоцијата?",
-          "description": "Промоцијата ќе се применува на артикли кои одговараат на следните услови."
+          "description": "Промоцијата ќе се применува на артикли кои одговараат на следните услови.",
+          "order": {
+            "title": "What items will the promotion be applied to?",
+            "description": "The promotion will be applied to items that match the following conditions."
+          },
+          "shipping_methods": {
+            "title": "What shipping methods will the promotion be applied to?",
+            "description": "The promotion will be applied to shipping methods that match the following conditions."
+          },
+          "items": {
+            "title": "What items will the promotion be applied to?",
+            "description": "The promotion will be applied to items that match the following conditions."
+          }
         },
-        "buy-rules": {
+        "buy_rules": {
           "title": "Што треба да има во количката за да ја отклучите промоцијата?",
           "description": "Доколку овие услови се совпаѓаат, ја овозможуваме промоцијата на целните ставки."
         }
-      }
+      },
+      "taxInclusive": "Tax Inclusive"
     },
     "tooltips": {
       "campaignType": "Кодот на валутата мора да биде избран во промоцијата за да се постави буџет за трошење."
@@ -1931,10 +2079,10 @@
       "rules": {
         "title": "Уредете ги условите за користење"
       },
-      "target-rules": {
+      "target_rules": {
         "title": "Уредете ги условите на ставката"
       },
-      "buy-rules": {
+      "buy_rules": {
         "title": "Уредете ги правилата за купување"
       }
     },
@@ -1946,7 +2094,10 @@
       },
       "actions": {
         "goToCampaign": "Одете во кампања"
-      }
+      },
+      "notPartOf": "Not part of a campaign",
+      "addToExisting": "Add this promotion to an existing campaign",
+      "addToCampaign": "Add to Campaign"
     },
     "campaign_currency": {
       "tooltip": "Ова е валутата на промоцијата. "
@@ -2028,7 +2179,8 @@
         "description": "Кодот што вашите клиенти ќе го внесат за време на наплатата."
       },
       "value": {
-        "title": "Промотивна вредност"
+        "title": "Промотивна вредност",
+        "invalid": "Invalid promotion value"
       },
       "value_type": {
         "fixed": {
@@ -2039,6 +2191,10 @@
           "title": "Промотивна вредност",
           "description": "Процентот за попуст на износот. "
         }
+      },
+      "taxInclusive": {
+        "title": "Does promotion include taxes?",
+        "description": "Enable this field to apply the promotion after taxes"
       }
     },
     "deleteWarning": "Ќе ја избришете промоцијата {{code}}. ",
@@ -2048,6 +2204,32 @@
       "add": "Додадете состојба",
       "list": {
         "noRecordsMessage": "Додајте услов за ограничување на кои ставки се однесува промоцијата."
+      }
+    },
+    "templates": {
+      "amountOffProducts": {
+        "title": "Amount off products",
+        "description": "Discount specific products or collection of products"
+      },
+      "amountOffOrder": {
+        "title": "Amount off order",
+        "description": "Discounts the total order amount"
+      },
+      "percentageOffProduct": {
+        "title": "Percentage off product",
+        "description": "Discounts a percentage off selected products"
+      },
+      "percentageOffOrder": {
+        "title": "Percentage off order",
+        "description": "Discounts a percentage of the total order amount"
+      },
+      "buyXGetY": {
+        "title": "Buy X Get Y",
+        "description": "Buy X product(s), get Y product(s)"
+      },
+      "freeShipping": {
+        "title": "Free shipping",
+        "description": "Provide free shipping to customers"
       }
     }
   },
@@ -2094,7 +2276,8 @@
       "budget_limit": "Буџетско ограничување",
       "campaign_id": {
         "hint": "Во оваа листа се прикажани само кампањи со истиот код на валута како и промоцијата."
-      }
+      },
+      "totalUsedByAttribute": "Total used"
     },
     "budget": {
       "create": {
@@ -2106,7 +2289,10 @@
         "type": "Тип",
         "currency": "Валута",
         "limit": "Ограничување",
-        "used": "Искористени"
+        "used": "Искористени",
+        "budgetAttribute": "Limit usage per",
+        "budgetAttributeTooltip": "Define how many times the promotion can be used by a specific customer or email.",
+        "totalUsedByAttribute": "Budget limit per: {{attribute}}"
       },
       "type": {
         "spend": {
@@ -2116,6 +2302,10 @@
         "usage": {
           "title": "Употреба",
           "description": "Поставете ограничување за тоа колку пати може да се искористи промоцијата."
+        },
+        "useByAttribute": {
+          "title": "Usage by attribute (customer id, email, etc.)",
+          "description": "Set a limit on how many times the promotion can be used by a specific attribute value."
         }
       },
       "edit": {
@@ -2285,7 +2475,17 @@
     },
     "deleteUserWarning": "Ќе го избришете корисникот {{name}}. ",
     "deleteUserSuccess": "Корисник {{name}} успешно избришани",
-    "invite": "Покани"
+    "invite": "Покани",
+    "list": {
+      "empty": {
+        "heading": "No users found",
+        "description": "Once a user has been invited, they will appear here."
+      },
+      "filtered": {
+        "heading": "No results",
+        "description": "No users match the current filter criteria."
+      }
+    }
   },
   "store": {
     "domain": "Продавница",
@@ -2311,7 +2511,9 @@
       "currenciesUpdated": "Валутите се успешно ажурирани",
       "currenciesRemoved": "Успешно се отстранети валутите од продавницата",
       "updatedTaxInclusivitySuccessfully": "Цената со вклучен данок е успешно ажурирана"
-    }
+    },
+    "defaultSalesChannel": "Default sales channel",
+    "defaultLocation": "Default location"
   },
   "regions": {
     "domain": "Региони",
@@ -2464,6 +2666,16 @@
         "list": {
           "noRecordsMessage": "Прво креирајте производ."
         }
+      }
+    },
+    "list": {
+      "empty": {
+        "heading": "No sales channels found",
+        "description": "Once a sales channel has been created, it will appear here."
+      },
+      "filtered": {
+        "heading": "No results",
+        "description": "No sales channels match the current filter criteria."
       }
     }
   },
@@ -2746,7 +2958,13 @@
     "added": "Додадено",
     "removed": "Отстрането",
     "from": "Од",
-    "to": "На"
+    "to": "На",
+    "beaware": "Be aware",
+    "loading": "Loading",
+    "selectValue": "Select Value",
+    "selectValues": "Select Values",
+    "selectOperator": "Select Operator",
+    "selectType": "Select type"
   },
   "fields": {
     "amount": "Износ",
@@ -2904,7 +3122,21 @@
     "startDate": "Датум на почеток",
     "endDate": "Краен датум",
     "draft": "Драфт",
-    "values": "Вредности"
+    "values": "Вредности",
+    "reference": "Reference",
+    "reference_id": "Reference ID",
+    "enabledInStore": "Enabled in store",
+    "isReturn": "Is return",
+    "promotionCode": "Promotion code",
+    "serviceZone": "Service Zone",
+    "creditTotal": "Credit Lines Total",
+    "yes": "Yes",
+    "no": "No",
+    "filterable": "Filterable",
+    "global": "Global",
+    "required": "Required",
+    "productCategories": "Product Categories",
+    "options": "Options"
   },
   "dateTime": {
     "years_one": "Година",
@@ -2920,6 +3152,477 @@
     "minutes_one": "Минута",
     "minutes_other": "Минути",
     "seconds_one": "Второ",
-    "seconds_other": "Секунди"
+    "seconds_other": "Секунди",
+    "createdAt": "Created At",
+    "updatedAt": "Updated At"
+  },
+  "refundReasons": {
+    "domain": "Refund Reasons",
+    "subtitle": "Manage reasons for issuing refunds.",
+    "calloutHint": "Manage the reasons to categorize refunds.",
+    "editReason": "Edit Refund Reason",
+    "create": {
+      "header": "Add Refund Reason",
+      "subtitle": "Specify the most common reasons for refunds.",
+      "hint": "Create a new refund reason to categorize refunds.",
+      "successToast": "Refund reason {{label}} was successfully created."
+    },
+    "edit": {
+      "header": "Edit Refund Reason",
+      "subtitle": "Edit the value of the refund reason.",
+      "successToast": "Refund reason {{label}} was successfully updated."
+    },
+    "delete": {
+      "confirmation": "You are about to delete the refund reason \"{{label}}\". This action cannot be undone.",
+      "successToast": "Refund reason was successfully deleted."
+    },
+    "fields": {
+      "label": {
+        "label": "Label",
+        "placeholder": "Gesture of goodwill"
+      },
+      "code": {
+        "label": "Code",
+        "placeholder": "gesture_of_goodwill"
+      },
+      "description": {
+        "label": "Description",
+        "placeholder": "Customer had a bad shopping experience"
+      }
+    }
+  },
+  "shippingOptionTypes": {
+    "domain": "Shipping Option Types",
+    "subtitle": "Organize your shipping options into types.",
+    "create": {
+      "header": "Create Shipping Option Type",
+      "hint": "Create a new shipping option type to categorize your shipping options.",
+      "successToast": "Shipping option type {{label}} was successfully created."
+    },
+    "edit": {
+      "header": "Edit Shipping Option Type",
+      "successToast": "Shipping option type {{label}} was successfully updated."
+    },
+    "delete": {
+      "confirmation": "You are about to delete the shipping option type \"{{label}}\". This action cannot be undone.",
+      "successToast": "Shipping option type \"{{label}}\" was successfully deleted."
+    },
+    "fields": {
+      "label": "Label",
+      "code": "Code",
+      "description": "Description"
+    }
+  },
+  "views": {
+    "save": "Save",
+    "saveAsNew": "Save as new view",
+    "updateDefaultForEveryone": "Update default for everyone",
+    "updateViewName": "Update view",
+    "prompts": {
+      "updateDefault": {
+        "title": "Update default view",
+        "description": "This will update the default view for all users. Are you sure?",
+        "confirmText": "Update for everyone",
+        "cancelText": "Cancel"
+      },
+      "updateView": {
+        "title": "Update view",
+        "description": "Are you sure you want to update \"{{name}}\"?",
+        "confirmText": "Update",
+        "cancelText": "Cancel"
+      }
+    },
+    "systemDefault": "System Default",
+    "personalViews": "Personal Views",
+    "saveCurrentView": "Save current view",
+    "editView": "Edit view",
+    "deleteView": "Delete view",
+    "deleteViewDescription": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+    "resetSystemDefault": "Reset system default",
+    "resetSystemDefaultDescription": "This will delete the saved system default and revert to the original code-level defaults. All users will be affected. Are you sure?",
+    "resetToCodeDefaults": "Reset to code defaults",
+    "viewName": "View Name",
+    "enterViewName": "Enter view name",
+    "editViewName": "Edit View Name",
+    "saveAsNewView": "Save as New View",
+    "changeViewName": "Change the name of your saved view",
+    "saveConfiguration": "Save your current configuration as a new view",
+    "nameRequired": "Name is required",
+    "nameNotEmpty": "Name cannot be empty",
+    "saveAsSystemDefault": "Save as system default",
+    "saveAsSystemDefaultDesc": "This will save the current configuration as the system default. All users will see this configuration by default unless they have their own personal views. Are you sure?",
+    "updateExistingView": "Update existing view",
+    "updateExistingViewDesc": "Update \"{{name}}\" with the current configuration?",
+    "update": "Update",
+    "saveAsDefaultBtn": "Save as default",
+    "default": "Default",
+    "updateDefaultView": "Update default view",
+    "updateDefaultViewDesc": "This will update the default view for all users. Are you sure?",
+    "updateConfirmText": "Update for everyone"
+  },
+  "attributes": {
+    "domain": "Product Attributes",
+    "create": {
+      "successToast": "Attribute was successfully created.",
+      "details": "Details",
+      "type": "Type",
+      "enterValue": "Enter value"
+    },
+    "detail": {
+      "notFound": "Attribute not found",
+      "possibleValues": "Possible Values"
+    },
+    "possibleValues": {
+      "search": "Search possible values..."
+    }
+  },
+  "requests": {
+    "domain": "Requests",
+    "seller": "Seller",
+    "product": "Product",
+    "review-remove": "Review Remove",
+    "return": "Order Return",
+    "product-collection": "Product Collection",
+    "product-category": "Product Category",
+    "product-tag": "Product Tag",
+    "product-type": "Product Type",
+    "product-update": "Product Update",
+    "detail": {
+      "accept": "Accept",
+      "reject": "Reject",
+      "variants": "Variants",
+      "options": "Options",
+      "organization": "Organization",
+      "attributes": "Attributes",
+      "requestInformation": "Request information",
+      "submittedOn": "Submitted on {{date}}",
+      "reviewedOn": "Reviewed on {{date}}",
+      "reviewerNote": "Reviewer note: {{note}}",
+      "submittedBy": "Submitted by"
+    },
+    "loading": "Loading...",
+    "columns": {
+      "date": "Date",
+      "status": "Status",
+      "actions": "Actions",
+      "submittedBy": "Submitted By",
+      "reason": "Reason",
+      "orderId": "Order ID",
+      "customer": "Customer",
+      "seller": "Seller",
+      "escalatedDate": "Escalated Date",
+      "title": "Title",
+      "name": "Name",
+      "product": "Product",
+      "variants": "Variants",
+      "value": "Value",
+      "handle": "Handle"
+    },
+    "sellerList": {
+      "heading": "Seller creation requests",
+      "detail": {
+        "title": "Review seller request",
+        "sellerName": "Seller name",
+        "member": "Member"
+      }
+    },
+    "reviewRemoveList": {
+      "heading": "Remove review requests",
+      "detail": {
+        "title": "Remove review request",
+        "reviewNote": "Review note",
+        "reviewRating": "Review rating",
+        "sellerResponse": "Seller response"
+      }
+    },
+    "returnList": {
+      "heading": "Order return requests",
+      "detail": {
+        "title": "Order return request",
+        "returnReason": "Return request reason",
+        "vendorResponse": "Vendor response",
+        "items": "Items",
+        "escalatedOn": "Escalated on {{date}}"
+      }
+    },
+    "productUpdateList": {
+      "heading": "Product update requests"
+    },
+    "productTypeList": {
+      "heading": "Product type requests",
+      "detail": {
+        "title": "Product type request",
+        "productTypeValue": "Product type value"
+      }
+    },
+    "productTagList": {
+      "heading": "Product tag requests",
+      "detail": {
+        "title": "Product tag request",
+        "productTagValue": "Product tag value"
+      }
+    },
+    "productList": {
+      "heading": "Product requests",
+      "variantCount": "{{count}} variant(s)",
+      "detail": {
+        "title": "Product request",
+        "productTitle": "Product title",
+        "seeFullProduct": "See full product"
+      }
+    },
+    "productCollectionList": {
+      "heading": "Product collection requests",
+      "detail": {
+        "title": "Product collection request",
+        "collectionTitle": "Collection title"
+      }
+    },
+    "productCategoryList": {
+      "heading": "Product category requests",
+      "detail": {
+        "title": "Product category request",
+        "categoryName": "Category name"
+      }
+    }
+  },
+  "sellers": {
+    "domain": "Sellers",
+    "fields": {
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "description": "Description",
+      "address": "Address",
+      "address_line": "Address Line",
+      "postal_code": "Postal Code",
+      "city": "City",
+      "country_code": "Country Code",
+      "tax_id": "Tax ID"
+    },
+    "edit": {
+      "header": "Edit Seller",
+      "successToast": "Seller {{name}} was successfully updated."
+    },
+    "stockLocations": {
+      "heading": "Stock Locations",
+      "assign": "Assign",
+      "removeTitle": "Remove stock location",
+      "removeDesc": "Remove \"{{name}}\" from this seller? The seller will no longer be able to manage stock at this location.",
+      "removeSuccess": "Stock location removed",
+      "removeError": "Failed to remove stock location",
+      "assignSuccess": "Stock location assigned",
+      "assignError": "Failed to assign stock location"
+    },
+    "customerGroups": {
+      "deleteDesc": "You are about to delete the customer group {{name}}. This action cannot be undone.",
+      "deleteSuccess": "Customer group deleted successfully",
+      "deleteSuccessDesc": "{{name}} deleted successfully",
+      "deleteError": "Error deleting customer group",
+      "deleteErrorDesc": "Please try again later"
+    },
+    "invite": {
+      "action": "Invite",
+      "title": "Invite Seller",
+      "description": "Invite a new seller to your store",
+      "success": "Invited!",
+      "error": "Error!"
+    },
+    "activate": "Activate account",
+    "suspend": "Suspend account",
+    "activateConfirm": "Are you sure you want to activate this account?",
+    "suspendConfirm": "Are you sure you want to suspend this account?"
+  },
+  "messages": {
+    "domain": "Messages",
+    "delete": "Delete for me",
+    "deleteForEveryone": "Delete for everyone",
+    "close": "Close",
+    "connectionLost": "Connection lost. Reconnecting...",
+    "imageUploadFailed": "Image upload failed"
+  },
+  "messenger": {
+    "searchConversations": "Search conversations...",
+    "noConversations": "No conversations yet",
+    "startConversation": "Start a conversation",
+    "selectConversation": "Select a conversation",
+    "startMessaging": "Choose a conversation from the left to start messaging",
+    "typeMessage": "Type a message...",
+    "seen": "Seen",
+    "image": "Image",
+    "support": "Support",
+    "direct": "Direct",
+    "unknown": "Unknown",
+    "supportTeam": "Support Team"
+  },
+  "configuration": {
+    "domain": "Product Catalog Settings",
+    "header": "Product Catalog Settings",
+    "subtitle": "Manage global product catalog configuration settings",
+    "createRulesTitle": "Create Rules",
+    "ruleType": "Rule type",
+    "ruleTypeColumn": "Rule type",
+    "enabledColumn": "Enabled",
+    "isRuleEnabled": "Is rule enabled",
+    "updated": "Updated!",
+    "error": "Error!",
+    "tooltip": {
+      "global_product_catalog": "Indicates whether sellers can only add inventory to admin-managed global products",
+      "product_request_enabled": "Allow sellers to propose new products for inclusion in the catalog",
+      "require_product_approval": "Indicates whether seller-added products require admin approval before becoming ready to list",
+      "product_import_enabled": "Allow sellers to import products via csv file"
+    }
+  },
+  "meilisearch": {
+    "domain": "Meilisearch",
+    "checkStatus": "Check Meilisearch status",
+    "triggerSync": "Trigger Synchronization",
+    "syncSuccess": "Synchronization triggered!",
+    "host": "Host",
+    "productIndex": "Product Index",
+    "exists": "Exists",
+    "doesNotExist": "Doesn't exist",
+    "error": "Error!"
+  },
+  "commission": {
+    "domain": "Commission Settings",
+    "deleted": "Deleted!",
+    "updated": "Updated!",
+    "created": "Created!",
+    "error": "Error!",
+    "disable": "Disable",
+    "enable": "Enable",
+    "delete": "Delete",
+    "globalTitle": "Global Commission Settings",
+    "globalDescription": "Manage global commission settings for your marketplace.",
+    "rulesTitle": "Commission Rules",
+    "rulesDescription": "View, search, and manage existing commission rules.",
+    "createRule": "Create Rule",
+    "editDefault": "Edit default rule",
+    "defaultCommission": "Default commission",
+    "minCommission": "Minimum commission per order",
+    "maxCommission": "Maximum commission per order",
+    "includingTax": "Commission charged including tax",
+    "ruleName": "Rule Name",
+    "ruleType": "Rule Type",
+    "refTypeSeller": "Seller",
+    "refTypeProductType": "Product type",
+    "refTypeProductCategory": "Product category",
+    "refTypeSellerProductType": "Seller + Product type",
+    "refTypeSellerProductCategory": "Seller + Product category",
+    "attribute": "Attribute",
+    "feeType": "Fee type",
+    "flatFee": "Flat fee",
+    "feeValue": "Fee value",
+    "minValue": "Minimum commission value",
+    "maxValue": "Maximum commission value"
+  },
+  "commissionLines": {
+    "domain": "Commission Lines",
+    "columns": {
+      "order": "Order"
+    },
+    "detail": {
+      "title": "Commission line details",
+      "sellerName": "Seller name",
+      "viewSeller": "View Seller",
+      "orderNumber": "Order number",
+      "viewOrder": "View Order",
+      "calculatedValue": "Calculated commission value",
+      "rateDetails": "Rate details",
+      "ruleNameValue": "Rule name: {{name}}",
+      "referenceValue": "Reference: {{ref}}",
+      "typeValue": "Type: {{type}}",
+      "rateValuePct": "Rate value: {{value}}%",
+      "includeTaxValue": "Include tax: {{value}}",
+      "ruleDeletedAt": "Rule was deleted at {{date}}!"
+    }
+  },
+  "reportedImages": {
+    "domain": "Reported Images",
+    "subtitle": "Review flagged images and decide to remove or publish them.",
+    "list": {
+      "noRecordsMessage": "No reported images found."
+    },
+    "status": {
+      "all": "All",
+      "pending": "Pending",
+      "resolved": "Resolved"
+    },
+    "columns": {
+      "image": "Image",
+      "reportedBy": "Reported By",
+      "reason": "Reason",
+      "date": "Date",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "actions": {
+      "removeImage": "Remove Image",
+      "publishImage": "Publish Image"
+    },
+    "remove": {
+      "title": "Remove Image",
+      "description": "This will permanently hide the image from all users. Continue?",
+      "success": "Image removed successfully."
+    },
+    "publish": {
+      "title": "Publish Image",
+      "description": "This will make the image visible to all users again. Continue?",
+      "success": "Image published successfully."
+    },
+    "errors": {
+      "actionFailed": "Something went wrong. Please try again."
+    }
+  },
+  "productReports": {
+    "domain": "Product Reports",
+    "subtitle": "Review flagged products and resolve or dismiss reports.",
+    "list": {
+      "noRecordsMessage": "No product reports found."
+    },
+    "status": {
+      "all": "All",
+      "pending": "Pending",
+      "resolved": "Resolved",
+      "dismissed": "Dismissed"
+    },
+    "columns": {
+      "product": "Product",
+      "seller": "Seller",
+      "reporter": "Reporter",
+      "reason": "Reason",
+      "comment": "Comment",
+      "date": "Date",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "reasons": {
+      "inaccurate_product_details": "Inaccurate Product Details",
+      "pricing_irregularities": "Pricing Irregularities",
+      "prohibited_item": "Prohibited Item",
+      "counterfeit_trademark": "Counterfeit / Trademark Violation",
+      "incorrect_categorization": "Incorrect Categorization",
+      "inappropriate_media": "Inappropriate Media",
+      "dmca_violation": "DMCA / Copyright Violation",
+      "other": "Other"
+    },
+    "actions": {
+      "resolve": "Mark as Attended",
+      "delete": "Delete",
+      "notificationSent": "Notification sent to user.",
+      "reportDeleted": "Report deleted."
+    },
+    "errors": {
+      "actionFailed": "An error occurred, please try again."
+    }
+  },
+  "team": {
+    "domain": "Team",
+    "subtitle": "Manage your team members and their roles."
+  },
+  "dashboard": {
+    "analyticsTitle": "Analytics",
+    "analyticsSubtitle": "See your store's progress"
   }
 }

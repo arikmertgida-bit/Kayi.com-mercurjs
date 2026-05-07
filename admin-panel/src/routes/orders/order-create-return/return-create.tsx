@@ -25,11 +25,11 @@ export const ReturnCreate = () => {
 
   const { order: preview } = useOrderPreview(id!, undefined, {})
 
-  const [activeReturnId, setActiveReturnId] = useState()
+  const [activeReturnId, setActiveReturnId] = useState<string | undefined>()
 
   const { mutateAsync: initiateReturn } = useInitiateReturn(order.id)
 
-  const { return: activeReturn } = useReturn(activeReturnId, undefined, {
+  const { return: activeReturn } = useReturn(activeReturnId!, undefined, {
     enabled: !!activeReturnId,
   })
 
@@ -41,7 +41,7 @@ export const ReturnCreate = () => {
 
       if (preview.order_change) {
         if (preview.order_change.change_type === "return_request") {
-          setActiveReturnId(preview.order_change.return_id)
+          setActiveReturnId(preview.order_change.return_id ?? undefined)
         } else {
           navigate(`/orders/${order.id}`, { replace: true })
           toast.error(t("orders.returns.activeChangeError"))
@@ -54,10 +54,10 @@ export const ReturnCreate = () => {
 
       try {
         const orderReturn = await initiateReturn({ order_id: order.id })
-        setActiveReturnId(orderReturn.id)
+        setActiveReturnId((orderReturn as { return?: { id: string }; id?: string }).return?.id ?? (orderReturn as { id?: string }).id)
       } catch (e) {
         navigate(`/orders/${order.id}`, { replace: true })
-        toast.error(e.message)
+        toast.error((e as Error).message)
       } finally {
         IS_REQUEST_RUNNING = false
       }

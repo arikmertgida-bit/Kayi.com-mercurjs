@@ -25,7 +25,7 @@ export const ProductTagListTable = () => {
     ReturnType<typeof productTagListLoader>
   >
 
-  const { product_tags, count, isPending, isError, error } = useProductTags(
+  const { product_tags, isPending, isError, error } = useProductTags(
     searchParams,
     {
       initialData,

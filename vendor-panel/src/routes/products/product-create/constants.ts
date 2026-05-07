@@ -130,17 +130,17 @@ export const PRODUCT_CREATE_FORM_DEFAULTS: Partial<
   sales_channels: [],
   options: [
     {
-      title: "Default option",
-      values: ["Default option value"],
+      title: "Varsayılan Seçenek",
+      values: ["Varsayılan Değer"],
     },
   ],
   variants: decorateVariantsWithDefaultValues([
     {
-      title: "Default variant",
+      title: "Varsayılan Varyant",
       should_create: true,
       variant_rank: 0,
       options: {
-        "Default option": "Default option value",
+        "Varsayılan Seçenek": "Varsayılan Değer",
       },
       inventory: [{ inventory_item_id: "", required_quantity: "" }],
       is_default: true,

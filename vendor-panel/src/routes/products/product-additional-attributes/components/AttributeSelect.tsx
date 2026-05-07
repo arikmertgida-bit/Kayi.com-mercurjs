@@ -1,4 +1,5 @@
 import { Select } from "@medusajs/ui"
+import { useTranslation } from "react-i18next"
 import { ProductAttributePossibleValue } from "../../../../types/products"
 import { ControllerRenderProps } from "react-hook-form"
 
@@ -9,6 +10,7 @@ export const AttributeSelect = ({
   values: ProductAttributePossibleValue[]
   field: ControllerRenderProps<any, string>
 }) => {
+  const { t } = useTranslation()
   const handleChange = (value: string) => {
     field.onChange(value)
   }
@@ -16,7 +18,7 @@ export const AttributeSelect = ({
   return (
     <Select onValueChange={(value) => handleChange(value)} value={field.value}>
       <Select.Trigger className="bg-ui-bg-base">
-        <Select.Value placeholder="Select value" />
+        <Select.Value placeholder={t("labels.selectValue")} />
       </Select.Trigger>
       <Select.Content>
         {values.map(({ id, attribute_id, value }) => (

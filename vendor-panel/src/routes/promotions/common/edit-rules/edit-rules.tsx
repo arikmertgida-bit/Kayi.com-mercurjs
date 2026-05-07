@@ -8,10 +8,10 @@ import { EditRulesWrapper } from "./components/edit-rules-wrapper"
 
 export enum RuleType {
   RULES = "rules",
-  BUY_RULES = "buy-rules",
-  TARGET_RULES = "target-rules",
+  BUY_RULES = "buy_rules",
+  TARGET_RULES = "target_rules",
 }
-export type RuleTypeValues = "rules" | "buy-rules" | "target-rules"
+export type RuleTypeValues = "rules" | "buy_rules" | "target_rules"
 
 export const EditRules = () => {
   const params = useParams()

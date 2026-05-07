@@ -1,6 +1,7 @@
 "use client"
 
 import { Button, Heading, toast, Tooltip } from "@medusajs/ui"
+import { useTranslation } from "react-i18next"
 import { RouteDrawer } from "../../../components/modals"
 import {
   useProduct,
@@ -17,13 +18,13 @@ import { InformationCircleSolid } from "@medusajs/icons"
 
 export const ProductAdditionalAttributesForm = () => {
   const { id } = useParams()
+  const { t } = useTranslation()
   const { product, isLoading: isProductLoading } = useProduct(id!)
 
   const { attributes, isLoading: isAttributesLoading } = useProductAttributes(
     id!
   )
 
-  // @ts-expect-error TS2339: attribute_values is a custom field added via additional_data — not in base MedusaJS StoreProduct type
   const defaultValues = product?.attribute_values?.reduce(
     (acc: any, curr: any) => {
       acc[curr.attribute_id] = curr.value
@@ -39,7 +40,7 @@ export const ProductAdditionalAttributesForm = () => {
 
   const { mutate: updateProduct } = useUpdateProduct(id!)
 
-  if (isAttributesLoading || isProductLoading) return <div>Loading...</div>
+  if (isAttributesLoading || isProductLoading) return <div>{t("general.loading")}</div>
 
   const onSubmit = async (data: any) => {
     const values = Object.keys(data).reduce(
@@ -57,7 +58,7 @@ export const ProductAdditionalAttributesForm = () => {
       },
       {
         onSuccess: () => {
-          toast.success("Product updated successfully")
+          toast.success(t("products.additionalAttributes.successUpdate"))
           navigate(`/products/${id}`)
         },
       }
@@ -67,7 +68,7 @@ export const ProductAdditionalAttributesForm = () => {
   return (
     <RouteDrawer>
       <RouteDrawer.Header>
-        <Heading level="h2">Additional Attributes</Heading>
+        <Heading level="h2">{t("products.additionalAttributes.title")}</Heading>
       </RouteDrawer.Header>
       <RouteDrawer.Body className="max-h-[calc(86vh)] overflow-y-auto py-2">
         <Form {...form}>
@@ -100,7 +101,7 @@ export const ProductAdditionalAttributesForm = () => {
               />
             ))}
             <div className="flex justify-end mt-4">
-              <Button>Save</Button>
+              <Button>{t("actions.save")}</Button>
             </div>
           </form>
         </Form>

@@ -267,9 +267,11 @@ export const CreatePromotionForm = () => {
     for (const [key, value] of Object.entries(currentTemplate.defaults)) {
       if (typeof value === "object") {
         for (const [subKey, subValue] of Object.entries(value)) {
+          // @ts-expect-error — dynamic application_method subkeys from template defaults cannot be statically typed
           setValue(`application_method.${subKey}`, subValue)
         }
       } else {
+        // @ts-expect-error — dynamic top-level keys from template defaults cannot be statically typed
         setValue(key, value)
       }
     }
@@ -318,7 +320,7 @@ export const CreatePromotionForm = () => {
     }
   }
 
-  const { campaigns } = useCampaigns(campaignQuery)
+  useCampaigns(campaignQuery)
 
   const watchCampaignChoice = useWatch({
     control: form.control,
@@ -437,8 +439,8 @@ export const CreatePromotionForm = () => {
                                   <RadioGroup.ChoiceBox
                                     key={template.id}
                                     value={template.id}
-                                    label={template.title}
-                                    description={template.description}
+                                    label={t(template.titleKey as any)}
+                                    description={t(template.descriptionKey as any)}
                                   />
                                 )
                               })}
@@ -851,7 +853,7 @@ export const CreatePromotionForm = () => {
                       <Form.Field
                         control={form.control}
                         name="application_method.max_quantity"
-                        render={({ field }) => {
+                        render={() => {
                           return (
                             <Form.Item className="basis-1/2">
                               <Form.Label>
@@ -944,7 +946,7 @@ export const CreatePromotionForm = () => {
                       <Divider />
                       <RulesFormField
                         form={form}
-                        ruleType={"buy-rules"}
+                        ruleType={"buy_rules"}
                         scope="application_method.buy_rules"
                       />
                     </>
@@ -955,7 +957,7 @@ export const CreatePromotionForm = () => {
                       <Divider />
                       <RulesFormField
                         form={form}
-                        ruleType={"target-rules"}
+                        ruleType={"target_rules"}
                         scope="application_method.target_rules"
                       />
                     </>
@@ -972,7 +974,6 @@ export const CreatePromotionForm = () => {
                 <div className="flex w-full max-w-[720px] flex-col gap-y-8 py-16">
                   <AddCampaignPromotionFields
                     form={form}
-                    campaigns={campaigns || []}
                   />
                 </div>
               </div>

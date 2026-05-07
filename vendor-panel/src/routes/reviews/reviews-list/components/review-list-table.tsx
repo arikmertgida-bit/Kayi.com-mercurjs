@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import { Container, Heading, Text } from "@medusajs/ui"
 import { keepPreviousData } from "@tanstack/react-query"
 import { useMemo } from "react"
@@ -12,6 +13,7 @@ import { StarsRating } from "../../../../components/common/stars-rating/stars-ra
 const PAGE_SIZE = 20
 
 export const ReviewListTable = () => {
+  const { t } = useTranslation()
   const { searchParams, raw, clientQ } = useReviewTableQuery({
     pageSize: PAGE_SIZE,
   })
@@ -77,13 +79,13 @@ export const ReviewListTable = () => {
     <Container className="divide-y p-0">
       <div className="flex items-center justify-between px-6 py-4">
         <div>
-          <Heading>Reviews</Heading>
+          <Heading>{t("reviews.domain")}</Heading>
           <Text className="text-ui-fg-subtle" size="small">
-            Manage your reviews
+            {t("reviews.subtitle")}
           </Text>
         </div>
         <div>
-          <Text className="text-ui-fg-subtle mb-2">{count} reviews</Text>
+          <Text className="text-ui-fg-subtle mb-2">{count} {t("reviews.countLabel")}</Text>
           <StarsRating rate={averageRating} />
         </div>
       </div>
@@ -93,16 +95,16 @@ export const ReviewListTable = () => {
         pageSize={PAGE_SIZE}
         count={count}
         orderBy={[
-          { key: "created_at", label: "Tarih" },
-          { key: "seller_note", label: "Durum" },
-          { key: "rating", label: "Puan" },
+          { key: "created_at", label: t("reviews.columns.date") },
+          { key: "seller_note", label: t("reviews.columns.status") },
+          { key: "rating", label: t("reviews.columns.rating") },
         ]}
         isLoading={isLoading}
         navigateTo={(row) => row.original.id}
         search
         queryObject={raw}
         noRecords={{
-          message: "Your reviews will show up here.",
+          message: t("reviews.list.noRecordsMessage"),
         }}
       />
     </Container>

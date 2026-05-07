@@ -6,6 +6,7 @@ import { Container, Divider, Heading } from "@medusajs/ui";
 import { formatDate } from "@lib/date";
 import { getStylizedAmount } from "@lib/money-amount-helpers";
 import { createColumnHelper } from "@tanstack/react-table";
+import { useTranslation } from "react-i18next";
 
 import type { AdminOrderListResponse } from "@custom-types/order";
 
@@ -27,6 +28,7 @@ export const SellerOrdersSection = ({
   seller_orders: AdminOrderListResponse;
 }) => {
   const { orders, count } = seller_orders;
+  const { t } = useTranslation();
 
   const { raw } = useSellerOrdersTableQuery({
     pageSize: PAGE_SIZE,
@@ -50,7 +52,7 @@ export const SellerOrdersSection = ({
   return (
     <Container className="mt-2 px-0">
       <div className="px-8 pb-4">
-        <Heading>Orders</Heading>
+        <Heading>{t("orders.domain")}</Heading>
       </div>
       <Divider />
       <_DataTable
@@ -65,9 +67,9 @@ export const SellerOrdersSection = ({
         pagination
         navigateTo={(row) => `/orders/${row.id}`}
         orderBy={[
-          { key: "display_id", label: "Order" },
-          { key: "created_at", label: "Created" },
-          { key: "updated_at", label: "Updated" },
+          { key: "display_id", label: t("fields.order") },
+          { key: "created_at", label: t("fields.createdAt") },
+          { key: "updated_at", label: t("fields.updatedAt") },
         ]}
         prefix={PREFIX}
       />
@@ -78,21 +80,22 @@ export const SellerOrdersSection = ({
 const columnHelper = createColumnHelper<AdminOrder>();
 
 const useColumns = () => {
+  const { t } = useTranslation();
   const columns = useMemo(
     () => [
       columnHelper.display({
         id: "display_id",
-        header: "Order",
+        header: t("fields.order"),
         cell: ({ row }) => `#${row.original.display_id}`,
       }),
       columnHelper.display({
         id: "created_at",
-        header: "Date",
+        header: t("fields.date"),
         cell: ({ row }) => formatDate(row.original.created_at, "MMM d, yyyy"),
       }),
       columnHelper.display({
         id: "customer",
-        header: "Customer",
+        header: t("fields.customer"),
         cell: ({ row }) => {
           return row.original.customer?.first_name &&
             row.original.customer?.last_name
@@ -102,19 +105,19 @@ const useColumns = () => {
       }),
       columnHelper.display({
         id: "status",
-        header: "Order Status",
+        header: t("fields.status"),
         cell: ({ row }) => <OrderStatusBadge status={row.original.status} />,
       }),
       columnHelper.display({
         id: "payment_status",
-        header: "Payment Status",
+        header: t("orders.payment.statusLabel"),
         cell: ({ row }) => (
           <PaymentStatusBadge status={row.original?.payment_status || "-"} />
         ),
       }),
       columnHelper.display({
         id: "fulfillment_status",
-        header: "Fulfillment Status",
+        header: t("orders.fulfillment.statusLabel"),
         cell: ({ row }) => (
           <FulfillmentStatusBadge
             status={row.original.fulfillment_status || "-"}
@@ -123,7 +126,7 @@ const useColumns = () => {
       }),
       columnHelper.display({
         id: "total",
-        header: "Order Total",
+        header: t("fields.total"),
         cell: ({ row }) => {
           if (
             typeof row.original.total === "undefined" ||

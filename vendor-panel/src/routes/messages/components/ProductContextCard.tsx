@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import type { ProductContextData } from "../../../lib/messenger/types"
 import { MEDUSA_STOREFRONT_URL } from "../../../lib/storefront"
 
@@ -11,6 +12,7 @@ interface ProductContextCardProps {
  * the customer is asking about, with a direct link to the storefront.
  */
 export function ProductContextCard({ product }: ProductContextCardProps) {
+  const { t } = useTranslation()
   const productUrl = product.handle
     ? `${MEDUSA_STOREFRONT_URL}/tr/products/${product.handle}`
     : null
@@ -37,7 +39,7 @@ export function ProductContextCard({ product }: ProductContextCardProps) {
       {/* Info */}
       <div className="flex-1 min-w-0">
         <p className="text-[10px] text-ui-fg-muted font-medium uppercase tracking-wide mb-0.5">
-          Ürün sorusu
+          {t("messages.productQuestion")}
         </p>
         {productUrl ? (
           <a

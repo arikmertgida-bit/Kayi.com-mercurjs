@@ -27,15 +27,15 @@ import { useUserInviteTableQuery } from "../../../../../hooks/table/query/use-us
 import { useDataTable } from "../../../../../hooks/use-data-table"
 import { isFetchError } from "../../../../../lib/is-fetch-error"
 
-const InviteUserSchema = zod.object({
-  email: zod.string().email(),
-})
-
 const PAGE_SIZE = 10
 const PREFIX = "usr_invite"
 
 export const InviteUserForm = () => {
   const { t } = useTranslation()
+
+  const InviteUserSchema = zod.object({
+    email: zod.string().email(t("users.invalidEmail")),
+  })
 
   const form = useForm<zod.infer<typeof InviteUserSchema>>({
     defaultValues: {

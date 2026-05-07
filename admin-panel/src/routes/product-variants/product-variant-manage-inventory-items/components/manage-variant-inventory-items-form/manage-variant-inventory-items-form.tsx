@@ -61,17 +61,15 @@ const ManageVariantInventoryItemsSchema = zod.object({
   ),
 })
 
-type InventoryItemFormData = zod.infer<
-  typeof ManageVariantInventoryItemsSchema
->["inventory"]
+type ManageFormValues = zod.infer<typeof ManageVariantInventoryItemsSchema>
 
 type VariantInventoryItemRowProps = {
-  form: UseFormReturn<InventoryItemFormData>
+  form: UseFormReturn<ManageFormValues>
   inventoryIndex: number
   inventoryItem: {
     id: string
     inventory_item_id: string
-    required_quantity: number
+    required_quantity: string | number
   }
   isItemOptionDisabled: (
     option: { value: string },
@@ -87,11 +85,12 @@ function VariantInventoryItemRow({
   isItemOptionDisabled,
   onRemove,
 }: VariantInventoryItemRowProps) {
+  const typedForm = form
   const { t } = useTranslation()
 
   const selectedInventoryItemId = useWatch({
-    control: form.control,
-    name: `inventory.${inventoryIndex}.inventory_item_id`,
+    control: typedForm.control,
+    name: `inventory.${inventoryIndex}.inventory_item_id` as `inventory.${number}.inventory_item_id`,
   })
 
   const items = useComboboxData({
@@ -125,8 +124,8 @@ function VariantInventoryItemRow({
         </div>
 
         <Form.Field
-          control={form.control}
-          name={`inventory.${inventoryIndex}.inventory_item_id`}
+          control={typedForm.control}
+          name={`inventory.${inventoryIndex}.inventory_item_id` as `inventory.${number}.inventory_item_id`}
           render={({ field }) => {
             return (
               <Form.Item>
@@ -162,8 +161,8 @@ function VariantInventoryItemRow({
           </Label>
         </div>
         <Form.Field
-          control={form.control}
-          name={`inventory.${inventoryIndex}.required_quantity`}
+          control={typedForm.control}
+          name={`inventory.${inventoryIndex}.required_quantity` as `inventory.${number}.required_quantity`}
           render={({ field: { onChange, value, ...field } }) => {
             return (
               <Form.Item>
@@ -172,7 +171,7 @@ function VariantInventoryItemRow({
                     type="number"
                     className="bg-ui-bg-field-component"
                     min={0}
-                    value={value}
+                    value={value as string | number}
                     onChange={onChange}
                     {...field}
                     placeholder={t(
@@ -210,7 +209,7 @@ export function ManageVariantInventoryItemsForm({
       inventory: variant.inventory_items.length
         ? variant.inventory_items!.map((i) => ({
             required_quantity: i.required_quantity,
-            inventory_item_id: i.inventory.id,
+            inventory_item_id: i.inventory!.id,
           }))
         : [
             {
@@ -256,7 +255,7 @@ export function ManageVariantInventoryItemsForm({
     const selectedItems: Record<string, boolean> = {}
 
     variant.inventory_items.forEach(
-      (i) => (existingItems[i.inventory.id] = i.required_quantity)
+      (i) => (existingItems[i.inventory!.id] = i.required_quantity ?? 0)
     )
 
     values.inventory.forEach((i) => (selectedItems[i.inventory_item_id] = true))
@@ -286,11 +285,11 @@ export function ManageVariantInventoryItemsForm({
     })
 
     variant.inventory_items.forEach((i) => {
-      if (!(i.inventory.id in selectedItems)) {
+      if (!(i.inventory!.id in selectedItems)) {
         payload.delete = payload.delete || []
 
         payload.delete.push({
-          inventory_item_id: i.inventory.id,
+          inventory_item_id: i.inventory!.id,
           variant_id: variant.id,
         })
       }

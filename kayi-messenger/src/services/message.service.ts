@@ -68,13 +68,14 @@ export const MessageService = {
 
   /**
    * Deletes a message:
-   * - deleteForAll=true: marks content as deleted, visible to nobody (only sender can do this)
+   * - deleteForAll=true: hard-deletes the message (ADMIN can delete any; others only their own)
    * - deleteForAll=false: creates a MessageDeletion record so the requester stops seeing it
    */
   async deleteMessage(
     messageId: string,
     requesterId: string,
-    deleteForAll: boolean
+    deleteForAll: boolean,
+    requesterType: string = "CUSTOMER"
   ) {
     const message = await prisma.message.findUnique({
       where: { id: messageId },
@@ -94,18 +95,13 @@ export const MessageService = {
     if (!isParticipant) throw new Error("Forbidden")
 
     if (deleteForAll) {
-      // Only the original sender may delete for everyone
-      if (message.senderId !== requesterId) throw new Error("Only the sender can delete for all")
+      // Admin can delete any message; others can only delete their own
+      if (requesterType !== "ADMIN" && message.senderId !== requesterId) {
+        throw new Error("Only the sender can delete for all")
+      }
 
-      return prisma.message.update({
-        where: { id: messageId },
-        data: {
-          deletedForAll: true,
-          deletedAt: new Date(),
-          content: "[Bu mesaj silindi]",
-          imageUrl: null,
-        },
-      })
+      await prisma.message.delete({ where: { id: messageId } })
+      return null
     } else {
       // "Delete for me" — upsert to handle duplicate calls gracefully
       await prisma.messageDeletion.upsert({

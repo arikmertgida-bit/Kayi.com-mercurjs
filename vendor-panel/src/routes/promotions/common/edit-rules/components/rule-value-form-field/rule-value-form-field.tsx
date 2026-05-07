@@ -1,6 +1,7 @@
 import { HttpTypes } from "@medusajs/types"
 import { Input, Select } from "@medusajs/ui"
 import { useWatch } from "react-hook-form"
+import { useTranslation } from "react-i18next"
 import { Form } from "../../../../../../components/common/form"
 import { Combobox } from "../../../../../../components/inputs/combobox"
 import { usePromotionRuleValues } from "../../../../../../hooks/api/promotions"
@@ -17,7 +18,7 @@ type RuleValueFormFieldType = {
   operator: string
   fieldRule: any
   attributes: HttpTypes.AdminRuleAttributeOption[]
-  ruleType: "rules" | "target-rules" | "buy-rules"
+  ruleType: "rules" | "target_rules" | "buy_rules"
 }
 
 const buildFilters = (attribute?: string, store?: HttpTypes.AdminStore) => {
@@ -44,6 +45,7 @@ export const RuleValueFormField = ({
   attributes,
   ruleType,
 }: RuleValueFormFieldType) => {
+  const { t } = useTranslation()
   const attribute = attributes?.find(
     (attr) => attr.value === fieldRule.attribute
   )
@@ -116,7 +118,7 @@ export const RuleValueFormField = ({
                   disabled={!fieldRule.attribute}
                 >
                   <Select.Trigger ref={ref} className="bg-ui-bg-base">
-                    <Select.Value placeholder="Select Value" />
+                    <Select.Value placeholder={t("labels.selectValue")} />
                   </Select.Trigger>
 
                   <Select.Content>
@@ -143,7 +145,7 @@ export const RuleValueFormField = ({
                 <Combobox
                   {...field}
                   ref={ref}
-                  placeholder="Select Values"
+                  placeholder={t("labels.selectValues")}
                   options={options}
                   onChange={onChange}
                   className="bg-ui-bg-base"

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { History } from "@medusajs/icons";
 import type { ProductDTO } from "@medusajs/types";
 import { Container, Heading, Table, Text } from "@medusajs/ui";
+import { useTranslation } from "react-i18next";
 
 import { formatDate } from "@lib/date";
 import { useNavigate } from "react-router-dom";
@@ -22,6 +23,7 @@ import { ProductSummaryDetail } from "@routes/requests/request-product-list/comp
 const PAGE_SIZE = 20;
 
 export const RequestProductList = () => {
+  const { t } = useTranslation();
   const [currentFilter, setCurrentFilter] = useState<FilterState>("");
   const [currentPage, setCurrentPage] = useState<number>(0);
 
@@ -46,7 +48,7 @@ export const RequestProductList = () => {
     <Container>
       <div className="flex items-center justify-between px-6 py-4">
         <div>
-          <Heading>Product requests</Heading>
+          <Heading>{t("requests.productList.heading")}</Heading>
           <ProductSummaryDetail
             request={detailRequest}
             open={detailOpen}
@@ -62,16 +64,16 @@ export const RequestProductList = () => {
         </div>
       </div>
       <div className="flex size-full flex-col overflow-hidden">
-        {isLoading && <Text>Loading...</Text>}
+        {isLoading && <Text>{t("requests.loading")}</Text>}
         <Table>
           <Table.Header>
             <Table.Row>
-              <Table.HeaderCell>Product</Table.HeaderCell>
-              <Table.HeaderCell>Submitted By</Table.HeaderCell>
-              <Table.HeaderCell>Variants</Table.HeaderCell>
-              <Table.HeaderCell>Date</Table.HeaderCell>
-              <Table.HeaderCell>Status</Table.HeaderCell>
-              <Table.HeaderCell>Actions</Table.HeaderCell>
+              <Table.HeaderCell>{t("requests.columns.product")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("requests.columns.submittedBy")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("requests.columns.variants")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("requests.columns.date")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("requests.columns.status")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("requests.columns.actions")}</Table.HeaderCell>
             </Table.Row>
           </Table.Header>
           <Table.Body>
@@ -112,6 +114,7 @@ const ProductRequestsRow = ({
   request: AdminRequest;
   handleDetail: (request: AdminRequest) => void;
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const requestData = request.data as ProductDTO;
 
@@ -120,8 +123,7 @@ const ProductRequestsRow = ({
       <Table.Cell>{requestData.title}</Table.Cell>
       <Table.Cell>{request.seller?.name}</Table.Cell>
       <Table.Cell>
-        {requestData.variants?.length || 0}
-        {" variant(s)"}
+        {t("requests.productList.variantCount", { count: requestData.variants?.length || 0 })}
       </Table.Cell>
       <Table.Cell>
         <div className="flex items-center gap-2">

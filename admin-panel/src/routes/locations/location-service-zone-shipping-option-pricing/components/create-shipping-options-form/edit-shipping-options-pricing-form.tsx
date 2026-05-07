@@ -163,7 +163,7 @@ export function EditShippingOptionsPricingForm({
         id: rule.id,
         currency_code,
         amount: castNumber(rule.amount),
-        rules: buildShippingOptionPriceRules(rule),
+        rules: buildShippingOptionPriceRules(rule) as HttpTypes.AdminUpdateShippingOptionPriceWithCurrency["rules"],
       }))
     )
 
@@ -183,7 +183,7 @@ export function EditShippingOptionsPricingForm({
         }
 
         const existingPrice = shippingOption.prices.find(
-          (p) => p.region_id === region_id && !p.price_rules!.length
+          (p) => (p as HttpTypes.AdminShippingOptionPrice & { region_id?: string }).region_id === region_id && !p.price_rules!.length
         )
 
         if (existingPrice) {
@@ -201,7 +201,7 @@ export function EditShippingOptionsPricingForm({
         id: rule.id,
         region_id,
         amount: castNumber(rule.amount),
-        rules: buildShippingOptionPriceRules(rule),
+        rules: buildShippingOptionPriceRules(rule) as HttpTypes.AdminUpdateShippingOptionPriceWithRegion["rules"],
       }))
     )
 
@@ -367,6 +367,7 @@ const getDefaultValues = (prices: HttpTypes.AdminShippingOptionPrice[]) => {
         (r) => r.attribute === REGION_ID_ATTRIBUTE
       )?.value
 
+      if (!regionId) { return }
       region_prices[regionId] = price.amount
       return
     }
@@ -376,6 +377,7 @@ const getDefaultValues = (prices: HttpTypes.AdminShippingOptionPrice[]) => {
         (r) => r.attribute === REGION_ID_ATTRIBUTE
       )?.value
 
+      if (!regionId) { return }
       if (!conditional_region_prices[regionId]) {
         conditional_region_prices[regionId] = []
       }

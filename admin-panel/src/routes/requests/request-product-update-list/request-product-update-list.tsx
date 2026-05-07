@@ -3,6 +3,7 @@ import { useState } from "react";
 import { History } from "@medusajs/icons";
 import type { ProductDTO } from "@medusajs/types";
 import { Container, Heading, Table, Text } from "@medusajs/ui";
+import { useTranslation } from "react-i18next";
 
 import { formatDate } from "@lib/date";
 import { useNavigate } from "react-router-dom";
@@ -21,6 +22,7 @@ import { getRequestStatusBadge } from "@routes/requests/common/utils/get-status-
 const PAGE_SIZE = 20;
 
 export const RequestProductUpdateList = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState<number>(0);
 
@@ -43,7 +45,7 @@ export const RequestProductUpdateList = () => {
     <Container>
       <div className="flex items-center justify-between px-6 py-4">
         <div>
-          <Heading>Product update requests</Heading>
+          <Heading>{t("requests.productUpdateList.heading")}</Heading>
           <FilterRequests
             onChange={(val) => {
               setCurrentFilter(val);
@@ -52,15 +54,15 @@ export const RequestProductUpdateList = () => {
         </div>
       </div>
       <div className="flex size-full flex-col overflow-hidden">
-        {isLoading && <Text>Loading...</Text>}
+        {isLoading && <Text>{t("requests.loading")}</Text>}
         <Table>
           <Table.Header>
             <Table.Row>
-              <Table.HeaderCell>Title</Table.HeaderCell>
-              <Table.HeaderCell>Submitted By</Table.HeaderCell>
-              <Table.HeaderCell>Date</Table.HeaderCell>
-              <Table.HeaderCell>Status</Table.HeaderCell>
-              <Table.HeaderCell>Actions</Table.HeaderCell>
+              <Table.HeaderCell>{t("requests.columns.title")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("requests.columns.submittedBy")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("requests.columns.date")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("requests.columns.status")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("requests.columns.actions")}</Table.HeaderCell>
             </Table.Row>
           </Table.Header>
           <Table.Body>

@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import { History } from "@medusajs/icons";
 import { Container, Heading, Table, Text } from "@medusajs/ui";
+import { useTranslation } from "react-i18next";
 
 import type { CommissionLine } from "@custom-types/commission";
 
@@ -15,6 +16,7 @@ import { formatDate } from "@/lib/date";
 const PAGE_SIZE = 20;
 
 export const CommissionLines = () => {
+  const { t } = useTranslation();
   const [currentPage, setCurrentPage] = useState<number>(0);
 
   const [detailOpen, setDetailOpen] = useState(false);
@@ -36,7 +38,7 @@ export const CommissionLines = () => {
     <Container>
       <div className="flex items-center justify-between px-6 py-4">
         <div>
-          <Heading>Commission Lines</Heading>
+          <Heading>{t("commissionLines.domain")}</Heading>
 
           <CommissionLineDetail
             line={detailCommission}
@@ -48,15 +50,15 @@ export const CommissionLines = () => {
         </div>
       </div>
       <div className="flex size-full flex-col overflow-hidden">
-        {isLoading && <Text>Loading...</Text>}
+        {isLoading && <Text>{t("general.loading")}</Text>}
         <Table>
           <Table.Header>
             <Table.Row>
-              <Table.HeaderCell>Seller</Table.HeaderCell>
-              <Table.HeaderCell>Order</Table.HeaderCell>
-              <Table.HeaderCell>Value</Table.HeaderCell>
-              <Table.HeaderCell>Date</Table.HeaderCell>
-              <Table.HeaderCell>Actions</Table.HeaderCell>
+              <Table.HeaderCell>{t("requests.columns.seller")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("commissionLines.columns.order")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("fields.value")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("requests.columns.date")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("requests.columns.actions")}</Table.HeaderCell>
             </Table.Row>
           </Table.Header>
           <Table.Body>

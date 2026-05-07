@@ -3,6 +3,7 @@ import { Navigate, Outlet, useLocation } from "react-router-dom"
 import { useMe } from "../../../hooks/api/users"
 import { SearchProvider } from "../../../providers/search-provider"
 import { SidebarProvider } from "../../../providers/sidebar-provider"
+import { MessengerAdminProvider } from "../../../providers/messenger-provider/MessengerAdminProvider"
 
 export const ProtectedRoute = () => {
   const { user, isLoading } = useMe()
@@ -21,10 +22,12 @@ export const ProtectedRoute = () => {
   }
 
   return (
-    <SidebarProvider>
-      <SearchProvider>
-        <Outlet />
-      </SearchProvider>
-    </SidebarProvider>
+    <MessengerAdminProvider adminId={user.id ?? null}>
+      <SidebarProvider>
+        <SearchProvider>
+          <Outlet />
+        </SearchProvider>
+      </SidebarProvider>
+    </MessengerAdminProvider>
   )
 }

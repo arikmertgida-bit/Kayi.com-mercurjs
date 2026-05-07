@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { StatusBadge, Table } from "@medusajs/ui";
 
 import type {
@@ -24,33 +25,34 @@ export const CommissionDetailTable = ({
 }: {
   commissionRule?: AdminCommissionAggregate;
 }) => {
+  const { t } = useTranslation();
   return (
     <>
       <Table>
         <Table.Body>
           <Table.Row>
-            <Table.Cell>Default commission</Table.Cell>
+            <Table.Cell>{t("commission.defaultCommission")}</Table.Cell>
             <Table.Cell>{commissionRule?.fee_value} </Table.Cell>
           </Table.Row>
           <Table.Row>
-            <Table.Cell>Minimum commission per order</Table.Cell>
+            <Table.Cell>{t("commission.minCommission")}</Table.Cell>
             <Table.Cell>
               {getFormattedPriceValue(commissionRule?.min_price_set)}
             </Table.Cell>
           </Table.Row>
           <Table.Row>
-            <Table.Cell>Maximum commission per order</Table.Cell>
+            <Table.Cell>{t("commission.maxCommission")}</Table.Cell>
             <Table.Cell>
               {getFormattedPriceValue(commissionRule?.max_price_set)}
             </Table.Cell>
           </Table.Row>
           <Table.Row>
-            <Table.Cell>Commission charged including tax</Table.Cell>
+            <Table.Cell>{t("commission.includingTax")}</Table.Cell>
             <Table.Cell>
               <StatusBadge
                 color={commissionRule?.include_tax ? "green" : "grey"}
               >
-                {commissionRule?.include_tax ? "True" : "False"}
+                {commissionRule?.include_tax ? t("fields.true") : t("fields.false")}
               </StatusBadge>
             </Table.Cell>
           </Table.Row>

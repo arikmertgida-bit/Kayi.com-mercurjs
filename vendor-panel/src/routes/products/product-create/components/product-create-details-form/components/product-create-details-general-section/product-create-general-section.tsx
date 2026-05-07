@@ -39,7 +39,7 @@ export const ProductCreateGeneralSection = ({
                 <Form.Item>
                   <Form.Label>{t("products.fields.title.label")}</Form.Label>
                   <Form.Control>
-                    <Input {...field} placeholder="Winter jacket" />
+                    <Input {...field} placeholder={t("products.fields.title.placeholder")} />
                   </Form.Control>
                 </Form.Item>
               )
@@ -55,7 +55,7 @@ export const ProductCreateGeneralSection = ({
                     {t("products.fields.subtitle.label")}
                   </Form.Label>
                   <Form.Control>
-                    <Input {...field} placeholder="Warm and cosy" />
+                    <Input {...field} placeholder={t("products.fields.subtitle.placeholder")} />
                   </Form.Control>
                 </Form.Item>
               )
@@ -76,7 +76,7 @@ export const ProductCreateGeneralSection = ({
                   <Form.Control>
                     <HandleInput
                       {...field}
-                      placeholder="winter-jacket"
+                      placeholder={t("products.fields.handle.placeholder")}
                       onChange={(e) => {
                         isManualHandle.current = true
                         field.onChange(e)
@@ -99,7 +99,7 @@ export const ProductCreateGeneralSection = ({
                 {t("products.fields.description.label")}
               </Form.Label>
               <Form.Control>
-                <Textarea {...field} placeholder="A warm and cozy jacket" />
+                <Textarea {...field} placeholder={t("products.fields.description.placeholder")} />
               </Form.Control>
             </Form.Item>
           )

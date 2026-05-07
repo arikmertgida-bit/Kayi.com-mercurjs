@@ -32,7 +32,6 @@ export const useOrderTableQuery = ({
     region_id,
     q,
     order,
-    order_status,
   } = queryObject
 
   const searchParams: HttpTypes.AdminOrderFilters = {

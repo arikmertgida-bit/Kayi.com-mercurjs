@@ -1,15 +1,15 @@
 import {
   AdminClaim,
+  AdminInventoryLevel,
   AdminOrder,
   AdminOrderPreview,
-  InventoryLevelDTO,
+  HttpTypes,
 } from "@medusajs/types"
 import { Alert, Button, Heading, Text, toast } from "@medusajs/ui"
 import { useEffect, useMemo, useState } from "react"
 import { useFieldArray, UseFormReturn } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
-import { HttpTypes } from "@medusajs/types"
 import { Form } from "../../../../../components/common/form"
 import { Combobox } from "../../../../../components/inputs/combobox"
 import {
@@ -53,7 +53,7 @@ export const ClaimOutboundSection = ({
 
   const { setIsOpen } = useStackedModal()
   const [inventoryMap, setInventoryMap] = useState<
-    Record<string, InventoryLevelDTO[]>
+    Record<string, AdminInventoryLevel[]>
   >({})
 
   /**
@@ -144,7 +144,7 @@ export const ClaimOutboundSection = ({
           {
             item_id: i.id,
             quantity: i.detail.quantity,
-            variant_id: i.variant_id,
+            variant_id: i.variant_id ?? undefined,
           },
           { shouldFocus: false }
         )
@@ -169,7 +169,7 @@ export const ClaimOutboundSection = ({
             variant_id: variantId,
             quantity: 1,
           })),
-        },
+        } as unknown as HttpTypes.AdminAddClaimOutboundItems,
         {
           onError: (error) => {
             toast.error(error.message)
@@ -238,7 +238,7 @@ export const ClaimOutboundSection = ({
 
     const allItemsHaveLocation = outboundItems
       .map((i) => {
-        const item = variantItemMap.get(i.variant_id)
+        const item = variantItemMap.get(i.variant_id ?? "")
         if (!item?.variant_id || !item?.variant) {
           return true
         }
@@ -259,7 +259,7 @@ export const ClaimOutboundSection = ({
   useEffect(() => {
     // TODO: Ensure inventory validation occurs correctly
     const getInventoryMap = async () => {
-      const ret: Record<string, InventoryLevelDTO[]> = {}
+      const ret: Record<string, AdminInventoryLevel[]> = {}
 
       if (!outboundItems.length) {
         return ret
@@ -267,7 +267,7 @@ export const ClaimOutboundSection = ({
 
       const variantIds = outboundItems
         .map((item) => item?.variant_id)
-        .filter(Boolean)
+        .filter((id): id is string => !!id)
 
       const variants = (
         await sdk.admin.productVariant.list({
@@ -277,7 +277,7 @@ export const ClaimOutboundSection = ({
       ).variants
 
       variants.forEach((variant) => {
-        ret[variant.id] = variant.inventory?.[0]?.location_levels || []
+        ret[variant.id] = (variant.inventory_items?.[0]?.inventory?.location_levels || []) as AdminInventoryLevel[]
       })
 
       return ret
@@ -303,10 +303,10 @@ export const ClaimOutboundSection = ({
             <StackedFocusModal.Header />
 
             <AddClaimOutboundItemsTable
-              selectedItems={outboundItems.map((i) => i.variant_id)}
+              selectedItems={outboundItems.map((i) => i.variant_id).filter((id): id is string => !!id)}
               currencyCode={order.currency_code}
               onSelectionChange={(finalSelection) => {
-                const alreadySelected = outboundItems.map((i) => i.variant_id)
+                const alreadySelected = outboundItems.map((i) => i.variant_id).filter((id): id is string => !!id)
 
                 itemsToAdd = finalSelection.filter(
                   (selection) => !alreadySelected.includes(selection)
@@ -346,10 +346,10 @@ export const ClaimOutboundSection = ({
 
       {outboundItems.map(
         (item, index) =>
-          variantOutboundMap.get(item.variant_id) && (
+          variantOutboundMap.get(item.variant_id ?? "") && (
             <ClaimOutboundItem
               key={item.id}
-              previewItem={variantOutboundMap.get(item.variant_id)!}
+              previewItem={variantOutboundMap.get(item.variant_id ?? "")!}
               currencyCode={order.currency_code}
               form={form}
               onRemove={() => {

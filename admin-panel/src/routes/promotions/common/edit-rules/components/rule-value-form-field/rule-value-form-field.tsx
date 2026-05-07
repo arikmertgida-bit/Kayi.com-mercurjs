@@ -1,7 +1,7 @@
 import {
   ApplicationMethodTargetTypeValues,
   HttpTypes,
-  RuleTypeValues,
+  PromotionRuleTypes,
 } from "@medusajs/types"
 import { Input } from "@medusajs/ui"
 import { useWatch } from "react-hook-form"
@@ -25,7 +25,7 @@ type RuleValueFormFieldType = {
   operator: string
   fieldRule: any
   attributes: HttpTypes.AdminRuleAttributeOption[]
-  ruleType: RuleTypeValues
+  ruleType: PromotionRuleTypes
   applicationMethodTargetType: ApplicationMethodTargetTypeValues | undefined
 }
 

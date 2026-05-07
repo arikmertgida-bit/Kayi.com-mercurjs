@@ -24,6 +24,8 @@ export const InventoryItemGeneralSection = ({
 
     return "-"
   }
+  const stocked_quantity = (inventoryItem.location_levels ?? []).reduce((sum, l) => sum + (l.stocked_quantity ?? 0), 0)
+  const reserved_quantity = (inventoryItem.location_levels ?? []).reduce((sum, l) => sum + (l.reserved_quantity ?? 0), 0)
   return (
     <Container className="divide-y p-0">
       <div className="flex items-center justify-between px-6 py-4">
@@ -47,17 +49,17 @@ export const InventoryItemGeneralSection = ({
       <SectionRow title={t("fields.sku")} value={inventoryItem.sku ?? "-"} />
       <SectionRow
         title={t("fields.inStock")}
-        value={getQuantityFormat(inventoryItem.stocked_quantity)}
+        value={getQuantityFormat(stocked_quantity)}
       />
 
       <SectionRow
         title={t("inventory.reserved")}
-        value={getQuantityFormat(inventoryItem.reserved_quantity)}
+        value={getQuantityFormat(reserved_quantity)}
       />
       <SectionRow
         title={t("inventory.available")}
         value={getQuantityFormat(
-          inventoryItem.stocked_quantity - inventoryItem.reserved_quantity
+          stocked_quantity - reserved_quantity
         )}
       />
     </Container>

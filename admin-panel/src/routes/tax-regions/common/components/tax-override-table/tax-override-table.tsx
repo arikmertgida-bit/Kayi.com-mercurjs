@@ -66,7 +66,13 @@ export const TaxOverrideTable = ({
                 <DataTableSearch prefix={prefix} />
               </div>
               <DataTableOrderBy
-                keys={["name", "rate", "code", "updated_at", "created_at"]}
+                keys={[
+                  { key: "name" as keyof HttpTypes.AdminTaxRate, label: "Name" },
+                  { key: "rate" as keyof HttpTypes.AdminTaxRate, label: "Rate" },
+                  { key: "code" as keyof HttpTypes.AdminTaxRate, label: "Code" },
+                  { key: "updated_at" as keyof HttpTypes.AdminTaxRate, label: "Updated" },
+                  { key: "created_at" as keyof HttpTypes.AdminTaxRate, label: "Created" },
+                ]}
                 prefix={prefix}
               />
             </div>

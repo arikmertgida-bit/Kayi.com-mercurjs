@@ -1,4 +1,5 @@
 import { Container, Heading } from "@medusajs/ui"
+import { useTranslation } from "react-i18next"
 import { ExtendedAdminProduct } from "../../../../../types/products"
 import { PencilSquare } from "@medusajs/icons"
 import { ActionMenu } from "../../../../../components/common/action-menu"
@@ -14,6 +15,7 @@ export const ProductAdditionalAttributesSection = ({
   product,
 }: ProductAttributeSectionProps) => {
   const { attributes, isLoading } = useProductAttributes(product.id)
+  const { t } = useTranslation()
 
   const attributeList = useMemo(() => {
     return attributes?.map((attribute) => {
@@ -32,13 +34,13 @@ export const ProductAdditionalAttributesSection = ({
   return (
     <Container className="divide-y p-0">
       <div className="flex items-center justify-between px-6 py-4">
-        <Heading level="h2">Attributes</Heading>
+        <Heading level="h2">{t("attributes.domain")}</Heading>
         <ActionMenu
           groups={[
             {
               actions: [
                 {
-                  label: "Edit",
+                  label: t("actions.edit"),
                   to: "additional-attributes",
                   icon: <PencilSquare />,
                 },

@@ -4,13 +4,13 @@ import { PencilSquare, User } from "@medusajs/icons";
 import {
   Button,
   Drawer,
-  Heading,
   Input,
   Label,
   Text,
   toast,
   usePrompt,
 } from "@medusajs/ui";
+import { useTranslation } from "react-i18next";
 
 import { keepPreviousData } from "@tanstack/react-query";
 import { createColumnHelper } from "@tanstack/react-table";
@@ -39,6 +39,7 @@ type SellersProps = VendorSeller & { store_status: string };
 export const SellerListTable = () => {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
+  const { t } = useTranslation();
   const { searchParams, raw } = useSellersTableQuery({ pageSize: PAGE_SIZE });
 
   const { sellers, count, isLoading } = useSellers(
@@ -66,11 +67,11 @@ export const SellerListTable = () => {
       const isValid = validateEmail(email);
       if (!isValid) return;
       await inviteSeller({ email });
-      toast.success("Invited!");
+      toast.success(t("sellers.invite.success"));
       setOpen(false);
       setEmail("");
     } catch {
-      toast.error("Error!");
+      toast.error(t("sellers.invite.error"));
     }
   };
 
@@ -87,34 +88,34 @@ export const SellerListTable = () => {
         pagination
         navigateTo={(row) => `/sellers/${row.original?.handle || row.id}`}
         orderBy={[
-          { key: "email", label: "Email" },
-          { key: "name", label: "Name" },
-          { key: "created_at", label: "Created" },
+          { key: "email", label: t("sellers.fields.email") },
+          { key: "name", label: t("sellers.fields.name") },
+          { key: "created_at", label: t("fields.createdAt") },
         ]}
         action={
           <Drawer open={open} onOpenChange={setOpen}>
             <Drawer.Trigger asChild>
-              <Button size="small">Invite</Button>
+              <Button size="small">{t("sellers.invite.action")}</Button>
             </Drawer.Trigger>
             <Drawer.Content>
               <Drawer.Header>
-                <Drawer.Title>Invite Seller</Drawer.Title>
+                <Drawer.Title>{t("sellers.invite.title")}</Drawer.Title>
               </Drawer.Header>
               <Drawer.Body>
                 <Text className="text-ui-fg-subtle" size="small">
-                  Invite a new seller to your store
+                  {t("sellers.invite.description")}
                 </Text>
                 <div className="mt-6 flex flex-col gap-2">
-                  <Label>Email</Label>
+                  <Label>{t("fields.email")}</Label>
                   <Input
-                    placeholder="Email"
+                    placeholder={t("fields.email")}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
                 <div className="flex justify-end">
                   <Button className="mt-6" onClick={handleInvite}>
-                    Invite
+                    {t("sellers.invite.action")}
                   </Button>
                 </div>
               </Drawer.Body>
@@ -131,18 +132,19 @@ const columnHelper = createColumnHelper<VendorSeller>();
 const useColumns = () => {
   const dialog = usePrompt();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { mutateAsync: suspendSeller } = useUpdateSeller();
 
   const handleSuspend = async (seller: SellersProps) => {
     const res = await dialog({
       title:
         seller.store_status === "SUSPENDED"
-          ? "Activate account"
-          : "Suspend account",
+          ? t("sellers.activate")
+          : t("sellers.suspend"),
       description:
         seller.store_status === "SUSPENDED"
-          ? "Are you sure you want to activate this account?"
-          : "Are you sure you want to suspend this account?",
+          ? t("sellers.activateConfirm")
+          : t("sellers.suspendConfirm"),
       verificationText: seller.email || seller.name || "",
     });
 
@@ -166,7 +168,7 @@ const useColumns = () => {
           <ActionsButton
             actions={[
               {
-                label: "Edit",
+                label: t("actions.edit"),
                 onClick: () =>
                   navigate(`/sellers/${row.original.handle || row.original.id}/edit`),
                 icon: <PencilSquare />,
@@ -174,8 +176,8 @@ const useColumns = () => {
               {
                 label:
                   row.original.store_status === "SUSPENDED"
-                    ? "Activate account"
-                    : "Suspend account",
+                    ? t("sellers.activate")
+                    : t("sellers.suspend"),
                 onClick: () => handleSuspend(row.original as SellersProps),
                 icon: <User />,
               },

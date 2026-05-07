@@ -1,16 +1,13 @@
 import React, { useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { 
-  Select,
   Button,
   Tooltip,
   DropdownMenu,
-  Badge,
   usePrompt,
-  toast,
 } from "@medusajs/ui"
 import { 
   Eye,
-  EyeSlash,
   Plus,
   Trash,
   PencilSquare,
@@ -40,16 +37,16 @@ export const ViewSelector: React.FC<ViewSelectorProps> = ({
     listViews,
     activeView,
     setActiveView,
-    isDefaultViewActive,
   } = useViewConfigurations(entity)
 
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
   const [editingView, setEditingView] = useState<ViewConfiguration | null>(null)
   const [deletingViewId, setDeletingViewId] = useState<string | null>(null)
   const prompt = usePrompt()
+  const { t } = useTranslation()
 
-  const views = listViews.data?.view_configurations || []
-  const currentActiveView = activeView.data?.view_configuration || null
+  const views: ViewConfiguration[] = listViews.view_configurations || []
+  const currentActiveView = activeView.view_configuration || null
 
   // Get delete mutation for the current deleting view
   const { deleteView } = useViewConfiguration(entity, deletingViewId || '')
@@ -73,10 +70,10 @@ export const ViewSelector: React.FC<ViewSelectorProps> = ({
 
   const handleDeleteView = async (view: ViewConfiguration) => {
     const result = await prompt({
-      title: "Delete view",
-      description: `Are you sure you want to delete "${view.name}"? This action cannot be undone.`,
-      confirmText: "Delete",
-      cancelText: "Cancel",
+      title: t("views.deleteView"),
+      description: t("views.deleteViewDescription", { name: view.name }),
+      confirmText: t("actions.delete"),
+      cancelText: t("actions.cancel"),
     })
 
     if (result) {
@@ -112,10 +109,10 @@ export const ViewSelector: React.FC<ViewSelectorProps> = ({
 
   const handleResetSystemDefault = async (systemDefaultView: ViewConfiguration) => {
     const result = await prompt({
-      title: "Reset system default",
-      description: "This will delete the saved system default and revert to the original code-level defaults. All users will be affected. Are you sure?",
-      confirmText: "Reset",
-      cancelText: "Cancel",
+      title: t("views.resetSystemDefault"),
+      description: t("views.resetSystemDefaultDescription"),
+      confirmText: t("actions.reset"),
+      cancelText: t("actions.cancel"),
     })
 
     if (result) {
@@ -139,21 +136,21 @@ export const ViewSelector: React.FC<ViewSelectorProps> = ({
           <DropdownMenu.Content className="w-[260px]">
             {systemDefaultView && (
               <>
-                <DropdownMenu.Label>System Default</DropdownMenu.Label>
+                <DropdownMenu.Label>{t("views.systemDefault")}</DropdownMenu.Label>
                 <DropdownMenu.Item
                   onClick={() => handleViewSelect(systemDefaultView.id)}
                   className="justify-between group"
                 >
                   <span className="flex items-center gap-2">
                     <Star className="h-4 w-4" />
-                    {systemDefaultView.name || "System Default"}
+                    {systemDefaultView.name || t("views.systemDefault")}
                   </span>
                   <div className="flex items-center gap-1">
                     {currentActiveView?.id === systemDefaultView.id && (
                       <CheckCircleSolid className="h-4 w-4 text-ui-fg-positive" />
                     )}
                     <div className="opacity-0 group-hover:opacity-100">
-                      <Tooltip content="Reset to code defaults">
+                      <Tooltip content={t("views.resetToCodeDefaults")}>
                         <Button
                           variant="transparent"
                           size="small"
@@ -174,7 +171,7 @@ export const ViewSelector: React.FC<ViewSelectorProps> = ({
 
             {personalViews.length > 0 && (
               <>
-                <DropdownMenu.Label>Personal Views</DropdownMenu.Label>
+                <DropdownMenu.Label>{t("views.personalViews")}</DropdownMenu.Label>
                 {personalViews.map((view) => (
                   <DropdownMenu.Item
                     key={view.id}
@@ -187,7 +184,7 @@ export const ViewSelector: React.FC<ViewSelectorProps> = ({
                         <CheckCircleSolid className="h-4 w-4 text-ui-fg-positive" />
                       )}
                       <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1">
-                        <Tooltip content="Edit view">
+                        <Tooltip content={t("views.editView")}>
                           <Button
                             variant="transparent"
                             size="small"
@@ -199,7 +196,7 @@ export const ViewSelector: React.FC<ViewSelectorProps> = ({
                             <PencilSquare className="h-3 w-3" />
                           </Button>
                         </Tooltip>
-                        <Tooltip content="Delete view">
+                        <Tooltip content={t("views.deleteView")}>
                           <Button
                             variant="transparent"
                             size="small"
@@ -224,7 +221,7 @@ export const ViewSelector: React.FC<ViewSelectorProps> = ({
               className="text-ui-fg-interactive"
             >
               <Plus className="h-4 w-4" />
-              Save current view
+              {t("views.saveCurrentView")}
             </DropdownMenu.Item>
           </DropdownMenu.Content>
         </DropdownMenu>

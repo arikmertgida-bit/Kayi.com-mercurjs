@@ -140,7 +140,7 @@ export const SellerAgreement = () => {
                 key={row.categoryKey}
                 className={i % 2 === 0 ? "bg-ui-bg-subtle" : "bg-ui-bg-base"}
               >
-                <td className="px-4 py-3 font-medium text-ui-fg-base">{t(`sellerAgreement.sections.commissionTable.categories.${row.categoryKey}`)}</td>
+                <td className="px-4 py-3 font-medium text-ui-fg-base">{t(`sellerAgreement.sections.commissionTable.categories.${row.categoryKey}` as any)}</td>
                 <td className="px-4 py-3 text-center text-ui-fg-subtle">%{row.net}</td>
                 <td className="px-4 py-3 text-center text-ui-fg-subtle">%{row.kdv}</td>
                 <td className="px-4 py-3 text-center font-semibold text-ui-fg-base">%{row.total}</td>

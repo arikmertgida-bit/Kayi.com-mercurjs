@@ -1,4 +1,5 @@
-import { useState } from "react"
+﻿import React, { useState } from "react"
+import { useTranslation } from "react-i18next"
 import { History, Photo, Trash, Check } from "@medusajs/icons"
 import { Badge, Button, Container, Heading, Table, Text, usePrompt, toast } from "@medusajs/ui"
 import { formatDate } from "@lib/date"
@@ -12,13 +13,8 @@ const PAGE_SIZE = 20
 
 type FilterState = "pending" | "resolved" | ""
 
-const getStatusBadge = (status: string) => {
-  if (status === "pending") return <Badge color="orange">Pending</Badge>
-  if (status === "resolved") return <Badge color="green">Resolved</Badge>
-  return <Badge color="grey">{status}</Badge>
-}
-
 export const ReportedImageList = () => {
+  const { t } = useTranslation()
   const [currentPage, setCurrentPage] = useState(0)
   const [filter, setFilter] = useState<FilterState>("pending")
 
@@ -32,12 +28,12 @@ export const ReportedImageList = () => {
     onSuccess: (_, variables) => {
       toast.success(
         variables.action === "hide"
-          ? "Image removed successfully."
-          : "Image published successfully."
+          ? t("reportedImages.remove.success")
+          : t("reportedImages.publish.success")
       )
     },
     onError: () => {
-      toast.error("Something went wrong. Please try again.")
+      toast.error(t("reportedImages.errors.actionFailed"))
     },
   })
 
@@ -45,25 +41,31 @@ export const ReportedImageList = () => {
 
   const handleAction = async (report: ReviewImageReport, action: "hide" | "publish") => {
     const confirmed = await prompt({
-      title: action === "hide" ? "Remove Image" : "Publish Image",
+      title: action === "hide" ? t("reportedImages.remove.title") : t("reportedImages.publish.title"),
       description:
         action === "hide"
-          ? "This will permanently hide the image from all users. Continue?"
-          : "This will make the image visible to all users again. Continue?",
-      confirmText: action === "hide" ? "Remove" : "Publish",
-      cancelText: "Cancel",
+          ? t("reportedImages.remove.description")
+          : t("reportedImages.publish.description"),
+      confirmText: action === "hide" ? t("reportedImages.actions.removeImage") : t("reportedImages.actions.publishImage"),
+      cancelText: t("actions.cancel"),
     })
     if (!confirmed) return
     resolveReport({ id: report.id, action })
+  }
+
+  const getStatusBadge = (status: string) => {
+    if (status === "pending") return <Badge color="orange">{t("reportedImages.status.pending")}</Badge>
+    if (status === "resolved") return <Badge color="green">{t("reportedImages.status.resolved")}</Badge>
+    return <Badge color="grey">{status}</Badge>
   }
 
   return (
     <Container>
       <div className="flex items-center justify-between px-6 py-4">
         <div>
-          <Heading>Reported Images</Heading>
+          <Heading>{t("reportedImages.domain")}</Heading>
           <Text className="text-ui-fg-subtle mt-1">
-            Review flagged images and decide to remove or publish them.
+            {t("reportedImages.subtitle")}
           </Text>
         </div>
         <div className="flex gap-2">
@@ -77,24 +79,24 @@ export const ReportedImageList = () => {
                 setFilter(f)
               }}
             >
-              {f === "" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
+              {f === "" ? t("reportedImages.status.all") : t(`reportedImages.status.${f}`)}
             </Button>
           ))}
         </div>
       </div>
 
       <div className="flex size-full flex-col overflow-hidden">
-        {isLoading && <Text className="px-6 pb-4">Loading...</Text>}
+        {isLoading && <Text className="px-6 pb-4">{t("labels.loading")}</Text>}
 
         <Table>
           <Table.Header>
             <Table.Row>
-              <Table.HeaderCell>Image</Table.HeaderCell>
-              <Table.HeaderCell>Reported By</Table.HeaderCell>
-              <Table.HeaderCell>Reason</Table.HeaderCell>
-              <Table.HeaderCell>Date</Table.HeaderCell>
-              <Table.HeaderCell>Status</Table.HeaderCell>
-              <Table.HeaderCell>Actions</Table.HeaderCell>
+              <Table.HeaderCell>{t("reportedImages.columns.image")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("reportedImages.columns.reportedBy")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("reportedImages.columns.reason")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("reportedImages.columns.date")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("reportedImages.columns.status")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("reportedImages.columns.actions")}</Table.HeaderCell>
             </Table.Row>
           </Table.Header>
           <Table.Body>
@@ -150,7 +152,7 @@ export const ReportedImageList = () => {
                         onClick={() => handleAction(report, "hide")}
                       >
                         <Trash className="mr-1" />
-                        Remove
+                        {t("reportedImages.actions.removeImage")}
                       </Button>
                       <Button
                         variant="secondary"
@@ -159,21 +161,21 @@ export const ReportedImageList = () => {
                         onClick={() => handleAction(report, "publish")}
                       >
                         <Check className="mr-1" />
-                        Publish
+                        {t("reportedImages.actions.publishImage")}
                       </Button>
                     </div>
                   )}
                   {report.status === "resolved" && (
-                    <Text className="text-sm text-ui-fg-subtle">Resolved</Text>
+                    <Text className="text-sm text-ui-fg-subtle">{t("reportedImages.status.resolved")}</Text>
                   )}
                 </Table.Cell>
               </Table.Row>
             ))}
             {!isLoading && reports.length === 0 && (
               <Table.Row>
-                <Table.Cell colSpan={6}>
+                <Table.Cell {...{ colSpan: 6 } as React.TdHTMLAttributes<HTMLTableCellElement>}>
                   <Text className="text-center text-ui-fg-subtle py-8">
-                    No reported images found.
+                    {t("reportedImages.list.noRecordsMessage")}
                   </Text>
                 </Table.Cell>
               </Table.Row>

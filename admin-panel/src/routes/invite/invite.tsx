@@ -166,7 +166,7 @@ const InvalidView = () => {
 const CreateView = ({
   onSuccess,
   token,
-  invite,
+  invite: _invite,
 }: {
   onSuccess: () => void
   token: string

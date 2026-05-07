@@ -1,6 +1,7 @@
 import { Button, DropdownMenu } from "@medusajs/ui"
 import { ReactNode } from "react"
 import { useSearchParams } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 
 type FilterGroupProps = {
   filters: {
@@ -10,6 +11,7 @@ type FilterGroupProps = {
 
 export const FilterGroup = ({ filters }: FilterGroupProps) => {
   const [searchParams] = useSearchParams()
+  const { t } = useTranslation()
   const filterKeys = Object.keys(filters)
 
   if (filterKeys.length === 0) {
@@ -25,7 +27,7 @@ export const FilterGroup = ({ filters }: FilterGroupProps) => {
       {hasMore && <AddFilterMenu availableKeys={availableKeys} />}
       {isClearable && (
         <Button variant="transparent" size="small">
-          Clear all
+          {t("actions.clearAll")}
         </Button>
       )}
     </div>
@@ -37,11 +39,12 @@ type AddFilterMenuProps = {
 }
 
 const AddFilterMenu = ({ availableKeys }: AddFilterMenuProps) => {
+  const { t } = useTranslation()
   return (
     <DropdownMenu>
       <DropdownMenu.Trigger asChild>
         <Button variant="secondary" size="small">
-          Add filter
+          {t("filters.addFilter")}
         </Button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Content>

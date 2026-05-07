@@ -125,15 +125,14 @@ export function registerSocketHandlers(io: SocketServer, socket: Socket): void {
           return
         }
 
-        await MessageService.deleteMessage(messageId, userId, deleteForAll)
+        await MessageService.deleteMessage(messageId, userId, deleteForAll, userType)
 
         if (deleteForAll) {
-          // Broadcast to all in room so everyone sees "[Bu mesaj silindi]"
+          // Broadcast to all in room — message is hard-deleted
           io.to(`conversation:${conversationId}`).emit("message_deleted", {
             messageId,
             conversationId,
             deleteForAll: true,
-            content: "[Bu mesaj silindi]",
           })
         } else {
           // Only notify the requester's own socket (delete for me)

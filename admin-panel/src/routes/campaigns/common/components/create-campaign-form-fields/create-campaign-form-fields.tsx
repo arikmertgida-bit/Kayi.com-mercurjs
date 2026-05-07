@@ -9,7 +9,7 @@ import {
   Textarea,
 } from "@medusajs/ui"
 import { useEffect } from "react"
-import { useWatch } from "react-hook-form"
+import { UseFormReturn, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
 import { Form } from "../../../../../components/common/form"
@@ -21,7 +21,7 @@ import {
 } from "../../../../../lib/data/currencies"
 import { Combobox } from "../../../../../components/inputs/combobox"
 
-export const CreateCampaignFormFields = ({ form, fieldScope = "" }) => {
+export const CreateCampaignFormFields = ({ form, fieldScope = "" }: { form: UseFormReturn<any>; fieldScope?: string }) => {
   const { t } = useTranslation()
   const { store } = useStore()
   const direction = useDocumentDirection()

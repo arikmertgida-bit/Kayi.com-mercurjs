@@ -10,6 +10,7 @@ import {
 } from "@medusajs/ui";
 import { useParams, useNavigate } from "react-router-dom";
 import { EllipsisHorizontal } from "@medusajs/icons";
+import { useTranslation } from "react-i18next";
 import { PossibleValuesTable } from "../attribute-edit-possible-value/components/possible-values-table";
 
 import { SingleColumnLayout } from "../../../components/layout/single-column";
@@ -23,6 +24,7 @@ import { SectionRow } from "../../../components/common/section";
 export const AttributeDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const queryClient = useQueryClient();
 
@@ -39,7 +41,7 @@ export const AttributeDetail = () => {
     return (
       <Container>
         <div className="flex items-center justify-center h-[200px]">
-          <Text>Loading...</Text>
+          <Text>{t("general.loading")}</Text>
         </div>
       </Container>
     );
@@ -49,7 +51,7 @@ export const AttributeDetail = () => {
     return (
       <Container>
         <div className="flex items-center justify-center h-[200px]">
-          <Text>Attribute not found</Text>
+          <Text>{t("attributes.detail.notFound")}</Text>
         </div>
       </Container>
     );
@@ -85,35 +87,35 @@ export const AttributeDetail = () => {
                 </Button>
               </DropdownMenu.Trigger>
               <DropdownMenu.Content align="end">
-                <DropdownMenu.Item onClick={handleEdit}>Edit</DropdownMenu.Item>
+                <DropdownMenu.Item onClick={handleEdit}>{t("actions.edit")}</DropdownMenu.Item>
                 <DropdownMenu.Item onClick={handleDelete}>
-                  Delete
+                  {t("actions.delete")}
                 </DropdownMenu.Item>
               </DropdownMenu.Content>
             </DropdownMenu>
           </div>
         </div>
 
-        <SectionRow title="Description" value={attribute.description} />
-        <SectionRow title="Handle" value={attribute.handle} />
-        <SectionRow title="Type" value={attribute.ui_component} />
+        <SectionRow title={t("fields.description")} value={attribute.description} />
+        <SectionRow title={t("fields.handle")} value={attribute.handle} />
+        <SectionRow title={t("fields.type")} value={attribute.ui_component} />
         <SectionRow
-          title="Filterable"
-          value={attribute.is_filterable ? "True" : "False"}
+          title={t("fields.filterable")}
+          value={attribute.is_filterable ? t("fields.yes") : t("fields.no")}
         />
         <SectionRow
-          title="Required"
-          value={attribute.is_required ? "True" : "False"}
+          title={t("fields.required")}
+          value={attribute.is_required ? t("fields.yes") : t("fields.no")}
         />
         <SectionRow
-          title="Global"
-          value={!attribute.product_categories?.length ? "True" : "False"}
+          title={t("fields.global")}
+          value={!attribute.product_categories?.length ? t("fields.yes") : t("fields.no")}
         />
 
         {attribute.product_categories &&
           attribute.product_categories.length > 0 && (
             <SectionRow
-              title="Product Categories"
+              title={t("fields.productCategories")}
               value={
                 <>
                   {attribute.product_categories.map(

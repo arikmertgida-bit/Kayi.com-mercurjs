@@ -2,7 +2,7 @@ import { motion } from "motion/react"
 
 export default function AvatarBox({
   checked,
-  size = 44,
+  size: _size = 44,
 }: {
   checked?: boolean
   size?: number

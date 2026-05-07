@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react"
+﻿import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { InventoryItemDTO, OrderLineItemDTO } from "@medusajs/types"
+import { AdminInventoryItem, AdminOrderLineItem } from "@medusajs/types"
 import {
   Component,
   ExclamationCircleSolid,
@@ -17,16 +17,16 @@ import { AllocateItemsSchema } from "./constants"
 import { checkInventoryKit } from "./utils"
 
 type OrderEditItemProps = {
-  item: OrderLineItemDTO
+  item: AdminOrderLineItem
   locationId?: string
   form: UseFormReturn<zod.infer<typeof AllocateItemsSchema>>
   onQuantityChange: (
-    inventoryItem: InventoryItemDTO,
-    lineItem: OrderLineItemDTO,
+    inventoryItem: AdminInventoryItem,
+    lineItem: AdminOrderLineItem,
     hasInventoryKit: boolean,
     value: number | null,
     isRoot?: boolean
-  ) => {}
+  ) => void
 }
 
 export function OrderAllocateItemsItem({
@@ -38,7 +38,11 @@ export function OrderAllocateItemsItem({
   const { t } = useTranslation()
 
   const variant = item.variant
-  const inventory = item.variant?.inventory || []
+  // Build inventory array from inventory_items links
+  const inventoryItems: AdminInventoryItem[] =
+    variant?.inventory_items
+      ?.map((link) => link.inventory)
+      .filter((inv): inv is AdminInventoryItem => !!inv) ?? []
 
   const [isOpen, setIsOpen] = useState(false)
 
@@ -49,12 +53,14 @@ export function OrderAllocateItemsItem({
 
   const hasInventoryKit = checkInventoryKit(item)
 
+  const firstInventoryId = inventoryItems[0]?.id
+
   const { availableQuantity, inStockQuantity } = useMemo(() => {
-    if (!variant || !locationId) {
+    if (!variant || !locationId || !inventoryItems[0]) {
       return {}
     }
 
-    const locationInventory = inventory[0]?.location_levels?.find(
+    const locationInventory = inventoryItems[0].location_levels?.find(
       (inv) => inv.location_id === locationId
     )
 
@@ -66,13 +72,14 @@ export function OrderAllocateItemsItem({
       availableQuantity: locationInventory.available_quantity,
       inStockQuantity: locationInventory.stocked_quantity,
     }
-  }, [variant, locationId])
+  }, [variant, locationId, inventoryItems])
 
   const hasQuantityError =
     !hasInventoryKit &&
     availableQuantity &&
-    quantityField[`${item.id}-${item.variant?.inventory[0].id}`] &&
-    quantityField[`${item.id}-${item.variant?.inventory[0].id}`] >
+    firstInventoryId &&
+    quantityField[`${item.id}-${firstInventoryId}`] &&
+    Number(quantityField[`${item.id}-${firstInventoryId}`]) >
       availableQuantity
 
   const minValue = 0
@@ -131,14 +138,15 @@ export function OrderAllocateItemsItem({
                     {availableQuantity || "-"}
                     {availableQuantity &&
                       !hasInventoryKit &&
+                      firstInventoryId &&
                       quantityField[
-                        `${item.id}-${item.variant?.inventory[0].id}`
+                        `${item.id}-${firstInventoryId}`
                       ] && (
                         <span className="text-ui-fg-error txt-small ml-1">
                           -
                           {
                             quantityField[
-                              `${item.id}-${item.variant?.inventory[0].id}`
+                              `${item.id}-${firstInventoryId}`
                             ]
                           }
                         </span>
@@ -171,11 +179,11 @@ export function OrderAllocateItemsItem({
                 name={
                   hasInventoryKit
                     ? `quantity.${item.id}-`
-                    : `quantity.${item.id}-${item.variant?.inventory[0].id}`
+                    : `quantity.${item.id}-${firstInventoryId ?? ""}`
                 }
                 rules={{
                   required: !hasInventoryKit,
-                  min: !hasInventoryKit && minValue,
+                  min: !hasInventoryKit ? minValue : undefined,
                   max: maxValue,
                 }}
                 render={({ field }) => {
@@ -194,7 +202,7 @@ export function OrderAllocateItemsItem({
                                 : Number(e.target.value)
 
                             onQuantityChange(
-                              item.variant?.inventory[0],
+                              inventoryItems[0],
                               item,
                               hasInventoryKit,
                               val,
@@ -225,7 +233,7 @@ export function OrderAllocateItemsItem({
             />
             <span className="txt-small text-ui-fg-muted cursor-pointer">
               {t("orders.allocateItems.consistsOf", {
-                num: inventory.length,
+                num: inventoryItems.length,
               })}
             </span>
           </div>
@@ -233,14 +241,16 @@ export function OrderAllocateItemsItem({
       )}
 
       {isOpen &&
-        variant.inventory.map((i, ind) => {
-          const location = i.location_levels.find(
+        variant &&
+        inventoryItems.map((i, ind) => {
+          const location = i.location_levels?.find(
             (l) => l.location_id === locationId
           )
 
           const hasQuantityError =
             !!quantityField[`${item.id}-${i.id}`] &&
-            quantityField[`${item.id}-${i.id}`] > location.available_quantity
+            !!(location?.available_quantity) &&
+            Number(quantityField[`${item.id}-${i.id}`]) > (location?.available_quantity ?? 0)
 
           return (
             <div key={i.id} className="txt-small flex items-center gap-x-3 p-4">
@@ -252,7 +262,7 @@ export function OrderAllocateItemsItem({
                   <span className="text-ui-fg-subtle">{i.title}</span>
                   <span className="text-ui-fg-muted">
                     {t("orders.allocateItems.requires", {
-                      num: variant.inventory_items[ind].required_quantity,
+                      num: variant?.inventory_items?.[ind]?.required_quantity ?? 1,
                     })}
                   </span>
                 </div>
@@ -301,7 +311,7 @@ export function OrderAllocateItemsItem({
                       rules={{
                         required: true,
                         min: 0,
-                        max: location?.available_quantity,
+                        max: location?.available_quantity ?? undefined,
                       }}
                       render={({ field }) => {
                         return (
@@ -333,7 +343,7 @@ export function OrderAllocateItemsItem({
                     />
                     /{" "}
                     {item.quantity *
-                      variant.inventory_items[ind].required_quantity}{" "}
+                      (variant?.inventory_items?.[ind]?.required_quantity ?? 1)}{" "}
                     {t("fields.qty")}
                   </div>
                 </div>

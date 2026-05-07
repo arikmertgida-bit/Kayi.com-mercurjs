@@ -17,7 +17,7 @@ export const CollectionListTable = () => {
   const { t } = useTranslation()
   const [localSearch, setLocalSearch] = useState("")
 
-  const { searchParams, raw } = useCollectionTableQuery({
+  const { searchParams } = useCollectionTableQuery({
     pageSize: PAGE_SIZE,
   })
 
@@ -25,7 +25,7 @@ export const CollectionListTable = () => {
   // Date filters (created_at, updated_at) are not accepted → strip them
   const { created_at, updated_at, q: _q, ...collectionApiParams } = searchParams as any
 
-  const { product_collections, count: totalCount, isError, error, isLoading } =
+  const { product_collections, isError, error, isLoading } =
     useCollections(
       {
         ...collectionApiParams,
@@ -87,7 +87,7 @@ export const CollectionListTable = () => {
           />
           <Link to="/collections/create">
             <Button size="small" variant="secondary">
-              Request Collection
+              {t("requests.collections.requestAction")}
             </Button>
           </Link>
         </div>

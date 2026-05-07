@@ -37,6 +37,7 @@ import { useExtension } from "../../../providers/extension-provider";
 import { useSearch } from "../../../providers/search-provider";
 import { UserMenu } from "../user-menu";
 import { useDocumentDirection } from "../../../hooks/use-document-direction";
+import { useMessengerAdmin } from "../../../providers/messenger-provider/MessengerAdminProvider";
 
 export const MainLayout = () => {
   return (
@@ -188,6 +189,7 @@ const useCoreRoutes = (): Omit<INavItem, "pathname">[] => {
   const location = useLocation();
   const { count: pendingReportCount = 0 } = useReviewImageReports({ status: "pending", limit: 1 });
   const { count: pendingProductReportCount = 0 } = useProductReports({ status: "pending", limit: 1 });
+  const { unreadCount: messengerUnreadCount } = useMessengerAdmin();
 
   // Badge sıfırlama: sayfaya girilince localStorage'a mevcut sayıyı kaydet
   const SEEN_KEY = "product_reports_seen_count";
@@ -324,18 +326,18 @@ const useCoreRoutes = (): Omit<INavItem, "pathname">[] => {
     },
     {
       icon: <ChatBubble />,
-      label: t("messages.domain"),
+      label: messengerUnreadCount > 0 ? `${t("messages.domain")} (${messengerUnreadCount})` : t("messages.domain"),
       to: "/messages",
     },
     {
       icon: <ExclamationCircle />,
-      label: "Reported Images",
+      label: t("reportedImages.domain"),
       to: "/reported-images",
       badge: pendingReportCount > 0 ? pendingReportCount : undefined,
     },
     {
       icon: <ExclamationCircle />,
-      label: "Product Reports",
+      label: t("productReports.domain"),
       to: "/product-reports",
       badge: unseenProductReportCount > 0 ? unseenProductReportCount : undefined,
     },

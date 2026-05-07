@@ -20,7 +20,7 @@ export const useRefundReasons = (
   >
 ) => {
   const { data, ...rest } = useQuery({
-    queryFn: () => sdk.admin.refundReason.list(query),
+    queryFn: () => sdk.admin.refundReason.list(query as any),
     queryKey: [],
     ...options,
   })

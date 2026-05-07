@@ -234,7 +234,7 @@ export const useUpdateClaimInboundItem = (
   id: string,
   orderId: string,
   options?: UseMutationOptions<
-    HttpTypes.AdminClaimResponse,
+    HttpTypes.AdminClaimReturnPreviewResponse,
     FetchError,
     HttpTypes.AdminUpdateClaimInboundItem & { actionId: string }
   >
@@ -264,7 +264,7 @@ export const useUpdateClaimInboundItem = (
 export const useRemoveClaimInboundItem = (
   id: string,
   orderId: string,
-  options?: UseMutationOptions<HttpTypes.AdminClaimResponse, FetchError, string>
+  options?: UseMutationOptions<HttpTypes.AdminClaimReturnPreviewResponse, FetchError, string>
 ) => {
   return useMutation({
     mutationFn: (actionId: string) =>
@@ -292,7 +292,7 @@ export const useAddClaimInboundShipping = (
   id: string,
   orderId: string,
   options?: UseMutationOptions<
-    HttpTypes.AdminClaimResponse,
+    HttpTypes.AdminClaimReturnPreviewResponse,
     FetchError,
     HttpTypes.AdminClaimAddInboundShipping
   >
@@ -319,7 +319,7 @@ export const useUpdateClaimInboundShipping = (
   id: string,
   orderId: string,
   options?: UseMutationOptions<
-    HttpTypes.AdminClaimResponse,
+    HttpTypes.AdminClaimPreviewResponse,
     FetchError,
     HttpTypes.AdminClaimUpdateInboundShipping
   >
@@ -348,7 +348,7 @@ export const useUpdateClaimInboundShipping = (
 export const useDeleteClaimInboundShipping = (
   id: string,
   orderId: string,
-  options?: UseMutationOptions<HttpTypes.AdminClaimResponse, FetchError, string>
+  options?: UseMutationOptions<HttpTypes.AdminClaimReturnPreviewResponse, FetchError, string>
 ) => {
   return useMutation({
     mutationFn: (actionId: string) =>
@@ -429,7 +429,7 @@ export const useUpdateClaimOutboundItems = (
 export const useRemoveClaimOutboundItem = (
   id: string,
   orderId: string,
-  options?: UseMutationOptions<HttpTypes.AdminClaimResponse, FetchError, string>
+  options?: UseMutationOptions<HttpTypes.AdminClaimPreviewResponse, FetchError, string>
 ) => {
   return useMutation({
     mutationFn: (actionId: string) =>
@@ -480,7 +480,7 @@ export const useUpdateClaimOutboundShipping = (
   id: string,
   orderId: string,
   options?: UseMutationOptions<
-    HttpTypes.AdminClaimResponse,
+    HttpTypes.AdminClaimPreviewResponse,
     FetchError,
     HttpTypes.AdminClaimUpdateOutboundShipping
   >
@@ -509,7 +509,7 @@ export const useUpdateClaimOutboundShipping = (
 export const useDeleteClaimOutboundShipping = (
   id: string,
   orderId: string,
-  options?: UseMutationOptions<HttpTypes.AdminClaimResponse, FetchError, string>
+  options?: UseMutationOptions<HttpTypes.AdminClaimPreviewResponse, FetchError, string>
 ) => {
   return useMutation({
     mutationFn: (actionId: string) =>
@@ -567,7 +567,7 @@ export const useClaimConfirmRequest = (
 export const useCancelClaimRequest = (
   id: string,
   orderId: string,
-  options?: UseMutationOptions<HttpTypes.AdminClaimResponse, FetchError>
+  options?: UseMutationOptions<HttpTypes.AdminClaimDeleteResponse, FetchError>
 ) => {
   return useMutation({
     mutationFn: () => sdk.admin.claim.cancelRequest(id),

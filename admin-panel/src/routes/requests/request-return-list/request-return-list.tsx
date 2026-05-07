@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import { History } from "@medusajs/icons";
 import { Container, Heading, Table, Text } from "@medusajs/ui";
+import { useTranslation } from "react-i18next";
 
 import { formatDate } from "@lib/date";
 
@@ -20,6 +21,7 @@ import { ReturnRequestDetail } from "@routes/requests/request-return-list/compon
 const PAGE_SIZE = 20;
 
 export const OrderReturnRequestsPage = () => {
+  const { t } = useTranslation();
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailRequest, setDetailRequest] = useState<
@@ -48,7 +50,7 @@ export const OrderReturnRequestsPage = () => {
     <Container>
       <div className="flex items-center justify-between px-6 py-4">
         <div>
-          <Heading>Order return requests</Heading>
+          <Heading>{t("requests.returnList.heading")}</Heading>
           <ReturnRequestDetail
             request={detailRequest}
             open={detailOpen}
@@ -67,17 +69,17 @@ export const OrderReturnRequestsPage = () => {
         </div>
       </div>
       <div className="flex size-full flex-col overflow-hidden">
-        {isLoading && <Text>Loading...</Text>}
+        {isLoading && <Text>{t("requests.loading")}</Text>}
         <Table>
           <Table.Header>
             <Table.Row>
-              <Table.HeaderCell>Order ID</Table.HeaderCell>
-              <Table.HeaderCell>Customer</Table.HeaderCell>
-              <Table.HeaderCell>Seller</Table.HeaderCell>
-              <Table.HeaderCell>Reason</Table.HeaderCell>
-              <Table.HeaderCell>Escalated Date</Table.HeaderCell>
-              <Table.HeaderCell>Status</Table.HeaderCell>
-              <Table.HeaderCell>Actions</Table.HeaderCell>
+              <Table.HeaderCell>{t("requests.columns.orderId")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("requests.columns.customer")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("requests.columns.seller")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("requests.columns.reason")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("requests.columns.escalatedDate")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("requests.columns.status")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("requests.columns.actions")}</Table.HeaderCell>
             </Table.Row>
           </Table.Header>
           <Table.Body>
@@ -109,7 +111,7 @@ export const OrderReturnRequestsPage = () => {
           </Table.Body>
         </Table>
         <Table.Pagination
-          canNextPage={PAGE_SIZE * (currentPage + 1) < count!}
+          canNextPage={PAGE_SIZE * (currentPage + 1) < (count ?? 0)}
           canPreviousPage={currentPage > 0}
           previousPage={() => {
             setCurrentPage(currentPage - 1);
@@ -117,8 +119,8 @@ export const OrderReturnRequestsPage = () => {
           nextPage={() => {
             setCurrentPage(currentPage + 1);
           }}
-          count={count!}
-          pageCount={Math.ceil(count! / PAGE_SIZE)}
+          count={count ?? 0}
+          pageCount={Math.ceil((count ?? 0) / PAGE_SIZE)}
           pageIndex={currentPage}
           pageSize={PAGE_SIZE}
         />

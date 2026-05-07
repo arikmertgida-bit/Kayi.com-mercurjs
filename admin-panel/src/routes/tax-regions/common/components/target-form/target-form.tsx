@@ -142,7 +142,7 @@ const PAGE_SIZE = 50
 
 const PREFIX_CUSTOMER_GROUP = "cg"
 
-const CustomerGroupTable = ({
+export const _CustomerGroupTable = ({
   initialRowState,
   intermediate,
   setIntermediate,
@@ -408,7 +408,7 @@ const useProductColumns = () => {
 
 const PREFIX_PRODUCT_COLLECTION = "pc"
 
-const ProductCollectionTable = ({
+export const _ProductCollectionTable = ({
   initialRowState,
   intermediate,
   setIntermediate,
@@ -693,6 +693,7 @@ const ShippingOptionTable = ({
   useCleanupSearchParams()
 
   const { searchParams, raw } = useShippingOptionTableQuery({
+    regionId: "",
     pageSize: PAGE_SIZE,
     prefix: PREFIX_SHIPPING_OPTION,
   })
@@ -824,7 +825,7 @@ const useShippingOptionColumns = () => {
 
 const PREFIX_PRODUCT_TAG = "ptag"
 
-const ProductTagTable = ({
+export const _ProductTagTable = ({
   initialRowState,
   intermediate,
   setIntermediate,

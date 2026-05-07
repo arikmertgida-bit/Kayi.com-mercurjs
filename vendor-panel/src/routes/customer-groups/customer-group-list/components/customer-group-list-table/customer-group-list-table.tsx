@@ -53,7 +53,7 @@ export const CustomerGroupListTable = () => {
           columns={columns}
           filters={filters}
           heading={t("customerGroups.domain")}
-          subHeading="Organize customers into groups. Groups can have different promotions and prices."
+          subHeading={t("customerGroups.subtitle")}
           rowCount={count}
           getRowId={(row) => row.customer_group_id}
           rowHref={(row: any) => `/customer-groups/${row.original.customer_group_id}`

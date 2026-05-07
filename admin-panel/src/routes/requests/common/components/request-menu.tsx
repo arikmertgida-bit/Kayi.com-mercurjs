@@ -1,5 +1,6 @@
 import { EllipsisHorizontal, Eye } from "@medusajs/icons";
 import { DropdownMenu } from "@medusajs/ui";
+import { useTranslation } from "react-i18next";
 
 import type { AdminRequest } from "@custom-types/requests";
 
@@ -9,6 +10,8 @@ type Props = {
 };
 
 export function RequestMenu({ handleDetail, request }: Props) {
+  const { t } = useTranslation();
+
   return (
     <DropdownMenu>
       <DropdownMenu.Trigger asChild>
@@ -22,7 +25,7 @@ export function RequestMenu({ handleDetail, request }: Props) {
           }}
         >
           <Eye className="text-ui-fg-subtle" />
-          Review
+          {t("actions.viewDetails")}
         </DropdownMenu.Item>
       </DropdownMenu.Content>
     </DropdownMenu>

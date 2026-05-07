@@ -6,9 +6,9 @@ export const ProductSingleList = () => {
     <div className="flex flex-1 flex-col gap-y-2">
       <ProductFilteredListTable
         productType="single"
-        heading="Tekil Ürünler"
+        heading="Tekli Ürünler"
         createTo="/products/single/create-single"
-        createLabel="Tekil Ürün Ekle"
+        createLabel="Tekli Ürün Ekle"
       />
       <Outlet />
     </div>

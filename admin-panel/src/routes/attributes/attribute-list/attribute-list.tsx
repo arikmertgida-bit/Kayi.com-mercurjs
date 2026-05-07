@@ -11,6 +11,7 @@ import {
 } from "@medusajs/ui";
 import { XMark, DescendingSorting } from "@medusajs/icons";
 import { useState, useMemo, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { SingleColumnLayout } from "../../../components/layout/single-column";
 import { useAttributeTableColumns } from "../../../hooks/table/columns/use-attribute-table-columns";
@@ -20,6 +21,7 @@ import { AttributeDTO } from "../../../types";
 
 export const AttributeList = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
@@ -183,13 +185,13 @@ export const AttributeList = () => {
     <SingleColumnLayout>
       <Container className="divide-y p-0">
         <div className="flex items-center justify-between px-6 py-4">
-          <Heading level="h2">Product Attributes</Heading>
+          <Heading level="h2">{t("attributes.domain")}</Heading>
           <Button
             variant="primary"
             size="small"
             onClick={() => navigate("/settings/attributes/create")}
           >
-            Create
+            {t("actions.create")}
           </Button>
         </div>
 
@@ -203,11 +205,11 @@ export const AttributeList = () => {
                     size="small"
                     className="flex items-center gap-1 bg-ui-bg-subtle text-ui-fg-subtle"
                   >
-                    Filterable
+                    {t("fields.filterable")}
                     <DropdownMenu>
                       <DropdownMenu.Trigger asChild>
                         <button className="hover:bg-ui-bg-subtle-hover px-2 h-7 border border-ui-border-base">
-                          {filters.filterable ? "Yes" : "No"}
+                          {filters.filterable ? t("fields.yes") : t("fields.no")}
                         </button>
                       </DropdownMenu.Trigger>
                       <DropdownMenu.Content align="start">
@@ -219,7 +221,7 @@ export const AttributeList = () => {
                           ) : (
                             <span className="ml-4" />
                           )}
-                          Yes
+                          {t("fields.yes")}
                         </DropdownMenu.Item>
                         <DropdownMenu.Item
                           onClick={() => addFilter("filterable", false)}
@@ -229,7 +231,7 @@ export const AttributeList = () => {
                           ) : (
                             <span className="ml-4" />
                           )}
-                          No
+                          {t("fields.no")}
                         </DropdownMenu.Item>
                       </DropdownMenu.Content>
                     </DropdownMenu>
@@ -246,11 +248,11 @@ export const AttributeList = () => {
                     size="small"
                     className="flex items-center gap-1 bg-ui-bg-subtle text-ui-fg-subtle"
                   >
-                    Global
+                    {t("fields.global")}
                     <DropdownMenu>
                       <DropdownMenu.Trigger asChild>
                         <button className="hover:bg-ui-bg-subtle-hover px-2 h-7 border border-ui-border-base">
-                          {filters.global ? "Yes" : "No"}
+                          {filters.global ? t("fields.yes") : t("fields.no")}
                         </button>
                       </DropdownMenu.Trigger>
                       <DropdownMenu.Content align="start">
@@ -262,7 +264,7 @@ export const AttributeList = () => {
                           ) : (
                             <span className="ml-4" />
                           )}
-                          Yes
+                          {t("fields.yes")}
                         </DropdownMenu.Item>
                         <DropdownMenu.Item
                           onClick={() => addFilter("global", false)}
@@ -272,7 +274,7 @@ export const AttributeList = () => {
                           ) : (
                             <span className="ml-4" />
                           )}
-                          No
+                          {t("fields.no")}
                         </DropdownMenu.Item>
                       </DropdownMenu.Content>
                     </DropdownMenu>
@@ -310,14 +312,14 @@ export const AttributeList = () => {
                       <DropdownMenu.Item
                         onClick={() => addFilter("filterable", true)}
                       >
-                        Filterable
+                        {t("fields.filterable")}
                       </DropdownMenu.Item>
                     )}
                     {filters.global === undefined && (
                       <DropdownMenu.Item
                         onClick={() => addFilter("global", true)}
                       >
-                        Global
+                        {t("fields.global")}
                       </DropdownMenu.Item>
                     )}
                   </DropdownMenu.Content>
@@ -331,13 +333,13 @@ export const AttributeList = () => {
                     size="small"
                     onClick={clearAllFilters}
                   >
-                    Clear all
+                    {t("actions.clearAll")}
                   </Button>
                 )}
               </div>
 
               <div className="flex items-center gap-2">
-                <DataTable.Search placeholder="Search table" />
+                <DataTable.Search placeholder={t("filters.searchLabel")} />
 
                 {/* Sorting Dropdown */}
                 <DropdownMenu>
@@ -356,7 +358,7 @@ export const AttributeList = () => {
                         ) : (
                           <span className="ml-4" />
                         )}
-                        Name
+                        {t("fields.name")}
                       </DropdownMenu.Item>
                       <DropdownMenu.Item
                         onClick={() => handleSortFieldChange("created_at")}
@@ -366,7 +368,7 @@ export const AttributeList = () => {
                         ) : (
                           <span className="ml-4" />
                         )}
-                        Created At
+                        {t("dateTime.createdAt")}
                       </DropdownMenu.Item>
                       <DropdownMenu.Item
                         onClick={() => handleSortFieldChange("updated_at")}
@@ -376,7 +378,7 @@ export const AttributeList = () => {
                         ) : (
                           <span className="ml-4" />
                         )}
-                        Updated At
+                        {t("dateTime.updatedAt")}
                       </DropdownMenu.Item>
                     </div>
                     <DropdownMenu.Separator />
@@ -389,7 +391,7 @@ export const AttributeList = () => {
                         ) : (
                           <span className="ml-4" />
                         )}
-                        Ascending (1 → 30)
+                        {t("general.ascending")}
                       </DropdownMenu.Item>
                       <DropdownMenu.Item
                         onClick={() => handleSortOrderChange("desc")}
@@ -399,7 +401,7 @@ export const AttributeList = () => {
                         ) : (
                           <span className="ml-4" />
                         )}
-                        Descending (30 → 1)
+                        {t("general.descending")}
                       </DropdownMenu.Item>
                     </div>
                   </DropdownMenu.Content>

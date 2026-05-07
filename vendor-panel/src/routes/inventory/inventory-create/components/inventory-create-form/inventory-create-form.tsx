@@ -295,7 +295,7 @@ export function InventoryCreateForm({ locations }: InventoryCreateFormProps) {
                             <Form.Control>
                               <Textarea
                                 {...field}
-                                placeholder="The item description"
+                                placeholder={t("fields.description")}
                               />
                             </Form.Control>
                           </Form.Item>

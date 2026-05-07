@@ -65,7 +65,7 @@ export const usePromotionRules = (
   query?: HttpTypes.AdminGetPromotionRuleParams,
   options?: Omit<
     UseQueryOptions<
-      HttpTypes.AdminGetPromotionRuleParams,
+      HttpTypes.AdminPromotionRuleListResponse,
       FetchError,
       HttpTypes.AdminPromotionRuleListResponse,
       QueryKey
@@ -75,7 +75,7 @@ export const usePromotionRules = (
 ) => {
   const { data, ...rest } = useQuery({
     queryKey: promotionsQueryKeys.listRules(id, ruleType, query),
-    queryFn: async () => sdk.admin.promotion.listRules(id, ruleType, query),
+    queryFn: async () => sdk.admin.promotion.listRules(id!, ruleType, query),
     ...options,
   })
 

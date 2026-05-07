@@ -1,4 +1,4 @@
-import { InventoryTypes, StockLocationDTO } from "@medusajs/types"
+import { HttpTypes } from "@medusajs/types"
 import { PencilSquare, Trash } from "@medusajs/icons"
 
 import { useMemo } from "react"
@@ -14,13 +14,10 @@ import { queryClient } from "../../../../../lib/query-client"
 import { useNavigate } from "react-router-dom"
 
 /**
- * Adds missing properties to the InventoryLevelDTO type.
+ * Adds missing properties to the AdminInventoryLevel type.
  */
-interface ExtendedLocationLevel extends InventoryTypes.InventoryLevelDTO {
-  stock_locations: StockLocationDTO[]
-  reserved_quantity: number
-  stocked_quantity: number
-  available_quantity: number
+export interface ExtendedLocationLevel extends HttpTypes.AdminInventoryLevel {
+  stock_locations: HttpTypes.AdminStockLocation[]
 }
 
 const columnHelper = createDataTableColumnHelper<ExtendedLocationLevel>()
@@ -66,13 +63,14 @@ export const useLocationListTableColumns = () => {
         queryKey: inventoryItemLevelsQueryKeys.detail(level.inventory_item_id),
       })
     } catch (e) {
-      toast.error(e.message)
+      toast.error(e instanceof Error ? e.message : String(e))
     }
   }
 
   return useMemo(
     () => [
-      columnHelper.accessor("stock_locations.0.name", {
+      columnHelper.accessor((row) => row.stock_locations?.[0]?.name, {
+        id: "location_name",
         header: t("fields.location"),
         cell: ({ getValue }) => {
           const locationName = getValue()
@@ -147,7 +145,7 @@ export const useLocationListTableColumns = () => {
                 icon: <PencilSquare />,
                 label: t("actions.edit"),
 
-                onClick: (row) => {
+                onClick: (_row) => {
                   navigate(`locations/${level.location_id}`)
                 },
               },

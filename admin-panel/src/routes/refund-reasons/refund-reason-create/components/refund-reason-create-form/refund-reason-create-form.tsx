@@ -15,7 +15,7 @@ import { useCreateRefundReason } from "../../../../../hooks/api";
 
 const RefundReasonCreateSchema = z.object({
   label: z.string().min(1),
-  // code: z.string().min(1),
+  code: z.string().min(1),
   description: z.string().optional(),
 });
 
@@ -26,7 +26,7 @@ export const RefundReasonCreateForm = () => {
   const form = useForm<z.infer<typeof RefundReasonCreateSchema>>({
     defaultValues: {
       label: "",
-      // code: "",
+      code: "",
       description: "",
     },
     resolver: zodResolver(RefundReasonCreateSchema),
@@ -43,7 +43,8 @@ export const RefundReasonCreateForm = () => {
   const { mutateAsync, isPending } = useCreateRefundReason();
 
   const handleSubmit = form.handleSubmit(async (data) => {
-    await mutateAsync(data, {
+    const code = data.code || data.label.toLowerCase().replace(/[^a-z0-9]/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, "")
+    await mutateAsync({ ...data, code }, {
       onSuccess: ({ refund_reason }) => {
         toast.success(
           t("refundReasons.create.successToast", {

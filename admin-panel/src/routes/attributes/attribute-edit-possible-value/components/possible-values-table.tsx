@@ -13,6 +13,7 @@ import { format } from "date-fns";
 import { EllipsisHorizontal } from "@medusajs/icons";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "@medusajs/ui";
+import { useTranslation } from "react-i18next";
 import { AttributeDTO } from "../../../../types";
 
 type PossibleValue = {
@@ -30,6 +31,7 @@ type PossibleValuesTableProps = {
 export const PossibleValuesTable = ({
   attribute,
 }: PossibleValuesTableProps) => {
+  const { t } = useTranslation();
   const [possibleValuesPage, setPossibleValuesPage] = useState(1);
   const possibleValuesPageSize = 10;
   const [possibleValuesPagination, setPossibleValuesPagination] =
@@ -127,12 +129,12 @@ export const PossibleValuesTable = ({
   return (
     <Container className="divide-y p-0">
       <div className="flex items-center justify-between px-6 py-4">
-        <Heading level="h2">Possible Values</Heading>
+        <Heading level="h2">{t("attributes.detail.possibleValues")}</Heading>
       </div>
       <div>
         <DataTable instance={possibleValuesTable}>
           <DataTable.Toolbar className="flex flex-col items-start justify-between gap-2 md:flex-row md:items-center">
-            <DataTable.Search placeholder="Search possible values..." />
+            <DataTable.Search placeholder={t("attributes.possibleValues.search")} />
           </DataTable.Toolbar>
           <DataTable.Table />
           <DataTable.Pagination />

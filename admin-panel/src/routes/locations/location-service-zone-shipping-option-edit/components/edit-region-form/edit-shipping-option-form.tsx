@@ -94,6 +94,7 @@ export const EditShippingOptionForm = ({
     if (!storeRule) {
       // NOTE: should always exist since we always create this rule when we create a shipping option
       rules.push({
+        id: "",
         value: values.enabled_in_store ? "true" : "false",
         attribute: "enabled_in_store",
         operator: "eq",
@@ -255,7 +256,7 @@ export const EditShippingOptionForm = ({
                   control={form.control}
                   name="provider_id"
                   disabled={true}
-                  render={({ field }) => {
+                  render={({ field: _field }) => {
                     return (
                       <Form.Item>
                         <Form.Label>

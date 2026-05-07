@@ -18,6 +18,7 @@ import { AdminProductCategory } from "@medusajs/types";
 import PossibleValuesList from "../../attribute-create/components/PossibleValuesList";
 import MultiSelectCategory from "../../attribute-create/components/MultiSelectCategory";
 import { findDuplicatePossibleValues } from "../utils";
+import { useTranslation } from "react-i18next";
 
 enum AttributeUIComponent {
   SELECT = "select",
@@ -52,6 +53,7 @@ export const AttributeForm = ({
   activeTab = "details",
   onFormStateChange,
 }: AttributeFormProps) => {
+  const { t } = useTranslation();
   const [showCategorySection, setShowCategorySection] = useState(
     (initialData?.product_categories?.length || 0) > 0
   );
@@ -295,7 +297,7 @@ export const AttributeForm = ({
         <div
           className={`mt-3 ${!(showCategorySection || (form.watch("product_category_ids")?.length || 0) > 0) && "collapse"}`}
         >
-          <InlineTip label="Warning" variant="warning">
+          <InlineTip label={t("general.warning")} variant="warning">
             All child categories of the selected category will automatically
             inherit its attributes.
           </InlineTip>
@@ -317,7 +319,7 @@ export const AttributeForm = ({
           }
         >
           <Select.Trigger className="mt-1">
-            <Select.Value placeholder="Select Type" />
+            <Select.Value placeholder={t("labels.selectType")} />
           </Select.Trigger>
           <Select.Content>
             {Object.values(AttributeUIComponent).map((component) => (

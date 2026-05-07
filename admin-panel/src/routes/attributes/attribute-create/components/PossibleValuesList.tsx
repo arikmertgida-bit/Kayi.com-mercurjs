@@ -18,6 +18,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Button, Input, IconButton, Label } from "@medusajs/ui";
 import { XMark, DotsSix } from "@medusajs/icons";
 import { useFieldArray, useFormContext } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 type AttributeValueType = {
   value: string;
@@ -38,6 +39,7 @@ const SortableItem = ({ id, index, onRemove }: SortableItemProps) => {
     register,
     formState: { errors },
   } = useFormContext<FormValues>();
+  const { t } = useTranslation();
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id });
 
@@ -65,7 +67,7 @@ const SortableItem = ({ id, index, onRemove }: SortableItemProps) => {
         <Input
           className="flex-1"
           aria-invalid={!!fieldError}
-          placeholder="Enter value"
+          placeholder={t("attributes.create.enterValue")}
           {...register(`possible_values.${index}.value`)}
         />
       </div>

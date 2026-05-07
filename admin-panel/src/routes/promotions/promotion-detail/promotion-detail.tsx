@@ -23,8 +23,8 @@ export const PromotionDetail = () => {
   }
 
   const { rules } = usePromotionRules(id!, "rules", query)
-  const { rules: targetRules } = usePromotionRules(id!, "target-rules", query)
-  const { rules: buyRules } = usePromotionRules(id!, "buy-rules", query)
+  const { rules: targetRules } = usePromotionRules(id!, "target_rules", query)
+  const { rules: buyRules } = usePromotionRules(id!, "buy_rules", query)
 
   const { getWidgets } = useExtension()
 
@@ -51,15 +51,15 @@ export const PromotionDetail = () => {
         <PromotionConditionsSection rules={rules || []} ruleType={"rules"} />
         <PromotionConditionsSection
           rules={targetRules || []}
-          ruleType={"target-rules"}
+          ruleType={"target_rules"}
           applicationMethodTargetType={
-            promotion.application_method.target_type || "items"
+            promotion.application_method?.target_type ?? "items"
           }
         />
         {promotion.type === "buyget" && (
           <PromotionConditionsSection
             rules={buyRules || []}
-            ruleType={"buy-rules"}
+            ruleType={"buy_rules"}
             applicationMethodTargetType={"items"}
           />
         )}

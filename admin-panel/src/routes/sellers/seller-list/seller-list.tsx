@@ -8,8 +8,8 @@ export const SellersList = () => {
   return (
     <SingleColumnPage
       widgets={{
-        after: getWidgets("seller.list.after"),
-        before: getWidgets("seller.list.before"),
+        after: getWidgets("seller.list.after" as any),
+        before: getWidgets("seller.list.before" as any),
       }}
       hasOutlet={false}
     >

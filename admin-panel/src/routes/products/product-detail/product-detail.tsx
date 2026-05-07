@@ -1,4 +1,5 @@
 import { useLoaderData, useParams } from "react-router-dom";
+import { HttpTypes } from "@medusajs/types";
 
 import { TwoColumnPageSkeleton } from "../../../components/common/skeleton";
 import { TwoColumnPage } from "../../../components/layout/pages";
@@ -72,7 +73,7 @@ export const ProductDetail = () => {
       </TwoColumnPage.Main>
       <TwoColumnPage.Sidebar>
         <ProductSalesChannelSection product={product} />
-        <ProductShippingProfileSection product={product} />
+        <ProductShippingProfileSection product={product as HttpTypes.AdminProduct & { shipping_profile?: HttpTypes.AdminShippingProfile }} />
         <ProductOrganizationSection product={product} />
         <ProductAttributeSection product={product} />
         <ProductAdditionalAttributeSection />

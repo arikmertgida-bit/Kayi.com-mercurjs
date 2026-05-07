@@ -38,11 +38,11 @@ const ProductFormImport = () => {
   const [submitted, setSubmitted] = useState(false)
   const [errorIndices, setErrorIndices] = useState<Set<number>>(new Set())
 
-  const { data: locData } = useStockLocations()
-  const { data: catData } = useProductCategories()
-  const { data: tagData } = useProductTags()
-  const { data: typeData } = useProductTypes()
-  const { data: colData } = useCollections()
+  const { data: locData } = useStockLocations() as any
+  const { data: catData } = useProductCategories() as any
+  const { data: tagData } = useProductTags() as any
+  const { data: typeData } = useProductTypes() as any
+  const { data: colData } = useCollections() as any
 
   const stockLocations: { id: string; name: string }[] = useMemo(
     () =>

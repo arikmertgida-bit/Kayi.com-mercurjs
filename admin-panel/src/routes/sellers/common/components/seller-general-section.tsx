@@ -2,6 +2,7 @@ import { ChatBubbleLeftRight, PencilSquare, User } from "@medusajs/icons";
 import { Button, Container, Divider, Drawer, Heading, Text, usePrompt } from "@medusajs/ui";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
 import type { VendorSeller } from "@custom-types/seller";
@@ -11,7 +12,6 @@ import { SellerStatusBadge } from "@components/common/seller-status-badge";
 
 import {
   connectSocket,
-  disconnectSocket,
   emitMessagesRead,
   emitTypingStart,
   emitTypingStop,
@@ -253,6 +253,7 @@ function SellerDirectChat({
 
 export const SellerGeneralSection = ({ seller }: { seller: VendorSeller }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [chatOpen, setChatOpen] = useState(false);
 
   const { mutateAsync: suspendSeller } = useUpdateSeller();
@@ -263,12 +264,12 @@ export const SellerGeneralSection = ({ seller }: { seller: VendorSeller }) => {
     const res = await dialog({
       title:
         seller.store_status === "SUSPENDED"
-          ? "Activate account"
-          : "Suspend account",
+          ? t("sellers.activate")
+          : t("sellers.suspend"),
       description:
         seller.store_status === "SUSPENDED"
-          ? "Are you sure you want to activate this account?"
-          : "Are you sure you want to suspend this account?",
+          ? t("sellers.activateConfirm")
+          : t("sellers.suspendConfirm"),
       verificationText: seller.email || seller.name || "",
     });
 
@@ -333,7 +334,7 @@ export const SellerGeneralSection = ({ seller }: { seller: VendorSeller }) => {
               <ActionsButton
                 actions={[
                   {
-                    label: "Edit",
+                    label: t("actions.edit"),
                     onClick: () =>
                       navigate(
                         `/sellers/${seller.handle || seller.id}/edit`
@@ -343,8 +344,8 @@ export const SellerGeneralSection = ({ seller }: { seller: VendorSeller }) => {
                   {
                     label:
                       seller.store_status === "SUSPENDED"
-                        ? "Activate account"
-                        : "Suspend account",
+                        ? t("sellers.activate")
+                        : t("sellers.suspend"),
                     onClick: () => handleSuspend(),
                     icon: <User />,
                   },
@@ -358,34 +359,34 @@ export const SellerGeneralSection = ({ seller }: { seller: VendorSeller }) => {
         <Container className="px-0">
           <div className="flex items-center justify-between px-8 py-4">
             <div>
-              <Heading>Store</Heading>
+              <Heading>{t("sellers.store")}</Heading>
             </div>
           </div>
           <div>
             <Divider />
             <div className="flex px-8 py-4">
-              <Text className="w-1/2 font-medium text-ui-fg-subtle">Name</Text>
+              <Text className="w-1/2 font-medium text-ui-fg-subtle">{t("sellers.fields.name")}</Text>
               <Text className="w-1/2">{seller.name}</Text>
             </div>
             <Divider />
             <div className="flex px-8 py-4">
-              <Text className="w-1/2 font-medium text-ui-fg-subtle">Handle</Text>
+              <Text className="w-1/2 font-medium text-ui-fg-subtle">{t("sellers.fields.handle")}</Text>
               <Text className="w-1/2 font-mono text-sm">{seller.handle || "—"}</Text>
             </div>
             <Divider />
             <div className="flex px-8 py-4">
-              <Text className="w-1/2 font-medium text-ui-fg-subtle">Email</Text>
+              <Text className="w-1/2 font-medium text-ui-fg-subtle">{t("sellers.fields.email")}</Text>
               <Text className="w-1/2">{seller.email}</Text>
             </div>
             <Divider />
             <div className="flex px-8 py-4">
-              <Text className="w-1/2 font-medium text-ui-fg-subtle">Phone</Text>
+              <Text className="w-1/2 font-medium text-ui-fg-subtle">{t("sellers.fields.phone")}</Text>
               <Text className="w-1/2">{seller.phone}</Text>
             </div>
             <Divider />
             <div className="flex px-8 py-4">
               <Text className="w-1/2 font-medium text-ui-fg-subtle">
-                Description
+                {t("sellers.fields.description")}
               </Text>
               <Text className="w-1/2">{seller.description}</Text>
             </div>
@@ -394,39 +395,39 @@ export const SellerGeneralSection = ({ seller }: { seller: VendorSeller }) => {
         <Container className="px-0">
           <div className="flex items-center justify-between px-8 py-4">
             <div>
-              <Heading>Address</Heading>
+              <Heading>{t("sellers.fields.address")}</Heading>
             </div>
           </div>
           <div>
             <Divider />
             <div className="flex px-8 py-4">
               <Text className="w-1/2 font-medium text-ui-fg-subtle">
-                Address
+                {t("sellers.fields.address_line")}
               </Text>
               <Text className="w-1/2">{seller.address_line}</Text>
             </div>
             <Divider />
             <div className="flex px-8 py-4">
               <Text className="w-1/2 font-medium text-ui-fg-subtle">
-                Postal Code
+                {t("sellers.fields.postal_code")}
               </Text>
               <Text className="w-1/2">{seller.postal_code}</Text>
             </div>
             <Divider />
             <div className="flex px-8 py-4">
-              <Text className="w-1/2 font-medium text-ui-fg-subtle">City</Text>
+              <Text className="w-1/2 font-medium text-ui-fg-subtle">{t("sellers.fields.city")}</Text>
               <Text className="w-1/2">{seller.city}</Text>
             </div>
             <Divider />
             <div className="flex px-8 py-4">
               <Text className="w-1/2 font-medium text-ui-fg-subtle">
-                Country
+                {t("sellers.fields.country_code")}
               </Text>
               <Text className="w-1/2">{seller.country_code}</Text>
             </div>
             <Divider />
             <div className="flex px-8 py-4">
-              <Text className="w-1/2 font-medium text-ui-fg-subtle">TaxID</Text>
+              <Text className="w-1/2 font-medium text-ui-fg-subtle">{t("sellers.fields.tax_id")}</Text>
               <Text className="w-1/2">{seller.tax_id}</Text>
             </div>
           </div>

@@ -1,4 +1,4 @@
-import { Button, Container, Copy, Heading, toast } from "@medusajs/ui"
+﻿import { Button, Container, Copy, Heading, toast } from "@medusajs/ui"
 import { useTranslation } from "react-i18next"
 import { ExclamationCircleSolid } from "@medusajs/icons"
 
@@ -14,7 +14,6 @@ import { useNavigate } from "react-router-dom"
 
 type OrderActiveEditSectionProps = {
   order: HttpTypes.AdminOrder
-  quantity: number
 }
 
 function EditItem({
@@ -61,11 +60,11 @@ export const OrderActiveEditSection = ({
   const { mutateAsync: cancelOrderEdit } = useCancelOrderEdit(order.id)
   const { mutateAsync: confirmOrderEdit } = useConfirmOrderEdit(order.id)
 
-  const isPending = orderPreview.order_change?.status === "pending"
+  const isPending = (orderPreview as HttpTypes.AdminOrder & { order_change?: { status?: string } } | undefined)?.order_change?.status === "pending"
 
   const [addedItems, removedItems] = useMemo(() => {
-    const added = []
-    const removed = []
+    const added: { item: HttpTypes.AdminOrderLineItem; quantity: number }[] = []
+    const removed: { item: HttpTypes.AdminOrderLineItem; quantity: number }[] = []
 
     const orderLookupMap = new Map(order.items!.map((i) => [i.id, i]))
 
@@ -101,7 +100,7 @@ export const OrderActiveEditSection = ({
 
       toast.success(t("orders.edits.toast.confirmedSuccessfully"))
     } catch (e) {
-      toast.error(e.message)
+      toast.error((e as Error).message)
     }
   }
 
@@ -111,11 +110,11 @@ export const OrderActiveEditSection = ({
 
       toast.success(t("orders.edits.toast.canceledSuccessfully"))
     } catch (e) {
-      toast.error(e.message)
+      toast.error((e as Error).message)
     }
   }
 
-  if (!orderPreview || orderPreview.order_change?.change_type !== "edit") {
+  if (!orderPreview || (orderPreview as HttpTypes.AdminOrder & { order_change?: { change_type?: string } }).order_change?.change_type !== "edit") {
     return null
   }
 

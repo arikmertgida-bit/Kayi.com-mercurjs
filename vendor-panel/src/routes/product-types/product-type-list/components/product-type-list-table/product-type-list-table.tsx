@@ -61,7 +61,7 @@ export const ProductTypeListTable = () => {
       <Container className="divide-y p-0">
         <div className="px-6 py-4">
           <Text className="text-ui-fg-error">
-            {error instanceof Error ? error.message : "An error occurred while loading product types."}
+            {error instanceof Error ? error.message : t("productTypes.loadError")}
           </Text>
         </div>
       </Container>

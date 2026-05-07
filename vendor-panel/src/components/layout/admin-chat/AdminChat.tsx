@@ -1,10 +1,12 @@
 import { ChatBubble } from "@medusajs/icons"
 import { Button, Drawer, Heading } from "@medusajs/ui"
+import { useTranslation } from "react-i18next"
 import { useMe } from "../../../hooks/api"
 import { MessengerChat } from "../messenger-chat/MessengerChat"
 import { useMessengerAdminUnreads } from "../../../providers/messenger-provider/MessengerProvider"
 
 export const AdminChat = () => {
+  const { t } = useTranslation()
   const { seller, isPending } = useMe()
   const unreads = useMessengerAdminUnreads()
   const unreadCount = unreads.length
@@ -23,7 +25,7 @@ export const AdminChat = () => {
           className="relative flex items-center gap-1.5 text-ui-fg-muted hover:text-ui-fg-subtle"
         >
           <ChatBubble className="w-4 h-4" />
-          <span className="text-xs font-medium">Support</span>
+          <span className="text-xs font-medium">{t("messenger.support")}</span>
           {unreadCount > 0 && (
             <span className="absolute -top-1 -right-1 min-w-[16px] h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
               {unreadCount > 9 ? "9+" : unreadCount}
@@ -34,7 +36,7 @@ export const AdminChat = () => {
       <Drawer.Content>
         <Drawer.Header>
           <Drawer.Title asChild>
-            <Heading>Chat with Admin</Heading>
+            <Heading>{t("messenger.adminChatTitle")}</Heading>
           </Drawer.Title>
         </Drawer.Header>
         <Drawer.Body className="overflow-y-auto p-0 flex flex-col">

@@ -32,7 +32,7 @@ export const useVendorRequests = (
     queryFn: () =>
       sdk.client.fetch<Record<string, string | number>>("/admin/requests", {
         method: "GET",
-        query,
+        query: { order: "-created_at", ...query },
       }),
     ...options,
   });

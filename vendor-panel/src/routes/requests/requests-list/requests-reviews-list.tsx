@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import { Container, Heading, Text } from "@medusajs/ui"
 import { SingleColumnPage } from "../../../components/layout/pages"
 import { useDashboardExtension } from "../../../extensions"
@@ -6,6 +7,7 @@ import { useRequestsReviewsTableColumns } from "./components/use-requests-review
 
 export const RequestReviewsList = () => {
   const { getWidgets } = useDashboardExtension()
+  const { t } = useTranslation()
 
   const reviewsColumns = useRequestsReviewsTableColumns()
 
@@ -19,9 +21,9 @@ export const RequestReviewsList = () => {
       <Container className="divided-y p-0">
         <div className="flex items-center justify-between px-6 py-4">
           <div>
-            <Heading>Reviews Removal Requests</Heading>
+            <Heading>{t("requests.reviewRemovals.title")}</Heading>
             <Text className="text-ui-fg-subtle" size="small">
-              Your requests to cancel a review
+              {t("requests.reviewRemovals.subtitle")}
             </Text>
           </div>
         </div>

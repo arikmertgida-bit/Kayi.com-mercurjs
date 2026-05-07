@@ -65,7 +65,7 @@ export const uploadFilesQuery = async (files: any[]) => {
     .catch(() => null)
 }
 
-export const fetchQuery = async (
+export const fetchQuery = async <T = any>(
   url: string,
   {
     method,
@@ -73,12 +73,12 @@ export const fetchQuery = async (
     query,
     headers,
   }: {
-    method: "GET" | "POST" | "DELETE"
+    method: "GET" | "POST" | "DELETE" | "PUT"
     body?: object
     query?: Record<string, any>
     headers?: { [key: string]: string }
   }
-) => {
+): Promise<T> => {
   const bearer = window.localStorage.getItem("medusa_auth_token") || ""
   const cleanQuery: Record<string, any> = {}
   for (const [k, v] of Object.entries(query || {})) {

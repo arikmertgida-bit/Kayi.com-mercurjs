@@ -1,4 +1,5 @@
 import {
+  AdminOrderLineItem,
   AdminProductVariant,
   AdminProductVariantInventoryItemLink,
   OrderLineItemDTO,
@@ -8,21 +9,17 @@ import {
  * Check if the line item has inventory kit.
  */
 export function checkInventoryKit(
-  item: OrderLineItemDTO & {
-    variant?: AdminProductVariant & {
-      inventory_items: AdminProductVariantInventoryItemLink[]
-    }
-  }
+  item: AdminOrderLineItem | OrderLineItemDTO
 ) {
-  const variant = item.variant
+  const variant = (item as AdminOrderLineItem & { variant?: AdminProductVariant & { inventory_items?: AdminProductVariantInventoryItemLink[] } }).variant
 
   if (!variant) {
     return false
   }
 
   return (
-    (!!variant.inventory_items.length && variant.inventory_items.length > 1) ||
-    (variant.inventory_items.length === 1 &&
-      variant.inventory_items[0].required_quantity! > 1)
+    (!!variant.inventory_items?.length && variant.inventory_items.length > 1) ||
+    (variant.inventory_items?.length === 1 &&
+      (variant.inventory_items[0].required_quantity ?? 0) > 1)
   )
 }

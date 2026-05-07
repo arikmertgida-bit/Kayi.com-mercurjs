@@ -66,7 +66,7 @@ function ReturnInfoPopover({ orderReturn }: ReturnInfoPopoverProps) {
               {t(`orders.returns.returnRequested`)}
             </span>
             {" · "}
-            {getFullDate({ date: orderReturn.requested_at, includeTime: true })}
+            {(orderReturn as AdminReturn & { requested_at?: string }).requested_at && getFullDate({ date: (orderReturn as AdminReturn & { requested_at?: string }).requested_at!, includeTime: true })}
           </Text>
 
           <Text size="xsmall">

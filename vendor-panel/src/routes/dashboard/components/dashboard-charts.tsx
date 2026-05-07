@@ -25,6 +25,7 @@ import { useTranslation } from "react-i18next"
 import { addDays, differenceInDays, format, subDays } from "date-fns"
 import { Calendar } from "../../../components/common/calendar/calendar"
 import { useMessengerUnreads } from "../../../providers/messenger-provider/MessengerProvider"
+import { languages } from "../../../i18n/languages"
 
 const colorPicker = (line: string) => {
   switch (line) {
@@ -99,6 +100,8 @@ export const DashboardCharts = ({
   const { t } = useTranslation()
   const unreadMessages = useMessengerUnreads()
   const { count: followersCount } = useFollowers({ limit: 1 })
+  const { i18n } = useTranslation()
+  const dateLocale = languages.find((l) => l.code === i18n.language)?.date_locale
 
   const fromStr = searchParams.get("from") || format(addDays(new Date(), -7), "yyyy-MM-dd")
   const toStr = searchParams.get("to") || format(new Date(), "yyyy-MM-dd")
@@ -230,10 +233,10 @@ export const DashboardCharts = ({
                   {from ? (
                     to ? (
                       <>
-                        {format(from, "LLL dd, y")} - {format(to, "LLL dd, y")}
+                        {format(from, "PP", { locale: dateLocale })} - {format(to, "PP", { locale: dateLocale })}
                       </>
                     ) : (
-                      format(from, "LLL dd, y")
+                      format(from, "PP", { locale: dateLocale })
                     )
                   ) : (
                     <span>{t("dashboard.pickDate")}</span>
@@ -266,7 +269,7 @@ export const DashboardCharts = ({
                   <XAxis dataKey="date" />
                   <YAxis />
                   <CartesianGrid stroke="#333" vertical={false} />
-                  <Tooltip content={CustomTooltip} />
+                  <Tooltip content={<CustomTooltip />} />
                   {filters.map((item) => (
                     <Line
                       key={item}
@@ -349,6 +352,11 @@ const CustomTooltip = ({
     value: number
   }[]
 }) => {
+  const { t } = useTranslation()
+  const labels: Record<string, string> = {
+    orders: t("dashboard.orders"),
+    customers: t("dashboard.customers"),
+  }
   if (active && payload && payload.length) {
     return (
       <div className="bg-ui-bg-component p-4 rounded-lg border border-ui-border-base">
@@ -356,8 +364,8 @@ const CustomTooltip = ({
         <ul>
           {payload.map((item) => (
             <li key={item.dataKey} className="flex gap-2 items-center">
-              <span className="capitalize" style={{ color: item.stroke }}>
-                {item.name}:
+              <span style={{ color: item.stroke }}>
+                {labels[item.dataKey] ?? item.dataKey}:
               </span>
               <span>{item.value}</span>
             </li>

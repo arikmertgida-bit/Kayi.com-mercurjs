@@ -33,7 +33,7 @@ type ProductCreateVariantsSectionProps = {
 }
 
 const VariantColorImagePicker = ({
-  value,
+  value: _value,
   onChange,
   hasError,
 }: {
@@ -842,7 +842,7 @@ export const ProductCreateVariantsSection = ({
                 name="variants.0.sku"
                 render={({ field }) => (
                   <Form.Item>
-                    <Form.Label optional size="small">
+                    <Form.Label optional>
                       SKU
                     </Form.Label>
                     <Form.Control>
@@ -856,7 +856,7 @@ export const ProductCreateVariantsSection = ({
                 name="variants.0.barcode"
                 render={({ field }) => (
                   <Form.Item>
-                    <Form.Label optional size="small">
+                    <Form.Label optional>
                       Barkod
                     </Form.Label>
                     <Form.Control>
@@ -870,7 +870,7 @@ export const ProductCreateVariantsSection = ({
                 name="variants.0.initial_stock"
                 render={({ field }) => (
                   <Form.Item>
-                    <Form.Label size="small">
+                    <Form.Label>
                       {t("fields.totalStock", "Stok")}
                     </Form.Label>
                     <Form.Control>
@@ -892,7 +892,7 @@ export const ProductCreateVariantsSection = ({
                   name={`variants.0.prices.${col.key}` as any}
                   render={({ field }) => (
                     <Form.Item>
-                      <Form.Label size="small">
+                      <Form.Label>
                         {t("fields.price", "Satis Fiyati")} ({col.label})
                       </Form.Label>
                       <Form.Control>

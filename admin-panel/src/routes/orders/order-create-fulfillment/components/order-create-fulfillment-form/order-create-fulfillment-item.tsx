@@ -14,9 +14,9 @@ import { InformationCircleSolid } from "@medusajs/icons"
 
 type OrderEditItemProps = {
   item: HttpTypes.AdminOrderLineItem
-  currencyCode: string
+  currencyCode?: string
   locationId?: string
-  onItemRemove: (itemId: string) => void
+  onItemRemove?: (itemId: string) => void
   reservations: HttpTypes.AdminReservation[]
   form: UseFormReturn<zod.infer<typeof CreateFulfillmentSchema>>
   disabled: boolean
@@ -32,8 +32,8 @@ export function OrderCreateFulfillmentItem({
   const { t } = useTranslation()
 
   const { variant } = useProductVariant(
-    item.product_id,
-    item.variant_id,
+    item.product_id!,
+    item.variant_id ?? "",
     {
       fields: "*inventory,*inventory.location_levels,*inventory_items",
     },
@@ -45,13 +45,17 @@ export function OrderCreateFulfillmentItem({
   const { availableQuantity, inStockQuantity } = useMemo(() => {
     if (
       !variant?.inventory_items?.length ||
-      !variant?.inventory?.length ||
       !locationId
     ) {
       return {}
     }
 
-    const { inventory, inventory_items } = variant
+    const { inventory_items } = variant
+    const inventory = inventory_items.map((link) => link.inventory).filter(Boolean) as NonNullable<typeof inventory_items[0]["inventory"]>[]
+
+    if (!inventory.length) {
+      return {}
+    }
 
     const locationHasEveryInventoryItem = inventory.every((i) =>
       i.location_levels?.find((inv) => inv.location_id === locationId)
@@ -89,7 +93,7 @@ export function OrderCreateFulfillmentItem({
         }
       }
 
-      const availableQuantity = level.available_quantity / requiredQuantity
+      const availableQuantity = (level.available_quantity ?? 0) / requiredQuantity
       const stockedQuantity = level.stocked_quantity / requiredQuantity
 
       return {
@@ -213,8 +217,8 @@ export function OrderCreateFulfillmentItem({
 
                             field.onChange(val)
 
-                            if (!isNaN(val)) {
-                              if (val < minValue || val > maxValue) {
+                            if (!isNaN(val ?? 0)) {
+                              if ((val ?? 0) < minValue || (val ?? 0) > maxValue) {
                                 form.setError(`quantity.${item.id}`, {
                                   type: "manual",
                                   message: t(

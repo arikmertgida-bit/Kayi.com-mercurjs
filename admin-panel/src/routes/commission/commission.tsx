@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Button, Container, Drawer, Heading, Text } from "@medusajs/ui";
 
@@ -21,6 +22,7 @@ import UpsertDefaultCommissionRuleForm from "@routes/commission/components/upser
 const PAGE_SIZE = 50;
 
 export const Commission = () => {
+  const { t } = useTranslation();
   const [createRuleOpen, setCreateRuleOpen] = useState(false);
   const [upsertDefaultOpen, setUpsertDefaultOpen] = useState(false);
   const defaultRule = useDefaultCommissionRule();
@@ -55,9 +57,9 @@ export const Commission = () => {
       <Container className="divide-y p-0">
         <div className="flex items-center justify-between px-6 py-4">
           <div>
-            <Heading>Global Commission Settings</Heading>
+            <Heading>{t("commission.globalTitle")}</Heading>
             <Text className="text-ui-fg-subtle" size="small">
-              Manage global commission settings for your marketplace.
+              {t("commission.globalDescription")}
             </Text>
           </div>
 
@@ -71,11 +73,11 @@ export const Commission = () => {
               }}
               asChild
             >
-              <Button variant="secondary">Edit</Button>
+              <Button variant="secondary">{t("actions.edit")}</Button>
             </Drawer.Trigger>
             <Drawer.Content>
               <Drawer.Header>
-                <Drawer.Title>Edit default rule</Drawer.Title>
+                <Drawer.Title>{t("commission.editDefault")}</Drawer.Title>
               </Drawer.Header>
               <Drawer.Body>
                 <UpsertDefaultCommissionRuleForm
@@ -95,9 +97,9 @@ export const Commission = () => {
       <Container className="divide-y p-0">
         <div className="flex items-center justify-between px-6 py-4">
           <div>
-            <Heading>Commission Rules</Heading>
+            <Heading>{t("commission.rulesTitle")}</Heading>
             <Text className="text-ui-fg-subtle" size="small">
-              View, search, and manage existing commission rules.
+              {t("commission.rulesDescription")}
             </Text>
           </div>
           <Drawer
@@ -110,11 +112,11 @@ export const Commission = () => {
               }}
               asChild
             >
-              <Button variant="secondary">Create</Button>
+              <Button variant="secondary">{t("actions.create")}</Button>
             </Drawer.Trigger>
             <Drawer.Content>
               <Drawer.Header>
-                <Drawer.Title>Create Rule</Drawer.Title>
+                <Drawer.Title>{t("commission.createRule")}</Drawer.Title>
               </Drawer.Header>
               <Drawer.Body>
                 <CreateCommissionRuleForm
@@ -138,8 +140,8 @@ export const Commission = () => {
           pagination
           queryObject={raw}
           noRecords={{
-            title: "Commission rules",
-            message: "No records",
+            title: t("commission.rulesTitle"),
+            message: t("general.noRecordsMessage"),
           }}
         />
       </Container>

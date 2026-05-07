@@ -56,7 +56,11 @@
     "unsavedChangesDescription": "Az Ön által végzett változtatások nem lesznek mentve.",
     "includesTaxTooltip": "Az oszlopban szereplő árak adót tartalmaznak.",
     "excludesTaxTooltip": "Az oszlopban szereplő árak nem tartalmaznak adót.",
-    "noMoreData": "Nincs több adat"
+    "noMoreData": "Nincs több adat",
+    "noRecordsMessageFiltered": "There are no records to show matching the filters",
+    "loading": "Loading...",
+    "yes": "Yes",
+    "no": "No"
   },
   "json": {
     "header": "JSON",
@@ -539,18 +543,22 @@
     "fields": {
       "title": {
         "label": "Cím",
-        "hint": "Adjon rövid és egyértelmű címet a termékének.<0/>50-60 karakter az ajánlott hossz a keresőmotorok számára."
+        "hint": "Adjon rövid és egyértelmű címet a termékének.<0/>50-60 karakter az ajánlott hossz a keresőmotorok számára.",
+        "placeholder": "Winter jacket"
       },
       "subtitle": {
-        "label": "Alcím"
+        "label": "Alcím",
+        "placeholder": "Warm and cosy"
       },
       "handle": {
         "label": "Fogantyú",
-        "tooltip": "A fogantyú a termékre való hivatkozásra szolgál a kirakatban. Ha nincs megadva, a fogantyú a termék címéből generálódik."
+        "tooltip": "A fogantyú a termékre való hivatkozásra szolgál a kirakatban. Ha nincs megadva, a fogantyú a termék címéből generálódik.",
+        "placeholder": "winter-jacket"
       },
       "description": {
         "label": "Leírás",
-        "hint": "Adjon rövid és világos leírást a termékhez.<0/>120-160 karakter az ajánlott hosszúság a keresőmotorok számára."
+        "hint": "Adjon rövid és világos leírást a termékhez.<0/>120-160 karakter az ajánlott hosszúság a keresőmotorok számára.",
+        "placeholder": "A warm and cozy jacket"
       },
       "discountable": {
         "label": "Kedvezményezhető",
@@ -711,6 +719,18 @@
           "header": "Hiba történt a termék törlésekor"
         }
       }
+    },
+    "columns": {
+      "product_display": "Product",
+      "variants_count": "Variants",
+      "sales_channels_display": "Sales Channels",
+      "collection": "Collection",
+      "status": "Status",
+      "thumbnail": "Thumbnail",
+      "title": "Title",
+      "handle": "Handle",
+      "created_at": "Created",
+      "updated_at": "Updated"
     }
   },
   "collections": {
@@ -867,7 +887,8 @@
       "disablePrompt_other": "{{count}} helyszint letiltására készül. Ez a művelet nem vonható vissza.",
       "disabledToggleTooltip": "Nem lehet letiltani: a letiltás előtt törölje a bejövő és/vagy a lefoglalt mennyiséget.",
       "successToast": "Készletszintek sikeresen frissítve."
-    }
+    },
+    "levelDeleted": "Inventory level deleted successfully."
   },
   "giftCards": {
     "domain": "Ajándékkártyák",
@@ -1038,7 +1059,8 @@
       "itemSubtotal": "Tétel részösszeg",
       "shippingSubtotal": "Szállítás részösszeg",
       "discountSubtotal": "Kedvezmény részösszeg",
-      "taxTotal": "Adó összesen"
+      "taxTotal": "Adó összesen",
+      "totalAfterDiscount": "Total After Discount"
     },
     "transfer": {
       "title": "Rendelés átadása",
@@ -1079,7 +1101,8 @@
       "createRefundWrongQuantity": "A mennyiség egy 1 és {{number}} közötti szám lehet",
       "refundAmount": "{{ amount }} visszatérítése",
       "paymentLink": "Fizetési link másolása {{ amount }}",
-      "selectPaymentToRefund": "Válassza ki a visszatérítendő fizetést"
+      "selectPaymentToRefund": "Válassza ki a visszatérítendő fizetést",
+      "totalStoreCreditRefunds": "Total store credit refunds"
     },
     "edits": {
       "title": "Rendelés szerkesztése",
@@ -1275,11 +1298,15 @@
       "consistsOf": "{{num}}x készletelemből áll",
       "requires": "{{num}} szükséges variánsonként",
       "toast": {
-        "created": "Tételek sikeresen kiosztva"
+        "created": "Tételek sikeresen kiosztva",
+        "error": "Failed to allocate following items: {{items}}"
       },
       "error": {
         "quantityNotAllocated": "Vannak ki nem osztott tételek."
-      }
+      },
+      "noItemsToAllocate": "No items require allocation.",
+      "noItemsFound": "No items match your search.",
+      "noItemsFoundHint": "Try a different search term."
     },
     "shipment": {
       "title": "Teljesítés megjelölése szállítottként",
@@ -1442,6 +1469,31 @@
       "displayId": "Megjelenítési azonosító",
       "refundableAmount": "Visszatérítendő összeg",
       "returnableQuantity": "Visszaküldendő mennyiség"
+    },
+    "giftCardsStoreCreditLines": "Gift cards & credit lines",
+    "creditLines": {
+      "title": "Credit lines",
+      "total": "Sum of all credit lines",
+      "creditOrDebit": "Credit / Debit",
+      "createCreditLine": "Create credit line",
+      "createCreditLineSuccess": "Credit line created successfully",
+      "createCreditLineError": "Error creating credit line",
+      "createCreditLineDescription": "Create a credit line for amount {{amount}}",
+      "operation": "Operation",
+      "credit": "Credit",
+      "creditDescription": "Adds a positive sum to the order",
+      "debit": "Debit",
+      "debitDescription": "Subtracts a negative sum from the order"
+    },
+    "balanceSettlement": {
+      "title": "Balance settlement",
+      "settlementType": "Settlement type",
+      "settlementTypes": {
+        "paymentMethod": "Payment method",
+        "paymentMethodDescription": "Refund amount to the payment method",
+        "creditLine": "Store credit",
+        "creditLineDescription": "Refund amount as store credit"
+      }
     }
   },
   "draftOrders": {
@@ -1490,7 +1542,10 @@
   "stockLocations": {
     "domain": "Helyszínek és Szállítás",
     "list": {
-      "description": "Kezelje az áruház készlethelyszíneit és szállítási opcióit."
+      "description": "Kezelje az áruház készlethelyszíneit és szállítási opcióit.",
+      "noRecordsMessage": "No records",
+      "noRecordsMessageEmpty": "No locations found",
+      "noRecordsMessageFiltered": "No locations found matching the filters"
     },
     "create": {
       "header": "Készlethelyszín létrehozása",
@@ -1503,7 +1558,8 @@
       "successToast": "A(z) {{name}} helyszín sikeresen frissítve."
     },
     "delete": {
-      "confirmation": "A(z) {{name}} készlethelyszín törlésére készül. Ez a művelet nem vonható vissza."
+      "confirmation": "A(z) {{name}} készlethelyszín törlésére készül. Ez a művelet nem vonható vissza.",
+      "successToast": "Location \"{{name}}\" was successfully deleted."
     },
     "fulfillmentProviders": {
       "header": "Teljesítési Szolgáltatók",
@@ -1536,6 +1592,10 @@
       "shippingProfiles": {
         "label": "Szállítási Profilok",
         "description": "Csoportosítsa a termékeket szállítási követelmények szerint"
+      },
+      "shippingOptionTypes": {
+        "label": "Shipping Option Types",
+        "description": "Group shipping options by types"
       }
     },
     "salesChannels": {
@@ -1653,7 +1713,8 @@
         },
         "provider": "Teljesítési szolgáltató",
         "profile": "Szállítási profil",
-        "fulfillmentOption": "Teljesítési opció"
+        "fulfillmentOption": "Teljesítési opció",
+        "type": "Shipping option type"
       }
     },
     "serviceZones": {
@@ -1715,7 +1776,9 @@
       "hint": "Hozzon létre egy új adórégiót, hogy meghatározza az adókulcsokat egy adott ország számára.",
       "errors": {
         "rateIsRequired": "Adókulcs szükséges, amikor alapértelmezett adókulcsot hoz létre.",
-        "nameIsRequired": "Név szükséges, amikor alapértelmezett adókulcsot hoz létre."
+        "nameIsRequired": "Név szükséges, amikor alapértelmezett adókulcsot hoz létre.",
+        "missingProvider": "Provider is required when creating a tax region.",
+        "missingCountry": "Country is required when creating a tax region."
       },
       "successToast": "Az adórégió sikeresen létrehozva."
     },
@@ -1859,7 +1922,8 @@
           "productCollection": "Termékgyűjtemények",
           "productTag": "Termékcímkék",
           "productType": "Terméktípusok",
-          "customerGroup": "Vásárlói csoportok"
+          "customerGroup": "Vásárlói csoportok",
+          "shippingOption": "Shipping options"
         },
         "operators": {
           "in": "in",
@@ -1871,14 +1935,16 @@
           "productCollection": "Termékgyűjtemények keresése",
           "productTag": "Termékcímkék keresése",
           "productType": "Terméktípusok keresése",
-          "customerGroup": "Vásárlói csoportok keresése"
+          "customerGroup": "Vásárlói csoportok keresése",
+          "shippingOption": "Search for shipping options"
         },
         "tags": {
           "product": "Termék",
           "productCollection": "Termékgyűjtemény",
           "productTag": "Termékcímke",
           "productType": "Terméktípus",
-          "customerGroup": "Vásárlói csoport"
+          "customerGroup": "Vásárlói csoport",
+          "shippingOption": "Shipping option"
         },
         "modal": {
           "header": "Célok hozzáadása"
@@ -1934,7 +2000,16 @@
       "noDefaultRate": {
         "label": "Nincs alapértelmezett kulcs",
         "tooltip": "Ez az adórégió nem rendelkezik alapértelmezett adókulccsal. Ha van standard kulcs, például egy ország ÁFA-ja, kérjük, adja hozzá ehhez a régióhoz."
-      }
+      },
+      "taxProvider": "Tax provider"
+    },
+    "edit": {
+      "header": "Edit Tax Region",
+      "hint": "Edit the tax region details.",
+      "successToast": "The tax region was successfully updated."
+    },
+    "provider": {
+      "header": "Tax Provider"
     }
   },
   "promotions": {
@@ -1964,15 +2039,28 @@
           "title": "Ki használhatja ezt a kódot?",
           "description": "Melyik vásárló használhatja a promóciós kódot? A promóciós kódot minden vásárló használhatja, ha érintetlenül hagyja."
         },
-        "target-rules": {
+        "target_rules": {
           "title": "Mely tételekre vonatkozik a promóció?",
-          "description": "A promóció azokra a tételekre vonatkozik, amelyek megfelelnek az alábbi feltételeknek."
+          "description": "A promóció azokra a tételekre vonatkozik, amelyek megfelelnek az alábbi feltételeknek.",
+          "order": {
+            "title": "What items will the promotion be applied to?",
+            "description": "The promotion will be applied to items that match the following conditions."
+          },
+          "shipping_methods": {
+            "title": "What shipping methods will the promotion be applied to?",
+            "description": "The promotion will be applied to shipping methods that match the following conditions."
+          },
+          "items": {
+            "title": "What items will the promotion be applied to?",
+            "description": "The promotion will be applied to items that match the following conditions."
+          }
         },
-        "buy-rules": {
+        "buy_rules": {
           "title": "Mi szükséges a kosárban a promóció feloldásához?",
           "description": "Ha ezek a feltételek megfelelnek, engedélyezzük a promóciót a cél tételeken."
         }
-      }
+      },
+      "taxInclusive": "Tax Inclusive"
     },
     "tooltips": {
       "campaignType": "A pénznem kódját ki kell választani a promócióban a költségvetési limit beállításához."
@@ -1990,10 +2078,10 @@
       "rules": {
         "title": "Használati feltételek szerkesztése"
       },
-      "target-rules": {
+      "target_rules": {
         "title": "Tétel feltételek szerkesztése"
       },
-      "buy-rules": {
+      "buy_rules": {
         "title": "Vásárlási szabályok szerkesztése"
       }
     },
@@ -2005,7 +2093,10 @@
       },
       "actions": {
         "goToCampaign": "Ugrás a kampányhoz"
-      }
+      },
+      "notPartOf": "Not part of a campaign",
+      "addToExisting": "Add this promotion to an existing campaign",
+      "addToCampaign": "Add to Campaign"
     },
     "campaign_currency": {
       "tooltip": "Ez a promóció pénzneme. Módosítsa a Részletek fülön."
@@ -2087,7 +2178,8 @@
         "description": "A kód, amelyet a vásárlók megadnak a fizetés során."
       },
       "value": {
-        "title": "Promóció Értéke"
+        "title": "Promóció Értéke",
+        "invalid": "Invalid promotion value"
       },
       "value_type": {
         "fixed": {
@@ -2098,6 +2190,10 @@
           "title": "Promóció Értéke",
           "description": "A kedvezmény százaléka. pl. 8%"
         }
+      },
+      "taxInclusive": {
+        "title": "Does promotion include taxes?",
+        "description": "Enable this field to apply the promotion after taxes"
       }
     },
     "deleteWarning": "A(z) {{code}} promóció törlésére készül. Ez a művelet nem vonható vissza.",
@@ -2107,6 +2203,32 @@
       "add": "Feltétel hozzáadása",
       "list": {
         "noRecordsMessage": "Adjon hozzá egy feltételt, hogy korlátozza, mely tételekre vonatkozik a promóció."
+      }
+    },
+    "templates": {
+      "amountOffProducts": {
+        "title": "Amount off products",
+        "description": "Discount specific products or collection of products"
+      },
+      "amountOffOrder": {
+        "title": "Amount off order",
+        "description": "Discounts the total order amount"
+      },
+      "percentageOffProduct": {
+        "title": "Percentage off product",
+        "description": "Discounts a percentage off selected products"
+      },
+      "percentageOffOrder": {
+        "title": "Percentage off order",
+        "description": "Discounts a percentage of the total order amount"
+      },
+      "buyXGetY": {
+        "title": "Buy X Get Y",
+        "description": "Buy X product(s), get Y product(s)"
+      },
+      "freeShipping": {
+        "title": "Free shipping",
+        "description": "Provide free shipping to customers"
       }
     }
   },
@@ -2153,7 +2275,8 @@
       "budget_limit": "Költségvetési limit",
       "campaign_id": {
         "hint": "Csak azok a kampányok jelennek meg ebben a listában, amelyek pénznem kódja megegyezik a promócióval."
-      }
+      },
+      "totalUsedByAttribute": "Total used"
     },
     "budget": {
       "create": {
@@ -2165,7 +2288,10 @@
         "type": "Típus",
         "currency": "Pénznem",
         "limit": "Limit",
-        "used": "Felhasználva"
+        "used": "Felhasználva",
+        "budgetAttribute": "Limit usage per",
+        "budgetAttributeTooltip": "Define how many times the promotion can be used by a specific customer or email.",
+        "totalUsedByAttribute": "Budget limit per: {{attribute}}"
       },
       "type": {
         "spend": {
@@ -2175,6 +2301,10 @@
         "usage": {
           "title": "Használat",
           "description": "Állítson be egy limitet arra, hogy hányszor használható a promóció."
+        },
+        "useByAttribute": {
+          "title": "Usage by attribute (customer id, email, etc.)",
+          "description": "Set a limit on how many times the promotion can be used by a specific attribute value."
         }
       },
       "edit": {
@@ -2654,7 +2784,10 @@
         "placeholder": "wrong_size",
         "tooltip": "Az értéknek egyedi azonosítónak kell lennie a visszaküldési okhoz."
       },
-      "label": { "label": "Címke", "placeholder": "Rossz méret" },
+      "label": {
+        "label": "Címke",
+        "placeholder": "Rossz méret"
+      },
       "description": {
         "label": "Leírás",
         "placeholder": "A vásárló rossz méretet kapott"
@@ -2826,7 +2959,11 @@
     "from": "Tól",
     "to": "Ig",
     "beaware": "Legyen tudatában",
-    "loading": "Betöltés"
+    "loading": "Betöltés",
+    "selectValue": "Select Value",
+    "selectValues": "Select Values",
+    "selectOperator": "Select Operator",
+    "selectType": "Select type"
   },
   "fields": {
     "amount": "Összeg",
@@ -2984,7 +3121,21 @@
     "startDate": "Kezdési dátum",
     "endDate": "Befejezési dátum",
     "draft": "Piszkozat",
-    "values": "Értékek"
+    "values": "Értékek",
+    "reference": "Reference",
+    "reference_id": "Reference ID",
+    "enabledInStore": "Enabled in store",
+    "isReturn": "Is return",
+    "promotionCode": "Promotion code",
+    "serviceZone": "Service Zone",
+    "creditTotal": "Credit Lines Total",
+    "yes": "Yes",
+    "no": "No",
+    "filterable": "Filterable",
+    "global": "Global",
+    "required": "Required",
+    "productCategories": "Product Categories",
+    "options": "Options"
   },
   "dateTime": {
     "years_one": "Év",
@@ -3000,6 +3151,477 @@
     "minutes_one": "Perc",
     "minutes_other": "Percek",
     "seconds_one": "Másodperc",
-    "seconds_other": "Másodpercek"
+    "seconds_other": "Másodpercek",
+    "createdAt": "Created At",
+    "updatedAt": "Updated At"
+  },
+  "refundReasons": {
+    "domain": "Refund Reasons",
+    "subtitle": "Manage reasons for issuing refunds.",
+    "calloutHint": "Manage the reasons to categorize refunds.",
+    "editReason": "Edit Refund Reason",
+    "create": {
+      "header": "Add Refund Reason",
+      "subtitle": "Specify the most common reasons for refunds.",
+      "hint": "Create a new refund reason to categorize refunds.",
+      "successToast": "Refund reason {{label}} was successfully created."
+    },
+    "edit": {
+      "header": "Edit Refund Reason",
+      "subtitle": "Edit the value of the refund reason.",
+      "successToast": "Refund reason {{label}} was successfully updated."
+    },
+    "delete": {
+      "confirmation": "You are about to delete the refund reason \"{{label}}\". This action cannot be undone.",
+      "successToast": "Refund reason was successfully deleted."
+    },
+    "fields": {
+      "label": {
+        "label": "Label",
+        "placeholder": "Gesture of goodwill"
+      },
+      "code": {
+        "label": "Code",
+        "placeholder": "gesture_of_goodwill"
+      },
+      "description": {
+        "label": "Description",
+        "placeholder": "Customer had a bad shopping experience"
+      }
+    }
+  },
+  "shippingOptionTypes": {
+    "domain": "Shipping Option Types",
+    "subtitle": "Organize your shipping options into types.",
+    "create": {
+      "header": "Create Shipping Option Type",
+      "hint": "Create a new shipping option type to categorize your shipping options.",
+      "successToast": "Shipping option type {{label}} was successfully created."
+    },
+    "edit": {
+      "header": "Edit Shipping Option Type",
+      "successToast": "Shipping option type {{label}} was successfully updated."
+    },
+    "delete": {
+      "confirmation": "You are about to delete the shipping option type \"{{label}}\". This action cannot be undone.",
+      "successToast": "Shipping option type \"{{label}}\" was successfully deleted."
+    },
+    "fields": {
+      "label": "Label",
+      "code": "Code",
+      "description": "Description"
+    }
+  },
+  "views": {
+    "save": "Save",
+    "saveAsNew": "Save as new view",
+    "updateDefaultForEveryone": "Update default for everyone",
+    "updateViewName": "Update view",
+    "prompts": {
+      "updateDefault": {
+        "title": "Update default view",
+        "description": "This will update the default view for all users. Are you sure?",
+        "confirmText": "Update for everyone",
+        "cancelText": "Cancel"
+      },
+      "updateView": {
+        "title": "Update view",
+        "description": "Are you sure you want to update \"{{name}}\"?",
+        "confirmText": "Update",
+        "cancelText": "Cancel"
+      }
+    },
+    "systemDefault": "System Default",
+    "personalViews": "Personal Views",
+    "saveCurrentView": "Save current view",
+    "editView": "Edit view",
+    "deleteView": "Delete view",
+    "deleteViewDescription": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+    "resetSystemDefault": "Reset system default",
+    "resetSystemDefaultDescription": "This will delete the saved system default and revert to the original code-level defaults. All users will be affected. Are you sure?",
+    "resetToCodeDefaults": "Reset to code defaults",
+    "viewName": "View Name",
+    "enterViewName": "Enter view name",
+    "editViewName": "Edit View Name",
+    "saveAsNewView": "Save as New View",
+    "changeViewName": "Change the name of your saved view",
+    "saveConfiguration": "Save your current configuration as a new view",
+    "nameRequired": "Name is required",
+    "nameNotEmpty": "Name cannot be empty",
+    "saveAsSystemDefault": "Save as system default",
+    "saveAsSystemDefaultDesc": "This will save the current configuration as the system default. All users will see this configuration by default unless they have their own personal views. Are you sure?",
+    "updateExistingView": "Update existing view",
+    "updateExistingViewDesc": "Update \"{{name}}\" with the current configuration?",
+    "update": "Update",
+    "saveAsDefaultBtn": "Save as default",
+    "default": "Default",
+    "updateDefaultView": "Update default view",
+    "updateDefaultViewDesc": "This will update the default view for all users. Are you sure?",
+    "updateConfirmText": "Update for everyone"
+  },
+  "attributes": {
+    "domain": "Product Attributes",
+    "create": {
+      "successToast": "Attribute was successfully created.",
+      "details": "Details",
+      "type": "Type",
+      "enterValue": "Enter value"
+    },
+    "detail": {
+      "notFound": "Attribute not found",
+      "possibleValues": "Possible Values"
+    },
+    "possibleValues": {
+      "search": "Search possible values..."
+    }
+  },
+  "requests": {
+    "domain": "Requests",
+    "seller": "Seller",
+    "product": "Product",
+    "review-remove": "Review Remove",
+    "return": "Order Return",
+    "product-collection": "Product Collection",
+    "product-category": "Product Category",
+    "product-tag": "Product Tag",
+    "product-type": "Product Type",
+    "product-update": "Product Update",
+    "detail": {
+      "accept": "Accept",
+      "reject": "Reject",
+      "variants": "Variants",
+      "options": "Options",
+      "organization": "Organization",
+      "attributes": "Attributes",
+      "requestInformation": "Request information",
+      "submittedOn": "Submitted on {{date}}",
+      "reviewedOn": "Reviewed on {{date}}",
+      "reviewerNote": "Reviewer note: {{note}}",
+      "submittedBy": "Submitted by"
+    },
+    "loading": "Loading...",
+    "columns": {
+      "date": "Date",
+      "status": "Status",
+      "actions": "Actions",
+      "submittedBy": "Submitted By",
+      "reason": "Reason",
+      "orderId": "Order ID",
+      "customer": "Customer",
+      "seller": "Seller",
+      "escalatedDate": "Escalated Date",
+      "title": "Title",
+      "name": "Name",
+      "product": "Product",
+      "variants": "Variants",
+      "value": "Value",
+      "handle": "Handle"
+    },
+    "sellerList": {
+      "heading": "Seller creation requests",
+      "detail": {
+        "title": "Review seller request",
+        "sellerName": "Seller name",
+        "member": "Member"
+      }
+    },
+    "reviewRemoveList": {
+      "heading": "Remove review requests",
+      "detail": {
+        "title": "Remove review request",
+        "reviewNote": "Review note",
+        "reviewRating": "Review rating",
+        "sellerResponse": "Seller response"
+      }
+    },
+    "returnList": {
+      "heading": "Order return requests",
+      "detail": {
+        "title": "Order return request",
+        "returnReason": "Return request reason",
+        "vendorResponse": "Vendor response",
+        "items": "Items",
+        "escalatedOn": "Escalated on {{date}}"
+      }
+    },
+    "productUpdateList": {
+      "heading": "Product update requests"
+    },
+    "productTypeList": {
+      "heading": "Product type requests",
+      "detail": {
+        "title": "Product type request",
+        "productTypeValue": "Product type value"
+      }
+    },
+    "productTagList": {
+      "heading": "Product tag requests",
+      "detail": {
+        "title": "Product tag request",
+        "productTagValue": "Product tag value"
+      }
+    },
+    "productList": {
+      "heading": "Product requests",
+      "variantCount": "{{count}} variant(s)",
+      "detail": {
+        "title": "Product request",
+        "productTitle": "Product title",
+        "seeFullProduct": "See full product"
+      }
+    },
+    "productCollectionList": {
+      "heading": "Product collection requests",
+      "detail": {
+        "title": "Product collection request",
+        "collectionTitle": "Collection title"
+      }
+    },
+    "productCategoryList": {
+      "heading": "Product category requests",
+      "detail": {
+        "title": "Product category request",
+        "categoryName": "Category name"
+      }
+    }
+  },
+  "sellers": {
+    "domain": "Sellers",
+    "fields": {
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "description": "Description",
+      "address": "Address",
+      "address_line": "Address Line",
+      "postal_code": "Postal Code",
+      "city": "City",
+      "country_code": "Country Code",
+      "tax_id": "Tax ID"
+    },
+    "edit": {
+      "header": "Edit Seller",
+      "successToast": "Seller {{name}} was successfully updated."
+    },
+    "stockLocations": {
+      "heading": "Stock Locations",
+      "assign": "Assign",
+      "removeTitle": "Remove stock location",
+      "removeDesc": "Remove \"{{name}}\" from this seller? The seller will no longer be able to manage stock at this location.",
+      "removeSuccess": "Stock location removed",
+      "removeError": "Failed to remove stock location",
+      "assignSuccess": "Stock location assigned",
+      "assignError": "Failed to assign stock location"
+    },
+    "customerGroups": {
+      "deleteDesc": "You are about to delete the customer group {{name}}. This action cannot be undone.",
+      "deleteSuccess": "Customer group deleted successfully",
+      "deleteSuccessDesc": "{{name}} deleted successfully",
+      "deleteError": "Error deleting customer group",
+      "deleteErrorDesc": "Please try again later"
+    },
+    "invite": {
+      "action": "Invite",
+      "title": "Invite Seller",
+      "description": "Invite a new seller to your store",
+      "success": "Invited!",
+      "error": "Error!"
+    },
+    "activate": "Activate account",
+    "suspend": "Suspend account",
+    "activateConfirm": "Are you sure you want to activate this account?",
+    "suspendConfirm": "Are you sure you want to suspend this account?"
+  },
+  "messages": {
+    "domain": "Messages",
+    "delete": "Delete for me",
+    "deleteForEveryone": "Delete for everyone",
+    "close": "Close",
+    "connectionLost": "Connection lost. Reconnecting...",
+    "imageUploadFailed": "Image upload failed"
+  },
+  "messenger": {
+    "searchConversations": "Search conversations...",
+    "noConversations": "No conversations yet",
+    "startConversation": "Start a conversation",
+    "selectConversation": "Select a conversation",
+    "startMessaging": "Choose a conversation from the left to start messaging",
+    "typeMessage": "Type a message...",
+    "seen": "Seen",
+    "image": "Image",
+    "support": "Support",
+    "direct": "Direct",
+    "unknown": "Unknown",
+    "supportTeam": "Support Team"
+  },
+  "configuration": {
+    "domain": "Product Catalog Settings",
+    "header": "Product Catalog Settings",
+    "subtitle": "Manage global product catalog configuration settings",
+    "createRulesTitle": "Create Rules",
+    "ruleType": "Rule type",
+    "ruleTypeColumn": "Rule type",
+    "enabledColumn": "Enabled",
+    "isRuleEnabled": "Is rule enabled",
+    "updated": "Updated!",
+    "error": "Error!",
+    "tooltip": {
+      "global_product_catalog": "Indicates whether sellers can only add inventory to admin-managed global products",
+      "product_request_enabled": "Allow sellers to propose new products for inclusion in the catalog",
+      "require_product_approval": "Indicates whether seller-added products require admin approval before becoming ready to list",
+      "product_import_enabled": "Allow sellers to import products via csv file"
+    }
+  },
+  "meilisearch": {
+    "domain": "Meilisearch",
+    "checkStatus": "Check Meilisearch status",
+    "triggerSync": "Trigger Synchronization",
+    "syncSuccess": "Synchronization triggered!",
+    "host": "Host",
+    "productIndex": "Product Index",
+    "exists": "Exists",
+    "doesNotExist": "Doesn't exist",
+    "error": "Error!"
+  },
+  "commission": {
+    "domain": "Commission Settings",
+    "deleted": "Deleted!",
+    "updated": "Updated!",
+    "created": "Created!",
+    "error": "Error!",
+    "disable": "Disable",
+    "enable": "Enable",
+    "delete": "Delete",
+    "globalTitle": "Global Commission Settings",
+    "globalDescription": "Manage global commission settings for your marketplace.",
+    "rulesTitle": "Commission Rules",
+    "rulesDescription": "View, search, and manage existing commission rules.",
+    "createRule": "Create Rule",
+    "editDefault": "Edit default rule",
+    "defaultCommission": "Default commission",
+    "minCommission": "Minimum commission per order",
+    "maxCommission": "Maximum commission per order",
+    "includingTax": "Commission charged including tax",
+    "ruleName": "Rule Name",
+    "ruleType": "Rule Type",
+    "refTypeSeller": "Seller",
+    "refTypeProductType": "Product type",
+    "refTypeProductCategory": "Product category",
+    "refTypeSellerProductType": "Seller + Product type",
+    "refTypeSellerProductCategory": "Seller + Product category",
+    "attribute": "Attribute",
+    "feeType": "Fee type",
+    "flatFee": "Flat fee",
+    "feeValue": "Fee value",
+    "minValue": "Minimum commission value",
+    "maxValue": "Maximum commission value"
+  },
+  "commissionLines": {
+    "domain": "Commission Lines",
+    "columns": {
+      "order": "Order"
+    },
+    "detail": {
+      "title": "Commission line details",
+      "sellerName": "Seller name",
+      "viewSeller": "View Seller",
+      "orderNumber": "Order number",
+      "viewOrder": "View Order",
+      "calculatedValue": "Calculated commission value",
+      "rateDetails": "Rate details",
+      "ruleNameValue": "Rule name: {{name}}",
+      "referenceValue": "Reference: {{ref}}",
+      "typeValue": "Type: {{type}}",
+      "rateValuePct": "Rate value: {{value}}%",
+      "includeTaxValue": "Include tax: {{value}}",
+      "ruleDeletedAt": "Rule was deleted at {{date}}!"
+    }
+  },
+  "reportedImages": {
+    "domain": "Reported Images",
+    "subtitle": "Review flagged images and decide to remove or publish them.",
+    "list": {
+      "noRecordsMessage": "No reported images found."
+    },
+    "status": {
+      "all": "All",
+      "pending": "Pending",
+      "resolved": "Resolved"
+    },
+    "columns": {
+      "image": "Image",
+      "reportedBy": "Reported By",
+      "reason": "Reason",
+      "date": "Date",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "actions": {
+      "removeImage": "Remove Image",
+      "publishImage": "Publish Image"
+    },
+    "remove": {
+      "title": "Remove Image",
+      "description": "This will permanently hide the image from all users. Continue?",
+      "success": "Image removed successfully."
+    },
+    "publish": {
+      "title": "Publish Image",
+      "description": "This will make the image visible to all users again. Continue?",
+      "success": "Image published successfully."
+    },
+    "errors": {
+      "actionFailed": "Something went wrong. Please try again."
+    }
+  },
+  "productReports": {
+    "domain": "Product Reports",
+    "subtitle": "Review flagged products and resolve or dismiss reports.",
+    "list": {
+      "noRecordsMessage": "No product reports found."
+    },
+    "status": {
+      "all": "All",
+      "pending": "Pending",
+      "resolved": "Resolved",
+      "dismissed": "Dismissed"
+    },
+    "columns": {
+      "product": "Product",
+      "seller": "Seller",
+      "reporter": "Reporter",
+      "reason": "Reason",
+      "comment": "Comment",
+      "date": "Date",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "reasons": {
+      "inaccurate_product_details": "Inaccurate Product Details",
+      "pricing_irregularities": "Pricing Irregularities",
+      "prohibited_item": "Prohibited Item",
+      "counterfeit_trademark": "Counterfeit / Trademark Violation",
+      "incorrect_categorization": "Incorrect Categorization",
+      "inappropriate_media": "Inappropriate Media",
+      "dmca_violation": "DMCA / Copyright Violation",
+      "other": "Other"
+    },
+    "actions": {
+      "resolve": "Mark as Attended",
+      "delete": "Delete",
+      "notificationSent": "Notification sent to user.",
+      "reportDeleted": "Report deleted."
+    },
+    "errors": {
+      "actionFailed": "An error occurred, please try again."
+    }
+  },
+  "team": {
+    "domain": "Team",
+    "subtitle": "Manage your team members and their roles."
+  },
+  "dashboard": {
+    "analyticsTitle": "Analytics",
+    "analyticsSubtitle": "See your store's progress"
   }
 }

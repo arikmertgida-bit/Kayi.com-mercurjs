@@ -2,9 +2,11 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { PencilSquare } from "@medusajs/icons"
 import {
   AdminClaim,
+  AdminInventoryLevel,
   AdminOrder,
   AdminOrderPreview,
-  InventoryLevelDTO,
+  AdminReturn,
+  HttpTypes,
 } from "@medusajs/types"
 import {
   Alert,
@@ -37,7 +39,6 @@ import { AddClaimItemsTable } from "../add-claim-items-table"
 import { ClaimInboundItem } from "./claim-inbound-item.tsx"
 import { ClaimCreateSchema, CreateClaimSchemaType } from "./schema"
 
-import { AdminReturn, HttpTypes } from "@medusajs/types"
 import { KeyboundForm } from "../../../../../components/utilities/keybound-form/keybound-form.tsx"
 import {
   useAddClaimInboundItems,
@@ -99,7 +100,7 @@ export const ClaimCreateForm = ({
     })
 
   const [inventoryMap, setInventoryMap] = useState<
-    Record<string, InventoryLevelDTO[]>
+    Record<string, AdminInventoryLevel[]>
   >({})
 
   /**
@@ -209,7 +210,7 @@ export const ClaimCreateForm = ({
 
           return {
             item_id: i.id,
-            variant_id: i.variant_id,
+            variant_id: i.variant_id ?? undefined,
             quantity: i.detail.return_requested_quantity,
             note: inboundAction?.internal_note,
             reason_id: inboundAction?.details?.reason_id as string | undefined,
@@ -217,7 +218,7 @@ export const ClaimCreateForm = ({
         }),
         outbound_items: outboundPreviewItems.map((i) => ({
           item_id: i.id,
-          variant_id: i.variant_id,
+          variant_id: i.variant_id ?? undefined,
           quantity: i.detail.quantity,
         })),
         inbound_option_id: inboundShippingMethod
@@ -506,7 +507,7 @@ export const ClaimCreateForm = ({
           return true
         }
 
-        return inventoryMap[item.variant_id]?.find(
+        return inventoryMap[item.variant_id ?? ""]?.find(
           (l) => l.location_id === locationId
         )
       })
@@ -517,15 +518,18 @@ export const ClaimCreateForm = ({
 
   useEffect(() => {
     const getInventoryMap = async () => {
-      const ret: Record<string, InventoryLevelDTO[]> = {}
+      const ret: Record<string, AdminInventoryLevel[]> = {}
 
       if (!inboundItems.length) {
         return ret
       }
 
       const variantIds = inboundItems
-        .map((item) => item?.variant_id)
-        .filter(Boolean)
+        .map((item) => {
+          const orderItem = order.items?.find((oi) => oi.id === item.item_id)
+          return orderItem?.variant_id
+        })
+        .filter((id): id is string => !!id)
 
       const variants = (
         await sdk.admin.productVariant.list({
@@ -536,7 +540,7 @@ export const ClaimCreateForm = ({
 
       variants.forEach((variant) => {
         // TODO: fix this for inventory kits
-        ret[variant.id] = variant.inventory?.[0]?.location_levels || []
+        ret[variant.id] = (variant.inventory_items?.[0]?.inventory?.location_levels || []) as AdminInventoryLevel[]
       })
 
       return ret
@@ -825,7 +829,7 @@ export const ClaimCreateForm = ({
                       const action = item.actions?.find(
                         (act) => act.action === "RETURN_ITEM"
                       )
-                      acc = acc + (action?.amount || 0)
+                      acc = acc + ((action as unknown as { amount?: number })?.amount || 0)
 
                       return acc
                     }, 0) * -1,
@@ -845,7 +849,7 @@ export const ClaimCreateForm = ({
                       const action = item.actions?.find(
                         (act) => act.action === "ITEM_ADD"
                       )
-                      acc = acc + (action?.amount || 0)
+                      acc = acc + ((action as unknown as { amount?: number })?.amount || 0)
 
                       return acc
                     }, 0),
@@ -899,7 +903,7 @@ export const ClaimCreateForm = ({
                             {
                               actionId,
                               custom_amount: customPrice,
-                            },
+                            } as HttpTypes.AdminClaimUpdateInboundShipping & { actionId: string },
                             {
                               onError: (error) => {
                                 toast.error(error.message)
@@ -914,7 +918,7 @@ export const ClaimCreateForm = ({
                           .symbol_native
                       }
                       code={order.currency_code}
-                      onValueChange={(value, _name, values) => {
+                      onValueChange={(_value, _name, values) => {
                         setCustomInboundShippingAmount({
                           value: values?.value ?? "",
                           float: values?.float ?? null,
@@ -972,7 +976,7 @@ export const ClaimCreateForm = ({
                             {
                               actionId,
                               custom_amount: customPrice,
-                            },
+                            } as HttpTypes.AdminClaimUpdateOutboundShipping & { actionId: string },
                             {
                               onError: (error) => {
                                 toast.error(error.message)
@@ -987,7 +991,7 @@ export const ClaimCreateForm = ({
                           .symbol_native
                       }
                       code={order.currency_code}
-                      onValueChange={(value, _name, values) => {
+                      onValueChange={(_value2, _name2, values) => {
                         setCustomOutboundShippingAmount({
                           value: values?.value ?? "",
                           float: values?.float ?? null,

@@ -44,23 +44,23 @@ export const PricingEdit = ({
       return {}
     }
 
-    return regions.reduce((acc, reg) => {
+    return regions.reduce((acc: Record<string, string>, reg) => {
       acc[reg.id] = reg.currency_code
       return acc
-    }, {})
+    }, {} as Record<string, string>)
   }, [regions])
 
-  const variants = variantId
+  const variants = (variantId
     ? product.variants?.filter((v) => v.id === variantId)
-    : product.variants
+    : product.variants) ?? []
 
   const form = useForm<UpdateVariantPricesSchemaType>({
     defaultValues: {
       variants: variants?.map((variant: any) => ({
         title: variant.title,
         prices: variant.prices.reduce((acc: any, price: any) => {
-          if (price.rules?.region_id) {
-            acc[price.rules.region_id] = price.amount
+          if ((price as HttpTypes.AdminPrice & { rules?: Record<string, string> }).rules?.region_id) {
+            acc[(price as HttpTypes.AdminPrice & { rules?: Record<string, string> }).rules!.region_id] = price.amount
           } else {
             acc[price.currency_code] = price.amount
           }
@@ -91,13 +91,13 @@ export const PricingEdit = ({
 
           if (regionId) {
             existingId = variants?.[ind]?.prices?.find(
-              (p) => p.rules["region_id"] === regionId
+              (p) => (p as HttpTypes.AdminPrice & { rules?: Record<string, string> }).rules?.["region_id"] === regionId
             )?.id
           } else {
             existingId = variants?.[ind]?.prices?.find(
               (p) =>
                 p.currency_code === currencyCode &&
-                Object.keys(p.rules ?? {}).length === 0
+                Object.keys((p as HttpTypes.AdminPrice & { rules?: Record<string, unknown> }).rules ?? {}).length === 0
             )?.id
           }
 

@@ -731,7 +731,7 @@ export function getRouteMap({
               path: "/reported-images",
               errorElement: <ErrorBoundary />,
               handle: {
-                breadcrumb: () => "Reported Images",
+                breadcrumb: () => t("reportedImages.domain"),
               },
               lazy: () =>
                 import("../../routes/reported-images/reported-image-list"),
@@ -740,7 +740,7 @@ export function getRouteMap({
               path: "/product-reports",
               errorElement: <ErrorBoundary />,
               handle: {
-                breadcrumb: () => "Product Reports",
+                breadcrumb: () => t("productReports.domain"),
               },
               lazy: () =>
                 import("../../routes/product-reports/product-report-list"),

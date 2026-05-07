@@ -302,7 +302,7 @@ export const VariantStockDistributionModal = ({
             isLoading={isSaving}
             disabled={isLevelsLoading || rows.length === 0}
           >
-            {isSaved ? t("actions.saved") : t("actions.save")}
+            {isSaved ? t("actions.save") : t("actions.save")}
           </Button>
         </div>
       </div>

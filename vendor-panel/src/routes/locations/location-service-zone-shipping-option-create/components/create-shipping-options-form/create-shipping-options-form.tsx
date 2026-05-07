@@ -133,7 +133,7 @@ export function CreateShippingOptionsForm({
         type: {
           // TODO: FETCH TYPES
           label: "Type label",
-          description: "Type description",
+          description: t("locations.shippingOptions.typeDescription"),
           code: "type-code",
         },
       },

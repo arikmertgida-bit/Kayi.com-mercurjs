@@ -189,7 +189,7 @@ const Payment = ({
   const showCapture =
     payment.captured_at === null && payment.canceled_at === null
 
-  const totalRefunded = payment.refunds.reduce(
+  const totalRefunded = (payment.refunds ?? []).reduce(
     (acc, next) => next.amount + acc,
     0
   )
@@ -208,7 +208,7 @@ const Payment = ({
           </Text>
           <Text size="small" leading="compact">
             {format(
-              new Date(payment.created_at as string),
+              new Date(payment.created_at as unknown as string),
               "dd MMM, yyyy, HH:mm:ss"
             )}
           </Text>
@@ -325,7 +325,7 @@ const CreditLine = ({
           </Text>
           <Text size="small" leading="compact">
             {format(
-              new Date(creditLine.created_at as string),
+              new Date(creditLine.created_at as unknown as string),
               "dd MMM, yyyy, HH:mm:ss"
             )}
           </Text>
@@ -361,7 +361,7 @@ const PaymentBreakdown = ({
   /**
    * Refunds that are not associated with a payment.
    */
-  const orderRefunds = refunds.filter((refund) => refund.payment_id === null)
+  const orderRefunds = refunds.filter((refund) => !refund.payment)
   const creditLines = order.credit_lines ?? []
   const creditLineRefunds = creditLines.filter(
     (creditLine) => (creditLine.amount as number) < 0
@@ -402,7 +402,7 @@ const PaymentBreakdown = ({
                 order={order}
                 payment={event}
                 refunds={refunds.filter(
-                  (refund) => refund.payment_id === event.id
+                  (refund) => refund.payment?.id === event.id
                 )}
                 currencyCode={currencyCode}
               />

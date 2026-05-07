@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import { PlaceholderCell } from "../../common/placeholder-cell"
 
 type CustomerCellProps = {
@@ -17,9 +18,10 @@ export const CustomerCell = ({ customer }: CustomerCellProps) => {
 }
 
 export const CustomerHeader = () => {
+  const { t } = useTranslation()
   return (
     <div className="flex h-full w-full items-center">
-      <span className="truncate">Customer</span>
+      <span className="truncate">{t("reviews.detail.customer.header")}</span>
     </div>
   )
 }

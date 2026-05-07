@@ -25,7 +25,7 @@ export const StockCell = ({ variant }: StockCellProps) => {
     { enabled: !!inventoryItemId && managesInventory && !isInventoryKit }
   )
 
-  const { stock_locations, isPending: isLocationsLoading } = useStockLocations(
+  const { stock_locations } = useStockLocations(
     undefined,
     { enabled: !!inventoryItemId && managesInventory && !isInventoryKit }
   )

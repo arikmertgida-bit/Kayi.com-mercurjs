@@ -30,4 +30,4 @@ export interface PromotionRuleFormData {
   field_type?: string
 }
 
-export type FormattedPromotionRuleTypes = "buy-rules" | "target-rules" | "rules"
+export type FormattedPromotionRuleTypes = "buy_rules" | "target_rules" | "rules"

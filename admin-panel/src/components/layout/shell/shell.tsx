@@ -1,4 +1,4 @@
-import { SidebarLeft, TriangleRightMini, XMark } from "@medusajs/icons"
+import { ChatBubble, SidebarLeft, TriangleRightMini, XMark } from "@medusajs/icons"
 import { IconButton, clx } from "@medusajs/ui"
 import { AnimatePresence } from "motion/react"
 import { Dialog as RadixDialog } from "radix-ui"
@@ -10,7 +10,10 @@ import {
   UIMatch,
   useMatches,
   useNavigation,
+  useNavigate,
 } from "react-router-dom"
+
+import { useMessengerAdmin } from "../../../providers/messenger-provider/MessengerAdminProvider"
 
 import { KeybindProvider } from "../../../providers/keybind-provider"
 import { useGlobalShortcuts } from "../../../providers/keybind-provider/hooks"
@@ -187,6 +190,9 @@ const ToggleSidebar = () => {
 }
 
 const Topbar = () => {
+  const navigate = useNavigate()
+  const { unreadCount } = useMessengerAdmin()
+
   return (
     <div className="grid w-full grid-cols-2 border-b border-ui-border-base bg-ui-bg-base p-3">
       <div className="flex items-center gap-x-1.5">
@@ -194,6 +200,18 @@ const Topbar = () => {
         <Breadcrumbs />
       </div>
       <div className="flex items-center justify-end gap-x-3">
+        <button
+          type="button"
+          className="relative flex items-center justify-center w-8 h-8 rounded-md hover:bg-ui-bg-subtle-hover transition-colors"
+          onClick={() => navigate("/messages")}
+        >
+          <ChatBubble className="text-ui-fg-subtle" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[16px] h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
+        </button>
         <Notifications />
       </div>
     </div>

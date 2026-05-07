@@ -38,7 +38,7 @@ const createFormValues = (
       const prices =
         variant.prices?.reduce((acc: Record<string, number>, price) => {
           // Use region_id as key when present (matches the DataGrid column key)
-          const key = (price.rules as any)?.region_id || price.currency_code
+          const key = (price as any).rules?.region_id || price.currency_code
           acc[key] = price.amount
           return acc
         }, {}) || {}

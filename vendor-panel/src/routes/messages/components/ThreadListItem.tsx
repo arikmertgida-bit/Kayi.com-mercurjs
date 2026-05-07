@@ -1,5 +1,7 @@
 import { useState, useRef } from "react"
+import { useTranslation } from "react-i18next"
 import { formatDistanceToNow } from "date-fns"
+import { languages } from "../../../i18n/languages"
 import type { Conversation } from "../../../lib/messenger/types"
 
 interface ThreadListItemProps {
@@ -27,6 +29,8 @@ export function ThreadListItem({
   const isProduct = conv.contextType === "PRODUCT_BASED" || (conv.contextType !== "VENDOR_BASED" && !!conv.productId)
   const other = conv.participants?.find((p) => p.userType !== "SELLER") ?? null
   const isAdmin = other?.userType === "ADMIN"
+  const { t, i18n } = useTranslation()
+  const locale = languages.find((l) => l.code === i18n.language)?.date_locale
 
   const name = customerDisplayName ?? other?.displayName ?? "Customer"
   const initials = (name || "?")[0]?.toUpperCase() ?? "?"
@@ -48,7 +52,13 @@ export function ThreadListItem({
         <div className="flex items-start gap-2">
           {/* Avatar */}
           <div className="relative flex-shrink-0">
-            {customerAvatarUrl ? (
+            {isAdmin ? (
+              <img
+                src="/logo.png"
+                alt="Yardım Destek"
+                className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+              />
+            ) : customerAvatarUrl ? (
               <img
                 src={customerAvatarUrl}
                 alt={name}
@@ -75,17 +85,21 @@ export function ThreadListItem({
           {/* Content */}
           <div className="flex-1 min-w-0 pr-6">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-ui-fg-base truncate">{name}</span>
+              {isAdmin ? (
+                <img src="/brand-logo.png" alt="Kayı.com" className="h-4 object-contain" />
+              ) : (
+                <span className="text-sm font-medium text-ui-fg-base truncate">{name}</span>
+              )}
               <span className="text-xs text-ui-fg-muted flex-shrink-0 ml-1">
-                {formatDistanceToNow(new Date(conv.updatedAt), { addSuffix: true })}
+                {formatDistanceToNow(new Date(conv.updatedAt), { addSuffix: true, locale })}
               </span>
             </div>
             <p className="text-xs text-ui-fg-muted truncate mt-0.5">
               {lastMsg
                 ? lastMsg.messageType === "IMAGE"
-                  ? "📷 Görsel"
+                  ? `📷 ${t("messenger.imageMessage")}`
                   : lastMsg.content?.slice(0, 50)
-                : conv.subject ?? "Henüz mesaj yok"}
+                : conv.subject ?? t("messages.noMessages")}
             </p>
 
             {/* Context badge */}
@@ -94,14 +108,14 @@ export function ThreadListItem({
                 <svg className="w-2.5 h-2.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
-                Ürün sorusu
+                {t("messages.productQuestion")}
               </span>
             ) : (
               <span className="mt-1 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-ui-tag-green-bg text-ui-tag-green-text font-medium">
                 <svg className="w-2.5 h-2.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
-                Mağaza sorusu
+                {t("messages.storeQuestion")}
               </span>
             )}
           </div>
@@ -142,19 +156,19 @@ export function ThreadListItem({
             onClick={() => { setMenuPos(null); onDelete(conv.id, false) }}
             className="w-full text-left px-4 py-2.5 hover:bg-ui-bg-base-hover text-ui-fg-base transition-colors"
           >
-            Sadece Benden Sil
+            {t("messages.deleteOnlyForMe")}
           </button>
           <button
             onClick={() => { setMenuPos(null); onDelete(conv.id, true) }}
             className="w-full text-left px-4 py-2.5 hover:bg-ui-tag-red-bg text-ui-tag-red-text transition-colors"
           >
-            Herkesten Sil
+            {t("messages.deleteForEveryone")}
           </button>
           <button
             onClick={() => setMenuPos(null)}
             className="w-full text-left px-4 py-2.5 text-ui-fg-muted hover:text-ui-fg-base transition-colors text-sm"
           >
-            Kapat
+            {t("messages.close")}
           </button>
         </div>
       </>

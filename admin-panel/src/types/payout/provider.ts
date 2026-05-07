@@ -1,4 +1,5 @@
-import Stripe from 'stripe'
+// import Stripe from 'stripe'
+// TODO: PayTR entegrasyonu tamamlandığında Stripe tipleri PayTR tipleriyle değiştirilecek
 
 import { BigNumberInput } from '@medusajs/framework/types'
 
@@ -54,7 +55,7 @@ export interface IPayoutProvider {
   createPayoutAccount(
     input: CreatePayoutAccountInput
   ): Promise<CreatePayoutAccountResponse>
-  reversePayout(input: ReversePayoutInput): Promise<Stripe.TransferReversal>
+  reversePayout(input: ReversePayoutInput): Promise<Record<string, unknown>>
   /**
    * Initialize the onboarding process for a payout account.
    */
@@ -62,7 +63,7 @@ export interface IPayoutProvider {
     accountId: string,
     context: Record<string, unknown>
   ): Promise<InitializeOnboardingResponse>
-  getAccount(accountId: string): Promise<Stripe.Account>
+  getAccount(accountId: string): Promise<Record<string, unknown>>
   getWebhookActionAndData(
     payload: PayoutWebhookActionPayload
   ): Promise<PayoutWebhookActionAndDataResponse>

@@ -37,7 +37,11 @@ export const useOrderTableQuery = ({
     order,
   } = queryObject
 
-  const searchParams: HttpTypes.AdminOrderFilters = {
+  const searchParams: HttpTypes.AdminOrderFilters & {
+    fulfillment_status?: string[]
+    payment_status?: string[]
+    order?: string
+  } = {
     limit: pageSize,
     offset: offset ? Number(offset) : 0,
     sales_channel_id: sales_channel_id?.split(","),

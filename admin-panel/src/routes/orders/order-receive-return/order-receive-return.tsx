@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from "react-router-dom"
+﻿import { useNavigate, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { Heading, toast } from "@medusajs/ui"
 import { useEffect } from "react"
@@ -25,7 +25,7 @@ export function OrderReceiveReturn() {
 
   const { order } = useOrder(id!, { fields: "+currency_code,*items" })
   const { order: preview } = useOrderPreview(id!)
-  const { return: orderReturn } = useReturn(return_id, {
+  const { return: orderReturn } = useReturn(return_id!, {
     fields: "*items.item,*items.item.variant,*items.item.variant.product",
   }) // TODO: fix API needs to return 404 if return not exists and not an empty object
 
@@ -34,11 +34,11 @@ export function OrderReceiveReturn() {
    */
 
   const { mutateAsync: initiateReceiveReturn } = useInitiateReceiveReturn(
-    return_id,
-    id
+    return_id!,
+    id!
   )
 
-  const { mutateAsync: addReceiveItems } = useAddReceiveItems(return_id, id)
+  const { mutateAsync: addReceiveItems } = useAddReceiveItems(return_id!, id!)
 
   useEffect(() => {
     ;(async function () {
@@ -47,7 +47,7 @@ export function OrderReceiveReturn() {
       }
 
       if (preview.order_change) {
-        if (preview.order_change.change_type !== "return_receive") {
+        if ((preview.order_change.change_type as string) !== "return_receive") {
           navigate(`/orders/${id}`, { replace: true })
           toast.error(t("orders.returns.activeChangeError"))
         }
@@ -66,7 +66,7 @@ export function OrderReceiveReturn() {
           })),
         })
       } catch (e) {
-        toast.error(e.message)
+        toast.error((e as Error).message)
       } finally {
         IS_REQUEST_RUNNING = false
       }

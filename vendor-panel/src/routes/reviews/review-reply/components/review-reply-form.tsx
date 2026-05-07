@@ -1,12 +1,13 @@
 import { useRef, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { RouteDrawer, useRouteModal } from "../../../../components/modals"
 import { Button, Heading, Textarea, toast } from "@medusajs/ui"
 import { useParams } from "react-router-dom"
 import { useReview, useUpdateReview, useReviewReplies, useCreateReviewReply, useUpdateVendorReviewReply, useDeleteVendorReviewReply } from "../../../../hooks/api/review"
 
-function formatDate(iso: string) {
+function formatDate(iso: string, locale: string) {
   try {
-    return new Date(iso).toLocaleDateString("tr-TR", {
+    return new Date(iso).toLocaleDateString(locale, {
       day: "2-digit",
       month: "short",
       year: "numeric",
@@ -20,6 +21,7 @@ function formatDate(iso: string) {
 
 export const ReviewReplyForm = () => {
   const { handleSuccess } = useRouteModal()
+  const { t, i18n } = useTranslation()
   const { id } = useParams()
 
   const { review } = useReview(id!)
@@ -40,7 +42,7 @@ export const ReviewReplyForm = () => {
       { seller_note: "" },
       {
         onSuccess: () => {
-          toast.success("Reply has been deleted")
+          toast.success(t("reviews.reply.deleteReply"))
           handleSuccess(`/reviews/${id}`)
         },
         onError: (error) => {
@@ -54,7 +56,7 @@ export const ReviewReplyForm = () => {
     const content = replyText.trim()
     if (!content) return
     if (content.length > 500) {
-      setReplyError("Yanıt en fazla 500 karakter olabilir.")
+      setReplyError(t("reviews.reply.maxLength"))
       return
     }
     setReplyError(null)
@@ -62,9 +64,9 @@ export const ReviewReplyForm = () => {
       await createReply({ content })
       setReplyText("")
       refetchReplies()
-      toast.success("Yanıt gönderildi")
+      toast.success(t("reviews.reply.replySent"))
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Yanıt gönderilemedi"
+      const message = err instanceof Error ? err.message : t("reviews.reply.replyFailed")
       toast.error(message)
     }
   }
@@ -73,12 +75,12 @@ export const ReviewReplyForm = () => {
     <RouteDrawer>
       <RouteDrawer.Header>
         <RouteDrawer.Title asChild>
-          <Heading>{review.seller_note ? "Edit Reply" : "Reply"}</Heading>
+          <Heading>{review.seller_note ? t("reviews.detail.general.editReply") : t("reviews.detail.general.replyButton")}</Heading>
         </RouteDrawer.Title>
         <RouteDrawer.Description>
           {review.seller_note
-            ? "Edit your reply to customer review."
-            : "Reply to customer review."}
+            ? t("reviews.reply.editDescription")
+            : t("reviews.reply.description")}
         </RouteDrawer.Description>
       </RouteDrawer.Header>
       <RouteDrawer.Body>
@@ -86,7 +88,7 @@ export const ReviewReplyForm = () => {
           {images.length > 0 && (
             <div className="mb-4">
               <p className="text-xs font-medium text-ui-fg-subtle mb-2">
-                Müşteri Fotoğrafları ({images.length})
+                {t("reviews.reply.customerPhotos")} ({images.length})
               </p>
               <div
                 className={`grid gap-2 ${
@@ -106,7 +108,7 @@ export const ReviewReplyForm = () => {
                   >
                     <img
                       src={img.url}
-                      alt={`Yorum fotoğrafı ${index + 1}`}
+                      alt={`${t("reviews.reply.reviewPhoto")} ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
@@ -137,7 +139,7 @@ export const ReviewReplyForm = () => {
                 </button>
                 <img
                   src={images[lightboxIndex]?.url}
-                  alt="Büyük görünüm"
+                  alt={t("reviews.reply.expandView")}
                   className="w-full rounded-xl object-contain max-h-[70vh]"
                 />
                 {images.length > 1 && (
@@ -171,7 +173,7 @@ export const ReviewReplyForm = () => {
           <div className="mt-5 border-t border-ui-border-base pt-4">
             <p className="text-xs font-semibold text-ui-fg-base mb-3 flex items-center gap-1.5">
               <span>💬</span>
-              Müşteri Yanıtları
+              {t("reviews.reply.customerReplies")}
               {replies.length > 0 && (
                 <span className="ml-1 bg-ui-bg-base-pressed text-ui-fg-subtle text-[10px] font-medium px-1.5 py-0.5 rounded-full">
                   {replies.length}
@@ -180,7 +182,7 @@ export const ReviewReplyForm = () => {
             </p>
 
             {replies.length === 0 ? (
-              <p className="text-xs text-ui-fg-muted italic py-2">Henüz yanıt yok.</p>
+              <p className="text-xs text-ui-fg-muted italic py-2">{t("reviews.reply.noReplies")}</p>
             ) : (
               <div className="space-y-2.5 mb-4 max-h-64 overflow-y-auto pr-1">
                 {replies.map((reply: any) =>
@@ -198,20 +200,20 @@ export const ReviewReplyForm = () => {
                     >
                       <div className="size-6 rounded-full bg-ui-bg-base-pressed flex items-center justify-center text-[10px] font-bold text-ui-fg-subtle shrink-0">
                         {reply.customer
-                          ? `${reply.customer.first_name?.[0] ?? ""}${reply.customer.last_name?.[0] ?? ""}`.toUpperCase() || "K"
-                          : "K"}
+                          ? `${reply.customer.first_name?.[0] ?? ""}${reply.customer.last_name?.[0] ?? ""}`.toUpperCase() || t("messages.customer")[0]
+                          : t("messages.customer")[0]}
                       </div>
                       <div className="max-w-[80%]">
                         <div className="rounded-xl px-3 py-1.5 bg-ui-bg-base border border-ui-border-base rounded-tl-none">
                           <p className="font-medium mb-0.5 text-[10px] opacity-80">
                             {reply.customer
-                              ? `${reply.customer.first_name} ${reply.customer.last_name}`.trim() || "Müşteri"
-                              : "Müşteri"}
+                              ? `${reply.customer.first_name} ${reply.customer.last_name}`.trim() || t("messages.customer")
+                              : t("messages.customer")}
                           </p>
                           <p className="leading-snug whitespace-pre-line">{reply.content}</p>
                         </div>
                         <p className="text-[9px] text-ui-fg-muted mt-0.5 px-1">
-                          {formatDate(reply.created_at)}
+                          {formatDate(reply.created_at, i18n.language)}
                         </p>
                       </div>
                     </div>
@@ -235,7 +237,7 @@ export const ReviewReplyForm = () => {
                     handleSendReply()
                   }
                 }}
-                placeholder="Müşteriye yanıt yaz... (Enter ile gönder)"
+                placeholder={t("messenger.typeMessage")}
                 className="flex-1 min-h-[60px] text-xs resize-none"
                 autoComplete="off"
               />
@@ -247,7 +249,7 @@ export const ReviewReplyForm = () => {
                 disabled={!replyText.trim()}
                 className="shrink-0 mb-0.5"
               >
-                Gönder
+                {t("reviews.reply.send")}
               </Button>
             </div>
             {replyError && (
@@ -263,7 +265,7 @@ export const ReviewReplyForm = () => {
             onClick={handleDeleteNote}
             isLoading={isDeleting}
           >
-            Delete reply
+            {t("reviews.reply.deleteReply")}
           </Button>
         )}
         <Button
@@ -271,7 +273,7 @@ export const ReviewReplyForm = () => {
           className="px-6"
           onClick={() => handleSuccess(`/reviews/${id}`)}
         >
-          Kapat
+            {t("reviews.reply.close")}
         </Button>
       </RouteDrawer.Footer>
     </RouteDrawer>
@@ -288,6 +290,7 @@ const SellerReplyItem = ({
   reviewId: string
   onMutated: () => void
 }) => {
+  const { t, i18n } = useTranslation()
   const [isEditing, setIsEditing] = useState(false)
   const [editText, setEditText] = useState(reply.content)
   const [editError, setEditError] = useState<string | null>(null)
@@ -298,7 +301,7 @@ const SellerReplyItem = ({
   const handleSaveEdit = async () => {
     const content = editText.trim()
     if (!content || content.length > 500) {
-      setEditError("Yanıt boş olamaz veya 500 karakteri geçemez.")
+      setEditError(t("reviews.reply.maxLength"))
       return
     }
     try {
@@ -306,9 +309,9 @@ const SellerReplyItem = ({
       setIsEditing(false)
       setEditError(null)
       onMutated()
-      toast.success("Yanıt güncellendi")
+      toast.success(t("reviews.reply.replySent"))
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Güncellenemedi"
+      const message = err instanceof Error ? err.message : t("reviews.reply.replyFailed")
       setEditError(message)
     }
   }
@@ -317,9 +320,9 @@ const SellerReplyItem = ({
     try {
       await deleteReply()
       onMutated()
-      toast.success("Yanıt silindi")
+      toast.success(t("reviews.reply.deleteReply"))
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Silinemedi"
+      const message = err instanceof Error ? err.message : t("reviews.reply.replyFailed")
       toast.error(message)
     }
   }
@@ -330,7 +333,7 @@ const SellerReplyItem = ({
         <div className="rounded-xl px-3 py-1.5 bg-ui-bg-interactive text-ui-fg-on-color rounded-tr-none">
           <div className="flex items-center justify-between gap-2 mb-0.5">
             <p className="font-medium text-[10px] opacity-80">
-              🏪 {reply.seller_name ?? "Mağaza"}
+              🏪 {reply.seller_name ?? t("messages.store")}
             </p>
             {!isEditing && (
               <div className="flex items-center gap-1.5 ml-2">
@@ -338,7 +341,7 @@ const SellerReplyItem = ({
                   type="button"
                   onClick={() => { setIsEditing(true); setEditText(reply.content) }}
                   className="text-[10px] opacity-70 hover:opacity-100 transition-opacity"
-                  title="Düzenle"
+                  title={t("reviews.reply.edit")}
                 >
                   ✏️
                 </button>
@@ -347,7 +350,7 @@ const SellerReplyItem = ({
                   onClick={handleDelete}
                   disabled={isDeleting}
                   className="text-[10px] opacity-70 hover:opacity-100 transition-opacity disabled:opacity-30"
-                  title="Sil"
+                  title={t("reviews.reply.delete")}
                 >
                   {isDeleting ? "⏳" : "🗑️"}
                 </button>
@@ -371,14 +374,14 @@ const SellerReplyItem = ({
                   disabled={isUpdating || !editText.trim()}
                   className="text-[10px] font-semibold bg-white/20 hover:bg-white/30 text-white px-2 py-0.5 rounded disabled:opacity-40 transition-colors"
                 >
-                  {isUpdating ? "..." : "Kaydet"}
+                  {isUpdating ? "..." : t("reviews.reply.save")}
                 </button>
                 <button
                   type="button"
                   onClick={() => { setIsEditing(false); setEditError(null) }}
                   className="text-[10px] font-semibold bg-white/10 hover:bg-white/20 text-white px-2 py-0.5 rounded transition-colors"
                 >
-                  İptal
+                  {t("reviews.reply.cancel")}
                 </button>
               </div>
             </div>
@@ -387,7 +390,7 @@ const SellerReplyItem = ({
           )}
         </div>
         <p className="text-[9px] text-ui-fg-muted mt-0.5 px-1 text-right">
-          {formatDate(reply.created_at)}
+          {formatDate(reply.created_at, i18n.language)}
         </p>
       </div>
       <div className="size-6 rounded-full bg-ui-bg-interactive flex items-center justify-center text-[10px] font-bold text-ui-fg-on-color shrink-0">

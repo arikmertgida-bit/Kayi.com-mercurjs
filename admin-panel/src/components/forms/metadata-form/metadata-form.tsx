@@ -27,9 +27,11 @@ import { RouteDrawer, useRouteModal } from "../../modals"
 import { KeyboundForm } from "../../utilities/keybound-form"
 import { useDocumentDirection } from "../../../hooks/use-document-direction"
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type MetaDataSubmitHook<TRes> = (
-  params: { metadata?: Record<string, any> | null },
-  callbacks: { onSuccess: () => void; onError: (error: FetchError) => void }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  params: any,
+  callbacks?: { onSuccess?: () => void; onError?: (error: FetchError) => void }
 ) => Promise<TRes>
 
 type MetadataFormProps<TRes> = {
@@ -208,7 +210,7 @@ const InnerForm = <TRes,>({
                                   {...field}
                                   value={isDisabled ? placeholder : value}
                                   disabled={isDisabled}
-                                  placeholder="Value"
+                                  placeholder={t("metadata.edit.labels.value")}
                                 />
                               </Form.Control>
                             </Form.Item>

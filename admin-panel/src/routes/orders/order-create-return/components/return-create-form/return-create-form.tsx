@@ -1,10 +1,10 @@
-import { zodResolver } from "@hookform/resolvers/zod"
+﻿import { zodResolver } from "@hookform/resolvers/zod"
 import { PencilSquare } from "@medusajs/icons"
 import {
   AdminOrder,
   AdminOrderPreview,
   AdminReturn,
-  InventoryLevelDTO,
+  HttpTypes,
 } from "@medusajs/types"
 import {
   Alert,
@@ -102,7 +102,7 @@ export const ReturnCreateForm = ({
     float: 0,
   })
   const [inventoryMap, setInventoryMap] = useState<
-    Record<string, InventoryLevelDTO[]>
+    Record<string, HttpTypes.AdminInventoryLevel[]>
   >({})
 
   /**
@@ -181,9 +181,9 @@ export const ReturnCreateForm = ({
           note: i.actions?.find((a) => a.action === "RETURN_ITEM")
             ?.internal_note,
           reason_id: i.actions?.find((a) => a.action === "RETURN_ITEM")?.details
-            ?.reason_id,
+            ?.reason_id as string | null | undefined,
         })),
-        option_id: method ? method.shipping_option_id : "",
+        option_id: method ? (method.shipping_option_id ?? "") : "",
         location_id: activeReturn?.location_id,
         send_notification: false,
       })
@@ -226,7 +226,7 @@ export const ReturnCreateForm = ({
             ...items[ind],
             quantity: i.detail.return_requested_quantity,
             note: returnItemAction?.internal_note,
-            reason_id: returnItemAction?.details?.reason_id,
+            reason_id: returnItemAction?.details?.reason_id as string | null | undefined,
           })
         }
       } else {
@@ -277,8 +277,7 @@ export const ReturnCreateForm = ({
       handleSuccess()
     } catch (e) {
       toast.error(t("general.error"), {
-        description: e.message,
-        dismissLabel: t("actions.close"),
+        description: (e as Error).message,
       })
     }
   })
@@ -303,8 +302,8 @@ export const ReturnCreateForm = ({
   ) => {
     const promises = preview.shipping_methods
       .map((s) => s.actions?.find((a) => a.action === "SHIPPING_ADD")?.id)
-      .filter(Boolean)
-      .map(deleteReturnShipping)
+      .filter((id): id is string => !!id)
+      .map((id) => deleteReturnShipping(id))
 
     await Promise.all(promises)
 
@@ -315,7 +314,7 @@ export const ReturnCreateForm = ({
 
   useEffect(() => {
     if (isShippingPriceEdit) {
-      document.getElementById("js-shipping-input").focus()
+      document.getElementById("js-shipping-input")?.focus()
     }
   }, [isShippingPriceEdit])
 
@@ -350,7 +349,7 @@ export const ReturnCreateForm = ({
 
   useEffect(() => {
     const getInventoryMap = async () => {
-      const ret: Record<string, InventoryLevelDTO[]> = {}
+      const ret: Record<string, HttpTypes.AdminInventoryLevel[]> = {}
 
       if (!items.length) {
         return ret
@@ -361,21 +360,21 @@ export const ReturnCreateForm = ({
           items.map(async (_i) => {
             const item = itemsMap.get(_i.item_id)
 
-            if (!item.variant_id) {
+            if (!item || !item.variant_id) {
               return undefined
             }
             return await sdk.admin.product.retrieveVariant(
-              item.product_id,
+              item.product_id!,
               item.variant_id,
               { fields: "*inventory,*inventory.location_levels" }
             )
           })
         )
       )
-        .filter((it) => it?.variant)
+        .filter((it): it is NonNullable<typeof it> & { variant: NonNullable<NonNullable<typeof it>["variant"]> } => !!(it?.variant))
         .forEach((item) => {
           const { variant } = item
-          const levels = variant.inventory[0]?.location_levels
+          const levels = (variant.inventory_items as (typeof variant.inventory_items & { inventory?: { location_levels?: unknown[] } }[]) | undefined)?.[0]?.inventory?.location_levels
 
           if (!levels) {
             return
@@ -476,7 +475,7 @@ export const ReturnCreateForm = ({
                 <ReturnItem
                   key={item.id}
                   item={itemsMap.get(item.item_id)!}
-                  previewItem={previewItemsMap.get(item.item_id)}
+                  previewItem={previewItemsMap.get(item.item_id)!}
                   currencyCode={order.currency_code}
                   form={form}
                   onRemove={() => {
@@ -536,7 +535,7 @@ export const ReturnCreateForm = ({
                               value={value}
                               onChange={(v) => {
                                 onChange(v)
-                                onLocationChange(v)
+                                if (v) onLocationChange(v)
                               }}
                               {...field}
                               options={(stock_locations ?? []).map(
@@ -662,7 +661,7 @@ export const ReturnCreateForm = ({
                     <CurrencyInput
                       id="js-shipping-input"
                       onBlur={() => {
-                        let actionId
+                        let actionId: string | undefined
 
                         preview.shipping_methods.forEach((s) => {
                           if (s.actions) {
@@ -676,9 +675,9 @@ export const ReturnCreateForm = ({
 
                         if (actionId) {
                           updateReturnShipping({
-                            actionId,
-                            custom_amount: customShippingAmount.float,
-                          })
+                            actionId: actionId as string,
+                            custom_amount: customShippingAmount.float ?? undefined,
+                          } as HttpTypes.AdminAddReturnShipping & { actionId: string })
                         }
                         setIsShippingPriceEdit(false)
                       }}
@@ -687,7 +686,7 @@ export const ReturnCreateForm = ({
                           .symbol_native
                       }
                       code={order.currency_code}
-                      onValueChange={(value, name, values) =>
+                      onValueChange={(_value, _name, values) =>
                         setCustomShippingAmount({
                           value: values?.value ?? "",
                           float: values?.float ?? null,

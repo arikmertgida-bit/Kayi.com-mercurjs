@@ -9,7 +9,7 @@ export const Messages = () => {
 
   return (
     <Container className="divide-y p-0 min-h-[700px]">
-      <MessengerVendorInbox sellerId={seller.id} sellerName={seller.name} />
+      <MessengerVendorInbox sellerId={seller.id!} sellerName={seller.name} />
     </Container>
   )
 }

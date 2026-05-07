@@ -10,6 +10,7 @@ import {
   Text,
   toast,
 } from "@medusajs/ui";
+import { useTranslation } from "react-i18next";
 
 import {
   useConfigurationRules,
@@ -23,6 +24,7 @@ import {
 } from "@routes/configuration/components/rule-tooltip";
 
 export const Configuration = () => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const { configuration_rules, isLoading, refetch } = useConfigurationRules({});
   const { mutateAsync: updateConfigurationRule } = useUpdateConfigurationRule(
@@ -32,10 +34,10 @@ export const Configuration = () => {
   const updateRule = async (id: string, is_enabled: boolean) => {
     try {
       await updateConfigurationRule({ id, is_enabled });
-      toast.success("Updated!");
+      toast.success(t("configuration.updated"));
       refetch();
     } catch {
-      toast.error("Error!");
+      toast.error(t("configuration.error"));
     }
   };
 
@@ -43,9 +45,9 @@ export const Configuration = () => {
     <Container>
       <div className="flex items-center justify-between px-6 py-4">
         <div>
-          <Heading>Product catalog settings</Heading>
+          <Heading>{t("configuration.header")}</Heading>
           <Text className="text-ui-fg-subtle" size="small">
-            Manage global product catalog configuration settings
+            {t("configuration.subtitle")}
           </Text>
         </div>
         <Drawer
@@ -58,11 +60,11 @@ export const Configuration = () => {
             }}
             asChild
           >
-            <Button>Create</Button>
+            <Button>{t("actions.create")}</Button>
           </Drawer.Trigger>
           <Drawer.Content>
             <Drawer.Header>
-              <Drawer.Title>Create Rules</Drawer.Title>
+              <Drawer.Title>{t("configuration.createRulesTitle")}</Drawer.Title>
             </Drawer.Header>
             <Drawer.Body>
               <CreateConfigurationRuleForm
@@ -76,12 +78,12 @@ export const Configuration = () => {
         </Drawer>
       </div>
       <div className="flex size-full flex-col overflow-hidden">
-        {isLoading && <Text>Loading...</Text>}
+        {isLoading && <Text>{t("general.loading")}</Text>}
         <Table>
           <Table.Header>
             <Table.Row>
-              <Table.HeaderCell>Rule type</Table.HeaderCell>
-              <Table.HeaderCell>Enabled</Table.HeaderCell>
+              <Table.HeaderCell>{t("configuration.ruleTypeColumn")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("configuration.enabledColumn")}</Table.HeaderCell>
               <Table.HeaderCell></Table.HeaderCell>
             </Table.Row>
           </Table.Header>
@@ -98,7 +100,7 @@ export const Configuration = () => {
                 </Table.Cell>
                 <Table.Cell>
                   <StatusBadge color={rule.is_enabled ? "green" : "grey"}>
-                    {rule.is_enabled ? "True" : "False"}
+                    {rule.is_enabled ? t("filters.radio.true") : t("filters.radio.false")}
                   </StatusBadge>
                 </Table.Cell>
                 <Table.Cell>
@@ -108,7 +110,7 @@ export const Configuration = () => {
                       updateRule(rule.id!, !rule.is_enabled);
                     }}
                   >
-                    {rule.is_enabled ? "Disable" : "Enable"}
+                    {rule.is_enabled ? t("general.disabled") : t("general.enabled")}
                   </Button>
                 </Table.Cell>
               </Table.Row>

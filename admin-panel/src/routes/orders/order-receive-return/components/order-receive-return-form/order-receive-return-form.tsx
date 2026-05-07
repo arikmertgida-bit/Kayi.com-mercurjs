@@ -1,6 +1,6 @@
-import { zodResolver } from "@hookform/resolvers/zod"
+﻿import { zodResolver } from "@hookform/resolvers/zod"
 import { ArrowRight } from "@medusajs/icons"
-import { AdminOrder, AdminReturn } from "@medusajs/types"
+import { AdminOrder, AdminOrderPreview, AdminReturn } from "@medusajs/types"
 import { Alert, Button, Input, Switch, Text, toast } from "@medusajs/ui"
 import { useEffect, useMemo } from "react"
 import { useForm } from "react-hook-form"
@@ -25,7 +25,7 @@ import DismissedQuantity from "./dismissed-quantity"
 
 type OrderAllocateItemsFormProps = {
   order: AdminOrder
-  preview: AdminOrder
+  preview: AdminOrderPreview
   orderReturn: AdminReturn
 }
 
@@ -41,7 +41,7 @@ export function OrderReceiveReturnForm({
    * Items on the preview order that are part of the return we are receiving currently.
    */
   const previewItems = useMemo(() => {
-    const idsMap = {}
+    const idsMap: Record<string, boolean> = {}
 
     orderReturn.items.forEach((i) => (idsMap[i.item_id] = true))
 
@@ -72,7 +72,7 @@ export function OrderReceiveReturnForm({
   )
 
   const { stock_location } = useStockLocation(
-    orderReturn.location_id,
+    orderReturn.location_id ?? "",
     undefined,
     {
       enabled: !!orderReturn.location_id,
@@ -80,7 +80,7 @@ export function OrderReceiveReturnForm({
   )
 
   const itemsMap = useMemo(() => {
-    const ret = {}
+    const ret: Record<string, (typeof order.items)[number]> = {}
     order.items.forEach((i) => (ret[i.id] = i))
     return ret
   }, [order.items])
@@ -110,12 +110,12 @@ export function OrderReceiveReturnForm({
 
         form.setValue(
           `items.${index}.quantity`,
-          receivedAction?.details.quantity,
+          receivedAction?.details?.quantity as number | null | undefined,
           { shouldTouch: true, shouldDirty: true }
         )
         form.setValue(
           `items.${index}.dismissed_quantity`,
-          dismissedAction?.details.quantity,
+          dismissedAction?.details?.quantity as number | null | undefined,
           { shouldTouch: true, shouldDirty: true }
         )
       })
@@ -133,12 +133,10 @@ export function OrderReceiveReturnForm({
 
       toast.success(t("general.success"), {
         description: t("orders.returns.receive.toast.success"),
-        dismissLabel: t("actions.close"),
       })
     } catch (e) {
       toast.error(t("general.error"), {
-        description: e.message,
-        dismissLabel: t("actions.close"),
+        description: (e as Error).message,
       })
     }
   })
@@ -149,6 +147,7 @@ export function OrderReceiveReturnForm({
     index: number
   ) => {
     const item = previewItems?.find((i) => i.id === itemId)
+    if (!item) return
     const action = item?.actions?.find(
       (a) => a.action === "RECEIVE_RETURN_ITEM"
     )
@@ -194,7 +193,7 @@ export function OrderReceiveReturnForm({
         }
       }
     } catch (e) {
-      toast.error(e.message)
+      toast.error((e as Error).message)
     }
   }
 
@@ -204,7 +203,7 @@ export function OrderReceiveReturnForm({
         await cancelReceiveReturn()
       }
     } catch (e) {
-      toast.error(e.message)
+      toast.error((e as Error).message)
     }
   }
 
@@ -279,7 +278,7 @@ export function OrderReceiveReturnForm({
                                 min={0}
                                 max={item.quantity}
                                 type="number"
-                                value={value}
+                                value={value ?? undefined}
                                 className="bg-ui-bg-field-component text-right [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                                 onChange={(e) => {
                                   const value =
@@ -292,7 +291,7 @@ export function OrderReceiveReturnForm({
                                 {...field}
                                 onBlur={() => {
                                   field.onBlur()
-                                  handleQuantityChange(item.id, value, ind)
+                                  handleQuantityChange(item.id, value ?? null, ind)
                                 }}
                               />
                             </Form.Control>

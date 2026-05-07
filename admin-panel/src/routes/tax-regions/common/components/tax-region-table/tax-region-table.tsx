@@ -68,7 +68,10 @@ export const TaxRegionTable = ({
                 <DataTableSearch prefix={prefix} />
               </div> */}
               <DataTableOrderBy
-                keys={["updated_at", "created_at"]}
+                keys={[
+                  { key: "updated_at" as keyof HttpTypes.AdminTaxRegion, label: "Updated" },
+                  { key: "created_at" as keyof HttpTypes.AdminTaxRegion, label: "Created" },
+                ]}
                 prefix={prefix}
               />
             </div>

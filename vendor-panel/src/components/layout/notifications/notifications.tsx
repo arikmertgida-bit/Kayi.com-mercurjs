@@ -9,6 +9,7 @@ import { formatDistance } from "date-fns"
 import { TFunction } from "i18next"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { languages } from "../../../i18n/languages"
 import { notificationQueryKeys, useNotifications } from "../../../hooks/api"
 import { fetchQuery } from "../../../lib/client"
 import { FilePreview } from "../../common/file-preview"
@@ -147,6 +148,9 @@ const Notification = ({
   unread?: boolean
 }) => {
   const data = notification.data as unknown as NotificationData | undefined
+  const { t, i18n } = useTranslation()
+  const locale =
+    languages.find((l) => l.code === i18n.language)?.date_locale
 
   // We need at least the title to render a notification in the feed
   if (!notification.template) {
@@ -165,9 +169,12 @@ const Notification = ({
               <Text size="small" leading="compact" weight="plus">
                 {data?.title
                   ? data.title
-                  : NOTIFICATION_TEMPLATES[
-                      notification.template as keyof typeof NOTIFICATION_TEMPLATES
-                    ]}
+                  : t(`notifications.templates.${notification.template}`, {
+                      defaultValue:
+                        NOTIFICATION_TEMPLATES[
+                          notification.template as keyof typeof NOTIFICATION_TEMPLATES
+                        ],
+                    })}
               </Text>
               <div className="align-center flex items-center justify-center gap-2">
                 <Text
@@ -181,6 +188,7 @@ const Notification = ({
                 >
                   {formatDistance(notification.created_at, new Date(), {
                     addSuffix: true,
+                    locale,
                   })}
                 </Text>
                 {unread && (
@@ -199,11 +207,12 @@ const Notification = ({
                   className="text-ui-fg-subtle whitespace-pre-line"
                   size="small"
                 >
-                  {
-                    NOTIFICATION_TEMPLATES[
-                      notification.template as keyof typeof NOTIFICATION_TEMPLATES
-                    ]
-                  }
+                  {t(`notifications.templates.${notification.template}`, {
+                    defaultValue:
+                      NOTIFICATION_TEMPLATES[
+                        notification.template as keyof typeof NOTIFICATION_TEMPLATES
+                      ],
+                  })}
                 </Text>
               )}
           </div>

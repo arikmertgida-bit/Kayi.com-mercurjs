@@ -3,9 +3,10 @@ import { HeartBroken } from "@medusajs/icons"
 import { UseFormReturn } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
-import { AdminOrderLineItem } from "@medusajs/types"
+import { AdminOrderChangeAction, AdminOrderLineItem } from "@medusajs/types"
 import { Button, Input, Popover, toast } from "@medusajs/ui"
 
+import * as zod from "zod"
 import { ReceiveReturnSchema } from "./constants"
 import { Form } from "../../../../../components/common/form"
 import {
@@ -18,8 +19,8 @@ type DismissedQuantityProps = {
   returnId: string
   orderId: string
   index: number
-  item: AdminOrderLineItem
-  form: UseFormReturn<typeof ReceiveReturnSchema>
+  item: AdminOrderLineItem & { actions?: AdminOrderChangeAction[] }
+  form: UseFormReturn<zod.infer<typeof ReceiveReturnSchema>>
 }
 
 function DismissedQuantity({
@@ -48,7 +49,7 @@ function DismissedQuantity({
   )
 
   // quantities only for this return
-  const [receivedQuantity, dismissedQuantity] = useMemo(() => {
+  const [, dismissedQuantity] = useMemo(() => {
     const receivedAction = item.actions?.find(
       (a) => a.action === "RECEIVE_RETURN_ITEM"
     )
@@ -56,7 +57,7 @@ function DismissedQuantity({
       (a) => a.action === "RECEIVE_DAMAGED_RETURN_ITEM"
     )
 
-    return [receivedAction?.details.quantity, dismissedAction?.details.quantity]
+    return [receivedAction?.details?.quantity, dismissedAction?.details?.quantity]
   }, [item])
 
   const onDismissedQuantityChanged = async (value: number | null) => {
@@ -67,7 +68,7 @@ function DismissedQuantity({
     )
 
     if (typeof value === "number" && value < 0) {
-      form.setValue(`items.${index}.dismissed_quantity`, dismissedQuantity, {
+      form.setValue(`items.${index}.dismissed_quantity` as `items.${number}.dismissed_quantity`, dismissedQuantity as number | null | undefined, {
         shouldTouch: true,
         shouldDirty: true,
       })
@@ -81,7 +82,7 @@ function DismissedQuantity({
       typeof value === "number" &&
       value > item.quantity - item.detail.return_received_quantity // total received quantity across multiple returns
     ) {
-      form.setValue(`items.${index}.dismissed_quantity`, dismissedQuantity, {
+      form.setValue(`items.${index}.dismissed_quantity` as `items.${number}.dismissed_quantity`, dismissedQuantity as number | null | undefined, {
         shouldTouch: true,
         shouldDirty: true,
       })
@@ -107,7 +108,7 @@ function DismissedQuantity({
         }
       }
     } catch (e) {
-      toast.error(e.message)
+      toast.error((e as Error).message)
     }
   }
 
@@ -118,7 +119,7 @@ function DismissedQuantity({
           <div>
             <HeartBroken />
           </div>
-          {!!dismissedQuantity && <span>{dismissedQuantity}</span>}
+          {!!dismissedQuantity && <span>{dismissedQuantity as number}</span>}
         </Button>
       </Popover.Trigger>
       <Popover.Content align="center">
@@ -128,7 +129,7 @@ function DismissedQuantity({
           </span>
           <Form.Field
             control={form.control}
-            name={`items.${index}.dismissed_quantity`}
+            name={`items.${index}.dismissed_quantity` as `items.${number}.dismissed_quantity`}
             render={({ field: { onChange, value, ...field } }) => {
               return (
                 <Form.Item className="w-full">
@@ -137,7 +138,7 @@ function DismissedQuantity({
                       min={0}
                       max={item.quantity}
                       type="number"
-                      value={value}
+                      value={value ?? undefined}
                       className="bg-ui-bg-field-component text-right [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                       onChange={(e) => {
                         const value =
@@ -150,7 +151,7 @@ function DismissedQuantity({
                       {...field}
                       onBlur={() => {
                         field.onBlur()
-                        onDismissedQuantityChanged(value)
+                        onDismissedQuantityChanged(value ?? null)
                       }}
                     />
                   </Form.Control>

@@ -1,5 +1,5 @@
-import { ArrowUturnLeft, DocumentSeries, XCircle } from "@medusajs/icons"
-import { AdminOrderLineItem } from "@medusajs/types"
+﻿import { ArrowUturnLeft, DocumentSeries, XCircle } from "@medusajs/icons"
+import { AdminOrderChangeAction, AdminOrderLineItem } from "@medusajs/types"
 import { Badge, Input, Text, toast } from "@medusajs/ui"
 import { useTranslation } from "react-i18next"
 
@@ -15,7 +15,7 @@ import {
 } from "../../../../../hooks/api/order-edits"
 
 type OrderEditItemProps = {
-  item: AdminOrderLineItem
+  item: AdminOrderLineItem & { actions?: AdminOrderChangeAction[] }
   currencyCode: string
   orderId: string
 }
@@ -68,7 +68,7 @@ function OrderEditItem({ item, currencyCode, orderId }: OrderEditItemProps) {
         await updateOriginalItem({ quantity, itemId: item.id })
       }
     } catch (e) {
-      toast.error(e.message)
+      toast.error((e as Error).message)
     }
   }
 
@@ -85,7 +85,7 @@ function OrderEditItem({ item, currencyCode, orderId }: OrderEditItemProps) {
         })
       }
     } catch (e) {
-      toast.error(e.message)
+      toast.error((e as Error).message)
     }
   }
 
@@ -99,7 +99,7 @@ function OrderEditItem({ item, currencyCode, orderId }: OrderEditItemProps) {
         await undoAction(updateItemAction.id) // Remove action that updated items quantity to fulfilled quantity which makes it "removed"
       }
     } catch (e) {
-      toast.error(e.message)
+      toast.error((e as Error).message)
     }
   }
 
@@ -108,13 +108,13 @@ function OrderEditItem({ item, currencyCode, orderId }: OrderEditItemProps) {
       await addItems({
         items: [
           {
-            variant_id: item.variant_id,
+            variant_id: item.variant_id!,
             quantity: item.quantity,
           },
         ],
       })
     } catch (e) {
-      toast.error(e.message)
+      toast.error((e as Error).message)
     }
   }
 

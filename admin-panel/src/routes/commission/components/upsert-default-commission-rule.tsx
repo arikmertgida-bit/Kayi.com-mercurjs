@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Button, Input, Label, Switch, toast } from "@medusajs/ui";
 
@@ -14,6 +15,7 @@ type Props = {
 type Price = { amount: number; currency_code: string };
 
 const UpsertDefaultCommissionRuleForm = ({ onSuccess, rule }: Props) => {
+  const { t } = useTranslation();
   const [rateType, setRateType] = useState(rule?.type || "flat");
   const [ratePercentValue, setRatePercentValue] = useState(
     Number(rule?.percentage_rate) || 0,
@@ -76,10 +78,10 @@ const UpsertDefaultCommissionRuleForm = ({ onSuccess, rule }: Props) => {
 
       await upsertCommissionRule(rule_payload);
       setLoading(false);
-      toast.success("Created!");
+      toast.success(t("commission.created"));
       onSuccess?.();
     } catch (e: unknown) {
-      toast.error("Error!");
+      toast.error(t("commission.error"));
       console.error(e);
       setLoading(false);
     }
@@ -96,13 +98,13 @@ const UpsertDefaultCommissionRuleForm = ({ onSuccess, rule }: Props) => {
               setIncludeTax(val);
             }}
           />
-          <Label>Commission charged including tax</Label>
+          <Label>{t("commission.includingTax")}</Label>
         </div>
       </fieldset>
       <fieldset className="my-4">
-        <legend className="mb-2">Fee type</legend>
+        <legend className="mb-2">{t("commission.feeType")}</legend>
         <div className="flex items-center gap-x-2">
-          <Label>Flat fee</Label>
+          <Label>{t("commission.flatFee")}</Label>
           <Switch
             id="rate_type"
             checked={rateType === "percentage"}
@@ -110,11 +112,11 @@ const UpsertDefaultCommissionRuleForm = ({ onSuccess, rule }: Props) => {
               setRateType(val ? "percentage" : "flat");
             }}
           />
-          <Label>Percentage</Label>
+          <Label>{t("fields.percentage")}</Label>
         </div>
       </fieldset>
       <fieldset className="my-4">
-        <legend className="mb-2">Fee value</legend>
+        <legend className="mb-2">{t("commission.feeValue")}</legend>
         {rateType === "percentage" && (
           <Input
             name="rate_percent_value"
@@ -158,7 +160,7 @@ const UpsertDefaultCommissionRuleForm = ({ onSuccess, rule }: Props) => {
         <>
           <fieldset className="my-4">
             <div className="flex items-center gap-x-2">
-              <Label>Minimum commission value</Label>
+              <Label>{t("commission.minValue")}</Label>
               <Switch
                 id="min_com"
                 checked={minCommissionEnabled}
@@ -201,7 +203,7 @@ const UpsertDefaultCommissionRuleForm = ({ onSuccess, rule }: Props) => {
           </fieldset>
           <fieldset className="my-4">
             <div className="flex items-center gap-x-2">
-              <Label>Maximum commission value</Label>
+              <Label>{t("commission.maxValue")}</Label>
               <Switch
                 id="max_com"
                 checked={maxCommissionEnabled}
@@ -245,7 +247,7 @@ const UpsertDefaultCommissionRuleForm = ({ onSuccess, rule }: Props) => {
         </>
       )}
       <Button type="submit" isLoading={loading}>
-        Create
+        {t("actions.create")}
       </Button>
     </form>
   );

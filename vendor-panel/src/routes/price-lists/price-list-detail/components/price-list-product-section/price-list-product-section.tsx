@@ -133,7 +133,7 @@ const ProductRowAction = ({
       },
       {
         onSuccess: () => {
-          toast.success("Product removed from price list")
+          toast.success(t("priceLists.productRemovedSuccess"))
         },
         onError: (e) => {
           toast.error(e.message)

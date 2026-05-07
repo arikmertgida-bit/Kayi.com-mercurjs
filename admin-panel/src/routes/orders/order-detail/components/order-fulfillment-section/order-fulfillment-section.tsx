@@ -1,11 +1,5 @@
 import { Buildings, XCircle } from "@medusajs/icons"
-import {
-  AdminOrder,
-  AdminOrderFulfillment,
-  AdminOrderLineItem,
-  HttpTypes,
-  OrderLineItemDTO,
-} from "@medusajs/types"
+import { AdminOrder, AdminOrderLineItem, HttpTypes } from "@medusajs/types"
 import {
   Button,
   Container,
@@ -39,7 +33,7 @@ type OrderFulfillmentSectionProps = {
 export const OrderFulfillmentSection = ({
   order,
 }: OrderFulfillmentSectionProps) => {
-  const fulfillments = order.fulfillments || []
+  const fulfillments = (order.fulfillments || []) as unknown as HttpTypes.AdminFulfillment[]
 
   return (
     <div className="flex flex-col gap-y-3">
@@ -55,7 +49,7 @@ const UnfulfilledItem = ({
   item,
   currencyCode,
 }: {
-  item: OrderLineItemDTO & { variant: HttpTypes.AdminProductVariant }
+  item: AdminOrderLineItem
   currencyCode: string
 }) => {
   return (
@@ -81,7 +75,7 @@ const UnfulfilledItem = ({
             </div>
           )}
           <Text size="small">
-            {item.variant?.options.map((o) => o.value).join(" · ")}
+            {item.variant?.options?.map((o) => o.value).join(" · ")}
           </Text>
         </div>
       </div>
@@ -204,7 +198,7 @@ const Fulfillment = ({
   order,
   index,
 }: {
-  fulfillment: AdminOrderFulfillment
+  fulfillment: HttpTypes.AdminFulfillment
   order: AdminOrder
   index: number
 }) => {
@@ -215,7 +209,7 @@ const Fulfillment = ({
   const showLocation = !!fulfillment.location_id
 
   const isPickUpFulfillment =
-    fulfillment.shipping_option?.service_zone.fulfillment_set.type ===
+    (fulfillment as HttpTypes.AdminFulfillment & { shipping_option?: { service_zone?: { fulfillment_set?: { type?: string } } } }).shipping_option?.service_zone?.fulfillment_set?.type ===
     FulfillmentSetType.Pickup
 
   const { stock_location, isError, error } = useStockLocation(
@@ -226,7 +220,7 @@ const Fulfillment = ({
     }
   )
 
-  let statusText = fulfillment.requires_shipping
+  let statusText = (fulfillment as HttpTypes.AdminFulfillment & { requires_shipping?: boolean }).requires_shipping
     ? isPickUpFulfillment
       ? "Awaiting pickup"
       : "Awaiting shipping"
@@ -258,7 +252,7 @@ const Fulfillment = ({
     !fulfillment.canceled_at &&
     !fulfillment.shipped_at &&
     !fulfillment.delivered_at &&
-    fulfillment.requires_shipping &&
+    (fulfillment as HttpTypes.AdminFulfillment & { requires_shipping?: boolean }).requires_shipping &&
     !isPickUpFulfillment
 
   const showDeliveryButton =

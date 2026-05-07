@@ -1,6 +1,7 @@
 import { Button, Container, Drawer, Text } from "@medusajs/ui";
 
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import type { CommissionLine } from "@custom-types/commission";
 
@@ -14,6 +15,7 @@ type Props = {
 
 export function CommissionLineDetail({ line, open, close }: Props) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   if (!line) {
     return null;
@@ -23,11 +25,11 @@ export function CommissionLineDetail({ line, open, close }: Props) {
     <Drawer open={open} onOpenChange={close}>
       <Drawer.Content>
         <Drawer.Header>
-          <Drawer.Title>Commission line details</Drawer.Title>
+          <Drawer.Title>{t("commissionLines.detail.title")}</Drawer.Title>
         </Drawer.Header>
         <Drawer.Body className="p-4">
           <fieldset>
-            <legend className="mb-2">Seller name</legend>
+            <legend className="mb-2">{t("commissionLines.detail.sellerName")}</legend>
             <Container>
               <div className="flex items-center justify-between">
                 <Text>{line.order.seller.name}</Text>
@@ -36,13 +38,13 @@ export function CommissionLineDetail({ line, open, close }: Props) {
                   size="small"
                   onClick={() => navigate(`/sellers/${line.order.seller.id}`)}
                 >
-                  View Seller
+                  {t("commissionLines.detail.viewSeller")}
                 </Button>
               </div>
             </Container>
           </fieldset>
           <fieldset className="mt-2">
-            <legend className="mt-4">Order number</legend>
+            <legend className="mt-4">{t("commissionLines.detail.orderNumber")}</legend>
             <Container>
               <div className="flex items-center justify-between">
                 <Text>{`#${line.order.display_id}`}</Text>
@@ -51,13 +53,13 @@ export function CommissionLineDetail({ line, open, close }: Props) {
                   size="small"
                   onClick={() => navigate(`/orders/${line.order.id}`)}
                 >
-                  View Order
+                  {t("commissionLines.detail.viewOrder")}
                 </Button>
               </div>
             </Container>
           </fieldset>
           <fieldset className="mt-2">
-            <legend className="mt-4">Calculated commission value</legend>
+            <legend className="mt-4">{t("commissionLines.detail.calculatedValue")}</legend>
             <Container>
               <div className="flex items-center justify-between">
                 <Text>{`${line.value} ${line.currency_code.toUpperCase()}`}</Text>
@@ -65,23 +67,23 @@ export function CommissionLineDetail({ line, open, close }: Props) {
             </Container>
           </fieldset>
           <fieldset className="mt-2">
-            <legend className="mt-4">Rate details</legend>
+            <legend className="mt-4">{t("commissionLines.detail.rateDetails")}</legend>
             <Container>
               <div className="flex flex-col gap-2">
-                <Text>{`Rule name: ${line.rule.name}`}</Text>
-                <Text>{`Reference: ${line.rule.reference}`}</Text>
-                <Text>{`Type: ${line.rule.rate.type}`}</Text>
+                <Text>{t("commissionLines.detail.ruleNameValue", { name: line.rule.name })}</Text>
+                <Text>{t("commissionLines.detail.referenceValue", { ref: line.rule.reference })}</Text>
+                <Text>{t("commissionLines.detail.typeValue", { type: line.rule.rate.type })}</Text>
                 {line.rule.rate.type === "percentage" && (
                   <>
-                    <Text>{`Rate value: ${line.rule.rate.percentage_rate}%`}</Text>
-                    <Text>{`Include tax: ${line.rule.rate.include_tax ? "Yes" : "No"}`}</Text>
+                    <Text>{t("commissionLines.detail.rateValuePct", { value: line.rule.rate.percentage_rate })}</Text>
+                    <Text>{t("commissionLines.detail.includeTaxValue", { value: line.rule.rate.include_tax ? t("general.yes") : t("general.no") })}</Text>
                   </>
                 )}
                 {line.rule.deleted_at !== null && (
                   <Text
                     size="large"
                     weight="plus"
-                  >{`Rule was deleted at ${formatDate(line.rule.deleted_at)}!`}</Text>
+                  >{t("commissionLines.detail.ruleDeletedAt", { date: formatDate(line.rule.deleted_at) })}</Text>
                 )}
               </div>
             </Container>

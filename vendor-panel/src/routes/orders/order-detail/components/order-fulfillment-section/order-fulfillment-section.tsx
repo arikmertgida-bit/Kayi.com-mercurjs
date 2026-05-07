@@ -191,7 +191,7 @@ const UnfulfilledItemDisplay = ({
         <Link
           to={`/orders/${order.id}/fulfillment?requires_shipping=${requiresShipping}`}
         >
-          <Button>Fulfill items</Button>
+          <Button>{t("orders.fulfillment.fulfillItems")}</Button>
         </Link>
       </div>
     </Container>

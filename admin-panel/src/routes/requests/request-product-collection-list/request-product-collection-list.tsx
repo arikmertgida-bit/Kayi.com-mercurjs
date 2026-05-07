@@ -3,6 +3,7 @@ import { useState } from "react";
 import { History } from "@medusajs/icons";
 import type { ProductCollectionDTO } from "@medusajs/types";
 import { Container, Heading, Table, Text } from "@medusajs/ui";
+import { useTranslation } from "react-i18next";
 
 import { formatDate } from "@lib/date";
 
@@ -21,6 +22,7 @@ import { ProductCollectionRequestDetail } from "@routes/requests/request-product
 const PAGE_SIZE = 20;
 
 export const RequestProductCollectionList = () => {
+  const { t } = useTranslation();
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailRequest, setDetailRequest] = useState<AdminRequest | undefined>(
@@ -45,7 +47,7 @@ export const RequestProductCollectionList = () => {
     <Container>
       <div className="flex items-center justify-between px-6 py-4">
         <div>
-          <Heading>Product collection requests</Heading>
+          <Heading>{t("requests.productCollectionList.heading")}</Heading>
           <ProductCollectionRequestDetail
             request={detailRequest}
             open={detailOpen}
@@ -63,16 +65,16 @@ export const RequestProductCollectionList = () => {
         </div>
       </div>
       <div className="flex size-full flex-col overflow-hidden">
-        {isLoading && <Text>Loading...</Text>}
+        {isLoading && <Text>{t("requests.loading")}</Text>}
         <Table>
           <Table.Header>
             <Table.Row>
-              <Table.HeaderCell>Title</Table.HeaderCell>
-              <Table.HeaderCell>Handle</Table.HeaderCell>
-              <Table.HeaderCell>Submitted By</Table.HeaderCell>
-              <Table.HeaderCell>Date</Table.HeaderCell>
-              <Table.HeaderCell>Status</Table.HeaderCell>
-              <Table.HeaderCell>Actions</Table.HeaderCell>
+              <Table.HeaderCell>{t("requests.columns.title")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("requests.columns.handle")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("requests.columns.submittedBy")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("requests.columns.date")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("requests.columns.status")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("requests.columns.actions")}</Table.HeaderCell>
             </Table.Row>
           </Table.Header>
           <Table.Body>

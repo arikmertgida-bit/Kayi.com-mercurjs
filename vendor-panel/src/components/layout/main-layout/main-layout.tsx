@@ -124,7 +124,7 @@ const useCoreRoutes = (): Omit<INavItem, "pathname">[] => {
   return [
     {
       icon: <Component />,
-      label: "Dashboard",
+      label: t("dashboard.domain"),
       to: "/dashboard",
     },
     {
@@ -145,11 +145,11 @@ const useCoreRoutes = (): Omit<INavItem, "pathname">[] => {
       to: "/products",
       items: [
         {
-          label: "Tekil Ürünler",
+          label: t("products.singleProducts"),
           to: "/products/single",
         },
         {
-          label: "Varyasyonlu Ürünler",
+          label: t("products.variantProducts"),
           to: "/products/variants",
         },
         {
@@ -202,38 +202,40 @@ const useCoreRoutes = (): Omit<INavItem, "pathname">[] => {
     },
     {
       icon: <Star />,
-      label: reviewBadgeCount > 0 ? `Reviews (${reviewBadgeCount})` : "Reviews",
+      label: reviewBadgeCount > 0 ? `${t("reviews.domain")} (${reviewBadgeCount})` : t("reviews.domain"),
       to: "/reviews",
     },
     {
       icon: <Users />,
-      label: "Takipçiler",
+      label: t("followers.domain"),
       to: "/followers",
     },
     {
       icon: <ChatBubbleLeftRight />,
-      label: `Messages ${unreadMessages?.length && unreadMessages?.length > 0 ? `(${unreadMessages?.length})` : ""}`,
+      label: unreadMessages?.length && unreadMessages.length > 0
+        ? `${t("messages.domain")} (${unreadMessages.length})`
+        : t("messages.domain"),
       to: "/messages",
     },
     {
       icon: <ListCheckbox />,
-      label: "Requests",
+      label: t("requests.domain"),
       to: "/requests",
       items: [
         {
-          label: "Collections",
+          label: t("collections.domain"),
           to: "/requests/collections",
         },
         {
-          label: "Categories",
+          label: t("categories.domain"),
           to: "/requests/categories",
         },
         {
-          label: "Reviews",
+          label: t("reviews.domain"),
           to: "/requests/reviews",
         },
         {
-          label: "Orders returns",
+          label: t("requests.tabs.orderReturns"),
           to: "/requests/orders",
         },
       ],

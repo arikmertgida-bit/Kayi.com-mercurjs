@@ -45,11 +45,11 @@ export function createMessageRouter(io: SocketServer) {
    */
   router.delete("/:id/messages/:msgId", authMiddleware, requireConversationParticipant, async (req: AuthRequest, res) => {
     try {
-      const { userId } = resolveIdentity(req.auth!)
+      const { userId, userType } = resolveIdentity(req.auth!)
       const messageId = req.params.msgId
       const deleteForAll = Boolean(req.body?.deleteForAll)
 
-      const message = await MessageService.deleteMessage(messageId, userId, deleteForAll)
+      const message = await MessageService.deleteMessage(messageId, userId, deleteForAll, userType)
 
       if (deleteForAll) {
         // Broadcast updated message to all participants in the room
@@ -57,7 +57,6 @@ export function createMessageRouter(io: SocketServer) {
           messageId,
           conversationId: (req as any).conversationId,
           deleteForAll: true,
-          content: "[Bu mesaj silindi]",
         })
       }
 

@@ -107,15 +107,15 @@ export const ProductCreateForm = ({
   const handleTypeSelect = (type: ProductType) => {
     form.setValue("enable_variants", type === "variant")
     if (type === "single") {
-      form.setValue("options", [{ title: "Default option", values: ["Default option value"] }])
+      form.setValue("options", [{ title: "Varsayılan Seçenek", values: ["Varsayılan Değer"] }])
       form.setValue(
         "variants",
         decorateVariantsWithDefaultValues([
           {
-            title: "Default variant",
+            title: "Varsayılan Varyant",
             should_create: true,
             variant_rank: 0,
-            options: { "Default option": "Default option value" },
+            options: { "Varsayılan Seçenek": "Varsayılan Değer" },
             inventory: [{ inventory_item_id: "", required_quantity: "" }],
             is_default: true,
           },
@@ -138,15 +138,15 @@ export const ProductCreateForm = ({
     if (!initialProductType) return
     if (initialProductType === "single") {
       form.setValue("enable_variants", false)
-      form.setValue("options", [{ title: "Default option", values: ["Default option value"] }])
+      form.setValue("options", [{ title: "Varsayılan Seçenek", values: ["Varsayılan Değer"] }])
       form.setValue(
         "variants",
         decorateVariantsWithDefaultValues([
           {
-            title: "Default variant",
+            title: "Varsayılan Varyant",
             should_create: true,
             variant_rank: 0,
-            options: { "Default option": "Default option value" },
+            options: { "Varsayılan Seçenek": "Varsayılan Değer" },
             inventory: [{ inventory_item_id: "", required_quantity: "" }],
             is_default: true,
           },
@@ -398,7 +398,7 @@ export const ProductCreateForm = ({
                 }
 
                 if (createLevels.length > 0) {
-                  await batchUpdateStock({ create: createLevels })
+                  await batchUpdateStock({ create: createLevels } as any)
                 }
               }
             } catch (e) {
@@ -609,7 +609,7 @@ type ProductTypeSelectorProps = {
   onSelect: (type: ProductType) => void
 }
 
-const ProductTypeSelector = ({ onSelect }: ProductTypeSelectorProps) => {
+const ProductTypeSelector = ({ onSelect: _onSelect }: ProductTypeSelectorProps) => {
   const { t } = useTranslation()
   const navigate = useNavigate()
 

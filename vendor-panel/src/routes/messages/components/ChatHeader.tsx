@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import type { MessageContext } from "../../../lib/messenger/types"
 
 interface ChatHeaderProps {
@@ -22,13 +23,14 @@ export function ChatHeader({
   onBack,
   onClose,
 }: ChatHeaderProps) {
+  const { t } = useTranslation()
   const isProduct = context?.type === "PRODUCT"
   const isVendor = context?.type === "VENDOR"
 
   const contextLabel = isProduct
-    ? "Ürün sorusu"
+    ? t("messages.productQuestion")
     : isVendor
-    ? "Genel mağaza sorusu"
+    ? t("messages.storeQuestion")
     : otherParticipantType
 
   return (
@@ -37,7 +39,7 @@ export function ChatHeader({
       <button
         onClick={onBack}
         className="md:hidden w-7 h-7 flex items-center justify-center rounded-full hover:bg-ui-bg-base-hover text-ui-fg-muted hover:text-ui-fg-subtle transition-colors flex-shrink-0"
-        aria-label="Geri"
+        aria-label={t("messages.back")}
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -57,6 +59,8 @@ export function ChatHeader({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
         </div>
+      ) : otherParticipantType === "ADMIN" ? (
+        <img src="/logo.png" alt="Kayı.com" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
       ) : (
         <div className="w-8 h-8 rounded-full bg-ui-tag-blue-bg flex items-center justify-center text-xs font-medium text-ui-tag-blue-text flex-shrink-0">
           {(otherName[0] ?? "?").toUpperCase()}
@@ -66,16 +70,16 @@ export function ChatHeader({
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-ui-fg-base truncate">{otherName}</p>
         <p className="text-xs text-ui-fg-muted">
-          {contextLabel}
-          {" · "}
-          {participantCount} katılımcı
+          {otherParticipantType === "ADMIN" ? "Yönetim" : (
+            <>{contextLabel}{" · "}{participantCount} {t("messages.participant")}</>
+          )}
         </p>
       </div>
 
       <button
         onClick={onClose}
         className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-ui-bg-base-hover text-ui-fg-muted hover:text-ui-fg-subtle transition-colors flex-shrink-0"
-        aria-label="Kapat"
+        aria-label={t("messages.close")}
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

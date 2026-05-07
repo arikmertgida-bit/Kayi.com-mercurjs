@@ -1,9 +1,9 @@
 import {
   AdminExchange,
+  AdminInventoryLevel,
   AdminOrder,
   AdminOrderPreview,
   AdminReturn,
-  InventoryLevelDTO,
 } from "@medusajs/types"
 import { Alert, Button, Heading, Text, toast } from "@medusajs/ui"
 import { useEffect, useMemo, useState } from "react"
@@ -59,7 +59,7 @@ export const ExchangeInboundSection = ({
    */
   const { setIsOpen } = useStackedModal()
   const [inventoryMap, setInventoryMap] = useState<
-    Record<string, InventoryLevelDTO[]>
+    Record<string, AdminInventoryLevel[]>
   >({})
 
   /**
@@ -306,15 +306,18 @@ export const ExchangeInboundSection = ({
 
   useEffect(() => {
     const getInventoryMap = async () => {
-      const ret: Record<string, InventoryLevelDTO[]> = {}
+      const ret: Record<string, AdminInventoryLevel[]> = {}
 
       if (!inboundItems.length) {
         return ret
       }
 
       const variantIds = inboundItems
-        .map((item) => item?.variant_id)
-        .filter(Boolean)
+        .map((item) => {
+          const orderItem = order.items?.find((oi) => oi.id === item.item_id)
+          return orderItem?.variant_id
+        })
+        .filter((id): id is string => !!id)
 
       const variants = (
         await sdk.admin.productVariant.list({
@@ -324,7 +327,7 @@ export const ExchangeInboundSection = ({
       ).variants
 
       variants.forEach((variant) => {
-        ret[variant.id] = variant.inventory?.[0]?.location_levels || []
+        ret[variant.id] = (variant.inventory_items?.[0]?.inventory?.location_levels || []) as AdminInventoryLevel[]
       })
 
       return ret

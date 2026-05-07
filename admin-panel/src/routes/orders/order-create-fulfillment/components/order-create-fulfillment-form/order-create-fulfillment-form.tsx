@@ -1,5 +1,5 @@
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useEffect, useMemo, useState } from "react"
+﻿import { zodResolver } from "@hookform/resolvers/zod"
+import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import * as zod from "zod"
 
@@ -7,7 +7,7 @@ import { AdminOrder, HttpTypes } from "@medusajs/types"
 import { Alert, Button, Select, Switch, toast } from "@medusajs/ui"
 import { useForm, useWatch } from "react-hook-form"
 
-import { OrderLineItemDTO } from "@medusajs/types"
+import { AdminOrderLineItem } from "@medusajs/types"
 import { Form } from "../../../../../components/common/form"
 import {
   RouteFocusModal,
@@ -75,7 +75,7 @@ export function OrderCreateFulfillmentForm({
         },
         {} as Record<string, number>
       ),
-      send_notification: !order.no_notification,
+      send_notification: !(order as unknown as { no_notification?: boolean }).no_notification,
     },
     resolver: zodResolver(CreateFulfillmentSchema),
   })
@@ -155,7 +155,7 @@ export function OrderCreateFulfillmentForm({
       toast.success(t("orders.fulfillment.toast.created"))
       handleSuccess(`/orders/${order.id}`)
     } catch (e) {
-      toast.error(e.message)
+      toast.error((e as Error).message)
     }
   })
 
@@ -210,7 +210,7 @@ export function OrderCreateFulfillmentForm({
 
     const quantityMap = itemsToFulfill.reduce(
       (acc, item) => {
-        acc[item.id] = getFulfillableQuantity(item as OrderLineItemDTO)
+        acc[item.id] = getFulfillableQuantity(item as AdminOrderLineItem)
         return acc
       },
       {} as Record<string, number>
@@ -360,7 +360,7 @@ export function OrderCreateFulfillmentForm({
                             disabled={
                               requiresShipping && !isShippingProfileMatching
                             }
-                            reservations={reservations}
+                            reservations={reservations ?? []}
                           />
                         )
                       })}
@@ -368,10 +368,7 @@ export function OrderCreateFulfillmentForm({
                   </Form.Item>
                   {form.formState.errors.root && (
                     <Alert
-                      variant="error"
-                      dismissible={false}
                       className="flex items-center"
-                      classNameInner="flex justify-between flex-1 items-center"
                     >
                       {form.formState.errors.root.message}
                     </Alert>

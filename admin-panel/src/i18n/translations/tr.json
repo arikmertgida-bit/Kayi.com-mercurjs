@@ -3,6 +3,9 @@
   "general": {
     "ascending": "Artan",
     "descending": "Azalan",
+    "loading": "Yükleniyor...",
+    "yes": "Evet",
+    "no": "Hayır",
     "add": "Ekle",
     "start": "Başla",
     "end": "Bitiş",
@@ -2037,7 +2040,7 @@
           "title": "Bu kodu kim kullanabilir?",
           "description": "Hangi müşterinin promosyon kodunu kullanmasına izin verilir? Eğer değiştirilmezse, promosyon kodu tüm müşteriler tarafından kullanılabilir."
         },
-        "target-rules": {
+        "target_rules": {
           "title": "Promosyon hangi ürünlere uygulanacak?",
           "description": "Promosyon, aşağıdaki koşulları karşılayan ürünlere uygulanacaktır.",
           "order": {
@@ -2053,7 +2056,7 @@
             "description": "Promosyon, aşağıdaki koşullarla eşleşen ürünlere uygulanacak."
           }
         },
-        "buy-rules": {
+        "buy_rules": {
           "title": "Promosyonu açmak için sepette ne olmalı?",
           "description": "Bu koşullar sağlandığında, hedef ürünlerde promosyon etkinleştirilir."
         }
@@ -2076,10 +2079,10 @@
       "rules": {
         "title": "Kullanım koşullarını düzenle"
       },
-      "target-rules": {
+      "target_rules": {
         "title": "Ürün koşullarını düzenle"
       },
-      "buy-rules": {
+      "buy_rules": {
         "title": "Satın alma kurallarını düzenle"
       }
     },
@@ -2091,6 +2094,35 @@
       },
       "actions": {
         "goToCampaign": "Kampanyaya git"
+      },
+      "notPartOf": "Bir kampanyanın parçası değil",
+      "addToExisting": "Bu promosyonu mevcut bir kampanyaya ekle",
+      "addToCampaign": "Kampanyaya Ekle"
+    },
+    "templates": {
+      "amountOffProducts": {
+        "title": "Ürünlerden indirim",
+        "description": "Belirli ürünleri veya ürün koleksiyonlarını indir"
+      },
+      "amountOffOrder": {
+        "title": "Siparişten indirim",
+        "description": "Toplam sipariş tutarını indirir"
+      },
+      "percentageOffProduct": {
+        "title": "Üründen yüzde indirim",
+        "description": "Seçili ürünlerden yüzde indirim uygular"
+      },
+      "percentageOffOrder": {
+        "title": "Siparişten yüzde indirim",
+        "description": "Toplam sipariş tutarından yüzde indirim uygular"
+      },
+      "buyXGetY": {
+        "title": "X Al Y Kazan",
+        "description": "X ürün al, Y ürün kazan"
+      },
+      "freeShipping": {
+        "title": "Ücretsiz kargo",
+        "description": "Müşterilere ücretsiz kargo sağlar"
       }
     },
     "campaign_currency": {
@@ -2930,7 +2962,9 @@
     "beaware": "Dikkat",
     "loading": "Yükleniyor",
     "selectValue": "Değer Seç",
-    "selectValues": "Değerleri Seç"
+    "selectValues": "Değerleri Seç",
+    "selectOperator": "Operatör Seç",
+    "selectType": "Tür seç"
   },
   "fields": {
     "amount": "Miktar",
@@ -3095,7 +3129,14 @@
     "isReturn": "İade mi",
     "promotionCode": "Promosyon kodu",
     "serviceZone": "Hizmet Bölgesi",
-    "creditTotal": "Kredi Kalemleri Toplamı"
+    "creditTotal": "Kredi Kalemleri Toplamı",
+    "yes": "Evet",
+    "no": "Hayır",
+    "filterable": "Filtrelenebilir",
+    "global": "Genel",
+    "required": "Gerekli",
+    "productCategories": "Ürün Kategorileri",
+    "options": "Seçenekler"
   },
   "dateTime": {
     "years_one": "Yıl",
@@ -3111,18 +3152,33 @@
     "minutes_one": "Dakika",
     "minutes_other": "Dakikalar",
     "seconds_one": "Saniye",
-    "seconds_other": "Saniyeler"
+    "seconds_other": "Saniyeler",
+    "createdAt": "Oluşturulma",
+    "updatedAt": "Güncellenme"
   },
   "attributes": {
     "domain": "Ürün Özellikleri",
     "create": {
       "successToast": "Özellik başarıyla oluşturuldu.",
       "details": "Detaylar",
-      "type": "Tür"
+      "type": "Tür",
+      "enterValue": "Değer girin"
+    },
+    "detail": {
+      "notFound": "Özellik bulunamadı",
+      "possibleValues": "Olası Değerler"
+    },
+    "possibleValues": {
+      "search": "Olası değerlerde ara..."
     }
   },
   "requests": {
     "domain": "Talepler",
+    "status": {
+      "pending": "Beklemede",
+      "accepted": "Onaylandı",
+      "rejected": "Reddedildi"
+    },
     "seller": "Satıcı",
     "product": "Ürün",
     "review-remove": "Yorum Kaldırma",
@@ -3131,7 +3187,105 @@
     "product-category": "Ürün Kategorisi",
     "product-tag": "Ürün Etiketi",
     "product-type": "Ürün Türü",
-    "product-update": "Ürün Güncelleme"
+    "product-update": "Ürün Güncelleme",
+    "loading": "Yükleniyor...",
+    "columns": {
+      "date": "Tarih",
+      "status": "Durum",
+      "actions": "İşlemler",
+      "submittedBy": "Gönderen",
+      "reason": "Sebep",
+      "orderId": "Sipariş No",
+      "customer": "Müşteri",
+      "seller": "Satıcı",
+      "escalatedDate": "İtiraz Tarihi",
+      "title": "Başlık",
+      "name": "İsim",
+      "product": "Ürün",
+      "variants": "Varyantlar",
+      "value": "Değer",
+      "handle": "Tanımlayıcı"
+    },
+    "detail": {
+      "accept": "Onayla",
+      "reject": "Reddet",
+      "variants": "Varyantlar",
+      "options": "Seçenekler",
+      "organization": "Organizasyon",
+      "attributes": "Özellikler",
+      "requestInformation": "Talep bilgisi",
+      "submittedOn": "{{date}} tarihinde gönderildi",
+      "reviewedOn": "{{date}} tarihinde incelendi",
+      "reviewerNote": "İnceleyici notu: {{note}}",
+      "submittedBy": "Gönderen"
+    },
+    "sellerList": {
+      "heading": "Satıcı oluşturma talepleri",
+      "detail": {
+        "title": "Satıcı talebini incele",
+        "sellerName": "Satıcı adı",
+        "member": "Üye"
+      }
+    },
+    "reviewRemoveList": {
+      "heading": "Yorum kaldırma talepleri",
+      "detail": {
+        "title": "Yorum kaldırma talebi",
+        "reviewNote": "Yorum notu",
+        "reviewRating": "Yorum puanı",
+        "sellerResponse": "Satıcı yanıtı"
+      }
+    },
+    "returnList": {
+      "heading": "Sipariş iade talepleri",
+      "detail": {
+        "title": "Sipariş iade talebi",
+        "returnReason": "İade talebi sebebi",
+        "vendorResponse": "Satıcı yanıtı",
+        "items": "Ürünler",
+        "escalatedOn": "{{date}} tarihinde itiraz edildi"
+      }
+    },
+    "productUpdateList": {
+      "heading": "Ürün güncelleme talepleri"
+    },
+    "productTypeList": {
+      "heading": "Ürün türü talepleri",
+      "detail": {
+        "title": "Ürün türü talebi",
+        "productTypeValue": "Ürün türü değeri"
+      }
+    },
+    "productTagList": {
+      "heading": "Ürün etiketi talepleri",
+      "detail": {
+        "title": "Ürün etiketi talebi",
+        "productTagValue": "Ürün etiketi değeri"
+      }
+    },
+    "productList": {
+      "heading": "Ürün talepleri",
+      "variantCount": "{{count}} varyant",
+      "detail": {
+        "title": "Ürün talebi",
+        "productTitle": "Ürün başlığı",
+        "seeFullProduct": "Tam ürünü gör"
+      }
+    },
+    "productCollectionList": {
+      "heading": "Ürün koleksiyonu talepleri",
+      "detail": {
+        "title": "Ürün koleksiyonu talebi",
+        "collectionTitle": "Koleksiyon başlığı"
+      }
+    },
+    "productCategoryList": {
+      "heading": "Ürün kategorisi talepleri",
+      "detail": {
+        "title": "Ürün kategorisi talebi",
+        "categoryName": "Kategori adı"
+      }
+    }
   },
   "sellers": {
     "domain": "Satıcılar",
@@ -3145,18 +3299,83 @@
       "postal_code": "Posta Kodu",
       "city": "Şehir",
       "country_code": "Ülke Kodu",
-      "tax_id": "Vergi Kimliği"
+      "tax_id": "Vergi Kimliği",
+      "handle": "Tanımlayıcı",
+      "account_status": "Hesap Durumu"
     },
     "edit": {
       "header": "Satıcıyı Düzenle",
       "successToast": "Satıcı {{name}} başarıyla güncellendi."
-    }
+    },
+    "stockLocations": {
+      "heading": "Stok Konumları",
+      "assign": "Ata",
+      "removeTitle": "Stok konumunu kaldır",
+      "removeDesc": "\"{{name}}\" bu satıcıdan kaldırılsın mı? Satıcı artık bu konumdaki stoku yönetemeyecek.",
+      "removeSuccess": "Stok konumu kaldırıldı",
+      "removeError": "Stok konumu kaldırılamadı",
+      "assignSuccess": "Stok konumu atandı",
+      "assignError": "Stok konumu atanamadı"
+    },
+    "customerGroups": {
+      "deleteDesc": "{{name}} müşteri grubunu silmek üzeresiniz. Bu işlem geri alınamaz.",
+      "deleteSuccess": "Müşteri grubu başarıyla silindi",
+      "deleteSuccessDesc": "{{name}} başarıyla silindi",
+      "deleteError": "Müşteri grubu silinirken hata oluştu",
+      "deleteErrorDesc": "Lütfen daha sonra tekrar deneyin"
+    },
+    "invite": {
+      "action": "Davet Et",
+      "title": "Satıcı Davet Et",
+      "description": "Mağazanıza yeni bir satıcı davet edin",
+      "success": "Davet gönderildi!",
+      "error": "Hata!"
+    },
+    "store": "Mağaza",
+    "activate": "Hesabı etkinleştir",
+    "suspend": "Hesabı askıya al",
+    "activateConfirm": "Bu hesabı etkinleştirmek istediğinizden emin misiniz?",
+    "suspendConfirm": "Bu hesabı askıya almak istediğinizden emin misiniz?"
   },
   "messages": {
-    "domain": "Mesajlar"
+    "domain": "Mesajlar",
+    "delete": "Benden sil",
+    "deleteForEveryone": "Herkesten sil",
+    "close": "Kapat",
+    "connectionLost": "Bağlantı kesildi. Yeniden bağlanılıyor...",
+    "imageUploadFailed": "Görsel yüklenemedi"
+  },
+  "messenger": {
+    "searchConversations": "Konuşma ara...",
+    "noConversations": "Henüz konuşma yok",
+    "startConversation": "Konuşma başlat",
+    "selectConversation": "Bir konuşma seçin",
+    "startMessaging": "Mesajlaşmaya başlamak için sol taraftan bir konuşma seçin",
+    "typeMessage": "Mesaj yazın...",
+    "seen": "Görüldü",
+    "image": "Görsel",
+    "support": "Destek",
+    "direct": "Direkt",
+    "unknown": "Bilinmiyor",
+    "supportTeam": "Destek Ekibi"
   },
   "configuration": {
-    "domain": "Ürün Kataloğu Ayarları"
+    "domain": "Ürün Kataloğu Ayarları",
+    "header": "Ürün Kataloğu Ayarları",
+    "subtitle": "Global ürün kataloğu yapılandırma ayarlarını yönetin",
+    "createRulesTitle": "Kural Oluştur",
+    "ruleType": "Kural türü",
+    "ruleTypeColumn": "Kural türü",
+    "enabledColumn": "Aktif",
+    "isRuleEnabled": "Kural aktif mi",
+    "updated": "Güncellendi!",
+    "error": "Hata!",
+    "tooltip": {
+      "global_product_catalog": "Satıcıların yalnızca admin tarafından yönetilen global ürünlere stok ekleyip ekleyemeyeceğini belirtir",
+      "product_request_enabled": "Satıcıların kataloğa dahil edilmek üzere yeni ürün önermesine izin ver",
+      "require_product_approval": "Satıcı tarafından eklenen ürünlerin listelenmeye hazır olmadan önce admin onayı gerektirip gerektirmediğini belirtir",
+      "product_import_enabled": "Satıcıların CSV dosyası aracılığıyla ürün içe aktarmasına izin ver"
+    }
   },
   "meilisearch": {
     "domain": "Meilisearch",
@@ -3177,13 +3396,54 @@
     "error": "Hata!",
     "disable": "Devre dışı bırak",
     "enable": "Etkinleştir",
-    "delete": "Sil"
+    "delete": "Sil",
+    "globalTitle": "Global Komisyon Ayarları",
+    "globalDescription": "Marketplace'inizin global komisyon ayarlarını yönetin.",
+    "rulesTitle": "Komisyon Kuralları",
+    "rulesDescription": "Mevcut komisyon kurallarını görüntüleyin, arayın ve yönetin.",
+    "createRule": "Kural Oluştur",
+    "editDefault": "Varsayılan kuralı düzenle",
+    "defaultCommission": "Varsayılan komisyon",
+    "minCommission": "Sipariş başına minimum komisyon",
+    "maxCommission": "Sipariş başına maksimum komisyon",
+    "includingTax": "Komisyon vergi dahil uygulanır",
+    "ruleName": "Kural Adı",
+    "ruleType": "Kural Türü",
+    "refTypeSeller": "Satıcı",
+    "refTypeProductType": "Ürün türü",
+    "refTypeProductCategory": "Ürün kategorisi",
+    "refTypeSellerProductType": "Satıcı + Ürün türü",
+    "refTypeSellerProductCategory": "Satıcı + Ürün kategorisi",
+    "attribute": "Özellik",
+    "feeType": "Ücret türü",
+    "flatFee": "Sabit ücret",
+    "feeValue": "Ücret değeri",
+    "minValue": "Minimum komisyon değeri",
+    "maxValue": "Maksimum komisyon değeri"
   },
   "commissionLines": {
-    "domain": "Komisyon Satırları"
+    "domain": "Komisyon Satırları",
+    "columns": {
+      "order": "Sipariş"
+    },
+    "detail": {
+      "title": "Komisyon satırı detayları",
+      "sellerName": "Satıcı adı",
+      "viewSeller": "Satıcıyı Görüntüle",
+      "orderNumber": "Sipariş numarası",
+      "viewOrder": "Siparişi Görüntüle",
+      "calculatedValue": "Hesaplanan komisyon değeri",
+      "rateDetails": "Oran detayları",
+      "ruleNameValue": "Kural adı: {{name}}",
+      "referenceValue": "Referans: {{ref}}",
+      "typeValue": "Tür: {{type}}",
+      "rateValuePct": "Oran değeri: %{{value}}",
+      "includeTaxValue": "Vergi dahil: {{value}}",
+      "ruleDeletedAt": "Kural {{date}} tarihinde silindi!"
+    }
   },
   "refundReasons": {
-    "domain": "İade Nedenleri",
+    "domain": "Geri Ödeme Gerekçeleri",
     "subtitle": "İade için nedenleri yönetin.",
     "calloutHint": "İadeleri kategorize etmek için nedenleri yönetin.",
     "editReason": "İade Nedenini Düzenle",
@@ -3244,6 +3504,33 @@
     "saveAsNew": "Yeni görünüm olarak kaydet",
     "updateDefaultForEveryone": "Herkese varsayılan olarak güncelle",
     "updateViewName": "Görünümü güncelle",
+    "systemDefault": "Sistem Varsayılanı",
+    "personalViews": "Kişisel Görünümler",
+    "saveCurrentView": "Mevcut görünümü kaydet",
+    "editView": "Görünümü düzenle",
+    "deleteView": "Görünümü sil",
+    "deleteViewDescription": "\"{{name}}\" görünümünü silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+    "resetSystemDefault": "Sistem varsayılanını sıfırla",
+    "resetSystemDefaultDescription": "Bu işlem kaydedilen sistem varsayılanını silecek ve orijinal kod düzeyindeki varsayılanlara geri dönecektir. Tüm kullanıcılar etkilenecektir. Emin misiniz?",
+    "resetToCodeDefaults": "Kod varsayılanlarına sıfırla",
+    "viewName": "Görünüm Adı",
+    "enterViewName": "Görünüm adını girin",
+    "editViewName": "Görünüm Adını Düzenle",
+    "saveAsNewView": "Yeni Görünüm Olarak Kaydet",
+    "changeViewName": "Kaydedilmiş görünümünüzün adını değiştirin",
+    "saveConfiguration": "Mevcut yapılandırmayı yeni görünüm olarak kaydedin",
+    "nameRequired": "Ad gereklidir",
+    "nameNotEmpty": "Ad boş olamaz",
+    "saveAsSystemDefault": "Sistem varsayılanı olarak kaydet",
+    "saveAsSystemDefaultDesc": "Bu işlem mevcut yapılandırmayı sistem varsayılanı olarak kaydedecektir. Kendi kişisel görünümleri olmadığı sürece tüm kullanıcılar bu yapılandırmayı varsayılan olarak görecektir. Emin misiniz?",
+    "updateExistingView": "Mevcut görünümü güncelle",
+    "updateExistingViewDesc": "\"{{name}}\" mevcut yapılandırmayla güncellensin mi?",
+    "update": "Güncelle",
+    "saveAsDefaultBtn": "Varsayılan olarak kaydet",
+    "default": "Varsayılan",
+    "updateDefaultView": "Varsayılan görünümü güncelle",
+    "updateDefaultViewDesc": "Bu işlem tüm kullanıcılar için varsayılan görünümü güncelleyecektir. Emin misiniz?",
+    "updateConfirmText": "Herkes için güncelle",
     "prompts": {
       "updateDefault": {
         "title": "Varsayılan görünümü güncelle",
@@ -3258,5 +3545,92 @@
         "cancelText": "İptal"
       }
     }
+  },
+  "reportedImages": {
+    "domain": "Bildirilen Görseller",
+    "subtitle": "İşaretlenmiş görselleri inceleyin ve kaldırmaya veya yayınlamaya karar verin.",
+    "list": {
+      "noRecordsMessage": "Bildirilen görsel bulunamadı."
+    },
+    "status": {
+      "all": "Tümü",
+      "pending": "Beklemede",
+      "resolved": "Çözüldü"
+    },
+    "columns": {
+      "image": "Görsel",
+      "reportedBy": "Bildiren",
+      "reason": "Sebep",
+      "date": "Tarih",
+      "status": "Durum",
+      "actions": "İşlemler"
+    },
+    "actions": {
+      "removeImage": "Görseli Kaldır",
+      "publishImage": "Görseli Yayınla"
+    },
+    "remove": {
+      "title": "Görseli Kaldır",
+      "description": "Bu işlem görseli tüm kullanıcılardan kalıcı olarak gizleyecek. Devam etmek istiyor musunuz?",
+      "success": "Görsel başarıyla kaldırıldı."
+    },
+    "publish": {
+      "title": "Görseli Yayınla",
+      "description": "Bu işlem görseli tekrar tüm kullanıcılara görünür hale getirecek. Devam etmek istiyor musunuz?",
+      "success": "Görsel başarıyla yayınlandı."
+    },
+    "errors": {
+      "actionFailed": "Bir şeyler yanlış gitti. Lütfen tekrar deneyin."
+    }
+  },
+  "productReports": {
+    "domain": "Ürün Bildirimleri",
+    "subtitle": "İşaretlenmiş ürünleri inceleyin, bildirimleri çözümleyin veya reddedin.",
+    "list": {
+      "noRecordsMessage": "Ürün bildirimi bulunamadı."
+    },
+    "status": {
+      "all": "Tümü",
+      "pending": "Beklemede",
+      "resolved": "Çözüldü",
+      "dismissed": "Reddedildi"
+    },
+    "columns": {
+      "product": "Ürün",
+      "seller": "Satıcı",
+      "reporter": "Bildiren",
+      "reason": "Sebep",
+      "comment": "Yorum",
+      "date": "Tarih",
+      "status": "Durum",
+      "actions": "İşlemler"
+    },
+    "reasons": {
+      "inaccurate_product_details": "Hatalı Ürün Detayları",
+      "pricing_irregularities": "Fiyat Düzensizlikleri",
+      "prohibited_item": "Yasak Ürün",
+      "counterfeit_trademark": "Sahte / Ticari Marka İhlali",
+      "incorrect_categorization": "Hatalı Kategorizasyon",
+      "inappropriate_media": "Uygunsuz Medya",
+      "dmca_violation": "DMCA / Telif Hakkı İhlali",
+      "other": "Diğer"
+    },
+    "actions": {
+      "resolve": "Görüldü Olarak İşaretle",
+      "delete": "Sil",
+      "notificationSent": "Kullanıcıya bildirim gönderildi.",
+      "reportDeleted": "Bildirim silindi."
+    },
+    "errors": {
+      "actionFailed": "Bir hata oluştu, lütfen tekrar deneyin."
+    }
+  },
+  "dashboard": {
+    "analyticsTitle": "Analitik",
+    "analyticsSubtitle": "Mağazanızın ilerlemesini görün"
+  },
+  "team": {
+    "domain": "Ekip",
+    "subtitle": "Ekip üyelerinizi ve rollerini yönetin."
   }
 }

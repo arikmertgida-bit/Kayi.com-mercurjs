@@ -1,6 +1,6 @@
 import { DataTable } from "../../../../../components/data-table"
 import { useInventoryItemLevels } from "../../../../../hooks/api/inventory"
-import { useLocationListTableColumns } from "./use-location-list-table-columns"
+import { useLocationListTableColumns, type ExtendedLocationLevel } from "./use-location-list-table-columns"
 import { useLocationLevelTableQuery } from "./use-location-list-table-query"
 
 const PAGE_SIZE = 20
@@ -35,7 +35,7 @@ export const ItemLocationListTable = ({
 
   return (
     <DataTable
-      data={inventory_levels ?? []}
+      data={(inventory_levels ?? []) as unknown as ExtendedLocationLevel[]}
       columns={columns}
       rowCount={count}
       pageSize={PAGE_SIZE}

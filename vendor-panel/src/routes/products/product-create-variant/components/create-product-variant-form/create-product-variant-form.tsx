@@ -245,7 +245,7 @@ export const CreateProductVariantForm = ({
             }
           })
           .filter(
-            (price) => !!price
+            (price): price is AdminCreateProductVariantPrice => !!price
           ),
       },
       {

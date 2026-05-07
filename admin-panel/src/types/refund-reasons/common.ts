@@ -19,6 +19,10 @@ export interface AdminRefundReason {
    */
   label: string;
   /**
+   * The refund reason's code.
+   */
+  code: string;
+  /**
    * The refund reason's description.
    *
    * @example

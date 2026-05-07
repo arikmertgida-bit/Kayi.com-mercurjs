@@ -1,6 +1,5 @@
 import { useTranslation } from "react-i18next"
 
-import React from "react"
 import { IconButton, Input, Text } from "@medusajs/ui"
 import { UseFormReturn } from "react-hook-form"
 import { HttpTypes, AdminOrderLineItem } from "@medusajs/types"
@@ -102,7 +101,7 @@ function ReturnItem({
           <div className="text-ui-fg-subtle txt-small mr-2 flex flex-shrink-0">
             <MoneyAmountCell
               currencyCode={currencyCode}
-              amount={previewItem.return_requested_total}
+              amount={(previewItem as AdminOrderLineItem & { return_requested_total?: number }).return_requested_total}
             />
           </div>
 
@@ -126,7 +125,7 @@ function ReturnItem({
                     onClick: onRemove,
                     icon: <XCircle />,
                   },
-                ].filter(Boolean),
+                ].filter((a): a is Exclude<typeof a, false> => !!a),
               },
             ]}
           />

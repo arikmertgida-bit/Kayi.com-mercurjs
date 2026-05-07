@@ -1,9 +1,11 @@
-import { PromotionRuleResponse } from "@medusajs/types"
+import type { AdminPromotionRule } from "@medusajs/types"
 
-export const getRuleValue = (rule: PromotionRuleResponse) => {
-  if (rule.field_type === "number") {
-    return parseInt(rule.values as unknown as string)
+import type { ExtendedAdminPromotionRule } from "../../types"
+
+export const getRuleValue = (rule: AdminPromotionRule) => {
+  const r = rule as ExtendedAdminPromotionRule
+  if (r.field_type === "number") {
+    return parseInt(r.values as unknown as string)
   }
-
-  return rule.values
+  return r.values
 }

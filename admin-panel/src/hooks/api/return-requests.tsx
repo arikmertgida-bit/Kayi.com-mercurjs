@@ -33,7 +33,7 @@ export const useReturnRequests = (
     queryFn: () =>
       sdk.client.fetch("/admin/return-request", {
         method: "GET",
-        query,
+        query: { order: "-created_at", ...query },
       }),
     ...options,
   });

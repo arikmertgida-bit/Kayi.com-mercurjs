@@ -1,4 +1,5 @@
-import { useState } from "react"
+﻿import React, { useState } from "react"
+import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 import { History } from "@medusajs/icons"
 import { Badge, Button, Container, Heading, Table, Text, toast } from "@medusajs/ui"
@@ -14,25 +15,8 @@ const PAGE_SIZE = 20
 
 type FilterState = "pending" | "resolved" | "dismissed" | ""
 
-const getStatusBadge = (status: string) => {
-  if (status === "pending") return <Badge color="orange">Pending</Badge>
-  if (status === "resolved") return <Badge color="green">Resolved</Badge>
-  if (status === "dismissed") return <Badge color="grey">Dismissed</Badge>
-  return <Badge color="grey">{status}</Badge>
-}
-
-const REASON_LABELS: Record<string, string> = {
-  inaccurate_product_details: "Inaccurate Product Details",
-  pricing_irregularities: "Pricing Irregularities",
-  prohibited_item: "Prohibited Item",
-  counterfeit_trademark: "Counterfeit / Trademark Violation",
-  incorrect_categorization: "Incorrect Categorization",
-  inappropriate_media: "Inappropriate Media",
-  dmca_violation: "DMCA / Copyright Violation",
-  other: "Other",
-}
-
 export const ProductReportList = () => {
+  const { t } = useTranslation()
   const [currentPage, setCurrentPage] = useState(0)
   const [filter, setFilter] = useState<FilterState>("pending")
 
@@ -44,23 +28,30 @@ export const ProductReportList = () => {
 
   const { mutate: resolveReport, isPending: isResolving } = useResolveProductReport({
     onSuccess: () => {
-      toast.success("Kullanıcıya bildirim gönderildi.")
+      toast.success(t("productReports.actions.notificationSent"))
     },
     onError: () => {
-      toast.error("Bir hata oluştu, lütfen tekrar deneyin.")
+      toast.error(t("productReports.errors.actionFailed"))
     },
   })
 
   const { mutate: deleteReport, isPending: isDeleting } = useDeleteProductReport({
     onSuccess: () => {
-      toast.success("Rapor silindi.")
+      toast.success(t("productReports.actions.reportDeleted"))
     },
     onError: () => {
-      toast.error("Bir hata oluştu, lütfen tekrar deneyin.")
+      toast.error(t("productReports.errors.actionFailed"))
     },
   })
 
   const isBusy = isResolving || isDeleting
+
+  const getStatusBadge = (status: string) => {
+    if (status === "pending") return <Badge color="orange">{t("productReports.status.pending")}</Badge>
+    if (status === "resolved") return <Badge color="green">{t("productReports.status.resolved")}</Badge>
+    if (status === "dismissed") return <Badge color="grey">{t("productReports.status.dismissed")}</Badge>
+    return <Badge color="grey">{status}</Badge>
+  }
 
   const handleAttend = (report: ProductReport) => {
     resolveReport({ id: report.id })
@@ -74,9 +65,9 @@ export const ProductReportList = () => {
     <Container>
       <div className="flex items-center justify-between px-6 py-4">
         <div>
-          <Heading>Product Reports</Heading>
+          <Heading>{t("productReports.domain")}</Heading>
           <Text className="text-ui-fg-subtle mt-1">
-            Review flagged products and resolve or dismiss reports.
+            {t("productReports.subtitle")}
           </Text>
         </div>
         <div className="flex gap-2">
@@ -90,26 +81,26 @@ export const ProductReportList = () => {
                 setFilter(f)
               }}
             >
-              {f === "" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
+              {f === "" ? t("productReports.status.all") : t(`productReports.status.${f}`)}
             </Button>
           ))}
         </div>
       </div>
 
       <div className="flex size-full flex-col overflow-hidden">
-        {isLoading && <Text className="px-6 pb-4">Loading...</Text>}
+        {isLoading && <Text className="px-6 pb-4">{t("labels.loading")}</Text>}
 
         <Table>
           <Table.Header>
             <Table.Row>
-              <Table.HeaderCell>Ürün</Table.HeaderCell>
-              <Table.HeaderCell>Satıcı</Table.HeaderCell>
-              <Table.HeaderCell>Bildiren</Table.HeaderCell>
-              <Table.HeaderCell>Sebep</Table.HeaderCell>
-              <Table.HeaderCell>Yorum</Table.HeaderCell>
-              <Table.HeaderCell>Tarih</Table.HeaderCell>
-              <Table.HeaderCell>Durum</Table.HeaderCell>
-              <Table.HeaderCell>İşlemler</Table.HeaderCell>
+              <Table.HeaderCell>{t("productReports.columns.product")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("productReports.columns.seller")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("productReports.columns.reporter")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("productReports.columns.reason")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("productReports.columns.comment")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("productReports.columns.date")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("productReports.columns.status")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("productReports.columns.actions")}</Table.HeaderCell>
             </Table.Row>
           </Table.Header>
           <Table.Body>
@@ -135,7 +126,7 @@ export const ProductReportList = () => {
                   </Link>
                 </Table.Cell>
                 <Table.Cell>
-                  <Text className="text-sm">{report.seller_name ?? "—"}</Text>
+                  <Text className="text-sm">{report.seller_name ?? "â€”"}</Text>
                   {report.seller_handle && (
                     <Text className="text-xs text-ui-fg-subtle">@{report.seller_handle}</Text>
                   )}
@@ -145,7 +136,7 @@ export const ProductReportList = () => {
                 </Table.Cell>
                 <Table.Cell>
                   <Text className="text-sm">
-                    {REASON_LABELS[report.reason] ?? report.reason}
+                    {t(`productReports.reasons.${report.reason}`, { defaultValue: report.reason })}
                   </Text>
                 </Table.Cell>
                 <Table.Cell>
@@ -169,7 +160,7 @@ export const ProductReportList = () => {
                         disabled={isBusy}
                         onClick={() => handleAttend(report)}
                       >
-                        İlgilenildi
+                        {t("productReports.actions.resolve")}
                       </Button>
                     )}
                     <Button
@@ -178,7 +169,7 @@ export const ProductReportList = () => {
                       disabled={isBusy}
                       onClick={() => handleDelete(report)}
                     >
-                      Sil
+                      {t("productReports.actions.delete")}
                     </Button>
                   </div>
                 </Table.Cell>
@@ -186,9 +177,9 @@ export const ProductReportList = () => {
             ))}
             {!isLoading && (reports as ProductReport[]).length === 0 && (
               <Table.Row>
-                <Table.Cell colSpan={8} className="py-8 text-center">
+                <Table.Cell {...{ colSpan: 8 } as React.TdHTMLAttributes<HTMLTableCellElement>} className="py-8 text-center">
                   <Text className="text-center text-ui-fg-subtle py-8">
-                    No product reports found.
+                    {t("productReports.list.noRecordsMessage")}
                   </Text>
                 </Table.Cell>
               </Table.Row>

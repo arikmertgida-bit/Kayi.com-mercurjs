@@ -58,7 +58,7 @@ export const ProductCreateVariantsForm = ({
   })
 
   const variantData = useMemo(() => {
-    const ret = []
+    const ret: (ProductCreateVariantSchema & { originalIndex: number })[] = []
 
     variants.forEach((v, i) => {
       if (v.should_create) {
@@ -72,7 +72,7 @@ export const ProductCreateVariantsForm = ({
   return (
     <div className="flex size-full flex-col divide-y overflow-hidden">
       <DataGrid
-        columns={columns}
+        columns={columns as any}
         data={variantData}
         state={form}
         onEditingChange={(editing) => setCloseOnEscape(!editing)}
@@ -82,7 +82,7 @@ export const ProductCreateVariantsForm = ({
 }
 
 const columnHelper = createDataGridHelper<
-  ProductCreateVariantSchema,
+  ProductCreateVariantSchema & { originalIndex: number },
   ProductCreateSchemaType
 >()
 
@@ -191,10 +191,11 @@ const useColumns = ({
         regions,
         pricePreferences,
         getFieldName: (context, value) => {
+          const original = context.row.original as ProductCreateVariantSchema & { originalIndex: number }
           if (context.column.id?.startsWith("currency_prices")) {
-            return `variants.${context.row.original.originalIndex}.prices.${value}`
+            return `variants.${original.originalIndex}.prices.${value}`
           }
-          return `variants.${context.row.original.originalIndex}.prices.${value}`
+          return `variants.${original.originalIndex}.prices.${value}`
         },
         t,
       }),
