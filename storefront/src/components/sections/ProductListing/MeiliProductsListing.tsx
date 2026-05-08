@@ -72,7 +72,8 @@ export const MeiliProductsListing = ({
 
   return (
     <FiltersProvider initialSearch={searchParams.toString()}>
-      <InstantSearch searchClient={searchClient as any} indexName="products">
+      {/* @ts-expect-error — MeiliSearch client satisfies Algolia SearchClient interface at runtime but types differ */}
+      <InstantSearch searchClient={searchClient} indexName="products">
         <FilteredProductsContent
           seller_handle={seller_handle}
           category_id={category_id}
@@ -289,7 +290,7 @@ const ProductsListing = ({
             <div className="w-full">
               <ul className="grid grid-cols-1 min-[425px]:grid-cols-2 lg:grid-cols-3 min-[1440px]:grid-cols-4 gap-4">
                 {pagedItems.map((hit: any, i: number) => {
-                  const apiProduct = apiProductsMap.get((hit as any).objectID ?? (hit as any).id)
+                  const apiProduct = apiProductsMap.get(hit.objectID ?? (hit as Record<string, unknown>).id as string)
                   if (!apiProduct) {
                     // API data not yet loaded — skeleton dimensions must match ProductCard exactly:
                     //   outer p-1, image aspect-square, text area p-4 + title h-5 + price h-4

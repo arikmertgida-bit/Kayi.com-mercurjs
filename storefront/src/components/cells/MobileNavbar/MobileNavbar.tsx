@@ -76,7 +76,7 @@ export const MobileNavbar = ({
           <div className='flex flex-col'>
             {menuCategories.map((parent) => {
               const children: HttpTypes.StoreProductCategory[] =
-                (parent as any).category_children ?? [];
+                (parent as HttpTypes.StoreProductCategory & { category_children?: HttpTypes.StoreProductCategory[] }).category_children ?? [];
               const isOpen = openAccordion === parent.id;
 
               return (

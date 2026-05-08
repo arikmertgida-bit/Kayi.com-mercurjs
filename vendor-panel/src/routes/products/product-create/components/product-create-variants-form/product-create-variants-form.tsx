@@ -5,6 +5,7 @@ import { HttpTypes } from "@medusajs/types"
 import { ProductCreateVariantsSection } from "../product-create-details-form/components/product-create-details-variant-section"
 import { ProductCreateSchemaType } from "../../types"
 import { useRegions } from "../../../../../hooks/api/regions"
+import { currencies as currencyMap } from "../../../../../lib/data/currencies"
 
 type ProductCreateVariantsFormProps = {
   form: UseFormReturn<ProductCreateSchemaType>
@@ -20,7 +21,7 @@ export const ProductCreateVariantsForm = ({
     () =>
       (regions ?? []).map((r) => ({
         key: r.id,
-        label: `${r.name} (${r.currency_code.toUpperCase()})`,
+        label: currencyMap[r.currency_code.toUpperCase()]?.symbol_native ?? r.currency_code.toUpperCase(),
       })),
     [regions]
   )

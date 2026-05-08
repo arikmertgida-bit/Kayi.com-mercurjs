@@ -10,8 +10,11 @@ export const sdk = new Medusa({
 })
 
 // useful when you want to call the BE from the console and try things out quickly
+declare global {
+  interface Window { __sdk: typeof sdk }
+}
 if (typeof window !== "undefined") {
-  ;(window as any).__sdk = sdk
+  window.__sdk = sdk
 }
 
 export const importProductsQuery = async (file: File) => {

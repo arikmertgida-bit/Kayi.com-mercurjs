@@ -4,7 +4,8 @@ import { syncProductsWorkflow } from "../workflows/sync-products"
 const BATCH_SIZE = 500
 
 export default async function syncMeiliSearchJob(container: MedusaContainer) {
-  console.info("[MEILISEARCH-JOB] Starting sync at:", new Date().toISOString())
+  const logger = container.resolve<{ info: (...a: unknown[]) => void; error: (...a: unknown[]) => void }>('logger')
+  logger.info("[MEILISEARCH-JOB] Starting sync at:", new Date().toISOString())
   try {
     let offset = 0
     let totalSynced = 0
@@ -24,12 +25,12 @@ export default async function syncMeiliSearchJob(container: MedusaContainer) {
       offset += BATCH_SIZE
     }
 
-    console.info(
+    logger.info(
       `[MEILISEARCH-JOB] Sync completed — ${totalSynced} products processed`
     )
   } catch (error: unknown) {
-    const message = error instanceof Error ? (error as Error).message : String(error)
-    console.error("[MEILISEARCH-JOB] Sync failed:", message)
+    const message = error instanceof Error ? error.message : String(error)
+    logger.error("[MEILISEARCH-JOB] Sync failed:", message)
   }
 }
 

@@ -153,7 +153,7 @@ export const useCreateViewConfiguration = (
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: viewsQueryKeys.configurations(entity) })
       // If set_active was true, also invalidate the active configuration
-      if ((variables as any).set_active) {
+      if ((variables as unknown as Record<string, unknown>).set_active) {
         queryClient.invalidateQueries({
           queryKey: viewsQueryKeys.active(entity)
         })

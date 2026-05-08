@@ -27,7 +27,7 @@ export function createMessageRouter(io: SocketServer) {
   router.get("/:id/messages", authMiddleware, requireConversationParticipant, async (req: AuthRequest, res) => {
     try {
       const { userId } = resolveIdentity(req.auth!)
-      const conversationId = (req as any).conversationId as string
+      const conversationId = req.conversationId as string
       const cursor = req.query.cursor as string | undefined
       const limit = Math.min(parseInt(req.query.limit as string || "30", 10), 100)
 
@@ -53,9 +53,9 @@ export function createMessageRouter(io: SocketServer) {
 
       if (deleteForAll) {
         // Broadcast updated message to all participants in the room
-        io.to(`conversation:${(req as any).conversationId}`).emit("message_deleted", {
+        io.to(`conversation:${req.conversationId}`).emit("message_deleted", {
           messageId,
-          conversationId: (req as any).conversationId,
+          conversationId: req.conversationId,
           deleteForAll: true,
         })
       }
@@ -82,7 +82,7 @@ export function createMessageRouter(io: SocketServer) {
   router.post("/:id/messages", authMiddleware, messageSendLimiter, requireConversationParticipant, async (req: AuthRequest, res) => {
     try {
       const { userId, userType } = resolveIdentity(req.auth!)
-      const conversationId = (req as any).conversationId as string
+      const conversationId = req.conversationId as string
       const { content } = req.body
 
       if (!content || typeof content !== "string" || content.trim().length === 0) {

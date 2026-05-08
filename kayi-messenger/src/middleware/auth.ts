@@ -9,6 +9,10 @@ export interface AuthPayload {
 
 export interface AuthRequest extends Request {
   auth?: AuthPayload
+  /** Set by requireConversationParticipant middleware */
+  conversationId?: string
+  /** Set by requireConversationParticipant middleware */
+  participantUserId?: string
 }
 
 const JWT_SECRET = process.env.JWT_SECRET!

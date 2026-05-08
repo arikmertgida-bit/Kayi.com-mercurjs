@@ -26,7 +26,7 @@ export const ProductReviews = async ({ product, locale }: Props) => {
 
   if (customer) {
     try {
-      const isDev = (customer as any).email === DEV_EXCEPTION_EMAIL
+      const isDev = customer.email === DEV_EXCEPTION_EMAIL
       const orders = await listOrders(50, 0)
       matchedOrder = (orders || []).find((order) => {
         const containsProduct = order.items?.some((item) => item.product_id === product.id)
@@ -38,7 +38,7 @@ export const ProductReviews = async ({ product, locale }: Props) => {
       })
       canReview = isDev ? true : Boolean(matchedOrder)
     } catch {
-      canReview = (customer as any).email === DEV_EXCEPTION_EMAIL
+      canReview = customer.email === DEV_EXCEPTION_EMAIL
       matchedOrder = null
     }
   }

@@ -66,7 +66,7 @@ export const PricingEdit = ({
           }
           return acc
         }, {}),
-      })) as any,
+      })),
     },
 
     resolver: zodResolver(UpdateVariantPricesSchema, {}),

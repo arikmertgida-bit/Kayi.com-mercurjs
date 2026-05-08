@@ -187,14 +187,18 @@ export const useActivityItems = (order: ExtendedAdminOrder): Activity[] => {
       items.push({
         title: t("orders.activity.events.fulfillment.created"),
         timestamp: fulfillment.created_at,
-        children: <FulfillmentCreatedBody fulfillment={fulfillment as any} />,
+        children: (
+          <FulfillmentCreatedBody fulfillment={fulfillment as any} />
+        ),
       })
 
       if (fulfillment.delivered_at) {
         items.push({
           title: t("orders.activity.events.fulfillment.delivered"),
           timestamp: fulfillment.delivered_at,
-          children: <FulfillmentCreatedBody fulfillment={fulfillment as any} />,
+          children: (
+            <FulfillmentCreatedBody fulfillment={fulfillment as any} />
+          ),
         })
       }
 

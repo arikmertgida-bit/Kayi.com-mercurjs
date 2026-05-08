@@ -66,7 +66,7 @@ export const ProductEditVariantForm = ({
     return acc
   }, {})
 
-  const existingThumbnailUrl = (variant?.metadata as any)?.thumbnail_url as string | undefined
+  const existingThumbnailUrl = (variant?.metadata as Record<string, unknown> | undefined)?.thumbnail_url as string | undefined
 
   const form = useForm<z.infer<typeof ProductEditVariantSchema>>({
     defaultValues: {

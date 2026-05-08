@@ -18,7 +18,7 @@ export default async function MessagesPage() {
     user.email ||
     "Ben"
 
-  const avatarUrl = ((user.metadata as any)?.avatar_url as string) ?? null
+  const avatarUrl = ((user.metadata as Record<string, unknown> | null | undefined)?.avatar_url as string) ?? null
 
   return (
     <main className="container">

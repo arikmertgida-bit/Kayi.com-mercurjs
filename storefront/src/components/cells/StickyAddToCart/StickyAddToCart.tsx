@@ -50,7 +50,7 @@ export const StickyAddToCart = ({
       total,
       tax_total: total - subtotal,
       variant_id: selectedVariant.id,
-      product_id: (selectedVariant as any).product_id ?? "",
+      product_id: (selectedVariant as HttpTypes.StoreProductVariant & { product_id?: string }).product_id ?? "",
       variant: selectedVariant,
     }
 

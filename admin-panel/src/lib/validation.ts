@@ -77,10 +77,10 @@ export function partialFormValidation<TForm extends FieldValues>(
   fields: FieldPath<any>[],
   schema: z.ZodSchema<any>
 ) {
-  form.clearErrors(fields as any)
+  form.clearErrors(fields as FieldPath<TForm>[])
 
   const values = fields.reduce((acc, key) => {
-    acc[key] = form.getValues(key as any)
+    acc[key] = form.getValues(key as FieldPath<TForm>)
     return acc
   }, {} as Record<string, unknown>)
 
@@ -88,7 +88,7 @@ export function partialFormValidation<TForm extends FieldValues>(
 
   if (!validationResult.success) {
     validationResult.error.errors.forEach(({ path, message, code }) => {
-      form.setError(path.join(".") as any, {
+      form.setError(path.join(".") as FieldPath<TForm>, {
         type: code,
         message,
       })

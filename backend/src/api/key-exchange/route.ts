@@ -13,6 +13,6 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
       res.json({ publishableApiKey: defaultApiKey.token });
     }
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
   }
 }

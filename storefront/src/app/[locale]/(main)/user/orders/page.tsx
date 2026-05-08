@@ -6,6 +6,10 @@ import { listOrders } from "@/lib/data/orders"
 import { getTranslations } from "next-intl/server"
 import LocalizedClientLink from "@/components/molecules/LocalizedLink/LocalizedLink"
 
+interface OrderWithSet extends Omit<Awaited<ReturnType<typeof listOrders>>[number], never> {
+  order_set: { id: string; created_at: string; display_id: string }
+}
+
 const LIMIT = 10
 
 export default async function UserPage({
@@ -26,8 +30,8 @@ export default async function UserPage({
   const currentPage = +page || 1
   const offset = (+currentPage - 1) * LIMIT
 
-  const orderSetsGrouped = orders.reduce((acc, order) => {
-    const orderSetId = (order as any).order_set.id
+  const orderSetsGrouped = (orders as OrderWithSet[]).reduce((acc, order) => {
+    const orderSetId = order.order_set.id
     if (!acc[orderSetId]) {
       acc[orderSetId] = []
     }
@@ -38,7 +42,7 @@ export default async function UserPage({
   const orderSets = Object.entries(orderSetsGrouped).map(
     ([orderSetId, orders]) => {
       const firstOrder = orders[0]
-      const orderSet = (firstOrder as any).order_set
+      const orderSet = (orders[0] as any).order_set
 
       return {
         id: orderSetId,

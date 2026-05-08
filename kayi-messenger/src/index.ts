@@ -3,6 +3,7 @@ import express from "express"
 import cors from "cors"
 import { createServer } from "http"
 import { Server as SocketServer } from "socket.io"
+import { UserType } from "@prisma/client"
 import { decodeToken, resolveIdentity } from "./middleware/auth"
 import { registerSocketHandlers } from "./socket/handlers"
 import { setDisplayName } from "./lib/user-cache"
@@ -86,7 +87,7 @@ io.use((socket, next) => {
   if (displayName && typeof displayName === "string") {
     socket.data.displayName = displayName
     // Persist to DB asynchronously so cache survives server restarts
-    setDisplayName(identity.userId, displayName, identity.userType as any).catch((err) => {
+    setDisplayName(identity.userId, displayName, identity.userType as UserType).catch((err) => {
       console.error(`[socket] Failed to persist displayName for ${identity.userId}:`, err)
     })
   }

@@ -269,7 +269,7 @@ export function MessengerVendorInbox({ sellerId: _sellerId }: MessengerVendorInb
             </Heading>
             <span
               className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-500" : "bg-ui-fg-muted"}`}
-              title={isConnected ? "Connected" : "Disconnected"}
+              title={isConnected ? t("messenger.connected") : t("messenger.disconnected")}
             />
           </div>
           <input

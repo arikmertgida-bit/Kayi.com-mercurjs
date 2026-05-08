@@ -46,9 +46,9 @@ export function VariantGeneralSection({ variant }: VariantGeneralSectionProps) {
     <Container className="divide-y p-0">
       <div className="flex items-center justify-between px-6 py-4">
         <div className="flex items-center gap-4">
-          {(variant.metadata as any)?.thumbnail_url && (
+          {!!(variant.metadata as Record<string, unknown>)?.thumbnail_url && (
             <img
-              src={(variant.metadata as any).thumbnail_url}
+              src={(variant.metadata as Record<string, unknown>).thumbnail_url as string}
               alt={variant.title || ""}
               className="h-16 w-16 rounded-md object-cover object-center border"
             />

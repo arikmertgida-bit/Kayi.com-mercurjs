@@ -135,7 +135,7 @@ export function OrderCreateFulfillmentForm({
       const itemShippingProfileMap = order.items.reduce((acc, item) => {
         acc[item.id] = item.variant?.product?.shipping_profile?.id
         return acc
-      }, {} as any)
+      }, {} as Record<string, string | undefined>)
 
       items = items.filter(
         ({ id }) => itemShippingProfileMap[id] === selectedShippingProfileId

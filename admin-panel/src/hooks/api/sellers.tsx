@@ -18,6 +18,44 @@ type SortableOrderFields = "display_id" | "created_at" | "updated_at";
 type SortableProductFields = "title" | "created_at" | "updated_at";
 type SortableCustomerGroupFields = "name" | "created_at" | "updated_at";
 
+interface DateRangeFilter {
+  $gte?: string
+  $lte?: string
+}
+
+interface SellerOrderFilters {
+  q?: string
+  region_id?: string[]
+  sales_channel_id?: string[]
+  created_at?: DateRangeFilter
+  updated_at?: DateRangeFilter
+  order?: string
+  offset?: number
+  limit?: number
+}
+
+interface SellerProductFilters {
+  q?: string
+  sales_channel_id?: string[]
+  status?: string[]
+  tag_id?: string[]
+  type_id?: string[]
+  created_at?: DateRangeFilter
+  updated_at?: DateRangeFilter
+  order?: string
+  offset?: number
+  limit?: number
+}
+
+interface SellerCustomerGroupFilters {
+  q?: string
+  created_at?: DateRangeFilter
+  updated_at?: DateRangeFilter
+  order?: string
+  offset?: number
+  limit?: number
+}
+
 const sortOrders = (orders: any[], order: string) => {
   const field = order.startsWith("-")
     ? (order.slice(1) as SortableOrderFields)
@@ -215,7 +253,7 @@ export const useSellerByHandle = (handle: string | undefined) => {
 export const useSellerOrders = (
   id: string,
   query?: Record<string, string | number>,
-  filters?: any
+  filters?: SellerOrderFilters
 ) => {
   const { data, isLoading } = useQuery({
     queryKey: ["seller-orders", id, query],
@@ -248,23 +286,25 @@ export const useSellerOrders = (
 
   // Filter by region_id
   if (filters?.region_id && Array.isArray(filters.region_id)) {
+    const regionIds = filters.region_id
     processedOrders = processedOrders.filter(
-      (order) => order.region_id && filters.region_id.includes(order.region_id)
+      (order) => order.region_id && regionIds.includes(order.region_id)
     );
   }
 
   // Filter by sales_channel_id
   if (filters?.sales_channel_id && Array.isArray(filters.sales_channel_id)) {
+    const channelIds = filters.sales_channel_id
     processedOrders = processedOrders.filter(
       (order) =>
         order.sales_channel_id &&
-        filters.sales_channel_id.includes(order.sales_channel_id)
+        channelIds.includes(order.sales_channel_id)
     );
   }
 
   // Filter by created_at date ranges
   if (filters?.created_at) {
-    const dateFilter = filters.created_at as any;
+    const dateFilter = filters.created_at;
     if (dateFilter.$gte) {
       const filterDate = new Date(dateFilter.$gte);
       processedOrders = processedOrders.filter((order) => {
@@ -283,7 +323,7 @@ export const useSellerOrders = (
 
   // Filter by updated_at date ranges
   if (filters?.updated_at) {
-    const dateFilter = filters.updated_at as any;
+    const dateFilter = filters.updated_at;
 
     if (dateFilter.$gte) {
       const filterDate = new Date(dateFilter.$gte);
@@ -318,8 +358,8 @@ export const useSellerOrders = (
     }
   }
 
-  const offset = Number(filters.offset) || 0;
-  const limit = Number(filters.limit) || 10;
+  const offset = Number(filters?.offset) || 0;
+  const limit = Number(filters?.limit) || 10;
 
   return {
     data: {
@@ -347,7 +387,7 @@ export const useUpdateSeller = () => {
 export const useSellerProducts = (
   id: string,
   query?: Record<string, string | number>,
-  filters?: any
+  filters?: SellerProductFilters
 ) => {
   const { data, isLoading, refetch } = useQuery<
     { products: AdminProduct[] },
@@ -378,37 +418,41 @@ export const useSellerProducts = (
 
   // Filter by tag_id
   if (filters?.tag_id && Array.isArray(filters.tag_id)) {
+    const tagIds = filters.tag_id
     processedProducts = processedProducts.filter((product) =>
-      product.tags?.some((tag: any) => filters.tag_id.includes(tag.id))
+      product.tags?.some((tag: any) => tagIds.includes(tag.id))
     );
   }
 
   // Filter by type_id
   if (filters?.type_id && Array.isArray(filters.type_id)) {
+    const typeIds = filters.type_id
     processedProducts = processedProducts.filter((product) =>
-      filters.type_id.includes(product.type_id)
+      product.type_id != null && typeIds.includes(product.type_id)
     );
   }
 
   // Filter by sales_channel_id
   if (filters?.sales_channel_id && Array.isArray(filters.sales_channel_id)) {
+    const channelIds = filters.sales_channel_id
     processedProducts = processedProducts.filter((product) =>
       product.sales_channels?.some((channel: any) =>
-        filters.sales_channel_id.includes(channel.id)
+        channelIds.includes(channel.id)
       )
     );
   }
 
   // Filter by status
   if (filters?.status && Array.isArray(filters.status)) {
+    const statuses = filters.status
     processedProducts = processedProducts.filter((product) =>
-      filters.status.includes(product.status)
+      statuses.includes(product.status)
     );
   }
 
   // Filter by created_at date ranges
   if (filters?.created_at) {
-    const dateFilter = filters.created_at as any;
+    const dateFilter = filters.created_at;
     if (dateFilter.$gte) {
       const filterDate = new Date(dateFilter.$gte);
       processedProducts = processedProducts.filter((product) => {
@@ -427,7 +471,7 @@ export const useSellerProducts = (
 
   // Filter by updated_at date ranges
   if (filters?.updated_at) {
-    const dateFilter = filters.updated_at as any;
+    const dateFilter = filters.updated_at;
     if (dateFilter.$gte) {
       const filterDate = new Date(dateFilter.$gte);
       processedProducts = processedProducts.filter((product) => {
@@ -479,7 +523,7 @@ export const useSellerProducts = (
 export const useSellerCustomerGroups = (
   id: string,
   query?: Record<string, string | number>,
-  filters?: Record<string, string | number>
+  filters?: SellerCustomerGroupFilters
 ) => {
   const { data, isLoading, refetch } = useQuery<
     { customer_groups: AdminCustomerGroup[] },
@@ -516,7 +560,7 @@ export const useSellerCustomerGroups = (
 
   // Filter by created_at date ranges
   if (filters?.created_at) {
-    const dateFilter = filters.created_at as any;
+    const dateFilter = filters.created_at;
     if (dateFilter.$gte) {
       const filterDate = new Date(dateFilter.$gte);
       processedCustomerGroups = processedCustomerGroups.filter((group) => {
@@ -535,7 +579,7 @@ export const useSellerCustomerGroups = (
 
   // Filter by updated_at date ranges
   if (filters?.updated_at) {
-    const dateFilter = filters.updated_at as any;
+    const dateFilter = filters.updated_at;
     if (dateFilter.$gte) {
       const filterDate = new Date(dateFilter.$gte);
       processedCustomerGroups = processedCustomerGroups.filter((group) => {

@@ -27,7 +27,7 @@ export const paymentInfoMap: Record<
     icon: <CreditCard />,
   },
   pp_system_default: {
-    title: "Manual Payment",
+    title: "Banka Havalesi / EFT",
     icon: <Cash />,
   },
   // Add more payment providers here

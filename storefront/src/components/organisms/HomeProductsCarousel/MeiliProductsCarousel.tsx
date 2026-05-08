@@ -47,7 +47,8 @@ export const MeiliProductsCarousel = ({
   }
 
   return (
-    <InstantSearchNext searchClient={searchClient as any} indexName="products">
+    // @ts-expect-error — MeiliSearch client satisfies Algolia SearchClient interface at runtime but types differ
+    <InstantSearchNext searchClient={searchClient} indexName="products">
       <Configure hitsPerPage={10} filters={filters} />
       <ProductsListing locale={locale} />
     </InstantSearchNext>
@@ -75,7 +76,7 @@ const ProductsListing = ({ locale }: { locale: string }) => {
     .map((hit) => {
       const apiProd = prod?.find((p) => {
         const { cheapestPrice } = getProductPrice({ product: p })
-        return p.id === ((hit as any).objectID ?? (hit as any).id) && Boolean(cheapestPrice)
+        return p.id === (hit.objectID ?? (hit as Record<string, unknown>).id) && Boolean(cheapestPrice)
       })
       return apiProd ?? null
     })

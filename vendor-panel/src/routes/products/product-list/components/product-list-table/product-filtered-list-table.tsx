@@ -75,7 +75,7 @@ export const ProductFilteredListTable = ({
     if (!allProducts) return []
     return allProducts.filter(
       (p: ExtendedAdminProduct) =>
-        (p as any).metadata?.product_type === productType
+        (p as ExtendedAdminProduct & { metadata?: Record<string, unknown> }).metadata?.product_type === productType
     )
   }, [allProducts, productType])
 

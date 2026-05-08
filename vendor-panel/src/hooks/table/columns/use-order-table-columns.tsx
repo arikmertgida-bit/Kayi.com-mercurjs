@@ -39,6 +39,7 @@ type UseOrderTableColumnsProps = {
 
 export const useOrderTableColumns = (props: UseOrderTableColumnsProps) => {
   const { exclude = [] } = props ?? {}
+  const { t } = useTranslation()
 
   const columns = useMemo(
     () => [
@@ -61,7 +62,7 @@ export const useOrderTableColumns = (props: UseOrderTableColumnsProps) => {
       columnHelper.accessor("status", {
         header: () => (
           <div className="flex h-full w-full items-center">
-            <span className="truncate">Status</span>
+            <span className="truncate">{t("fields.status")}</span>
           </div>
         ),
         cell: ({ getValue }) => {

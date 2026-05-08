@@ -41,6 +41,6 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   } catch (error) {
     res
       .status(500)
-      .json({ success: false, message: error?.message || "Sync failed" })
+      .json({ success: false, message: error instanceof Error ? error.message : "Sync failed" })
   }
 }

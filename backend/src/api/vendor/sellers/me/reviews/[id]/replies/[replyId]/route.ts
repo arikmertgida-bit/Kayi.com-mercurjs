@@ -32,8 +32,9 @@ export async function PUT(req: MedusaRequest, res: MedusaResponse) {
   }
 
   const replyService: ReviewReplyService = req.scope.resolve(REVIEW_REPLY_MODULE)
+  const logger = req.scope.resolve<{ warn: (...a: unknown[]) => void }>('logger')
 
-  // Verify ownership — reply must belong to this seller
+  // Verify ownership
   const [existing] = await replyService.listReviewReplies({ id: replyId, review_id: reviewId })
   if (!existing) return res.status(404).json({ message: "Yanıt bulunamadı." })
   if (existing.seller_id !== seller.id) return res.status(403).json({ message: "Bu yanıt size ait değil." })
@@ -47,7 +48,7 @@ export async function PUT(req: MedusaRequest, res: MedusaResponse) {
       input: { id: reviewId, seller_note: content },
     })
   } catch (err: any) {
-    console.warn("[vendor-reply-put] Could not sync seller_note:", err?.message)
+    logger.warn("[vendor-reply-put] Could not sync seller_note:", err?.message)
   }
 
   return res.json({ reply: { ...existing, content } })
@@ -60,6 +61,7 @@ export async function DELETE(req: MedusaRequest, res: MedusaResponse) {
 
   const { id: reviewId, replyId } = req.params
   const replyService: ReviewReplyService = req.scope.resolve(REVIEW_REPLY_MODULE)
+  const logger = req.scope.resolve<{ warn: (...a: unknown[]) => void }>('logger')
 
   // Verify ownership
   const [existing] = await replyService.listReviewReplies({ id: replyId, review_id: reviewId })
@@ -78,7 +80,7 @@ export async function DELETE(req: MedusaRequest, res: MedusaResponse) {
         input: { id: reviewId, seller_note: "" },
       })
     } catch (err: any) {
-      console.warn("[vendor-reply-delete] Could not clear seller_note:", err?.message)
+      logger.warn("[vendor-reply-delete] Could not clear seller_note:", err?.message)
     }
   }
 

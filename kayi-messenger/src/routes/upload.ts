@@ -55,7 +55,7 @@ export function createUploadRouter(io: SocketServer) {
         }
 
         const { userId, userType } = resolveIdentity(req.auth!)
-        const conversationId = (req as any).conversationId as string
+        const conversationId = req.conversationId as string
 
         // Derive extension from MIME type, never from user-controlled filename
         const MIME_TO_EXT: Record<string, string> = {

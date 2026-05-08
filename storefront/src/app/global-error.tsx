@@ -26,6 +26,11 @@ export default function GlobalError({
           <p style={{ color: "#6b7280", marginBottom: "1.5rem" }}>
             Beklenmedik bir sorunla karşılaşıldı. Lütfen tekrar deneyin.
           </p>
+          {error?.message && (
+            <pre style={{ color: "#dc2626", fontSize: "0.75rem", textAlign: "left", background: "#fef2f2", padding: "1rem", borderRadius: "0.375rem", maxWidth: "600px", overflow: "auto", marginBottom: "1rem" }}>
+              {error.message}{"\n"}{error.stack}
+            </pre>
+          )}
           <div style={{ display: "flex", gap: "0.75rem" }}>
             <button
               onClick={() => reset()}

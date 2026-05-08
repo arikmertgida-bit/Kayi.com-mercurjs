@@ -22,13 +22,16 @@ export const WishlistItem = ({
   const t = useTranslations('listing')
 
   // calculated_amount may come from variants[0].calculated_price or directly
+  const firstVariant = product.variants?.[0] as (HttpTypes.StoreProductVariant & {
+    calculated_price?: { calculated_amount?: number; currency_code?: string }
+  }) | undefined
   const calculatedAmount =
     product.calculated_amount ??
-    (product as any).variants?.[0]?.calculated_price?.calculated_amount
+    firstVariant?.calculated_price?.calculated_amount
   const currencyCode =
     product.currency_code ??
-    (product as any).variants?.[0]?.calculated_price?.currency_code ??
-    (product as any).variants?.[0]?.prices?.[0]?.currency_code
+    firstVariant?.calculated_price?.currency_code ??
+    (firstVariant as typeof firstVariant & { prices?: { currency_code?: string }[] })?.prices?.[0]?.currency_code
 
   const price =
     calculatedAmount != null && currencyCode

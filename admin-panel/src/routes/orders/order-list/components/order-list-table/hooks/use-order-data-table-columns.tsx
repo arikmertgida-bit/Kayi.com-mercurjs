@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+﻿import { useMemo } from "react"
 import { createDataTableColumnHelper, StatusBadge } from "@medusajs/ui"
 import { HttpTypes } from "@medusajs/types"
 import { useDate } from "../../../../../../hooks/use-date"
@@ -70,7 +70,6 @@ export function useOrderDataTableColumns(apiColumns: any[] | undefined) {
           enableSorting: false as const,
         } as any)
       }
-
       if (apiColumn.field === "total") {
         return columnHelper.accessor("total", {
           id: apiColumn.field,
@@ -88,7 +87,6 @@ export function useOrderDataTableColumns(apiColumns: any[] | undefined) {
         } as any)
       }
 
-      // Handle nested fields with dot notation
       const fieldParts = apiColumn.field.split(".")
       
       return columnHelper.accessor(
@@ -127,4 +125,3 @@ export function useOrderDataTableColumns(apiColumns: any[] | undefined) {
     })
   }, [apiColumns, getFullDate])
 }
-

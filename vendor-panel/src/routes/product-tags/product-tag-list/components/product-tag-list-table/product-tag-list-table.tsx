@@ -63,7 +63,7 @@ export const ProductTagListTable = () => {
       <div className="flex items-center justify-between px-6 py-4">
         <Heading>{t("productTags.domain")}</Heading>
         <Button variant="secondary" size="small" asChild>
-          <Link to="create">Request Product Tag</Link>
+          <Link to="create">{t("productTags.create.requestHeader")}</Link>
         </Button>
       </div>
       <_DataTable

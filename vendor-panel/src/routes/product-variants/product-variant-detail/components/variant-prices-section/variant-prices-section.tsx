@@ -6,7 +6,7 @@ import { Button, Container, Heading } from "@medusajs/ui"
 
 import { ActionMenu } from "../../../../../components/common/action-menu"
 import { NoRecords } from "../../../../../components/common/empty-table-content"
-import { getLocaleAmount } from "../../../../../lib/money-amount-helpers"
+import { getLocaleAmount, getNativeSymbol } from "../../../../../lib/money-amount-helpers"
 import { ExtendedAdminProductVariant } from "../../../../../types/products"
 
 type VariantPricesSectionProps = {
@@ -53,7 +53,7 @@ export function VariantPricesSection({ variant }: VariantPricesSectionProps) {
             className="txt-small text-ui-fg-subtle flex justify-between px-6 py-4"
           >
             <span className="font-medium">
-              {price.currency_code.toUpperCase()}
+              {getNativeSymbol(price.currency_code)}
             </span>
             <span>{getLocaleAmount(price.amount, price.currency_code)}</span>
           </div>

@@ -16,6 +16,7 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   }
 
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
+  const logger = req.scope.resolve<{ error: (...a: unknown[]) => void }>('logger')
 
   try {
     const { data: members } = await query.graph({
@@ -37,7 +38,7 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
       })
     }
   } catch (err) {
-    console.error("[store/sellers/member] GET error:", err)
+    logger.error("[store/sellers/member] GET error:", err)
   }
 
   return res.json({ avatarUrl: null, displayName: null })

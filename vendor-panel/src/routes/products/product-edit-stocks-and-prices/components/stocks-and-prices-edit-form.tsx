@@ -16,6 +16,9 @@ import { ProductCreateSchemaType } from "../../product-create/types"
 import { UpdateVariantStocksSchemaType } from "../../product-edit-stocks-and-prices/schema"
 import { createDataGridLocationStockColumns } from "../../../../components/data-grid/helpers"
 
+/** Extended row type used in the DataGrid — combines real variants with the product-info header row */
+type DataGridVariantRow = HttpTypes.AdminProductVariant & { isProductInfo?: boolean }
+
 type StocksAndPricesFormProps = {
   form: UseFormReturn<UpdateVariantStocksSchemaType>
   stockLocations: HttpTypes.AdminStockLocation[]
@@ -99,8 +102,8 @@ const useStocksAndPricesGridColumns = ({
         id: t("fields.title"),
         header: t("fields.title"),
         cell: (context) => {
-          const entity = context.row.original
-          const isProductInfo = (entity as any).isProductInfo
+          const entity = context.row.original as DataGridVariantRow
+          const isProductInfo = entity.isProductInfo
 
           return (
             <DataGrid.ReadonlyCell context={context}>
@@ -125,9 +128,9 @@ const useStocksAndPricesGridColumns = ({
         ProductCreateSchemaType
       >({
         stockLocations,
-        isReadyOnly: (context) => (context.row.original as any).isProductInfo,
+        isReadyOnly: (context) => !!(context.row.original as DataGridVariantRow).isProductInfo,
         getFieldName: (context, stockLocationIndex) => {
-          const entity = context.row.original as any
+          const entity = context.row.original as DataGridVariantRow
           if (entity.isProductInfo) return null
           return `variants.${context.row.index - 1}.locations.${stockLocationIndex}` as any
         },
@@ -139,9 +142,9 @@ const useStocksAndPricesGridColumns = ({
       >({
         currencies: currencies.map((c) => c.currency_code),
         pricePreferences,
-        isReadyOnly: (context) => (context.row.original as any).isProductInfo,
+        isReadyOnly: (context) => !!(context.row.original as DataGridVariantRow).isProductInfo,
         getFieldName: (context, value) => {
-          const entity = context.row.original as any
+          const entity = context.row.original as DataGridVariantRow
           if (entity.isProductInfo) return null
           return `variants.${context.row.index - 1}.prices.${value}` as any
         },

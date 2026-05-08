@@ -24,7 +24,7 @@ export async function requireConversationParticipant(
     const conversationId = (
       req.params.conversationId ??
       req.params.id ??
-      (req.body as any)?.conversationId
+      req.body?.conversationId
     ) as string | undefined
 
     if (!conversationId) {
@@ -42,8 +42,8 @@ export async function requireConversationParticipant(
     }
 
     // Attach for convenient access in handlers
-    ;(req as any).conversationId = conversationId
-    ;(req as any).participantUserId = userId
+    req.conversationId = conversationId
+    req.participantUserId = userId
 
     next()
   } catch (err) {

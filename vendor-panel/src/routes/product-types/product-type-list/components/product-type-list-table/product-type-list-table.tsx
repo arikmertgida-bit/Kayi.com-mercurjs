@@ -78,7 +78,7 @@ export const ProductTypeListTable = () => {
           </Text>
         </div>
         <Button size="small" variant="secondary" asChild>
-          <Link to="create">Request Product Type</Link>
+          <Link to="create">{t("productTypes.create.requestHeader")}</Link>
         </Button>
       </div>
       <_DataTable

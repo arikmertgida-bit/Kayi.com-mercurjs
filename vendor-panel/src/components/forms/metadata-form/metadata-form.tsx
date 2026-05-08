@@ -188,7 +188,7 @@ const InnerForm = <TRes,>({
                                   aria-labelledby={METADATA_KEY_LABEL_ID}
                                   {...field}
                                   disabled={isDisabled}
-                                  placeholder="Key"
+                                  placeholder={t("metadata.edit.labels.key")}
                                 />
                               </Form.Control>
                             </Form.Item>

@@ -79,7 +79,6 @@ export const EditPromotionDetailsForm = ({
         application_method: {
           value: parseFloat(String(data.value)),
           type: data.value_type as any,
-          allocation: data.allocation as any,
         },
       },
       {

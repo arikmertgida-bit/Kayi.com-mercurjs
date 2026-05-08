@@ -35,7 +35,7 @@ export const ProductCreateReviewForm = ({ form }: ProductCreateReviewFormProps) 
 
   const activeVariants = variants.filter((v) => v.should_create)
   const thumbnail = media?.find((m) => m.isThumbnail)
-  const variantThumbCount = variants.filter((v) => !!(v as any).variant_thumbnail_file).length
+  const variantThumbCount = variants.filter((v) => !!(v as { variant_thumbnail_file?: File }).variant_thumbnail_file).length
   const totalStock = activeVariants.reduce(
     (sum, v) => sum + (Number(v.initial_stock) || 0),
     0

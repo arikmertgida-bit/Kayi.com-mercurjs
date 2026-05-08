@@ -1,4 +1,5 @@
 import { Server as SocketServer, Socket } from "socket.io"
+import { UserType } from "@prisma/client"
 import { decodeToken, resolveIdentity } from "../middleware/auth"
 import { MessageService } from "../services/message.service"
 import { ConversationService } from "../services/conversation.service"
@@ -73,7 +74,7 @@ export function registerSocketHandlers(io: SocketServer, socket: Socket): void {
         const message = await MessageService.create({
           conversationId,
           senderId: userId,
-          senderType: userType as any,
+          senderType: userType as UserType,
           content,
           messageType: "TEXT",  // IMAGE messages must go through /api/upload REST endpoint
         })

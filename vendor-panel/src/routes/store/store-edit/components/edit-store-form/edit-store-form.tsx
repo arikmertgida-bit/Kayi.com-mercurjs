@@ -161,7 +161,7 @@ export const EditStoreForm = ({ seller }: { seller: StoreVendor }) => {
                   <Form.Item>
                     <div className="flex flex-col gap-y-2">
                       <div className="flex flex-col gap-y-1">
-                        <Form.Label optional>Logo</Form.Label>
+                        <Form.Label optional>{t("store.logo")}</Form.Label>
                       </div>
                       <Form.Control>
                         <FileUpload

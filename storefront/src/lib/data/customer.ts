@@ -1,4 +1,4 @@
-"use server"
+﻿"use server"
 
 import { sdk } from "../config"
 import { HttpTypes } from "@medusajs/types"
@@ -365,3 +365,4 @@ export const updateGlobalNotificationPreference = async (
     },
   } as any)
 }
+

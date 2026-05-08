@@ -1,8 +1,7 @@
 import type { Conversation, Message } from "./types"
 
-// Vite exposes env vars via import.meta.env
 const BASE_URL: string =
-  (import.meta as any).env?.VITE_MESSENGER_URL ?? "http://localhost:4000"
+  import.meta.env.VITE_MESSENGER_URL ?? "http://localhost:4000"
 
 function getAuthHeader(): Record<string, string> {
   const token = window.localStorage.getItem("medusa_auth_token")

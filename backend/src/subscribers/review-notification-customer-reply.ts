@@ -19,6 +19,7 @@ export default async function reviewNotificationCustomerReplySubscriber({
 }: SubscriberArgs<ReviewNotificationCustomerReplyPayload>) {
   const { reviewId, customerId, customerName } = data
   const query = container.resolve(ContainerRegistrationKeys.QUERY)
+  const logger = container.resolve<{ warn: (...a: unknown[]) => void }>('logger')
 
   try {
     const { data: relations } = await query.graph({
@@ -41,9 +42,9 @@ export default async function reviewNotificationCustomerReplySubscriber({
       notificationType: "review_notification",
     })
   } catch (err: unknown) {
-    console.warn(
+    logger.warn(
       "[review-notification] Could not resolve seller for customer reply notification:",
-      (err as Error).message
+      err instanceof Error ? err.message : err
     )
   }
 }

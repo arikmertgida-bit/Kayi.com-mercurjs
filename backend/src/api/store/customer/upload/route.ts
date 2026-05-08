@@ -65,6 +65,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     rawImageType === "avatar" || rawImageType === "cover" ? rawImageType : null
 
   const fileService = req.scope.resolve(Modules.FILE)
+  const logger = req.scope.resolve<{ error: (...a: unknown[]) => void }>('logger')
 
   const processedFiles = await Promise.all(
     files.map(async (f: any) => {
@@ -85,7 +86,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
           }
         } catch (err) {
           // sharp başarısız olursa orijinale düşer (non-fatal)
-          console.error("[customer/upload] sharp processing failed, using original:", err)
+          logger.error("[customer/upload] sharp processing failed, using original:", err)
         }
       }
       return {

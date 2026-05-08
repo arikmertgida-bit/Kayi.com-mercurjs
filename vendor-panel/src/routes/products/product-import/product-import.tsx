@@ -468,9 +468,9 @@ const ProductImportContent = () => {
               </div>
             )}
 
-            {(job as any).error_log_url && (
+            {job?.error_log_url && (
               <a
-                href={(job as any).error_log_url}
+                href={job.error_log_url}
                 download
                 className="text-ui-fg-interactive text-sm underline"
               >

@@ -15,6 +15,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   const reportService: ProductReportService = req.scope.resolve(PRODUCT_REPORT_MODULE)
   const productService = req.scope.resolve(Modules.PRODUCT)
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
+  const logger = req.scope.resolve<{ error: (...a: unknown[]) => void; warn: (...a: unknown[]) => void }>('logger')
 
   const [report] = await reportService.listProductReports({ id })
   if (!report) {
@@ -27,7 +28,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   try {
     await (productService as any).updateProducts(productId, { status: "draft" })
   } catch (err: unknown) {
-    console.error("[product-report/reject] Failed to unpublish product:", (err as Error).message)
+    logger.error("[product-report/reject] Failed to unpublish product:", (err as Error).message)
     return res.status(500).json({ message: "Failed to unpublish product" })
   }
 
@@ -60,7 +61,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     }
   } catch (err: unknown) {
     // Bildirim hatası kritik değil, isteği başarılı say
-    console.warn("[product-report/reject] Seller notification failed:", (err as Error).message)
+    logger.warn("[product-report/reject] Seller notification failed:", (err as Error).message)
   }
 
   // Raporu bildiren müşteriye de bildir

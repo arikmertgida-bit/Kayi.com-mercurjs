@@ -1,5 +1,70 @@
 ﻿# Kayı.com — AI Operational Guide & Architecture Reference
 
+---
+
+## ⚖️ MÜHENDİSLİK ANAYASASI — Kayı.com Operational Constitution
+
+> **Yürürlük Tarihi:** 8 Mayıs 2026
+> **Statü:** Değiştirilemez. Bu ilkeler projenin DNA'sıdır.
+
+Bu belge, Kayı.com'un "pislik kod" dönemini kapattığını ve profesyonel bir mühendislik platformuna dönüştüğünü ilan eder. Aşağıdaki maddeler, bu projede yazılacak her satır kodun uyması gereken değiştirilemez ana ilkelerdir.
+
+---
+
+### Madde I — SIFIR `as any` TOLERANSI
+
+`as any` kullanımı bu projede **tamamen ve kalıcı olarak yasaklanmıştır.**
+
+Sorunların üzerini örtmek, geçici yamalar uygulamak veya TypeScript hatalarını `as any` ile "halı altına süpürmek" projenin profesyonel kimliğine ihanettir. Bir tip problemi çözülemiyor görünüyorsa doğru çözüm arayışı sürdürülecek; doğru çözüm bulunana kadar `as any` kullanılmayacaktır.
+
+**Kabul edilen tek alternatif:** `@ts-expect-error` — yalnızca üçüncü taraf kütüphane sınırlarında, her kullanımın üstüne açıklayıcı yorum eklenerek.
+
+---
+
+### Madde II — BÜTÜNCÜL MİMARİ (Interconnectivity)
+
+Her düzenleme veya yeni özellik, sistemi bütünüyle konuşan profesyonel bir yapıda inşa edilecektir.
+
+- **Tip güvenliği:** Her yeni modül, servis ve API rotası `strict: true` kapsamında hatasız derlenecektir.
+- **DI Container:** MedusaJS ortamında bağımlılıklar `req.scope.resolve()` / `container.resolve()` ile çözümlenecek; sınıf dışı bağımlılık enjeksiyonu yapılmayacaktır.
+- **Kurumsal logger:** Üretim kodunda `console.*` kullanılmayacaktır. Tüm kayıt işlemleri `req.scope.resolve('logger')` veya `container.resolve('logger')` ile yapılacaktır.
+- **Modüller arası bağlantı:** Bir özellik eklendiğinde, bu özelliğin diğer tüm modüllerle olan bağlantısı (tip tanımları, servis katmanı, hata yönetimi) eksiksiz kurulacaktır. Yarım bırakılmış entegrasyon kabul edilmez.
+
+---
+
+### Madde III — PROFESYONEL YAKLAŞIM
+
+"Sadece çalışsın yeter" mantığı bu projede geçersizdir.
+
+Her kod bloğu şu üç standardı **aynı anda** karşılamak zorundadır:
+
+1. **Sıfır hata (Zero-Error):** `pnpm tsc --noEmit` tüm paketlerde `0` hata döndürmelidir.
+2. **Tam tip güvenliği (Full Type-Safety):** Runtime'da tip çökmesi yaratabilecek hiçbir cast, assertion veya implicit any kabul edilmez.
+3. **Kurumsal disiplin:** Kod, bir kıdemli mühendis tarafından incelendiğinde "neden böyle yazılmış?" sorusunu doğurmamalıdır.
+
+Eğer bir çözüm basit usulde uygulanıyorsa reddedilecek; profesyonel standarda ulaşana kadar geliştirilmeye devam edilecektir.
+
+---
+
+### Madde IV — SİSTEMİN BÜTÜNLÜĞÜ
+
+Bu projeye yazılacak her yeni kod, mevcut "0 hata" disiplinine uymak zorundadır.
+
+- Mimariyi bozacak değişiklikler yapılamaz.
+- Modüller arası bağlantıları zayıflatacak kısayollar alınamaz.
+- Sistemi kırılgan hale getirecek hiçbir işleme — ne kadar "küçük" veya "geçici" görünse de — izin verilmez.
+- Her pull request / değişiklik, tüm paketlerin derlenmesini doğruladıktan sonra birleştirilebilir.
+
+---
+
+### Sonuç
+
+> **Kayı.com artık hatasız, kusursuz ve profesyonel bir kaledir.**
+>
+> Bu anayasa, projenin her katmanında — frontend bileşenlerinden backend workflow'larına, Socket.IO handler'larından Docker yapılandırmalarına — uygulanır. İstisna yoktur.
+
+---
+
 > **IMPORTANT FOR AI ASSISTANT:** Read this file completely before writing any plan, any code, or making any architectural decision. Do NOT guess. Every operational detail you need is here. This file is your memory.
 
 ---

@@ -221,13 +221,16 @@ export const ProductCreateForm = ({
     const variantThumbnailUrls: Record<number, string> = {}
     try {
       const thumbUploads = payload.variants
-        .map((v, i) => (v as any).variant_thumbnail_file ? { i, file: (v as any).variant_thumbnail_file } : null)
+        .map((v, i) => {
+          const vWithFile = v as typeof v & { variant_thumbnail_file?: File }
+          return vWithFile.variant_thumbnail_file ? { i, file: vWithFile.variant_thumbnail_file } : null
+        })
         .filter((x): x is { i: number; file: File } => x !== null)
       if (thumbUploads.length) {
         await Promise.all(
           thumbUploads.map(async ({ i, file }) => {
             const r = await uploadFilesQuery([{ file }])
-            const url = (r as any)?.files?.[0]?.url
+            const url = (r as { files?: { url?: string }[] } | null)?.files?.[0]?.url
             if (url) variantThumbnailUrls[i] = url
           })
         )
@@ -238,13 +241,13 @@ export const ProductCreateForm = ({
             ["renk", "color"].includes(k.toLowerCase())
           )
           if (!colorKey) return
-          const colorVal = (v.options as any)[colorKey]
+          const colorVal = (v.options as Record<string, string>)[colorKey]
           const match = payload.variants.findIndex((other, j) => {
             if (variantThumbnailUrls[j] === undefined) return false
             const otherColorKey = Object.keys(other.options || {}).find((k) =>
               ["renk", "color"].includes(k.toLowerCase())
             )
-            return otherColorKey && (other.options as any)[otherColorKey] === colorVal
+            return otherColorKey && (other.options as Record<string, string>)[otherColorKey] === colorVal
           })
           if (match >= 0) variantThumbnailUrls[i] = variantThumbnailUrls[match]
         })
@@ -259,7 +262,7 @@ export const ProductCreateForm = ({
       {
         ...payload,
         attribute_values: undefined,
-        status: isDraftSubmission ? "draft" : "published",
+        status: isDraftSubmission ? "draft" : "proposed",
         thumbnail: uploadedMedia.find((m) => m.isThumbnail)?.url,
         images: uploadedMedia
           .filter((m) => !m.isThumbnail)
@@ -378,7 +381,7 @@ export const ProductCreateForm = ({
                 const createLevels: any[] = []
 
                 for (const { index, stock } of variantsWithStock) {
-                  const formVariant = values.variants[index] as any
+                  const formVariant = values.variants[index] as typeof values.variants[number] & { sku?: string }
                   const inventoryItemId = formVariant.sku
                     ? skuToInvId.get(formVariant.sku)
                     : undefined

@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express"
 import { z } from "zod"
 import { Server as SocketServer } from "socket.io"
+import { UserType, ConversationType } from "@prisma/client"
 import { ConversationService } from "../services/conversation.service"
 import { NotificationService } from "../services/notification.service"
 
@@ -108,10 +109,12 @@ export function createInternalRouter(io: SocketServer): Router {
       try {
         const conv = await ConversationService.findOrCreate({
           participantAId: sourceUserId,
-          participantAType: (sourceUserType as any) ?? "CUSTOMER",
+          participantAType: (sourceUserType as UserType) ?? UserType.CUSTOMER,
           participantBId: targetUserId,
-          participantBType: (targetUserType as any) ?? "SELLER",
-          subject: subject ?? preview.substring(0, 60),          type: (conversationType as any) ?? undefined,        })
+          participantBType: (targetUserType as UserType) ?? UserType.SELLER,
+          subject: subject ?? preview.substring(0, 60),
+          type: (conversationType as ConversationType) ?? undefined,
+        })
         await NotificationService.sendSystemMessage(
           io,
           conv.id,

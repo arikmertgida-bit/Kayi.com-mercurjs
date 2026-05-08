@@ -69,7 +69,7 @@ export const PercentageInput = forwardRef<
     return (
       <div className="relative">
         <Primitive
-          ref={ref as any} // dependency is typed incorrectly
+        ref={ref as any} // dependency is typed incorrectly
           min={min}
           max={max}
           autoComplete="off"

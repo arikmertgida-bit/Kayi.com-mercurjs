@@ -25,7 +25,7 @@ export const UserDropdown = ({
   const unreadCount = useMessengerUnreadCount()
 
   const avatarSrc = user
-    ? ((user.metadata as any)?.avatar_url ||
+    ? ((user.metadata as Record<string, unknown> | null | undefined)?.avatar_url as string | undefined ||
         "/images/customer-default-avatar.jpg")
     : null
 

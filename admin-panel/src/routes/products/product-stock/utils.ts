@@ -15,7 +15,8 @@ export function isProductVariantWithInventoryPivot(
 ): row is HttpTypes.AdminProductVariant & {
   inventory_items: HttpTypes.AdminProductVariantInventoryItemLink[]
 } {
-  return (row as any).inventory_items && (row as any).inventory_items.length > 0
+  const r = row as { inventory_items?: unknown[] }
+  return Array.isArray(r.inventory_items) && r.inventory_items.length > 0
 }
 
 export function getDisabledInventoryRows(

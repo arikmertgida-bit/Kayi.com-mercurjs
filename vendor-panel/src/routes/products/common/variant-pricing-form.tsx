@@ -16,6 +16,9 @@ import { useStore } from "../../../hooks/api/store"
 import { ProductCreateSchemaType } from "../product-create/types"
 import { ExtendedAdminProduct } from "../../../types/products.ts"
 
+/** Extended row type: combines real variants with the product-info header row */
+type DataGridVariantRow = HttpTypes.AdminProductVariant & { isProductInfo?: boolean }
+
 type VariantPricingFormProps = {
   form: UseFormReturn<ProductCreateSchemaType>
   product: ExtendedAdminProduct
@@ -87,8 +90,8 @@ const useVariantPriceGridColumns = ({
         id: t("fields.title"),
         header: t("fields.title"),
         cell: (context) => {
-          const entity = context.row.original
-          const isProductInfo = (entity as any).isProductInfo
+          const entity = context.row.original as DataGridVariantRow
+          const isProductInfo = entity.isProductInfo
 
           return (
             <DataGrid.ReadonlyCell context={context}>
@@ -114,9 +117,9 @@ const useVariantPriceGridColumns = ({
       >({
         currencies: currencies.map((c) => c.currency_code),
         pricePreferences,
-        isReadyOnly: (context) => (context.row.original as any).isProductInfo,
+        isReadyOnly: (context) => !!(context.row.original as DataGridVariantRow).isProductInfo,
         getFieldName: (context, value) => {
-          const entity = context.row.original as any
+          const entity = context.row.original as DataGridVariantRow
           if (entity.isProductInfo) return null
           return `variants.${context.row.index - 1}.prices.${value}`
         },

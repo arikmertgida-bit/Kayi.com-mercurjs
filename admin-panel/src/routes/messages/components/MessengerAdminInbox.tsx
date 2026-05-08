@@ -89,8 +89,8 @@ export function MessengerAdminInbox({ adminId }: MessengerAdminInboxProps) {
             data: {
               id: pid,
               title: product.title,
-              thumbnail: (product as any).thumbnail ?? null,
-              handle: (product as any).handle ?? null,
+              thumbnail: product.thumbnail ?? null,
+              handle: product.handle ?? null,
             } as ProductContextData,
           })
         })

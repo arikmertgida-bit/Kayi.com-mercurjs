@@ -30,7 +30,7 @@ export const RouteMap: RouteObject[] = [
           {
             path: "stripe-connect",
             handle: {
-              breadcrumb: () => "Stripe Connects",
+              breadcrumb: () => t("stripeConnect.title"),
             },
             errorElement: <ErrorBoundary />,
             lazy: () => import("../../routes/stripe-connect"),

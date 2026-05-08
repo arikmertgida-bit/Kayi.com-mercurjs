@@ -51,6 +51,7 @@ type ProductWithMeta = HttpTypes.StoreProduct & {
 
 type VariantWithMeta = HttpTypes.StoreProductVariant & {
   metadata?: Record<string, unknown> | null
+  manage_inventory?: boolean
 }
 
 interface ProductVariantProviderProps extends PropsWithChildren {
@@ -220,7 +221,7 @@ export function ProductVariantProvider({
 
       if (!match) return false
       // Variants with manage_inventory=false are always considered in stock.
-      if ((match as any).manage_inventory === false) return true
+      if (match.manage_inventory === false) return true
       return (match.inventory_quantity ?? 0) > 0
     },
     [variants, variantOptionMaps, selectedColor, productOptions]
@@ -252,7 +253,7 @@ export function ProductVariantProvider({
     [selectedVariant]
   )
   const variantStock = selectedVariant
-    ? (selectedVariant as any).manage_inventory === false
+    ? selectedVariant.manage_inventory === false
       ? 1
       : selectedVariant.inventory_quantity ?? 0
     : 0

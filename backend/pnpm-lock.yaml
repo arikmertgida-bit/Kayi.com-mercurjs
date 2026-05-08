@@ -99,6 +99,9 @@ importers:
       '@types/node':
         specifier: ^20.0.0
         version: 20.19.25
+      '@types/pg':
+        specifier: ^8.20.0
+        version: 8.20.0
       '@types/react':
         specifier: ^18.3.2
         version: 18.3.26
@@ -4040,6 +4043,9 @@ packages:
   '@types/pg-pool@2.0.6':
     resolution: {integrity: sha512-TaAUE5rq2VQYxab5Ts7WZhKNmuN78Q6PiFonTDdpbx8a1H0M1vhy3rhiMjl+e2iHmogyMw7jZF4FrE6eJUy5HQ==}
 
+  '@types/pg@8.20.0':
+    resolution: {integrity: sha512-bEPFOaMAHTEP1EzpvHTbmwR8UsFyHSKsRisLIHVMXnpNefSbGA1bD6CVy+qKjGSqmZqNqBDV2azOBo8TgkcVow==}
+
   '@types/pg@8.6.1':
     resolution: {integrity: sha512-1Kc4oAGzAl7uqUStZCDvaLFqZrW9qWSjXOmBfdgyBP5La7Us6Mg4GBvRlSoaZMhQF/zSj1C8CtKMBkoiT8eL8w==}
 
@@ -6282,9 +6288,6 @@ packages:
     resolution: {integrity: sha512-gB+R+Xud1gLFuRD/QgOIgGOBE2KCQPaPwkzBBGC9oG69pHTkhQeIuejVIk3/cnDyX39av2AxomQiyPT13WKHQA==}
     peerDependencies:
       pg: '>=8.0'
-
-  pg-protocol@1.10.3:
-    resolution: {integrity: sha512-6DIBgBQaTKDJyxnXaLiLR8wBpQQcGWuAESkRBX/t6OwA8YsqP+iVSiond2EDy6Y/dsGk8rh/jtax3js5NeV7JQ==}
 
   pg-protocol@1.13.0:
     resolution: {integrity: sha512-zzdvXfS6v89r6v7OcFCHfHlyG/wvry1ALxZo4LqgUoy7W9xhBDMaqOuMiF3qEV45VqsN6rdlcehHrfDtlCPc8w==}
@@ -12832,12 +12835,18 @@ snapshots:
 
   '@types/pg-pool@2.0.6':
     dependencies:
-      '@types/pg': 8.6.1
+      '@types/pg': 8.20.0
+
+  '@types/pg@8.20.0':
+    dependencies:
+      '@types/node': 20.19.25
+      pg-protocol: 1.13.0
+      pg-types: 2.2.0
 
   '@types/pg@8.6.1':
     dependencies:
       '@types/node': 20.19.25
-      pg-protocol: 1.10.3
+      pg-protocol: 1.13.0
       pg-types: 2.2.0
 
   '@types/pluralize@0.0.33': {}
@@ -15389,8 +15398,6 @@ snapshots:
     dependencies:
       pg: 8.20.0
 
-  pg-protocol@1.10.3: {}
-
   pg-protocol@1.13.0: {}
 
   pg-types@2.2.0:
@@ -15405,7 +15412,7 @@ snapshots:
     dependencies:
       pg-connection-string: 2.9.1
       pg-pool: 3.10.1(pg@8.16.0)
-      pg-protocol: 1.10.3
+      pg-protocol: 1.13.0
       pg-types: 2.2.0
       pgpass: 1.0.5
     optionalDependencies:

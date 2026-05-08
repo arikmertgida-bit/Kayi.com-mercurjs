@@ -274,7 +274,7 @@ const useColumns = (product: ExtendedAdminProduct) => {
         id: "thumbnail",
         header: "Görsel",
         cell: ({ row }) => {
-          const url = (row.original.metadata as any)?.thumbnail_url
+          const url = (row.original.metadata as Record<string, unknown> | null | undefined)?.thumbnail_url as string | undefined
           if (!url) {
             return (
               <div className="flex h-8 w-8 items-center justify-center rounded border border-ui-border-base bg-ui-bg-subtle text-ui-fg-muted text-xs">

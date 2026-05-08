@@ -15,6 +15,10 @@ const IMAGE_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "imag
 const MAX_IMAGE_DIMENSION = 1920
 const WEBP_QUALITY = 85
 
+function errMsg(e: unknown): string {
+  return e instanceof Error ? e.message : String(e)
+}
+
 type InjectedDependencies = {
   logger: Logger
 }
@@ -76,7 +80,7 @@ class MinioFileProviderService extends AbstractFileProviderService {
 
     // Initialize bucket and policy
     this.initializeBucket().catch(error => {
-      this.logger_.error(`Failed to initialize MinIO bucket: ${error.message}`)
+      this.logger_.error(`Failed to initialize MinIO bucket: ${errMsg(error)}`)
     })
   }
 
@@ -143,11 +147,11 @@ class MinioFileProviderService extends AbstractFileProviderService {
           await this.client.setBucketPolicy(this.bucket, JSON.stringify(policy))
           this.logger_.info(`Updated public read policy for existing bucket: ${this.bucket}`)
         } catch (policyError) {
-          this.logger_.warn(`Failed to update policy for existing bucket: ${policyError.message}`)
+          this.logger_.warn(`Failed to update policy for existing bucket: ${errMsg(policyError)}`)
         }
       }
     } catch (error) {
-      this.logger_.error(`Error initializing bucket: ${error.message}`)
+      this.logger_.error(`Error initializing bucket: ${errMsg(error)}`)
       throw error
     }
   }
@@ -225,10 +229,10 @@ class MinioFileProviderService extends AbstractFileProviderService {
         key: fileKey
       }
     } catch (error) {
-      this.logger_.error(`Failed to upload file: ${error.message}`)
+      this.logger_.error(`Failed to upload file: ${errMsg(error)}`)
       throw new MedusaError(
         MedusaError.Types.UNEXPECTED_STATE,
-        `Failed to upload file: ${error.message}`
+        `Failed to upload file: ${errMsg(error)}`
       )
     }
   }
@@ -248,7 +252,7 @@ class MinioFileProviderService extends AbstractFileProviderService {
       this.logger_.info(`Successfully deleted file ${fileData.fileKey} from MinIO bucket ${this.bucket}`)
     } catch (error) {
       // Log error but don't throw if file doesn't exist
-      this.logger_.warn(`Failed to delete file ${fileData.fileKey}: ${error.message}`)
+      this.logger_.warn(`Failed to delete file ${fileData.fileKey}: ${errMsg(error)}`)
     }
   }
 
@@ -271,10 +275,10 @@ class MinioFileProviderService extends AbstractFileProviderService {
       this.logger_.info(`Generated presigned URL for file ${fileData.fileKey}`)
       return url
     } catch (error) {
-      this.logger_.error(`Failed to generate presigned URL: ${error.message}`)
+      this.logger_.error(`Failed to generate presigned URL: ${errMsg(error)}`)
       throw new MedusaError(
         MedusaError.Types.UNEXPECTED_STATE,
-        `Failed to generate presigned URL: ${error.message}`
+        `Failed to generate presigned URL: ${errMsg(error)}`
       )
     }
   }

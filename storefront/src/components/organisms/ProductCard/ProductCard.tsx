@@ -34,8 +34,8 @@ export const ProductCard = ({
   })
 
   const productName = String(product.title || "Product")
-  const isAdult = (api_product as any).categories?.some(
-    (c: any) => c.metadata?.is_adult
+  const isAdult = (api_product as HttpTypes.StoreProduct & { categories?: { metadata?: Record<string, unknown> }[] }).categories?.some(
+    (c) => c.metadata?.is_adult
   )
   const showBlur = isAdult && !isVerified
 

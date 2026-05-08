@@ -145,6 +145,7 @@
     "in": "In"
   },
   "app": {
+    "storeSuspended": "Your store is suspended. Please contact support.",
     "search": {
       "label": "Search",
       "title": "Search",
@@ -2426,7 +2427,9 @@
       "currenciesRemoved": "Removed currencies from the store successfully",
       "updatedTaxInclusivitySuccessfully": "Tax inclusive pricing updated successfully"
     },
-    "editCompany": "Edit Company"
+    "editCompany": "Edit Company",
+    "companyDescription": "Manage your company's details",
+    "logo": "Logo"
   },
   "regions": {
     "domain": "Regions",
@@ -3114,7 +3117,9 @@
     "searchConversations": "Search conversations...",
     "typeMessage": "Type a message...",
     "selectConversation": "Select a conversation",
-    "startMessaging": "Start messaging your customers or support team"
+    "startMessaging": "Start messaging your customers or support team",
+    "connected": "Connected",
+    "disconnected": "Disconnected"
   },
   "dashboard": {
     "domain": "Dashboard",
@@ -3402,6 +3407,11 @@
   "stripeConnect": {
     "title": "Stripe Connect",
     "description": "Connect Stripe to receive automatic payouts from the marketplace",
+    "status": {
+      "connected": "Connected",
+      "notConnected": "Not connected",
+      "pending": "Pending"
+    },
     "notConnected": {
       "title": "Not connected",
       "description": "No Stripe connection",

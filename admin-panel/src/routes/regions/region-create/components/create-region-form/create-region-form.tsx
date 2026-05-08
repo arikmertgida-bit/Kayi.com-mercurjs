@@ -16,6 +16,7 @@ import { useMemo, useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import * as zod from "zod"
+import { HttpTypes } from "@medusajs/types"
 
 import { Form } from "../../../../../components/common/form"
 import { Combobox } from "../../../../../components/inputs/combobox"
@@ -120,7 +121,7 @@ export const CreateRegionForm = ({ currencies }: CreateRegionFormProps) => {
       iso_3: c.iso_3,
       num_code: c.num_code,
       region_id: null,
-      region: {} as any,
+      region: {} as HttpTypes.AdminRegion,
     })),
     ...searchParams,
   })

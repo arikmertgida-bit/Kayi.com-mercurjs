@@ -112,7 +112,8 @@
     "enterCardDetails": "Kart bilgilerini girin",
     "continueToReview": "İncelemeye geç",
     "nextStep": "Bir sonraki adımda görünecek",
-    "placeOrder": "Siparişi Tamamla"
+    "placeOrder": "Siparişi Tamamla",
+    "backToCart": "Sepete Dön"
   },
   "productDetails": {
     "posted": "Yayın Tarihi:",
@@ -311,9 +312,6 @@
     "goToUserPage": "Hesap Sayfasına Git",
     "passwordMismatch": "Yeni şifre ile onay şifresi eşleşmiyor",
     "somethingWentWrong": "Bir şeyler ters gitti"
-  },
-  "checkout": {
-    "backToCart": "Sepete Dön"
   },
   "errorPage": {
     "title": "Bir hata oluştu",

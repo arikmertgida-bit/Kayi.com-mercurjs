@@ -51,6 +51,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   }
 
   const replyService: ReviewReplyService = req.scope.resolve(REVIEW_REPLY_MODULE)
+  const logger = req.scope.resolve<{ warn: (...a: unknown[]) => void }>('logger')
 
   const reply = await replyService.createReviewReplies({
     review_id: reviewId,
@@ -67,7 +68,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       input: { id: reviewId, seller_note: content },
     })
   } catch (err: any) {
-    console.warn("[review-reply] Could not sync seller_note:", err?.message)
+    logger.warn("[review-reply] Could not sync seller_note:", err?.message)
   }
 
   // Notify customer about the seller reply via event (fire-and-forget)
@@ -78,7 +79,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       body: { data: { reviewId, sellerId: seller.id, sellerName: seller.name ?? "Satıcı" } },
     })
     .catch((err: Error) => {
-      console.warn("[review-reply] notification event emit failed:", err.message)
+      logger.warn("[review-reply] notification event emit failed:", err.message)
     })
 
   return res.status(201).json({

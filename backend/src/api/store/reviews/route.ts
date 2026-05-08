@@ -113,6 +113,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   }
 
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
+  const logger = req.scope.resolve<{ warn: (...a: unknown[]) => void }>('logger')
   const { data: customers } = await query.graph({
     entity: "customer",
     fields: ["id", "email"],
@@ -252,7 +253,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     const eventBus = req.scope.resolve(Modules.EVENT_BUS) as any
     eventBus
       .emit({ eventName: "review_notification.new_review", body: { data: { sellerToNotify, customerName } } })
-      .catch((err: Error) => console.warn("[review] notification event emit failed:", err?.message))
+      .catch((err: Error) => logger.warn("[review] notification event emit failed:", err?.message))
   }
 
   return res.status(201).json({ review: data[0] ?? review })

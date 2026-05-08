@@ -15,8 +15,9 @@ export const Dashboard = () => {
 
   const isAuthError = (() => {
     if (!isError) return false
-    const errStatus = (error as any)?.status ?? (error as any)?.statusCode
-    const errMsg = (error as any)?.message ?? ""
+    const err = error as { status?: number; statusCode?: number; message?: string } | null
+    const errStatus = err?.status ?? err?.statusCode
+    const errMsg = err?.message ?? ""
     return errStatus === 401 || errMsg.toLowerCase().includes("unauthorized")
   })()
 

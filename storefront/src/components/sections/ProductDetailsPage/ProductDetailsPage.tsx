@@ -48,7 +48,7 @@ export const ProductDetailsPage = async ({
   }
 
   return (
-    <ProductVariantProvider product={prod as any}>
+    <ProductVariantProvider product={prod}>
       <div className="flex flex-col md:flex-row lg:gap-12">
         <div className="md:w-1/2 md:px-2 relative">
           <Suspense fallback={<ProductGallery images={prod?.images || []} />}>
@@ -60,7 +60,7 @@ export const ProductDetailsPage = async ({
         </div>
       </div>
       <div className="my-8">
-        <ProductReviews product={prod as any} locale={locale} />
+        <ProductReviews product={prod} locale={locale} />
       </div>
       <div className="my-8">
         <Suspense fallback={<RelatedProductsSkeleton />}>

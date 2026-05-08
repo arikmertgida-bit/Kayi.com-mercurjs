@@ -5,9 +5,9 @@ import { filterValidCartItems } from "@/lib/helpers/filter-valid-cart-items"
 import { DeleteCartItemButton } from "@/components/molecules"
 import LocalizedClientLink from "@/components/molecules/LocalizedLink/LocalizedLink"
 import { UpdateCartItemButton } from "@/components/molecules/UpdateCartItemButton/UpdateCartItemButton"
-import { getTranslations } from "next-intl/server"
+import { useTranslations } from "next-intl"
 
-export const CartItemsProducts = async ({
+export const CartItemsProducts = ({
   products,
   currency_code,
   delete_item = true,
@@ -18,7 +18,7 @@ export const CartItemsProducts = async ({
   delete_item?: boolean
   change_quantity?: boolean
 }) => {
-  const t = await getTranslations('cart')
+  const t = useTranslations('cart')
   // Filter out items with invalid data (missing prices/variants)
   const validProducts = filterValidCartItems(products)
 

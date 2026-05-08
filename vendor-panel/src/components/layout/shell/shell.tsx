@@ -24,6 +24,7 @@ export const Shell = ({ children }: PropsWithChildren) => {
   const globalShortcuts = useGlobalShortcuts()
   const navigation = useNavigation()
   const { seller } = useMe()
+  const { t } = useTranslation()
 
   const isSuspended = seller?.store_status === "SUSPENDED"
 
@@ -34,8 +35,8 @@ export const Shell = ({ children }: PropsWithChildren) => {
       <div className="flex flex-col h-screen">
         {isSuspended && (
           <div className="w-full bg-red-600 text-white p-1 text-center text-sm">
-            Your store is <b>suspended</b>. Please contact support.
-          </div>
+              {t("app.storeSuspended")}
+            </div>
         )}
         <div className="relative flex h-full flex-1 items-start overflow-hidden bg-ui-bg-subtle lg:flex-row">
           <NavigationBar loading={loading} />

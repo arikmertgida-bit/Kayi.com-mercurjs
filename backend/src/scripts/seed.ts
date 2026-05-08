@@ -32,23 +32,26 @@ export default async function seedDemoData({ container }: ExecArgs) {
 
   logger.info("Seeding store data...");
   const [store] = await storeModuleService.listStores();
-  let defaultSalesChannel = await salesChannelModuleService.listSalesChannels({
-    name: "Default Sales Channel",
+  // Use "Türkiye" as the default sales channel — the primary storefront channel.
+  // "Default Sales Channel" (created by Medusa core bootstrap) is ignored here;
+  // the store's default_sales_channel_id is explicitly set to Türkiye below.
+  let turkiyeSalesChannel = await salesChannelModuleService.listSalesChannels({
+    name: "Türkiye",
   });
 
-  if (!defaultSalesChannel.length) {
+  if (!turkiyeSalesChannel.length) {
     const { result: salesChannelResult } = await createSalesChannelsWorkflow(
       container
     ).run({
       input: {
         salesChannelsData: [
           {
-            name: "Default Sales Channel",
+            name: "Türkiye",
           },
         ],
       },
     });
-    defaultSalesChannel = salesChannelResult;
+    turkiyeSalesChannel = salesChannelResult;
   }
 
   await updateStoresWorkflow(container).run({
@@ -67,7 +70,7 @@ export default async function seedDemoData({ container }: ExecArgs) {
             currency_code: "eur",
           },
         ],
-        default_sales_channel_id: defaultSalesChannel[0].id,
+        default_sales_channel_id: turkiyeSalesChannel[0].id,
       },
     },
   });
@@ -273,7 +276,7 @@ export default async function seedDemoData({ container }: ExecArgs) {
   await linkSalesChannelsToStockLocationWorkflow(container).run({
     input: {
       id: stockLocation.id,
-      add: [defaultSalesChannel[0].id],
+      add: [turkiyeSalesChannel[0].id],
     },
   });
   logger.info("Finished seeding stock location data.");
@@ -297,7 +300,7 @@ export default async function seedDemoData({ container }: ExecArgs) {
   await linkSalesChannelsToApiKeyWorkflow(container).run({
     input: {
       id: publishableApiKey.id,
-      add: [defaultSalesChannel[0].id],
+      add: [turkiyeSalesChannel[0].id],
     },
   });
   logger.info("Finished seeding publishable API key data.");
@@ -401,7 +404,7 @@ export default async function seedDemoData({ container }: ExecArgs) {
           ],
           sales_channels: [
             {
-              id: defaultSalesChannel[0].id,
+              id: turkiyeSalesChannel[0].id,
             },
           ],
         },

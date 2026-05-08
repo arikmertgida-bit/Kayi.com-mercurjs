@@ -112,7 +112,8 @@
     "enterCardDetails": "Enter card details",
     "continueToReview": "Continue to review",
     "nextStep": "Another step will appear",
-    "placeOrder": "Place order"
+    "placeOrder": "Place order",
+    "backToCart": "Back to cart"
   },
   "productDetails": {
     "posted": "Posted:",
@@ -311,9 +312,6 @@
     "goToUserPage": "Go to user page",
     "passwordMismatch": "New password and old password cannot be identical",
     "somethingWentWrong": "Something went wrong"
-  },
-  "checkout": {
-    "backToCart": "Back to cart"
   },
   "errorPage": {
     "title": "An error occurred",

@@ -1,7 +1,7 @@
 import { io, Socket } from "socket.io-client"
 
 const BASE_URL: string =
-  (import.meta as any).env?.VITE_MESSENGER_URL ?? "http://localhost:4000"
+  import.meta.env.VITE_MESSENGER_URL ?? "http://localhost:4000"
 
 let socketInstance: Socket | null = null
 

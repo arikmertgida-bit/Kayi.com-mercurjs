@@ -33,6 +33,7 @@ export default async function importImageOptimizerSubscriber({
 }: SubscriberArgs<{ id: string }>) {
   const query = container.resolve(ContainerRegistrationKeys.QUERY)
   const fileModule = container.resolve(Modules.FILE)
+  const logger = container.resolve<{ error: (...a: unknown[]) => void }>('logger')
 
   try {
     const { data: [product] } = await query.graph({
@@ -95,7 +96,7 @@ export default async function importImageOptimizerSubscriber({
     }
   } catch (err: any) {
     // Subscriber errors must not crash the server — log and continue
-    console.error(
+    logger.error(
       `[import-image-optimizer] Failed to optimize images for product ${data.id}:`,
       err?.message ?? err
     )

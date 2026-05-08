@@ -142,7 +142,7 @@ const reportReviewImage = async (imageId: string, reason: string): Promise<{ suc
 
     if (!response.ok) {
       const err = await response.json().catch(() => ({}))
-      return { error: (err as any)?.message || "Bildirim gönderilemedi." }
+      return { error: (err as { message?: string })?.message || "Bildirim gönderilemedi." }
     }
 
     return { success: true }

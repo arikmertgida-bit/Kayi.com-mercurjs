@@ -1,5 +1,6 @@
 import { useLoaderData, useParams } from "react-router-dom"
 
+import { InventoryTypes, ProductVariantDTO } from "@medusajs/types"
 import { TwoColumnPageSkeleton } from "../../../components/common/skeleton"
 import { TwoColumnPage } from "../../../components/layout/pages"
 import { useInventoryItem } from "../../../hooks/api/inventory"
@@ -71,9 +72,9 @@ export const InventoryDetail = () => {
       </TwoColumnPage.Main>
       <TwoColumnPage.Sidebar>
         <InventoryItemVariantsSection
-          variants={(inventory_item as any).variants}
+          variants={(inventory_item as unknown as { variants: ProductVariantDTO[] }).variants}
         />
-        <InventoryItemAttributeSection inventoryItem={inventory_item as any} />
+        <InventoryItemAttributeSection inventoryItem={inventory_item as unknown as InventoryTypes.InventoryItemDTO} />
       </TwoColumnPage.Sidebar>
     </TwoColumnPage>
   )

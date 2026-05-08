@@ -44,7 +44,7 @@ export const listCollections = async (
 
 export const getCollectionByHandle = async (
   handle: string
-): Promise<HttpTypes.StoreCollection> => {
+): Promise<HttpTypes.StoreCollection | undefined> => {
   const next = {
     ...(await getCacheOptions("collections")),
   }
@@ -55,9 +55,9 @@ export const getCollectionByHandle = async (
       next,
       cache: "force-cache",
     })
-    .then(({ collections }) => collections[0])
+    .then(({ collections }) => collections[0] as HttpTypes.StoreCollection)
     .catch((err: unknown) => {
       console.error("[getCollectionByHandle] fetch error for handle:", handle, err)
-      return undefined as any
+      return undefined
     })
 }

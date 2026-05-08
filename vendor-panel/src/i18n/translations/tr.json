@@ -145,6 +145,7 @@
     "in": "İçinde"
   },
   "app": {
+    "storeSuspended": "Mağazanız askıya alınmıştır. Lütfen destek ekibiyle iletişime geçin.",
     "search": {
       "label": "Arama",
       "title": "Arama",
@@ -2203,7 +2204,7 @@
       "fields": {
         "type": "Tür",
         "currency": "Para birimi",
-        "limit": "Limit",
+        "limit": "Sınır",
         "used": "Kullanıldı"
       },
       "type": {
@@ -2426,7 +2427,9 @@
     },
     "defaultSalesChannel": "Varsayılan satış kanalı",
     "defaultLocation": "Varsayılan konum",
-    "editCompany": "Şirket Bilgilerini Düzenle"
+    "editCompany": "Şirket Bilgilerini Düzenle",
+    "companyDescription": "Şirket bilgilerinizi yönetin",
+    "logo": "Logo"
   },
   "regions": {
     "domain": "Bölgeler",
@@ -2949,7 +2952,7 @@
     "subtitle": "Alt başlık",
     "item": "Öğe",
     "qty": "adet.",
-    "limit": "Limit",
+    "limit": "Sınır",
     "tags": "Etiketler",
     "type": "Tür",
     "reason": "Sebep",
@@ -3114,7 +3117,9 @@
     "searchConversations": "Konuşma ara...",
     "typeMessage": "Mesaj yaz...",
     "selectConversation": "Bir konuşma seçin",
-    "startMessaging": "Müşterilerinizle veya destek ekibiyle mesajlaşmaya başlayın"
+    "startMessaging": "Müşterilerinizle veya destek ekibiyle mesajlaşmaya başlayın",
+    "connected": "Bağlandı",
+    "disconnected": "Bağlantı kesildi"
   },
   "dashboard": {
     "followers": "Takipçiler",
@@ -3130,9 +3135,9 @@
     "noData": "Veri yok",
     "orders": "Siparişler",
     "customers": "Müşteriler",
-    "domain": "Dashboard",
+    "domain": "Panel",
     "onboarding": {
-      "title": "Mercur pazaryerine hoş geldiniz",
+      "title": "Kayı.com pazaryerine hoş geldiniz",
       "description": "Pazaryerinde satışa başlamak için bu adımları tamamlayın",
       "completeStore": "Mağaza bilgilerini tamamlayın",
       "setupShipping": "Konum ve Kargo Ayarları",
@@ -3161,40 +3166,40 @@
     },
     "sections": {
       "platformStatus": {
-        "content": "Kayi.com, 6563 sayili Elektronik Ticaretin Duzenlenmesi Hakkinda Kanun kapsaminda Araci Hizmet Saglayici statusundedir. Platform, saticlar ile alicilar arasinda guvenli bir kopru kurar. Listelenen urunlerin mulkiyeti saticiya ait olup; urunlere iliskin tum hukuki, teknik ve ticari sorumluluk dogrudan ilgili saticiya aittir."
+        "content": "Kayı.com, 6563 sayılı Elektronik Ticaretin Düzenlenmesi Hakkında Kanun kapsamında Aracı Hizmet Sağlayıcı statüsündedir. Platform, satıcılar ile alıcılar arasında güvenli bir köprü kurar. Listelenen ürünlerin mülkiyeti satıcıya ait olup; ürünlere ilişkin tüm hukuki, teknik ve ticari sorumluluk doğrudan ilgili satıcıya aittir."
       },
       "storeDocuments": {
-        "content": "Saticlar, Turkiye Cumhuriyeti mevzuatina uygun sekilde yasal vergi mukellefi olduklarini ve ticari faaliyet yurutme yetkisine sahip olduklarini beyan ederler. Kayi.com, uyelik asamasinda veya sonrasinda saticlardan gerekli belgeleri talep etme hakkini sakli tutar."
+        "content": "Satıcılar, Türkiye Cumhuriyeti mevzuatına uygun şekilde yasal vergi mükellefi olduklarını ve ticari faaliyet yürütme yetkisine sahip olduklarını beyan ederler. Kayı.com, üyelik aşamasında veya sonrasında satıcılardan faaliyet belgeleri, imza sirküleri, vergi levhası ve gerekli yetki belgelerini talep etme hakkını saklı tutar."
       },
       "productStandards": {
-        "content": "Sahte, taklit, kacak veya mevzuata aykiri urun satisi kesinlikle yasaktir. Fikri ve sinai mulkiyet haklarini ihlal eden urunlerin tespiti halinde Kayi.com; magazayi tek tarafli feshetme, hakedisleri bloke etme ve yasal yollara basvurma hakkina sahiptir."
+        "content": "Sahte, taklit, kaçak veya mevzuata aykırı ürün satışı kesinlikle yasaktır. Fikri ve sınai mülkiyet haklarını ihlal eden ürünlerin tespiti halinde Kayı.com; mağazayı tek taraflı feshetme, hakedişleri bloke etme ve yasal yollara başvurma hakkına sahiptir."
       },
       "stockOperations": {
-        "subhead1": "Stok Yonetimi:",
-        "content1": "Satici, platformdaki stok bilgilerini guncel tutmakla yukumludur. Gecersiz stok beyani nedeniyle iptal edilen siparisler satici performans puanini etkiler.",
-        "subhead2": "Lojistik Surecleri:",
-        "content2": "Siparisler, magaza panelinde taahhut edilen yasal sureler icinde kargoya verilmelidir. Gecikmeli gonderimlr ve hatali paketleme kaynakli zararlar saticinin sorumlulukundadir."
+        "subhead1": "Stok Yönetimi:",
+        "content1": "Satıcı, platformdaki stok bilgilerini güncel tutmakla yükümlüdür. Geçersiz stok beyanı nedeniyle iptal edilen siparişler satıcı performans puanını etkiler.",
+        "subhead2": "Lojistik Süreçleri:",
+        "content2": "Siparişler, mağaza panelinde taahhüt edilen yasal süreler içinde kargoya verilmelidir. Gecikmeli gönderimler ve hatalı paketleme kaynaklı zararlar satıcının sorumluluğundadır."
       },
       "paymentSystem": {
-        "content": "Odemeler, Kayi.com'un anlasmal oldugu lisansli odeme kuruluslari nezdindeki Guvenli Havuz Hesabi'nda toplanir. Teslimatın onaylanmasi ve yasal itiraz surelerinin tamamlanmasinin ardindan, belirlenen komisyon ve hizmet bedelleri dusulerek saticinin beyan ettigi IBAN hesabina aktarilir."
+        "content": "Ödemeler, Kayı.com'un anlaşmalı olduğu lisanslı ödeme kuruluşları nezdindeki Güvenli Havuz Hesabı'nda toplanır. Teslimatın onaylanması ve yasal itiraz sürelerinin tamamlanmasının ardından, belirlenen komisyon ve hizmet bedelleri düşülerek satıcının beyan ettiği IBAN hesabına aktarılır."
       },
       "returnDispute": {
-        "content": "Satici, 6502 sayili Tuketicinin Korunmasi Hakkinda Kanun uyarinca alicinin sahip oldugu 14 gunluk cayma hakkini ve diger tum yasal haklarini pesinen kabul eder. Iade surecleri, platformun belirledigi operasyonel kurallar cercevesinde yurutulur."
+        "content": "Satıcı, 6502 sayılı Tüketicinin Korunması Hakkında Kanun uyarınca alıcının sahip olduğu 14 günlük cayma hakkını ve diğer tüm yasal haklarını peşinen kabul eder. İade süreçleri, platformun belirlediği operasyonel kurallar çerçevesinde yürütülür."
       },
       "privacyKVKK": {
-        "content": "Satici, kendisine iletilen alici verilerini sadece siparis teslimat amacıyla kullanabilir. Bu verilerin platform disi ticari faaliyetlerde kullanilmasi veya ucuncu sahislarla paylasilmasi KVKK kapsaminda agir ihlal sayilir ve sozlesmenin derhal feshine yol acar."
+        "content": "Satıcı, kendisine iletilen alıcı verilerini yalnızca sipariş teslimat amacıyla kullanabilir. Bu verilerin platform dışı ticari faaliyetlerde kullanılması veya üçüncü şahıslarla paylaşılması KVKK kapsamında ağır ihlal sayılır ve sözleşmenin derhal feshine yol açar."
       },
       "systemSecurity": {
-        "content": "Satici, sifre guvenligini saglamakla yukumludur. KVKK ve 6563 sayili Kanun geregi veri erisim sorumlulugu saticiya aittir."
+        "content": "Satıcı, şifre güvenliğini sağlamakla yükümlüdür. KVKK ve 6563 sayılı Kanun gereği veri erişim sorumluluğu satıcıya aittir."
       },
       "platformReputation": {
-        "content": "Satici, platform ici tum iletisiminde ve ticari faaliyetlerinde genel ahlak kurallarina ve Kayi.com is etigi standartlarina uygun hareket etmelidir. Platformun ticari itibarana zarar verecek eylemlerde bulunulmasi durumunda Kayi.com, sozlesmeyi tek tarafli olarak feshetme hakkini sakli tutar."
+        "content": "Satıcı, platform içi tüm iletişiminde ve ticari faaliyetlerinde genel ahlak kurallarına ve Kayı.com iş etiği standartlarına uygun hareket etmelidir. Platformun ticari itibarına zarar verecek eylemlerde bulunulması durumunda Kayı.com, sözleşmeyi tek taraflı olarak feshetme hakkını saklı tutar."
       },
       "approvalEnactment": {
-        "content": "Kayi.com uzerinde magaza kaydini baslatan ve onay kutucugunu isaretleyen her satici, yukarida belirtilen tum sartlari, kurallari ve ek protokolleri hicbir kisitlama olmaksizin okumuss, anlamis ve kabul etmis sayilir. Bu onay, taraflar arasinda dijital imza hukmunde olup kayit anından itibaren yururluge girer."
+        "content": "Kayı.com üzerinde mağaza kaydını başlatan ve onay kutucuğunu işaretleyen her satıcı, yukarıda belirtilen tüm şartları, kuralları ve ek protokolleri hiçbir kısıtlama olmaksızın okumuş, anlamış ve kabul etmiş sayılır. Bu onay, taraflar arasında dijital imza hükmünde olup kayıt anından itibaren yürürlüğe girer."
       },
       "commissionTable": {
-        "description": "Asagidaki tablo, her urun kategorisi icin uygulanan net komisyon oranlarini ve KDV dahil toplam oranlari gostermektedir. Komisyon tutarlari satis bedeli uzerinden hesaplanir.",
+        "description": "Aşağıdaki tablo, her ürün kategorisi için uygulanan net komisyon oranlarını ve KDV dahil toplam oranları göstermektedir. Komisyon tutarları satış bedeli üzerinden hesaplanır.",
         "col": {
           "category": "Kategori",
           "netCommission": "Net Komisyon (%)",
@@ -3215,7 +3220,7 @@
           "autoMoto": "Oto & Motosiklet",
           "privateLife": "Özel Yaşam"
         },
-        "footnote": "* Komisyon oranlari KDV haric net satis bedeli uzerinden hesaplanir. Kayi.com, oranlari 30 gun onceden bildirmek kaydiyla degistirme hakkini sakli tutar. Son guncelleme: 01 Mayis 2026."
+        "footnote": "* Komisyon oranları KDV hariç net satış bedeli üzerinden hesaplanır. Kayı.com, oranları 30 gün önceden bildirmek kaydıyla değiştirme hakkını saklı tutar. Son güncelleme: 01 Mayıs 2026."
       }
     }
   },
@@ -3402,6 +3407,11 @@
   "stripeConnect": {
     "title": "Stripe Connect",
     "description": "Pazaryerinden otomatik ödemeler almak için Stripe'ı bağlayın",
+    "status": {
+      "connected": "Bağlı",
+      "notConnected": "Bağlı Değil",
+      "pending": "Beklemede"
+    },
     "notConnected": {
       "title": "Bağlı değil",
       "description": "Stripe bağlantısı yok",
@@ -3426,7 +3436,7 @@
     "nameRequired": "Ad zorunludur",
     "nameNotEmpty": "Ad boş olamaz",
     "saveAsSystemDefault": "Sistem varsayılanı olarak kaydet",
-    "saveAsSystemDefaultDesc": "Bu, mevcut yapılandırmayı sistem varsayılanı olarak kaydeder. Emin misiniz?",
+    "saveAsSystemDefaultDesc": "Bu, mevcut yapılandırmayı sistem varsayılanı olarak kaydeder. Kendi kişisel görünümleri olmadıkça tüm kullanıcılar bu yapılandırmayı varsayılan olarak görecektir. Emin misiniz?",
     "updateExistingView": "Mevcut görünümü güncelle",
     "updateExistingViewDesc": "\"{{name}}\" mevcut yapılandırmayla güncellensin mi?",
     "update": "Güncelle",

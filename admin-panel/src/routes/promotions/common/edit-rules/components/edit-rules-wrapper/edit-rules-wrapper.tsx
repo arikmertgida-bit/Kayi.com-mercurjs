@@ -86,7 +86,7 @@ export const EditRulesWrapper = ({
               attribute: rule.attribute,
               operator: rule.operator,
               values: rule.values,
-            } as any
+            }
           }),
         }))
 

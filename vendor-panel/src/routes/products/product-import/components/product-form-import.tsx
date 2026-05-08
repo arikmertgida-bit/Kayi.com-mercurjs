@@ -38,51 +38,51 @@ const ProductFormImport = () => {
   const [submitted, setSubmitted] = useState(false)
   const [errorIndices, setErrorIndices] = useState<Set<number>>(new Set())
 
-  const { data: locData } = useStockLocations() as any
-  const { data: catData } = useProductCategories() as any
-  const { data: tagData } = useProductTags() as any
-  const { data: typeData } = useProductTypes() as any
-  const { data: colData } = useCollections() as any
+  const { stock_locations } = useStockLocations() as any
+  const { product_categories } = useProductCategories() as any
+  const { product_tags } = useProductTags() as any
+  const { product_types } = useProductTypes() as any
+  const { product_collections } = useCollections() as any
 
   const stockLocations: { id: string; name: string }[] = useMemo(
     () =>
-      (locData?.stock_locations ?? []).map((sl: any) => ({
+      (stock_locations ?? []).map((sl: any) => ({
         id: sl.id,
         name: sl.name,
       })),
-    [locData]
+    [stock_locations]
   )
   const categories: { id: string; name: string }[] = useMemo(
     () =>
-      (catData?.product_categories ?? []).map((c: any) => ({
+      (product_categories ?? []).map((c: any) => ({
         id: c.id,
         name: c.name,
       })),
-    [catData]
+    [product_categories]
   )
   const tags: { id: string; value: string }[] = useMemo(
     () =>
-      (tagData?.product_tags ?? []).map((t: any) => ({
+      (product_tags ?? []).map((t: any) => ({
         id: t.id,
         value: t.value,
       })),
-    [tagData]
+    [product_tags]
   )
   const types: { id: string; value: string }[] = useMemo(
     () =>
-      (typeData?.product_types ?? []).map((t: any) => ({
+      (product_types ?? []).map((t: any) => ({
         id: t.id,
         value: t.value,
       })),
-    [typeData]
+    [product_types]
   )
   const collections: { id: string; title: string }[] = useMemo(
     () =>
-      (colData?.product_collections ?? []).map((c: any) => ({
+      (product_collections ?? []).map((c: any) => ({
         id: c.id,
         title: c.title,
       })),
-    [colData]
+    [product_collections]
   )
 
   const { mutate: bulkImport, isPending } = useBulkImportProducts({

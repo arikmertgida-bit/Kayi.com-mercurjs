@@ -164,7 +164,20 @@ const CartPaymentSection = ({
                         paymentInfoMap={paymentInfoMap}
                         paymentProviderId={paymentMethod.id}
                         selectedPaymentOptionId={selectedPaymentMethod}
-                      />
+                      >
+                        {paymentMethod.id === "pp_system_default" &&
+                          selectedPaymentMethod === "pp_system_default" && (
+                            <div className="mt-3 p-4 bg-amber-50 border border-amber-200 rounded-sm text-sm text-ui-fg-base space-y-1">
+                              <p className="font-semibold">Havale / EFT Bilgileri</p>
+                              <p>Banka: <span className="font-medium">Örnek Bankası</span></p>
+                              <p>Hesap Sahibi: <span className="font-medium">Arıkmert Gıda San. ve Tic. LTD. Şti.</span></p>
+                              <p>IBAN: <span className="font-medium select-all">TR00 0000 0000 0000 0000 0000 00</span></p>
+                              <p className="text-ui-fg-subtle text-xs mt-2">
+                                Lütfen sipariş numaranızı açıklama kısmına yazınız. Ödemeniz onaylandıktan sonra siparişiniz işleme alınacaktır.
+                              </p>
+                            </div>
+                          )}
+                      </PaymentContainer>
                     )}
                   </div>
                 ))}
