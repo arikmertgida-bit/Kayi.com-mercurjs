@@ -2726,7 +2726,13 @@
     "title": "Kayı.com Ailesine Katıl",
     "hint": "Satışa başlamak için kayıt olun",
     "alreadySeller": "Zaten hesabınız var mı? - <0>Giriş Yap</0>",
-    "companyName": "Şirket Adı",
+    "companyName": "Mağaza Adı",
+    "validation": {
+      "name": "Mağaza adı en az 2 karakter olmalıdır.",
+      "email": "Geçerli bir e-posta adresi girin.",
+      "password": "şifre en az 2 karakter olmalıdır.",
+      "confirmPassword": "şifre onayı en az 2 karakter olmalıdır."
+    },
     "confirmPassword": "Şifreyi Onayla",
     "signUp": "Kaydol",
     "passwordMismatch": "Şifreler uyuşmuyor",

@@ -69,7 +69,7 @@ export const Login = () => {
   })
 
   const serverError =
-    form.formState.errors?.root?.serverError?.message || reason
+    form.formState.errors?.root?.serverError?.message
   const validationError =
     form.formState.errors.email?.message ||
     form.formState.errors.password?.message
