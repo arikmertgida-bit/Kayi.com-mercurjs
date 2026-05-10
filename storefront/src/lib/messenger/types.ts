@@ -38,6 +38,7 @@ export interface Conversation {
   subject: string | null
   productId: string | null
   orderId: string | null
+  metadata: ConversationMetadata | null
   createdAt: string
   updatedAt: string
   participants: Participant[]
@@ -66,7 +67,20 @@ export interface TypingUpdatePayload {
 }
 
 // ── Messaging Context Types ─────────────────────────────────────────────────
-
+/** Stored in Conversation.metadata — persists product or store context without extra API calls */
+export type ConversationMetadata =
+  | {
+      type: "product"
+      product_id: string
+      product_name: string
+      product_image: string | null
+    }
+  | {
+      type: "store"
+      store_id: string
+      store_name: string
+      store_image: string | null
+    }
 export interface ProductContextData {
   id: string
   title: string

@@ -54,7 +54,7 @@ export const SellerPageHeader = ({
       >
         <div className="flex items-start">
           <div
-            className="flex-shrink-0 rounded-full border-4 border-white shadow-xl overflow-hidden bg-white z-10 w-20 h-20 md:w-24 md:h-24"
+            className="flex-shrink-0 rounded-full shadow-xl overflow-hidden z-10 w-20 h-20 md:w-24 md:h-24"
           >
             {profilePhoto ? (
               <Image
@@ -66,13 +66,15 @@ export const SellerPageHeader = ({
                 className="object-cover w-full h-full"
               />
             ) : (
-              <Image
-                src="/images/vendor/default-seller-avatar.png"
-                alt={profileName || seller.name}
-                width={AVATAR}
-                height={AVATAR}
-                priority
-                className="object-cover w-full h-full"
+              <div
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  backgroundImage: "url('/images/vendor/default-seller-avatar.png')",
+                  backgroundSize: "contain",
+                  backgroundPosition: "center",
+                  backgroundRepeat: "no-repeat",
+                }}
               />
             )}
           </div>

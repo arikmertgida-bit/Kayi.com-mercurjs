@@ -9,7 +9,7 @@ import { ProductContextCard } from "./ProductContextCard"
 import { VendorContextCard } from "./VendorContextCard"
 import { ChatHeader } from "./ChatHeader"
 
-// â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Helpers ──────────────────────────────────────────────────────────────
 
 function formatTime(iso: string, locale: string): string {
   return new Date(iso).toLocaleTimeString(locale, {
@@ -18,7 +18,7 @@ function formatTime(iso: string, locale: string): string {
   })
 }
 
-// â”€â”€ Customer info lookup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Customer info lookup ──────────────────────────────────────────────────
 
 interface CustomerInfo {
   id: string
@@ -54,7 +54,7 @@ function useCustomerInfo(customerId: string | undefined) {
   return { info, displayName, avatarUrl }
 }
 
-// â”€â”€ Participant resolution â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Participant resolution ────────────────────────────────────────────────
 
 function getOtherParticipant(participants: any[]) {
   // SELLER type = current vendor; other = CUSTOMER or ADMIN
@@ -106,7 +106,7 @@ export function MessengerVendorInbox({ sellerId: _sellerId }: MessengerVendorInb
   const isOtherCustomer =
     otherParticipant?.userType === "CUSTOMER" || otherParticipant?.userId?.startsWith("cus_")
 
-  const { displayName: customerDisplayName } = useCustomerInfo(
+  const { displayName: customerDisplayName, avatarUrl: customerAvatarUrl } = useCustomerInfo(
     isOtherCustomer ? otherParticipant?.userId : undefined
   )
 
@@ -231,7 +231,7 @@ export function MessengerVendorInbox({ sellerId: _sellerId }: MessengerVendorInb
   }
 
 
-  // â”€â”€ Search (min 2 chars) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Search (min 2 chars) ──────────────────────────────────────────────
   // Show ALL conversations that have at least one message, or are currently open.
   // This prevents ghost rows from sidebar open (findOrCreate creates empty conversations).
   const directConversations = conversations.filter(
@@ -260,7 +260,7 @@ export function MessengerVendorInbox({ sellerId: _sellerId }: MessengerVendorInb
   return (
     <>
     <div className="flex h-[700px] border border-ui-border-base rounded-lg overflow-hidden">
-      {/* â”€â”€ Left: Conversation list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── Left: Conversation list ─────────────────────────────────────── */}
       <div className={`${mobileView === 'chat' ? 'hidden md:flex' : 'flex'} w-full md:w-80 flex-col border-r border-ui-border-base bg-ui-bg-subtle flex-shrink-0`}>
         <div className="p-3 border-b border-ui-border-base">
           <div className="flex items-center justify-between mb-2">
@@ -291,15 +291,13 @@ export function MessengerVendorInbox({ sellerId: _sellerId }: MessengerVendorInb
                 isActive={conv.id === activeConversationId}
                 onOpen={handleOpenConversation}
                 onDelete={deleteConversation}
-                customerDisplayName={null}
-                customerAvatarUrl={null}
               />
             ))
           )}
         </div>
       </div>
 
-      {/* â”€â”€ Right: Chat panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── Right: Chat panel ──────────────────────────────────────────────── */}
       {activeConv ? (
         <div className={`${mobileView === 'list' ? 'hidden md:flex' : 'flex'} flex-1 flex-col min-w-0`}>
           {/* Chat Header — context-aware */}
@@ -308,6 +306,7 @@ export function MessengerVendorInbox({ sellerId: _sellerId }: MessengerVendorInb
             otherName={otherName}
             otherParticipantType={otherParticipant?.userType ?? ""}
             participantCount={activeConv.participants?.length ?? 0}
+            customerAvatarUrl={isOtherCustomer ? (customerAvatarUrl ?? null) : null}
             onBack={() => setMobileView('list')}
             onClose={() => { closeConversation(); setMobileView('list') }}
           />
@@ -331,15 +330,11 @@ export function MessengerVendorInbox({ sellerId: _sellerId }: MessengerVendorInb
                 {isOtherAdmin ? (
                   <img src="/logo.png" alt="Yardım Destek" className="w-10 h-10 rounded-full object-cover mb-3" />
                 ) : (
-                  <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center mb-3 ${
-                      isOtherAdmin
-                        ? "bg-ui-tag-purple-bg text-ui-tag-purple-text"
-                        : "bg-ui-tag-blue-bg text-ui-tag-blue-text"
-                    }`}
-                  >
-                    <span className="text-base font-bold">{(otherName[0] ?? "?").toUpperCase()}</span>
-                  </div>
+                  <img
+                    src={customerAvatarUrl ?? "/images/customer-default-avatar.jpg"}
+                    alt={otherName}
+                    className="w-10 h-10 rounded-full object-cover aspect-square mb-3 flex-shrink-0"
+                  />
                 )}
                 <p className="text-sm font-medium text-ui-fg-base">{otherName}</p>
                 <p className="text-xs text-ui-fg-muted mt-1">{t("messenger.startConversation")}</p>

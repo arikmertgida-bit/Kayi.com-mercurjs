@@ -25,8 +25,8 @@ export const ProductAdditionalAttributesForm = () => {
     id!
   )
 
-  const defaultValues = product?.attribute_values?.reduce(
-    (acc: any, curr: any) => {
+  const defaultValues = product?.attribute_values?.reduce<Record<string, string>>(
+    (acc, curr) => {
       acc[curr.attribute_id] = curr.value
       return acc
     },
@@ -42,7 +42,7 @@ export const ProductAdditionalAttributesForm = () => {
 
   if (isAttributesLoading || isProductLoading) return <div>{t("general.loading")}</div>
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: Record<string, string>) => {
     const values = Object.keys(data).reduce(
       (acc: Array<Record<string, string>>, key) => {
         acc.push({ attribute_id: key, value: data[key] })

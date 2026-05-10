@@ -1,8 +1,7 @@
 import { Button, Heading, ProgressStatus, ProgressTabs, Text, toast } from "@medusajs/ui"
 import { HttpTypes } from "@medusajs/types"
-import { useEffect, useState } from "react"
+import { startTransition, useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { useNavigate } from "react-router-dom"
 import {
   RouteFocusModal,
   useRouteModal,
@@ -56,6 +55,8 @@ const ATTRIBUTE_FIELDS = [
   "attribute_values",
 ] as const
 
+const TAB_ORDER: Tab[] = [Tab.DETAILS, Tab.VARIANTS, Tab.ATTRIBUTES, Tab.REVIEW]
+
 type ProductCreateFormProps = {
   defaultChannel?: HttpTypes.AdminSalesChannel
   store?: HttpTypes.AdminStore
@@ -70,12 +71,15 @@ export const ProductCreateForm = ({
 }: ProductCreateFormProps) => {
   const [typeSelected, setTypeSelected] = useState<ProductType | null>(initialProductType ?? null)
   const [tab, setTab] = useState<Tab>(Tab.DETAILS)
-  const [tabState, setTabState] = useState<TabState>({
-    [Tab.DETAILS]: "in-progress",
-    [Tab.VARIANTS]: "not-started",
-    [Tab.ATTRIBUTES]: "not-started",
-    [Tab.REVIEW]: "not-started",
-  })
+  const tabState = useMemo<TabState>(() => {
+    const idx = TAB_ORDER.indexOf(tab)
+    return {
+      [Tab.DETAILS]: idx > 0 ? "completed" : "in-progress",
+      [Tab.VARIANTS]: idx > 1 ? "completed" : idx === 1 ? "in-progress" : "not-started",
+      [Tab.ATTRIBUTES]: idx > 2 ? "completed" : idx === 2 ? "in-progress" : "not-started",
+      [Tab.REVIEW]: idx === 3 ? "in-progress" : "not-started",
+    }
+  }, [tab])
 
   const { t } = useTranslation()
   const { handleSuccess } = useRouteModal()
@@ -105,31 +109,33 @@ export const ProductCreateForm = ({
   const { regions } = useRegions({ limit: 9999 })
 
   const handleTypeSelect = (type: ProductType) => {
-    form.setValue("enable_variants", type === "variant")
-    if (type === "single") {
-      form.setValue("options", [{ title: "Varsayılan Seçenek", values: ["Varsayılan Değer"] }])
-      form.setValue(
-        "variants",
-        decorateVariantsWithDefaultValues([
-          {
-            title: "Varsayılan Varyant",
-            should_create: true,
-            variant_rank: 0,
-            options: { "Varsayılan Seçenek": "Varsayılan Değer" },
-            inventory: [{ inventory_item_id: "", required_quantity: "" }],
-            is_default: true,
-          },
+    startTransition(() => {
+      form.setValue("enable_variants", type === "variant")
+      if (type === "single") {
+        form.setValue("options", [{ title: "Varsayılan Seçenek", values: ["Varsayılan Değer"] }])
+        form.setValue(
+          "variants",
+          decorateVariantsWithDefaultValues([
+            {
+              title: "Varsayılan Varyant",
+              should_create: true,
+              variant_rank: 0,
+              options: { "Varsayılan Seçenek": "Varsayılan Değer" },
+              inventory: [{ inventory_item_id: "", required_quantity: "" }],
+              is_default: true,
+            },
+          ])
+        )
+      } else {
+        form.setValue("options", [
+          { title: "Renk", values: [] },
+          { title: "Beden", values: [] },
+          { title: "Numara", values: [] },
         ])
-      )
-    } else {
-      form.setValue("options", [
-        { title: "Renk", values: [] },
-        { title: "Beden", values: [] },
-        { title: "Numara", values: [] },
-      ])
-      form.setValue("variants", [])
-    }
-    setTypeSelected(type)
+        form.setValue("variants", [])
+      }
+      setTypeSelected(type)
+    })
   }
 
   // initialProductType ile doğrudan açılan formlarda seçici ekranı atlanır,
@@ -443,30 +449,6 @@ export const ProductCreateForm = ({
     }
   }
 
-  useEffect(() => {
-    const currentState = { ...tabState }
-    if (tab === Tab.DETAILS) {
-      currentState[Tab.DETAILS] = "in-progress"
-    }
-    if (tab === Tab.VARIANTS) {
-      currentState[Tab.DETAILS] = "completed"
-      currentState[Tab.VARIANTS] = "in-progress"
-    }
-    if (tab === Tab.ATTRIBUTES) {
-      currentState[Tab.DETAILS] = "completed"
-      currentState[Tab.VARIANTS] = "completed"
-      currentState[Tab.ATTRIBUTES] = "in-progress"
-    }
-    if (tab === Tab.REVIEW) {
-      currentState[Tab.DETAILS] = "completed"
-      currentState[Tab.VARIANTS] = "completed"
-      currentState[Tab.ATTRIBUTES] = "completed"
-      currentState[Tab.REVIEW] = "in-progress"
-    }
-    setTabState({ ...currentState })
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- we only want this effect to run when the tab changes
-  }, [tab])
-
   return (
     <RouteFocusModal.Form form={form}>
       {typeSelected === null ? (
@@ -498,18 +480,19 @@ export const ProductCreateForm = ({
           }
         }}
         onSubmit={handleSubmit}
-        className="flex h-full flex-col"
+        className="animate-in fade-in duration-150 flex h-full flex-col"
       >
         <ProgressTabs
           value={tab}
-          onValueChange={async (tab) => {
-            const valid = await form.trigger()
-
-            if (!valid) {
-              return
+          onValueChange={async (nextTab) => {
+            const currentIndex = TAB_ORDER.indexOf(tab)
+            const targetIndex = TAB_ORDER.indexOf(nextTab as Tab)
+            // Backward navigation requires no validation
+            if (targetIndex > currentIndex) {
+              const valid = await form.trigger()
+              if (!valid) return
             }
-
-            setTab(tab as Tab)
+            setTab(nextTab as Tab)
           }}
           className="flex h-full flex-col overflow-hidden"
         >
@@ -612,17 +595,8 @@ type ProductTypeSelectorProps = {
   onSelect: (type: ProductType) => void
 }
 
-const ProductTypeSelector = ({ onSelect: _onSelect }: ProductTypeSelectorProps) => {
+const ProductTypeSelector = ({ onSelect }: ProductTypeSelectorProps) => {
   const { t } = useTranslation()
-  const navigate = useNavigate()
-
-  const handleSelect = (type: ProductType) => {
-    if (type === "single") {
-      navigate("/products/create-single")
-    } else {
-      navigate("/products/create-with-variants")
-    }
-  }
 
   return (
     <>
@@ -635,7 +609,7 @@ const ProductTypeSelector = ({ onSelect: _onSelect }: ProductTypeSelectorProps) 
       </RouteFocusModal.Header>
 
       <RouteFocusModal.Body className="flex items-center justify-center p-8 overflow-y-auto">
-        <div className="flex w-full max-w-2xl flex-col items-center gap-y-10">
+        <div className="animate-in fade-in slide-in-from-bottom-2 duration-200 flex w-full max-w-2xl flex-col items-center gap-y-10">
           <div className="flex flex-col items-center gap-y-2 text-center">
             <Heading>
               {t("products.create.typeSelect.title", "Nasıl bir ürün ekleyeceksiniz?")}
@@ -651,7 +625,7 @@ const ProductTypeSelector = ({ onSelect: _onSelect }: ProductTypeSelectorProps) 
           <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2">
             <button
               type="button"
-              onClick={() => handleSelect("single")}
+              onClick={() => onSelect("single")}
               className="group flex flex-col gap-y-5 rounded-xl border-2 border-ui-border-base bg-ui-bg-base p-6 text-left transition-all hover:border-ui-border-interactive hover:bg-ui-bg-base-hover focus:outline-none focus:ring-2 focus:ring-ui-border-interactive"
             >
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-ui-bg-component text-2xl group-hover:bg-ui-bg-subtle">
@@ -677,7 +651,7 @@ const ProductTypeSelector = ({ onSelect: _onSelect }: ProductTypeSelectorProps) 
 
             <button
               type="button"
-              onClick={() => handleSelect("variant")}
+              onClick={() => onSelect("variant")}
               className="group flex flex-col gap-y-5 rounded-xl border-2 border-ui-border-base bg-ui-bg-base p-6 text-left transition-all hover:border-ui-border-interactive hover:bg-ui-bg-base-hover focus:outline-none focus:ring-2 focus:ring-ui-border-interactive"
             >
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-ui-bg-component text-2xl group-hover:bg-ui-bg-subtle">

@@ -29,7 +29,6 @@ export const Chat = ({
   order_id?: string
 }) => {
   const [modal, setModal] = useState(false)
-  const [conversationId, setConversationId] = useState<string | null>(null)
   const [showConfirmation, setShowConfirmation] = useState(false)
   const { startConversation } = useMessenger()
 
@@ -42,6 +41,10 @@ export const Chat = ({
 
   if (!user) return null
 
+  // Customer profile photo from metadata
+  const customerAvatarUrl =
+    ((user.metadata as Record<string, unknown> | null | undefined)?.avatar_url as string) ?? null
+
   // Use owner/admin member photo; fallback to first member photo; finally undefined
   const ownerMember =
     seller.members?.find((m) => m.role === "owner" || m.role === "admin") ??
@@ -49,23 +52,8 @@ export const Chat = ({
   const memberPhoto = ownerMember?.photo ?? undefined
   const memberUserId = ownerMember?.id ?? seller.id
 
-  const handleOpen = async () => {
+  const handleOpen = () => {
     setModal(true)
-    if (!conversationId) {
-      try {
-        const cid = await startConversation({
-          targetUserId: memberUserId,
-          targetUserType: "SELLER",
-          subject: subject || product?.title,
-          productId: product?.id,
-          orderId: order_id,
-        })
-        setConversationId(cid)
-      } catch (err) {
-        console.error("[Chat] startConversation error:", err)
-        setModal(false)
-      }
-    }
   }
 
   const handleFirstMessageSent = () => {
@@ -83,17 +71,41 @@ export const Chat = ({
         {icon ? <MessageIcon size={20} /> : "Satıcıya Sor"}
       </Button>
 
-      {modal && conversationId && (
+      {modal && (
         <Modal heading="Satıcıya Sor" onClose={() => setModal(false)}>
           <div className="px-4 h-[520px]">
             <MessengerChatBox
-              conversationId={conversationId}
+              conversationId={null}
+              onNeedConversation={async () =>
+                startConversation({
+                  targetUserId: memberUserId,
+                  targetUserType: "SELLER",
+                  subject: subject || product?.title,
+                  productId: product?.id,
+                  orderId: order_id,
+                  contextType: product?.id ? "PRODUCT_BASED" : "VENDOR_BASED",
+                  metadata: product?.id
+                    ? {
+                        type: "product",
+                        product_id: product.id,
+                        product_name: product.title ?? "",
+                        product_image: product.thumbnail ?? null,
+                      }
+                    : {
+                        type: "store",
+                        store_id: seller.id,
+                        store_name: seller.name ?? "",
+                        store_image: memberPhoto ?? null,
+                      },
+                })
+              }
               currentUserId={user.id}
               currentUserName={
                 [user.first_name, user.last_name].filter(Boolean).join(" ") ||
                 user.email ||
                 "Ben"
               }
+              currentUserAvatarUrl={customerAvatarUrl}
               productId={product?.id}
               otherUser={{
                 id: memberUserId,

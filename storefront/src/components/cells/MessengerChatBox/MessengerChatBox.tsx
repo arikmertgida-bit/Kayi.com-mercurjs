@@ -19,7 +19,17 @@ interface MessengerChatBoxProps {
   currentUserName: string
   /** Current authenticated user's profile photo */
   currentUserAvatarUrl?: string | null
-  conversationId: string
+  /**
+   * Existing conversation id to open immediately, or null when the conversation
+   * should be created lazily on the first sent message.
+   */
+  conversationId: string | null
+  /**
+   * Called when a conversation id is needed for the first time (lazy init).
+   * Must resolve to the new conversation id.
+   * Only required when conversationId is null.
+   */
+  onNeedConversation?: () => Promise<string>
   /** Optional product ID — shows a product reference card at the top of the chat */
   productId?: string | null
   onClose: () => void
@@ -44,36 +54,17 @@ function TypingDots() {
   )
 }
 
-function Avatar({ src, name, size = 32, gradient = "from-purple-400 to-pink-400" }: { src?: string | null; name?: string | null; size?: number; gradient?: string }) {
+function Avatar({ src, name, size = 32, fallbackSrc = "/images/customer-default-avatar.jpg" }: { src?: string | null; name?: string | null; size?: number; fallbackSrc?: string }) {
   const safeName = name ?? ""
-  const initials = safeName
-    .split(" ")
-    .filter(Boolean)
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2) || "?"
-
-  if (src) {
-    return (
-      <Image
-        src={src}
-        alt={safeName || "avatar"}
-        width={size}
-        height={size}
-        className="rounded-full object-cover flex-shrink-0"
-        style={{ width: size, height: size }}
-      />
-    )
-  }
-
   return (
-    <div
-      className={`rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-semibold flex-shrink-0`}
-      style={{ width: size, height: size, fontSize: size * 0.35 }}
-    >
-      {initials}
-    </div>
+    <Image
+      src={src || fallbackSrc}
+      alt={safeName || "avatar"}
+      width={size}
+      height={size}
+      className="rounded-full object-cover aspect-square flex-shrink-0"
+      style={{ width: size, height: size }}
+    />
   )
 }
 
@@ -128,7 +119,7 @@ function MessageBubble({
       {!isMine && (
         <div className="mb-1 flex-shrink-0">
           {showAvatar ? (
-            <Avatar src={otherUser.avatarUrl} name={otherUser.name} size={28} />
+            <Avatar src={otherUser.avatarUrl} name={otherUser.name} size={28} fallbackSrc="/images/vendor/default-seller-avatar.png" />
           ) : (
             <div className="w-7" />
           )}
@@ -139,7 +130,7 @@ function MessageBubble({
       {isMine && (
         <div className="mb-1 flex-shrink-0">
           {showAvatarMine ? (
-            <Avatar src={currentUserAvatarUrl} name={currentUserName} size={28} gradient="from-blue-400 to-indigo-500" />
+            <Avatar src={currentUserAvatarUrl} name={currentUserName} size={28} />
           ) : (
             <div className="w-7" />
           )}
@@ -261,6 +252,7 @@ export function MessengerChatBox({
   currentUserName,
   currentUserAvatarUrl,
   conversationId,
+  onNeedConversation,
   productId,
   onClose,
   onFirstMessageSent,
@@ -277,6 +269,10 @@ export function MessengerChatBox({
     openConversation,
     closeConversation,
   } = useMessenger()
+
+  // Tracks the active conversation id — may start as null and be resolved lazily
+  // on the first sent message via onNeedConversation().
+  const activeConvIdRef = useRef<string | null>(conversationId)
 
   const [text, setText] = useState("")
   const [isSending, setIsSending] = useState(false)
@@ -304,6 +300,8 @@ export function MessengerChatBox({
   }, [productId])
 
   useEffect(() => {
+    if (!conversationId) return
+    activeConvIdRef.current = conversationId
     openConversation(conversationId)
     return () => closeConversation()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -322,6 +320,25 @@ export function MessengerChatBox({
     const content = text.trim()
     const isFirstMessage = messages.length === 0
 
+    // Lazy conversation init — create the conversation only when the first
+    // message is actually sent, not when the modal is opened.
+    if (!activeConvIdRef.current) {
+      if (!onNeedConversation) {
+        setSendError("Sohbet başlatılamadı. Tekrar deneyin.")
+        setIsSending(false)
+        return
+      }
+      try {
+        const newConvId = await onNeedConversation()
+        activeConvIdRef.current = newConvId
+        await openConversation(newConvId)
+      } catch {
+        setSendError("Sohbet başlatılamadı. Tekrar deneyin.")
+        setIsSending(false)
+        return
+      }
+    }
+
     // Upload pending image first
     if (pendingImage) {
       const file = pendingImage
@@ -329,8 +346,7 @@ export function MessengerChatBox({
       if (pendingImagePreview) { URL.revokeObjectURL(pendingImagePreview); setPendingImagePreview(null) }
       try {
         await uploadImage(file)
-      } catch (err) {
-        console.error("[MessengerChatBox] Image upload error:", err)
+      } catch {
         setSendError("Görsel gönderilemedi. Lütfen tekrar deneyin.")
         setIsSending(false)
         return
@@ -346,8 +362,7 @@ export function MessengerChatBox({
         if (isFirstMessage && onFirstMessageSent) {
           onFirstMessageSent()
         }
-      } catch (err) {
-        console.error("[MessengerChatBox] send error:", err)
+      } catch {
         setText(content)
         setSendError("Mesaj gönderilemedi. Tekrar deneyin.")
       }
@@ -356,7 +371,7 @@ export function MessengerChatBox({
     }
 
     setIsSending(false)
-  }, [text, pendingImage, pendingImagePreview, isSending, sendMessage, stopTyping, uploadImage, messages.length, onFirstMessageSent])
+  }, [text, pendingImage, pendingImagePreview, isSending, sendMessage, stopTyping, uploadImage, openConversation, onNeedConversation, messages.length, onFirstMessageSent])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -394,12 +409,14 @@ export function MessengerChatBox({
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 bg-white">
         <div className="relative">
-          <Avatar src={otherUser.avatarUrl} name={otherUser.name} size={40} />
+          <Avatar src={otherUser.avatarUrl} name={otherUser.name} size={40} fallbackSrc="/images/vendor/default-seller-avatar.png" />
           <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-white rounded-full" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-gray-900 text-sm truncate">{otherUser.name}</p>
-          <p className="text-xs text-gray-400">Mesaj bırakabilirsiniz</p>
+          <p className="text-xs text-gray-400">
+            {productId ? "Ürün Sorusu" : "Mağaza Sorusu"}
+          </p>
         </div>
         <button
           onClick={onClose}
@@ -446,7 +463,7 @@ export function MessengerChatBox({
           </div>
         ) : messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center py-8">
-            <Avatar src={otherUser.avatarUrl} name={otherUser.name} size={56} />
+            <Avatar src={otherUser.avatarUrl} name={otherUser.name} size={56} fallbackSrc="/images/vendor/default-seller-avatar.png" />
             <p className="mt-3 font-semibold text-gray-900">{otherUser.name}</p>
             <p className="text-sm text-gray-400 mt-1">Mesaj göndererek sohbeti başlatın.</p>
           </div>
@@ -491,7 +508,7 @@ export function MessengerChatBox({
         {/* Typing indicator */}
         {isOtherTyping && (
           <div className="flex items-end gap-2">
-            <Avatar src={otherUser.avatarUrl} name={otherUser.name} size={28} />
+            <Avatar src={otherUser.avatarUrl} name={otherUser.name} size={28} fallbackSrc="/images/vendor/default-seller-avatar.png" />
             <div className="bg-gray-100 rounded-[22px] rounded-bl-sm">
               <TypingDots />
             </div>

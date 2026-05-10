@@ -40,7 +40,7 @@ export const RefundReasonEditForm = ({
   const { mutateAsync, isPending } = useUpdateRefundReason(refundReason.id);
 
   const handleSubmit = form.handleSubmit(async (data) => {
-    await mutateAsync(data, {
+    await mutateAsync({ ...data, code: refundReason.code }, {
       onSuccess: ({ refund_reason }) => {
         toast.success(
           t("refundReasons.edit.successToast", {

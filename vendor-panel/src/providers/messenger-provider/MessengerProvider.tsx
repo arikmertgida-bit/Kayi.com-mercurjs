@@ -58,6 +58,7 @@ interface MessengerContextValue {
     subject?: string
     productId?: string
     orderId?: string
+    metadata?: Record<string, unknown>
   }) => Promise<string>
   sendMessage: (content: string) => Promise<void>
   uploadImage: (file: File) => Promise<void>
@@ -364,6 +365,7 @@ export function MessengerProvider({ children, sellerId, sellerName }: MessengerP
     subject?: string
     productId?: string
     orderId?: string
+    metadata?: Record<string, unknown>
   }): Promise<string> => {
     const { conversation } = await findOrCreateConversation(params as any)
     setConversations((prev) => {

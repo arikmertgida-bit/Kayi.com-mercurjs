@@ -34,8 +34,8 @@ export const CategorySelectionModal: React.FC<CategorySelectionModalProps> = ({
         method: "GET",
       });
       setCategories(response.product_categories || []);
-    } catch (error) {
-      console.error("Failed to fetch categories:", error);
+    } catch {
+      // background fetch — sessiz fail, kullanıcı arayüzü zaten boş liste gösterir
     } finally {
       setIsLoading(false);
     }

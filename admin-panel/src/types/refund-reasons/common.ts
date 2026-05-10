@@ -94,6 +94,11 @@ export type AdminBaseRefundReasonPayload = {
    */
   label: string;
   /**
+   * The refund reason's code (machine-readable identifier).
+   * Auto-generated from label if not provided.
+   */
+  code?: string;
+  /**
    * The refund reason's description.
    *
    * @example
@@ -111,6 +116,16 @@ export interface AdminRefundReasonDeleteResponse
 
 export interface AdminRefundReasonParams extends SelectParams {}
 
-export interface AdminCreateRefundReason extends AdminBaseRefundReasonPayload {}
+export interface AdminCreateRefundReason extends AdminBaseRefundReasonPayload {
+  /**
+   * Required on create. Auto-generated from label if not provided in the form.
+   */
+  code: string;
+}
 
-export interface AdminUpdateRefundReason extends AdminBaseRefundReasonPayload {}
+export interface AdminUpdateRefundReason extends Omit<AdminBaseRefundReasonPayload, "code"> {
+  /**
+   * Required by Medusa SDK. Pass the existing code value when not changing it.
+   */
+  code: string;
+}

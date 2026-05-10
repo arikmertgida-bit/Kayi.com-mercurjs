@@ -98,8 +98,8 @@ export const AttributeForm = ({
       }
 
       await onSubmit(data);
-    } catch (error) {
-      console.error(error);
+    } catch {
+      // onSubmit hataları parent bileşenin kendi try-catch bloğunda ele alınır
     }
   });
 

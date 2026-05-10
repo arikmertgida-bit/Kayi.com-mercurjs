@@ -57,6 +57,19 @@ Bu projeye yazılacak her yeni kod, mevcut "0 hata" disiplinine uymak zorundadı
 
 ---
 
+### Madde V — YALNIZCA Node.js / TypeScript EKOSİSTEMİ
+
+Bu proje **tamamen ve yalnızca** Node.js / TypeScript üzerine kuruludur.
+
+- Python, Ruby, Bash script veya başka hiçbir dil/runtime bu projede **kullanılamaz, önerilemez, çalıştırılamaz.**
+- Encoding, dosya manipülasyonu, veri dönüşümü gibi tüm işlemler Node.js veya PowerShell ile yapılır.
+- AI asistan dahil hiç kimse bu kurala istisna getiremez.
+- Bu kurala uymak, ekosistem bütünlüğünü ve Docker image güvenilirliğini korumak için zorunludur.
+
+> **⚠️ AI ASSISTANT UYARISI:** Herhangi bir işlem için Python kodu yazmadan önce dur. Bu projede Python yoktur, olmayacaktır. Node.js veya PowerShell ile çöz.
+
+---
+
 ### Sonuç
 
 > **Kayı.com artık hatasız, kusursuz ve profesyonel bir kaledir.**

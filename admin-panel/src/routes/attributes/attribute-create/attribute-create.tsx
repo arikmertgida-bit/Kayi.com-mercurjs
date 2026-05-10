@@ -34,8 +34,8 @@ export const AttributeCreate = () => {
         });
 
         setCategories(product_categories);
-      } catch (error) {
-        console.error("Failed to fetch categories:", error);
+      } catch {
+        // background fetch — sessiz fail, kategori listesi boş kalır
       }
     };
     fetchCategories();
@@ -57,7 +57,6 @@ export const AttributeCreate = () => {
       navigate(-1);
     } catch (error) {
       toast.error((error as Error).message);
-      console.error(error);
     }
   };
 

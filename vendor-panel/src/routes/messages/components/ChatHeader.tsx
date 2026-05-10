@@ -6,6 +6,7 @@ interface ChatHeaderProps {
   otherName: string
   otherParticipantType: string
   participantCount: number
+  customerAvatarUrl: string | null
   onBack: () => void
   onClose: () => void
 }
@@ -20,6 +21,7 @@ export function ChatHeader({
   otherName,
   otherParticipantType,
   participantCount,
+  customerAvatarUrl,
   onBack,
   onClose,
 }: ChatHeaderProps) {
@@ -46,25 +48,19 @@ export function ChatHeader({
         </svg>
       </button>
 
-      {/* Context icon */}
-      {isProduct ? (
-        <div className="w-8 h-8 rounded-lg bg-ui-tag-orange-bg flex items-center justify-center flex-shrink-0">
-          <svg className="w-4 h-4 text-ui-tag-orange-text" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-          </svg>
-        </div>
-      ) : isVendor ? (
-        <div className="w-8 h-8 rounded-lg bg-ui-tag-green-bg flex items-center justify-center flex-shrink-0">
-          <svg className="w-4 h-4 text-ui-tag-green-text" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-          </svg>
-        </div>
-      ) : otherParticipantType === "ADMIN" ? (
-        <img src="/logo.png" alt="Kayı.com" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+      {/* Customer / participant avatar — always shown except for ADMIN */}
+      {otherParticipantType === "ADMIN" ? (
+        <img
+          src="/logo.png"
+          alt="Kayı.com"
+          className="w-8 h-8 rounded-full object-cover aspect-square flex-shrink-0"
+        />
       ) : (
-        <div className="w-8 h-8 rounded-full bg-ui-tag-blue-bg flex items-center justify-center text-xs font-medium text-ui-tag-blue-text flex-shrink-0">
-          {(otherName[0] ?? "?").toUpperCase()}
-        </div>
+        <img
+          src={customerAvatarUrl ?? "/images/customer-default-avatar.jpg"}
+          alt={otherName}
+          className="w-8 h-8 rounded-full object-cover aspect-square flex-shrink-0"
+        />
       )}
 
       <div className="flex-1 min-w-0">

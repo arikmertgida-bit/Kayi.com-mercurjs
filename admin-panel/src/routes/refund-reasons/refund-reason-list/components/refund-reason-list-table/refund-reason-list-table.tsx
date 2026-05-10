@@ -1,13 +1,14 @@
 import { useCallback, useMemo } from "react";
 
 import { PencilSquare, Trash } from "@medusajs/icons";
-import { HttpTypes } from "@medusajs/types";
 import {
   Container,
   createDataTableColumnHelper,
   toast,
   usePrompt,
 } from "@medusajs/ui";
+
+import { AdminRefundReason } from "../../../../../types/refund-reasons";
 
 import { keepPreviousData } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -45,7 +46,7 @@ export const RefundReasonListTable = () => {
   return (
     <Container className="divide-y px-0 py-0">
       <DataTable
-        data={refund_reasons as unknown as HttpTypes.AdminRefundReason[] | undefined}
+        data={refund_reasons as AdminRefundReason[] | undefined}
         columns={columns}
         rowCount={count}
         pageSize={PAGE_SIZE}
@@ -74,7 +75,7 @@ export const RefundReasonListTable = () => {
   );
 };
 
-const columnHelper = createDataTableColumnHelper<HttpTypes.AdminRefundReason>();
+const columnHelper = createDataTableColumnHelper<AdminRefundReason>();
 
 const useColumns = () => {
   const { t } = useTranslation();
@@ -85,7 +86,7 @@ const useColumns = () => {
   const { mutateAsync } = useDeleteRefundReasonLazy();
 
   const handleDelete = useCallback(
-    async (refundReason: HttpTypes.AdminRefundReason) => {
+    async (refundReason: AdminRefundReason) => {
       const confirm = await prompt({
         title: t("general.areYouSure"),
         description: t("refundReasons.delete.confirmation", {

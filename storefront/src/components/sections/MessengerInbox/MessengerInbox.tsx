@@ -38,43 +38,26 @@ function Avatar({
   src,
   name,
   size = 40,
-  gradient = "from-amber-400 to-orange-400",
+  fallbackSrc = "/images/customer-default-avatar.jpg",
 }: {
   src?: string | null
   name?: string | null
   size?: number
-  gradient?: string
+  /** Shown when src is absent. Defaults to customer avatar. Pass seller avatar for seller contexts. */
+  fallbackSrc?: string
 }) {
   const safeName = name ?? ""
-  const initials =
-    safeName
-      .split(" ")
-      .filter(Boolean)
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2) || "?"
-
-  if (src) {
-    return (
-      <Image
-        src={src}
-        alt={safeName || "avatar"}
-        width={size}
-        height={size}
-        className="rounded-full object-cover flex-shrink-0"
-        style={{ width: size, height: size }}
-      />
-    )
-  }
 
   return (
-    <div
-      className={`rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-semibold flex-shrink-0`}
-      style={{ width: size, height: size, fontSize: size * 0.33 }}
-    >
-      {initials}
-    </div>
+    <Image
+      src={src || fallbackSrc}
+      alt={safeName || "avatar"}
+      width={size}
+      height={size}
+      className="rounded-full object-cover aspect-square flex-shrink-0"
+      style={{ width: size, height: size }}
+      unoptimized
+    />
   )
 }
 
@@ -319,10 +302,16 @@ export function MessengerInbox({
     setMobileView('chat')
   }, [openConversation])
 
+  // Filter out ghost conversations (created by findOrCreate but with no messages yet).
+  // A conversation is visible if it has at least one message, or if it's currently open.
+  const visibleConversations = conversations.filter(
+    (c) => (c.messages?.length ?? 0) > 0 || c.id === activeConversationId
+  )
+
   const filtered =
     searchQuery.length < 2
-      ? conversations
-      : conversations.filter((c) => {
+      ? visibleConversations
+      : visibleConversations.filter((c) => {
           const q = searchQuery.toLowerCase()
           const other = c.participants.find((p) => p.userId !== currentUserId)
           return (
@@ -499,7 +488,6 @@ export function MessengerInbox({
                             src={currentUserAvatarUrl}
                             name={currentUserName}
                             size={28}
-                            gradient="from-blue-400 to-indigo-500"
                           />
                         ) : (
                           <div className="w-7" />

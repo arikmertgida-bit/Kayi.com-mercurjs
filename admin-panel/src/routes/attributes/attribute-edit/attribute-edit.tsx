@@ -47,8 +47,8 @@ export const AttributeEdit = () => {
           method: "GET",
         });
         setCategories(response.product_categories);
-      } catch (error) {
-        console.error("Failed to fetch categories:", error);
+      } catch {
+        // background fetch — sessiz fail, kategori listesi boş kalır
       }
     };
     fetchCategories();
@@ -67,7 +67,6 @@ export const AttributeEdit = () => {
       navigate(-1);
     } catch (error) {
       toast.error((error as Error).message);
-      console.error(error);
     }
   };
 

@@ -15,7 +15,7 @@ import { useCreateRefundReason } from "../../../../../hooks/api";
 
 const RefundReasonCreateSchema = z.object({
   label: z.string().min(1),
-  code: z.string().min(1),
+  code: z.string().optional(),
   description: z.string().optional(),
 });
 

@@ -32,7 +32,7 @@ export const SellerInfo = ({
 
   return (
     <div className="flex gap-4 w-full">
-      <div className="relative h-14 w-14 overflow-hidden rounded-sm">
+      <div className="relative h-14 w-14 overflow-hidden rounded-full">
         <SellerAvatar photo={memberPhoto} size={56} alt={name} />
       </div>
       <div className="w-[90%]">

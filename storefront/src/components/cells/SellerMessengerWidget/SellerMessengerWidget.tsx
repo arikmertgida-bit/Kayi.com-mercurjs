@@ -34,25 +34,18 @@ function getSellerAvatar(seller: SellerProps): string | null {
   return owner?.photo ?? seller.photo ?? null
 }
 
-function Initials({ name, size, gradient = "from-amber-400 to-amber-600" }: { name: string; size: number; gradient?: string }) {
-  const text = name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2) || "?"
+function CustomerAvatar({ size, src }: { size: number; src?: string | null }) {
   return (
-    <div
-      className={`rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-bold flex-shrink-0`}
-      style={{ width: size, height: size, fontSize: size * 0.36 }}
-    >
-      {text}
-    </div>
+    <Image
+      src={src || "/images/customer-default-avatar.jpg"}
+      alt="Profil"
+      width={size}
+      height={size}
+      className="rounded-full object-cover aspect-square flex-shrink-0"
+      style={{ width: size, height: size }}
+      unoptimized={!!src}
+    />
   )
-}
-
-function CustomerAvatar({ name, size }: { name: string; size: number }) {
-  return <Initials name={name} size={size} gradient="from-blue-400 to-indigo-500" />
 }
 
 // WhatsApp-style read receipt ticks
@@ -88,13 +81,28 @@ function SellerAvatar({
         alt={seller.name}
         width={size}
         height={size}
-        className="rounded-full object-cover flex-shrink-0"
+        className="rounded-full object-cover aspect-square flex-shrink-0"
         style={{ width: size, height: size }}
         unoptimized
       />
     )
   }
-  return <Initials name={seller.name} size={size} />
+  return (
+    <div
+      role="img"
+      aria-label={seller.name}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: "50%",
+        backgroundImage: "url('/images/vendor/default-seller-avatar.png')",
+        backgroundSize: "contain",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        flexShrink: 0,
+      }}
+    />
+  )
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -130,7 +138,7 @@ function MessageBubble({
   showAvatarMine: boolean
   isFirst: boolean
   seller: SellerProps
-  currentUser: { id: string; name: string } | null
+  currentUser: { id: string; name: string; avatarUrl?: string | null } | null
 }) {
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const isImage = message.messageType === "IMAGE"
@@ -164,7 +172,7 @@ function MessageBubble({
       {isMine && (
         <div className="mb-1 flex-shrink-0">
           {showAvatarMine ? (
-            <CustomerAvatar name={currentUser?.name ?? "Ben"} size={26} />
+            <CustomerAvatar size={26} src={currentUser?.avatarUrl} />
           ) : (
             <div className="w-[26px]" />
           )}
@@ -266,7 +274,7 @@ function WelcomeScreen({ seller }: { seller: SellerProps }) {
     <div className="flex flex-col items-center justify-center flex-1 px-8 py-10 text-center">
       <div className="relative mb-5">
         <div className="rounded-full p-1 bg-gradient-to-tr from-amber-300 via-amber-400 to-amber-500 shadow-lg">
-          <div className="rounded-full overflow-hidden bg-white p-0.5">
+          <div className="rounded-full overflow-hidden">
             <SellerAvatar seller={seller} size={72} />
           </div>
         </div>
@@ -319,7 +327,7 @@ interface SellerMessengerWidgetProps {
   /** Authenticated customer id (null = not logged in) */
   currentUserId: string | null
   /** Authenticated customer display info */
-  currentUser?: { id: string; name: string } | null
+  currentUser?: { id: string; name: string; avatarUrl?: string | null } | null
 }
 
 export function SellerMessengerWidget({
@@ -382,11 +390,15 @@ export function SellerMessengerWidget({
       .catch(() => {/* silent fail */})
   }, [seller.id])
 
-  // Find existing conversation with this seller (match by seller.id OR member ID)
-  const existingConversation = conversations.find((c) =>
-    c.participants.some(
-      (p) => (p.userId === seller.id || p.userId === memberUserId) && p.userType === "SELLER"
-    )
+  // Find existing VENDOR_BASED conversation with this seller.
+  // Must filter by contextType to avoid accidentally capturing a PRODUCT_BASED
+  // conversation from the product detail page as the store-level conversation.
+  const existingConversation = conversations.find(
+    (c) =>
+      c.contextType === "VENDOR_BASED" &&
+      c.participants.some(
+        (p) => (p.userId === seller.id || p.userId === memberUserId) && p.userType === "SELLER"
+      )
   )
 
   // Unread count for this specific seller conversation
@@ -474,6 +486,12 @@ export function SellerMessengerWidget({
           targetUserType: "SELLER",
           subject: `${seller.name} ile sohbet`,
           contextType: "VENDOR_BASED",
+          metadata: {
+            type: "store",
+            store_id: seller.id,
+            store_name: seller.name ?? "",
+            store_image: getSellerAvatar(seller),
+          },
         })
         setConversationId(newConvId)
         await openConversation(newConvId)
@@ -599,25 +617,28 @@ export function SellerMessengerWidget({
                 padding: 2.5,
               }}
             >
-              <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden p-0.5">
-                <div className="w-full h-full rounded-full overflow-hidden">
-                  {getSellerAvatar(seller) ? (
-                    <Image
-                      src={decodeURIComponent(getSellerAvatar(seller)!)}
-                      alt={seller.name}
-                      width={56}
-                      height={56}
-                      className="object-cover w-full h-full"
-                      unoptimized
-                    />
-                  ) : (
-                    <div
-                      className="w-full h-full rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white font-bold text-lg"
-                    >
-                      {seller.name[0]?.toUpperCase()}
-                    </div>
-                  )}
-                </div>
+              <div className="w-full h-full rounded-full overflow-hidden">
+                {getSellerAvatar(seller) ? (
+                  <Image
+                    src={decodeURIComponent(getSellerAvatar(seller)!)}
+                    alt={seller.name}
+                    width={56}
+                    height={56}
+                    className="object-cover w-full h-full"
+                    unoptimized
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      backgroundImage: "url('/images/vendor/default-seller-avatar.png')",
+                      backgroundSize: "contain",
+                      backgroundPosition: "center",
+                      backgroundRepeat: "no-repeat",
+                    }}
+                  />
+                )}
               </div>
             </div>
 
@@ -645,12 +666,12 @@ export function SellerMessengerWidget({
           >
             {/* ── Header ─────────────────────────────────────────────── */}
             <div className="flex items-center gap-2.5 px-4 py-3 border-b border-gray-100 bg-white flex-shrink-0">
-              {/* IYI Damga + Logo */}
-              <div className="flex items-center gap-1.5 flex-shrink-0">
-                <IYIDamga size={26} />
+              {/* Seller profile photo (member.photo) */}
+              <div className="flex-shrink-0">
+                <SellerAvatar seller={seller} size={36} />
               </div>
 
-              {/* Store name — clickable */}
+              {/* Store name + context label — clickable */}
               <div className="flex-1 min-w-0">
                 <Link
                   href={`/tr/sellers/${seller.handle}`}
@@ -659,6 +680,11 @@ export function SellerMessengerWidget({
                   {seller.name}
                 </Link>
                 <p className="text-[11px] text-gray-400 leading-tight mt-0.5 flex items-center gap-1">
+                  {/* Context label: product question vs store question */}
+                  <span className={`font-medium ${existingConversation?.contextType === "PRODUCT_BASED" ? "text-amber-600" : "text-blue-500"}`}>
+                    {existingConversation?.contextType === "PRODUCT_BASED" ? "Ürün Sorusu" : "Mağaza Sorusu"}
+                  </span>
+                  <span className="text-gray-300">·</span>
                   {responseTime === null ? (
                     <span className="text-gray-300">Yükleniyor…</span>
                   ) : responseTime.isWithinHours ? (

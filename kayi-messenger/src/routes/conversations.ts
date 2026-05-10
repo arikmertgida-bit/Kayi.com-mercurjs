@@ -18,6 +18,7 @@ const createConversationSchema = z.object({
   productId: z.string().optional(),
   orderId: z.string().optional(),
   contextType: z.enum(["PRODUCT_BASED", "VENDOR_BASED"]).optional(),
+  metadata: z.record(z.unknown()).optional(),
 })
 
 /**
@@ -33,7 +34,7 @@ router.post("/", authMiddleware, async (req: AuthRequest, res) => {
       res.status(400).json({ error: parsed.error.errors[0].message })
       return
     }
-    const { targetUserId, targetUserType, type, subject, productId, orderId, contextType } = parsed.data
+    const { targetUserId, targetUserType, type, subject, productId, orderId, contextType, metadata } = parsed.data
     // Auto-derive contextType if not explicitly provided
     const resolvedContextType: ConversationContextType =
       (contextType as ConversationContextType) ?? (productId ? ConversationContextType.PRODUCT_BASED : ConversationContextType.VENDOR_BASED)
@@ -48,6 +49,7 @@ router.post("/", authMiddleware, async (req: AuthRequest, res) => {
       orderId,
       type: type as ConversationType,
       contextType: resolvedContextType,
+      metadata,
     })
 
     res.json({ conversation })

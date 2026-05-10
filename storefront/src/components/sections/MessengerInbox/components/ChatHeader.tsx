@@ -65,16 +65,25 @@ export function ChatHeader({ context, locale, onBack, onClose, fallbackName, isA
           </svg>
         </div>
       ) : isVendor ? (
-        <div className="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-          <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-          </svg>
+        <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border border-gray-100">
+          <Image
+            src={context.data.photo || "/images/vendor/default-seller-avatar.png"}
+            alt={context.data.name}
+            width={36}
+            height={36}
+            className="w-full h-full object-cover aspect-square"
+            unoptimized
+          />
         </div>
       ) : (
-        <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-          <span className="text-sm font-bold text-gray-500">
-            {fallbackName.charAt(0).toUpperCase()}
-          </span>
+        <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0">
+          <Image
+            src="/images/customer-default-avatar.jpg"
+            alt={fallbackName}
+            width={36}
+            height={36}
+            className="w-full h-full object-cover aspect-square"
+          />
         </div>
       )}
 

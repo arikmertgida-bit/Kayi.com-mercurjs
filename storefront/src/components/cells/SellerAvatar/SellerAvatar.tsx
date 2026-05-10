@@ -15,15 +15,23 @@ export const SellerAvatar = ({
       alt={alt}
       width={size}
       height={size}
+      className="object-cover w-full h-full"
       style={{ width: size, height: size }}
     />
   ) : (
-    <Image
-      src="/images/placeholder.svg"
-      alt={alt}
-      className="opacity-30 w-8 h-8"
-      width={32}
-      height={32}
+    <div
+      role="img"
+      aria-label={alt}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: "50%",
+        backgroundImage: "url('/images/vendor/default-seller-avatar.png')",
+        backgroundSize: "contain",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        flexShrink: 0,
+      }}
     />
   )
 }

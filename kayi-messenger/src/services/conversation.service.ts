@@ -11,6 +11,7 @@ export interface FindOrCreateConversationInput {
   orderId?: string
   type?: ConversationType
   contextType?: ConversationContextType
+  metadata?: Record<string, unknown>
 }
 
 export const ConversationService = {
@@ -19,16 +20,24 @@ export const ConversationService = {
    * or creates one if none exists.
    */
   async findOrCreate(input: FindOrCreateConversationInput) {
-    const { participantAId, participantAType, participantBId, participantBType, subject, productId, orderId, type, contextType } = input
+    const { participantAId, participantAType, participantBId, participantBType, subject, productId, orderId, type, contextType, metadata } = input
+
+    // Resolve contextType once — used in both find and create paths
+    const resolvedContextType: ConversationContextType =
+      (contextType as ConversationContextType) ?? (productId ? ConversationContextType.PRODUCT_BASED : ConversationContextType.VENDOR_BASED)
 
     return prisma.$transaction(async (tx) => {
       // Try to find existing conversation with both participants.
+      // Filter by contextType AND productId (explicit null for VENDOR_BASED) so that
+      // a VENDOR_BASED conversation never merges with a PRODUCT_BASED one, and
+      // two different products each get their own separate conversation.
       // Running inside a SERIALIZABLE transaction prevents a race condition
       // where two concurrent requests both see no conversation and both insert.
       const existing = await tx.conversation.findFirst({
         where: {
           type: type ?? ConversationType.DIRECT,
-          ...(productId ? { productId } : {}),
+          contextType: resolvedContextType,
+          productId: productId ?? null,
           ...(orderId ? { orderId } : {}),
           participants: {
             every: {
@@ -55,7 +64,8 @@ export const ConversationService = {
           subject,
           productId,
           orderId,
-          contextType: contextType ?? (productId ? ConversationContextType.PRODUCT_BASED : ConversationContextType.VENDOR_BASED),
+          contextType: resolvedContextType,
+          ...(metadata !== undefined ? { metadata: metadata as Prisma.InputJsonObject } : {}),
           participants: {
             create: [
               { userId: participantAId, userType: participantAType },

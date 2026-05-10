@@ -61,6 +61,7 @@ interface MessengerContextValue {
     productId?: string
     orderId?: string
     contextType?: string
+    metadata?: Record<string, unknown>
   }) => Promise<string>
   sendMessage: (content: string) => Promise<void>
   uploadImage: (file: File) => Promise<void>
@@ -308,6 +309,7 @@ export function MessengerProvider({ children, userId, authToken, userName, notif
       productId?: string
       orderId?: string
       contextType?: string
+      metadata?: Record<string, unknown>
     }): Promise<string> => {
       const { conversation } = await findOrCreateConversation(params)
       setConversations((prev) => {

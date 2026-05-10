@@ -88,6 +88,7 @@ export default async function SellerPage({
         currentUser={user ? {
           id: user.id,
           name: [user.first_name, user.last_name].filter(Boolean).join(" ") || user.email || "Müşteri",
+          avatarUrl: ((user.metadata as Record<string, unknown> | null | undefined)?.avatar_url as string) ?? null,
         } : null}
       />
     </>

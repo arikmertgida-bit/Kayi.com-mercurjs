@@ -21,19 +21,13 @@ export function VendorContextCard({ vendor, locale }: VendorContextCardProps) {
     <div className="flex items-center gap-3 px-5 py-3 bg-slate-50 border-b border-slate-100 flex-shrink-0">
       {/* Store logo */}
       <div className="w-11 h-11 rounded-full overflow-hidden bg-white flex-shrink-0 border border-slate-200 shadow-sm">
-        {vendor.photo ?? vendor.storePhoto ? (
-          <Image
-            src={(vendor.photo ?? vendor.storePhoto)!}
-            alt={vendor.name}
-            width={44}
-            height={44}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-200 to-slate-300 text-slate-500 font-bold text-base">
-            {vendor.name.charAt(0).toUpperCase()}
-          </div>
-        )}
+        <Image
+          src={(vendor.photo ?? vendor.storePhoto) || "/images/vendor/default-seller-avatar.png"}
+          alt={vendor.name}
+          width={44}
+          height={44}
+          className="w-full h-full object-cover aspect-square"
+        />
       </div>
 
       {/* Store info */}
