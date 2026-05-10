@@ -15,7 +15,7 @@ import { notifyMessengerUser } from "../../../../../lib/messenger"
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
   const customerId = (req as any).auth_context?.actor_id
   if (!customerId) {
-    return res.status(401).json({ message: "Authentication required." })
+    return res.status(401).json({ message: "Bu işlem için giriş yapmanız gerekiyor." })
   }
 
   const orderId = req.params.id
@@ -28,19 +28,19 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     .first()
 
   if (!order) {
-    return res.status(404).json({ message: "Order not found." })
+    return res.status(404).json({ message: "Sipariş bulunamadı." })
   }
 
   if (order.customer_id !== customerId) {
-    return res.status(403).json({ message: "You do not have permission to cancel this order." })
+    return res.status(403).json({ message: "Bu siparişi iptal etme yetkiniz yok." })
   }
 
   if (order.status === "cancelled") {
-    return res.status(409).json({ message: "Order is already cancelled." })
+    return res.status(409).json({ message: "Sipariş zaten iptal edilmiş." })
   }
 
   if (order.status === "completed") {
-    return res.status(409).json({ message: "Completed orders cannot be cancelled." })
+    return res.status(409).json({ message: "Tamamlanan siparişler iptal edilemez." })
   }
 
   try {
@@ -51,7 +51,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       },
     })
   } catch (err: any) {
-    const message = err?.message ?? "Unable to cancel this order. The order may already be in fulfillment."
+    const message = err?.message ?? "Bu sipariş şu anda iptal edilemiyor. Sipariş karşılama sürecinde olabilir."
     return res.status(400).json({ message })
   }
 
@@ -65,5 +65,5 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     // Non-critical — do not fail the response
   })
 
-  return res.status(200).json({ message: "Order cancelled successfully.", order_id: orderId })
+  return res.status(200).json({ message: "Siparişiniz başarıyla iptal edildi.", order_id: orderId })
 }

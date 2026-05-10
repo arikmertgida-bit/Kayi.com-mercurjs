@@ -16,6 +16,7 @@ export const listProducts = async ({
   category_id,
   collection_id,
   forceCache = false,
+  revalidateSeconds = 60,
 }: {
   pageParam?: number
   queryParams?: HttpTypes.FindParams &
@@ -27,6 +28,7 @@ export const listProducts = async ({
   countryCode?: string
   regionId?: string
   forceCache?: boolean
+  revalidateSeconds?: number
 }): Promise<{
   response: {
     products: (HttpTypes.StoreProduct & { seller?: SellerProps })[]
@@ -86,7 +88,7 @@ export const listProducts = async ({
         ...queryParams,
       },
       headers,
-      next: useCached ? { revalidate: 60 } : undefined,
+      next: useCached ? { revalidate: revalidateSeconds } : undefined,
       cache: useCached ? "force-cache" : "no-cache",
     })
     .then(({ products: productsRaw, count }) => {

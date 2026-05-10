@@ -19,7 +19,7 @@ export const SellerFooter = ({ seller }: { seller: SellerProps }) => {
           </div>
         )} */}
         <Divider square />
-        <p>Joined {format(seller.created_at, "yyyy-MM-dd")}</p>
+        <p>Katılım: {format(seller.created_at, "dd.MM.yyyy")}</p>
         {/* <Divider square /> */}
         {/* <p>sold {seller.sold}</p> */}
       </div>
@@ -29,10 +29,10 @@ export const SellerFooter = ({ seller }: { seller: SellerProps }) => {
         className="uppercase"
         onClick={() => setOpenModal(true)}
       >
-        Report
+        Şikayet Et
       </Button>
       {openModal && (
-        <Modal heading="Report seller" onClose={() => setOpenModal(false)}>
+        <Modal heading="Satıcıyı Şikayet Et" onClose={() => setOpenModal(false)}>
           <ReportSellerForm sellerId={seller.id} onClose={() => setOpenModal(false)} />
         </Modal>
       )}

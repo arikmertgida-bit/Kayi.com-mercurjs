@@ -8,11 +8,17 @@ export const CollectionProductSection = async ({
   collectionHandle,
   locale = process.env.NEXT_PUBLIC_DEFAULT_REGION || "tr",
   allProductsHref,
+  limit = 10,
+  shuffle = false,
+  revalidateSeconds = 60,
 }: {
   heading?: string
   collectionHandle: string
   locale?: string
   allProductsHref?: string
+  limit?: number
+  shuffle?: boolean
+  revalidateSeconds?: number
 }) => {
   const collection = await getCollectionByHandle(collectionHandle)
   if (!collection) return null
@@ -22,8 +28,9 @@ export const CollectionProductSection = async ({
   } = await listProducts({
     countryCode: locale,
     collection_id: collection.id,
-    queryParams: { limit: 10, order: "-created_at" },
+    queryParams: { limit, order: "-created_at" },
     forceCache: true,
+    revalidateSeconds,
   })
 
   if (!products.length) return null
@@ -34,6 +41,7 @@ export const CollectionProductSection = async ({
         heading={heading ?? collection.title}
         initialProducts={products as HttpTypes.StoreProduct[]}
         allProductsHref={allProductsHref ?? `/collections/${collectionHandle}`}
+        shuffle={shuffle}
       />
     </section>
   )

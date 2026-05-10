@@ -75,7 +75,7 @@ export async function reviewValidationMiddleware(
       const moderation = await checkOpenAIModeration(customerNote)
       if (moderation.flagged) {
         return res.status(400).json({
-          message: "Your review contains inappropriate content and could not be submitted.",
+          message: "Değerlendirmeniz uygunsuz içerik barındırdığından gönderilemedi.",
           category: moderation.category,
         })
       }
@@ -130,7 +130,7 @@ export async function reviewValidationMiddleware(
     const moderation = await checkOpenAIModeration(customerNote)
     if (moderation.flagged) {
       return res.status(400).json({
-        message: "Your review contains inappropriate content and could not be submitted.",
+        message: "Değerlendirmeniz uygunsuz içerik barındırdığından gönderilemedi.",
         category: moderation.category,
       })
     }

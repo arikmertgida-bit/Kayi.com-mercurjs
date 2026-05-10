@@ -43,7 +43,7 @@ export const SizeFilter = () => {
     updateFilters(size)
   }
   return (
-    <Accordion heading="Size">
+    <Accordion heading="Beden">
       {/* <SelectField
         options={sizeType}
         selected={size_region}

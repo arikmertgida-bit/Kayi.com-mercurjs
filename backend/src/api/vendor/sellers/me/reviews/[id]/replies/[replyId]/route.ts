@@ -21,7 +21,7 @@ async function resolveSeller(req: MedusaRequest) {
 // PUT /vendor/sellers/me/reviews/:id/replies/:replyId — seller edits own reply
 export async function PUT(req: MedusaRequest, res: MedusaResponse) {
   const seller = await resolveSeller(req)
-  if (!seller) return res.status(401).json({ message: "Unauthorized" })
+  if (!seller) return res.status(401).json({ message: "Yetkisiz erişim." })
 
   const { id: reviewId, replyId } = req.params
   const body = (req.body ?? {}) as Record<string, any>
@@ -57,7 +57,7 @@ export async function PUT(req: MedusaRequest, res: MedusaResponse) {
 // DELETE /vendor/sellers/me/reviews/:id/replies/:replyId — seller deletes own reply
 export async function DELETE(req: MedusaRequest, res: MedusaResponse) {
   const seller = await resolveSeller(req)
-  if (!seller) return res.status(401).json({ message: "Unauthorized" })
+  if (!seller) return res.status(401).json({ message: "Yetkisiz erişim." })
 
   const { id: reviewId, replyId } = req.params
   const replyService: ReviewReplyService = req.scope.resolve(REVIEW_REPLY_MODULE)

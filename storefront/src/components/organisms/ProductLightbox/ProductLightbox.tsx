@@ -97,14 +97,14 @@ export const ProductLightbox = ({
       <div
         className="absolute inset-0 bg-black/90"
         onClick={onClose}
-        aria-label="Close lightbox"
+        aria-label="Galeriyi kapat"
       />
 
       {/* Close button */}
       <button
         onClick={onClose}
         className="absolute top-4 right-4 z-[300] hover:opacity-70 transition-opacity p-2 bg-black/50 rounded-full"
-        aria-label="Close"
+        aria-label="Kapat"
       >
         <CloseIcon size={24} color="#ffffff" />
       </button>
@@ -148,7 +148,7 @@ export const ProductLightbox = ({
               <button
                 onClick={() => mainEmblaApi?.scrollPrev()}
                 className="absolute left-2 top-1/2 -translate-y-1/2 z-[200] text-white hover:opacity-70 transition-opacity p-2 bg-black/50 rounded-full"
-                aria-label="Previous image"
+                aria-label="Önceki görsel"
               >
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="15 18 9 12 15 6" />
@@ -157,7 +157,7 @@ export const ProductLightbox = ({
               <button
                 onClick={() => mainEmblaApi?.scrollNext()}
                 className="absolute right-2 top-1/2 -translate-y-1/2 z-[200] text-white hover:opacity-70 transition-opacity p-2 bg-black/50 rounded-full"
-                aria-label="Next image"
+                aria-label="Sonraki görsel"
               >
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="9 18 15 12 9 6" />

@@ -1,10 +1,10 @@
 import { z } from "zod"
 
 export const profileDetailsSchema = z.object({
-  firstName: z.string().nonempty("First name is required"),
-  lastName: z.string().nonempty("Last name is required"),
-  phone: z.string().nonempty("Phone number is required"),
-  email: z.string().nonempty("Email is required"),
+  firstName: z.string().nonempty("Ad zorunludur."),
+  lastName: z.string().nonempty("Soyad zorunludur."),
+  phone: z.string().nonempty("Telefon numarası zorunludur."),
+  email: z.string().nonempty("E-posta adresi zorunludur."),
 })
 
 export type ProfileDetailsFormData = z.infer<typeof profileDetailsSchema>

@@ -30,7 +30,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   })
 
   if (!review) {
-    return res.status(404).json({ message: "Review not found" })
+    return res.status(404).json({ message: "Değerlendirme bulunamadı." })
   }
 
   // Attach images from our custom module

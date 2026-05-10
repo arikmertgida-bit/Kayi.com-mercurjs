@@ -9,7 +9,7 @@ export const ProductAdditionalAttributes = ({
   if (!attributes.length) return null
 
   return (
-    <ProductPageAccordion heading="Additional attributes" defaultOpen={false}>
+    <ProductPageAccordion heading="Ek Özellikler" defaultOpen={false}>
       {attributes.map((attribute) => (
         <div
           key={attribute.id}

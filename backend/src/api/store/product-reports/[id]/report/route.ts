@@ -22,13 +22,13 @@ const reportSchema = z.object({
     "dmca_violation",
     "other",
   ]),
-  comment: z.string().min(1, "Comment is required").max(1000, "Comment must be at most 1000 characters"),
+  comment: z.string().min(1, "Yorum zorunludur.").max(1000, "Yorum en fazla 1000 karakter olabilir."),
 })
 
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
   const customerId = (req as any).auth_context?.actor_id
   if (!customerId) {
-    return res.status(401).json({ message: "Authentication required." })
+    return res.status(401).json({ message: "Bu işlem için giriş yapmanız gerekiyor." })
   }
 
   const productId = req.params.id
@@ -49,7 +49,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     customer_id: customerId,
   })
   if (existing.length > 0) {
-    return res.status(409).json({ message: "You have already reported this product." })
+    return res.status(409).json({ message: "Bu ürünü daha önce bildirdiniz." })
   }
 
   // Group B: purchase verification required
@@ -81,7 +81,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
 
     if (!hasPurchased) {
       return res.status(403).json({
-        message: "You can only report products you have purchased.",
+        message: "Yalnızca satın aldığınız ürünleri bildirebilirsiniz.",
       })
     }
   }
@@ -107,5 +107,5 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     notificationType: "report_notification",
   })
 
-  return res.status(201).json({ message: "Report submitted successfully." })
+  return res.status(201).json({ message: "Bildiriminiz alındı." })
 }

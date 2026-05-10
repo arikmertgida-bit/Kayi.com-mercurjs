@@ -375,10 +375,10 @@ function PriceFilter({ defaultOpen = true }: { defaultOpen?: boolean }) {
   const applyMax = () => updateSearchParams("max_price", max || null)
 
   return (
-    <Accordion heading="Price" defaultOpen={defaultOpen}>
+    <Accordion heading="Fiyat" defaultOpen={defaultOpen}>
       <div className="flex gap-2 mb-4">
         <Input
-          placeholder="Min"
+          placeholder="Min (₺)"
           onChange={(e) => setMin(e.target.value)}
           onBlur={applyMin}
           onKeyDown={(e: React.KeyboardEvent) => e.key === "Enter" && applyMin()}
@@ -387,7 +387,7 @@ function PriceFilter({ defaultOpen = true }: { defaultOpen?: boolean }) {
           className="no-arrows-number-input"
         />
         <Input
-          placeholder="Max"
+          placeholder="Maks (₺)"
           onChange={(e) => setMax(e.target.value)}
           onBlur={applyMax}
           onKeyDown={(e: React.KeyboardEvent) => e.key === "Enter" && applyMax()}
@@ -408,7 +408,7 @@ function RatingFilter() {
   }
 
   return (
-    <Accordion heading="Rating">
+    <Accordion heading="Puan">
       <ul className="px-4">
         {filters.map(({ label }) => (
           <li

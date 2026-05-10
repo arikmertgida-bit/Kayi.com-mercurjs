@@ -15,7 +15,7 @@ export const OrderCancel = ({ order }: { order: any }) => {
 
   const handleCancel = async () => {
     if (selectedItems.length === 0) {
-      toast.error("Please select at least one item to cancel.")
+      toast.error("İptal etmek için en az bir ürün seçin.")
       return
     }
 
@@ -27,14 +27,14 @@ export const OrderCancel = ({ order }: { order: any }) => {
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok) {
-        toast.error(data?.message ?? "Failed to cancel order. Please try again.")
+        toast.error(data?.message ?? "Sipariş iptal edilemedi. Lütfen tekrar deneyin.")
         return
       }
 
       setOpen(false)
-      toast.success("Order cancelled successfully.")
+      toast.success("Siparişiniz başarıyla iptal edildi.")
     } catch {
-      toast.error("An unexpected error occurred. Please try again.")
+      toast.error("Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.")
     } finally {
       setIsSubmitting(false)
     }
@@ -60,10 +60,9 @@ export const OrderCancel = ({ order }: { order: any }) => {
     <>
       <div className="md:flex justify-between items-center">
         <div className="mb-4 md:mb-0">
-          <h2 className="text-primary label-lg uppercase">Cancel Order</h2>
+          <h2 className="text-primary label-lg uppercase">Siparişi İptal Et</h2>
           <p className="text-secondary label-md max-w-sm">
-            Once you place your order, you can cancel it until the seller begins
-            preparation for shipment.
+            Siparişinizi, satıcı hazırlık sürecine başlayana kadar iptal edebilirsiniz.
           </p>
         </div>
         <Button
@@ -71,12 +70,12 @@ export const OrderCancel = ({ order }: { order: any }) => {
           className="uppercase"
           onClick={() => setOpen(true)}
         >
-          Cancel
+          İptal Et
         </Button>
       </div>
       {open && (
         <Modal
-          heading="Select items you want to cancel"
+          heading="İptal etmek istediğiniz ürünleri seçin"
           onClose={() => setOpen(false)}
         >
           <div>
@@ -168,7 +167,7 @@ export const OrderCancel = ({ order }: { order: any }) => {
             <Divider className="my-4" />
             <div className="px-4">
               <Button className="uppercase w-full" onClick={handleCancel} disabled={isSubmitting}>
-                {isSubmitting ? "Cancelling..." : "Request cancellation"}
+                {isSubmitting ? "İptal ediliyor..." : "İptal talebinde bulun"}
               </Button>
             </div>
           </div>

@@ -15,14 +15,14 @@ export const DeleteCartItemButton = ({ id }: { id: string }) => {
       const res = await deleteLineItem(id)
       if (res && !res.ok) {
         toast.error({
-          title: "Error removing item",
-          description: res.error?.message ?? "Could not remove item from cart",
+          title: "Ürün kaldırılamadı",
+          description: res.error?.message ?? "Ürün sepetten kaldırılamadı.",
         })
       }
     } catch (error: any) {
       toast.error({
-        title: "Error removing item",
-        description: error.message ?? "Could not remove item from cart",
+        title: "Ürün kaldırılamadı",
+        description: error.message ?? "Ürün sepetten kaldırılamadı.",
       })
     } finally {
       setIsDeleting(false)

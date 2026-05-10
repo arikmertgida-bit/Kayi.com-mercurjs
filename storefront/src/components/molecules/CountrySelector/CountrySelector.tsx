@@ -60,8 +60,8 @@ const CountrySelect = ({ regions }: CountrySelectProps) => {
       if (result.removedItems.length > 0) {
         const itemsList = result.removedItems.join(", ")
         toast.info({
-          title: "Cart updated",
-          description: `${itemsList} ${result.removedItems.length === 1 ? "is" : "are"} not available in ${option.label} and ${result.removedItems.length === 1 ? "was" : "were"} removed from your cart.`,
+          title: "Sepet güncellendi",
+          description: `${itemsList} ${option.label} bölgesinde mevcut olmadığından sepetinizden kaldırıldı.`,
         })
       }
       
@@ -70,8 +70,8 @@ const CountrySelect = ({ regions }: CountrySelectProps) => {
       router.refresh()
     } catch (error: any) {
       toast.error({
-        title: "Error switching region",
-        description: error?.message || "Failed to update region. Please try again.",
+        title: "Bölge değiştirilemedi",
+        description: error?.message || "Bölge güncellenemedi. Lütfen tekrar deneyin.",
       })
     }
   }

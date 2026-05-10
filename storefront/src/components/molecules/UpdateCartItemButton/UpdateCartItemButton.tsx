@@ -58,7 +58,7 @@ export const UpdateCartItemButton = ({
 
   function handleError(message: string) {
     toast.error({
-      title: "Error updating cart",
+      title: "Sepet güncellenemedi",
       description: message,
     })
   }

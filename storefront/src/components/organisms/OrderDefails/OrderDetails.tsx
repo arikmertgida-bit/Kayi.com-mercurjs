@@ -17,11 +17,11 @@ const OrderDetails = ({ order, showStatus }: OrderDetailsProps) => {
   return (
     <div className="border rounded-sm p-4 bg-ui-bg-subtle grid lg:grid-cols-2">
       <Text className="mt-2">
-        <span className="font-bold block">Order date</span>
-        <span>{format(order.created_at, "dd-MM-yyyy")}</span>
+        <span className="font-bold block">Sipariş Tarihi</span>
+        <span>{format(order.created_at, "dd.MM.yyyy")}</span>
       </Text>
       <Text className="mt-2 text-ui-fg-interactive">
-        <span className="font-bold block">Order number</span> #
+        <span className="font-bold block">Sipariş Numarası</span> #
         <span>{order.display_id}</span>
       </Text>
       {showStatus && (

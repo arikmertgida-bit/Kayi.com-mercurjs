@@ -8,7 +8,7 @@ const ADMIN_SYSTEM_ID = "admin-system"
 
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
   if ((req as any).auth_context?.actor_type !== "user") {
-    return res.status(403).json({ message: "Forbidden: admin access required" })
+    return res.status(403).json({ message: "Erişim reddedildi: yönetici yetkisi gereklidir." })
   }
 
   const { id } = req.params
@@ -19,7 +19,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
 
   const [report] = await reportService.listProductReports({ id })
   if (!report) {
-    return res.status(404).json({ message: "Report not found" })
+    return res.status(404).json({ message: "Rapor bulunamadı." })
   }
 
   const productId = (report as any).product_id
@@ -29,7 +29,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     await (productService as any).updateProducts(productId, { status: "draft" })
   } catch (err: unknown) {
     logger.error("[product-report/reject] Failed to unpublish product:", (err as Error).message)
-    return res.status(500).json({ message: "Failed to unpublish product" })
+    return res.status(500).json({ message: "Ürün yayından kaldırılamadı." })
   }
 
   // Raporu resolved olarak işaretle

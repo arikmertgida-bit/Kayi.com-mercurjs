@@ -28,17 +28,17 @@ export default async function UserPage({
             className="label-md text-action-on-secondary uppercase flex items-center gap-2"
           >
             <ArrowLeftIcon className="size-4" />
-            All orders
+            Tüm Siparişler
           </Button>
         </LocalizedClientLink>
         <div className="sm:flex items-center justify-between">
           <h1 className="heading-md uppercase my-8">
-            Order set #{orderSet.display_id}
+            Sipariş Seti #{orderSet.display_id}
           </h1>
           <p className="label-md text-secondary">
-            Order date:{" "}
+            Sipariş Tarihi:{" "}
             <span className="text-primary">
-              {format(orderSet.created_at || "", "yyyy-MM-dd")}
+              {format(orderSet.created_at || "", "dd.MM.yyyy")}
             </span>
           </p>
         </div>

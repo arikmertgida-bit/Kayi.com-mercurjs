@@ -14,7 +14,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   // Resolve seller from auth context (actor_id is the seller member id)
   const actorId = (req as any).auth_context?.actor_id
   if (!actorId) {
-    return res.status(401).json({ message: "Unauthorized" })
+    return res.status(401).json({ message: "Yetkisiz erişim." })
   }
 
   const { data: [seller] } = await query.graph({
@@ -24,7 +24,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   })
 
   if (!seller) {
-    return res.status(404).json({ message: "Seller not found" })
+    return res.status(404).json({ message: "Satıcı bulunamadı." })
   }
 
   const sellerId = seller.id

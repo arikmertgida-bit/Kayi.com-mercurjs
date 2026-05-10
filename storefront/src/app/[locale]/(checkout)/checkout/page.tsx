@@ -13,8 +13,8 @@ import { notFound } from "next/navigation"
 import { Suspense } from "react"
 
 export const metadata: Metadata = {
-  title: "Checkout",
-  description: "My cart page - Checkout",
+  title: "Sepet | Kayı.com",
+  description: "Kayı.com ödeme sayfası",
 }
 
 export default async function CheckoutPage({}) {
@@ -22,7 +22,7 @@ export default async function CheckoutPage({}) {
     <Suspense
       fallback={
         <div className="container flex items-center justify-center">
-          Loading...
+          Yükleniyor...
         </div>
       }
     >

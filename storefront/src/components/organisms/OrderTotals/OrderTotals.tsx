@@ -6,12 +6,12 @@ export const OrderTotals = ({ orderSet }: { orderSet: any }) => {
   const subtotal = orderSet.total - delivery
   const total = orderSet.total
 
-  const currency_code = orderSet.payment_collection.currency_code
+  const currency_code = "try" // Türkiye bölgesi — her zaman TRY
 
   return (
     <Card className="mb-8 p-4">
       <p className="text-secondary label-md mb-2 flex justify-between">
-        Subtotal:
+        Ara Toplam:
         <span className="text-primary">
           {convertToLocale({
             amount: subtotal,
@@ -20,7 +20,7 @@ export const OrderTotals = ({ orderSet }: { orderSet: any }) => {
         </span>
       </p>
       <p className="text-secondary label-md flex justify-between">
-        Delivery:
+        Kargo:
         <span className="text-primary">
           {convertToLocale({
             amount: delivery,
@@ -30,7 +30,7 @@ export const OrderTotals = ({ orderSet }: { orderSet: any }) => {
       </p>
       <Divider className="my-4" />
       <p className="text-secondary label-md flex justify-between items-center">
-        Total:{" "}
+        Toplam:{" "}
         <span className="text-primary heading-md">
           {convertToLocale({
             amount: total,

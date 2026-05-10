@@ -39,10 +39,10 @@ export const PriceFilter = () => {
   const applyMax = () => updateSearchParams("max_price", max || null)
 
   return (
-    <Accordion heading="Price">
+    <Accordion heading="Fiyat">
       <div className="flex gap-2 mb-4">
         <Input
-          placeholder="Min"
+          placeholder="Min (₺)"
           icon={<DollarIcon size={16} />}
           onChange={(e) => setMin(e.target.value)}
           onBlur={applyMin}
@@ -52,7 +52,7 @@ export const PriceFilter = () => {
           className="no-arrows-number-input"
         />
         <Input
-          placeholder="Max"
+          placeholder="Maks (₺)"
           icon={<DollarIcon size={16} />}
           onChange={(e) => setMax(e.target.value)}
           onBlur={applyMax}

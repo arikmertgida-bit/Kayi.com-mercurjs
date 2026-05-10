@@ -10,7 +10,7 @@ import { IUserModuleService } from "@medusajs/framework/types"
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const actorId = (req as any).auth_context?.actor_id
   if (!actorId) {
-    return res.status(401).json({ message: "Unauthorized" })
+    return res.status(401).json({ message: "Yetkisiz erişim." })
   }
 
   const userService: IUserModuleService = req.scope.resolve(Modules.USER)
@@ -24,7 +24,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   ) ?? users?.[0]
 
   if (!adminUser) {
-    return res.status(404).json({ message: "No admin user found" })
+    return res.status(404).json({ message: "Yönetici kullanıcı bulunamadı." })
   }
 
   return res.json({ adminUserId: adminUser.id })

@@ -22,7 +22,7 @@ async function resolveSeller(req: MedusaRequest) {
 // GET /vendor/sellers/me/reviews/:id/replies — seller sees all replies for a review
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const seller = await resolveSeller(req)
-  if (!seller) return res.status(401).json({ message: "Unauthorized" })
+  if (!seller) return res.status(401).json({ message: "Yetkisiz erişim." })
 
   const { id: reviewId } = req.params
   const replyService: ReviewReplyService = req.scope.resolve(REVIEW_REPLY_MODULE)
@@ -40,7 +40,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 // POST /vendor/sellers/me/reviews/:id/replies — seller posts a reply
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
   const seller = await resolveSeller(req)
-  if (!seller) return res.status(401).json({ message: "Unauthorized" })
+  if (!seller) return res.status(401).json({ message: "Yetkisiz erişim." })
 
   const { id: reviewId } = req.params
   const body = (req.body ?? {}) as Record<string, any>

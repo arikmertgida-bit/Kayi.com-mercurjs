@@ -51,7 +51,7 @@ export const Item = ({
         <div className="lg:flex justify-between -mt-4 lg:mt-0">
           <div className="label-md text-secondary">
             <p>
-              Quantity: <span className="text-primary">{item.quantity}</span>
+              Adet: <span className="text-primary">{item.quantity}</span>
             </p>
           </div>
           <div className="lg:text-right flex lg:block items-center gap-2 mt-4 lg:mt-0">

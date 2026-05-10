@@ -52,13 +52,32 @@ export const HomeSlider = ({
   initialProducts,
   seller_handle,
   allProductsHref,
+  shuffle = false,
 }: {
   heading: string
   initialProducts: HttpTypes.StoreProduct[]
   seller_handle?: string
   allProductsHref?: string
+  shuffle?: boolean
 }) => {
+  // Server render ve ilk client render aynı sırayla (initialProducts) yapılır → hydration eşleşir.
+  // useEffect yalnızca mount sonrası (hydration tamamlandıktan sonra) çalışır → React #418 olmaz.
+  // Boş deps intentional: her mount = her F5 = yeni shuffle sırası.
   const [products, setProducts] = useState<HttpTypes.StoreProduct[]>(initialProducts)
+
+  useEffect(() => {
+    if (!shuffle) return
+    const arr = [...initialProducts]
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      const tmp = arr[i]
+      arr[i] = arr[j]!
+      arr[j] = tmp!
+    }
+    setProducts(arr)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const [canScrollPrev, setCanScrollPrev] = useState(false)
   const [canScrollNext, setCanScrollNext] = useState(true)
 
@@ -98,8 +117,6 @@ export const HomeSlider = ({
     if (emblaApi) emblaApi.scrollNext()
   }, [emblaApi])
 
-  const totalProducts = products.length
-
   return (
     <div className="w-full">
       {/* Header row */}
@@ -113,14 +130,14 @@ export const HomeSlider = ({
       <div className="relative">
         <button
           onClick={scrollPrev}
-          aria-label="Previous products"
+          aria-label="Önceki ürünler"
           className={`absolute left-2 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-10 h-10 rounded-full bg-[#000000] text-[#fcfcfc] hover:bg-[#e30a17] hover:text-[#fcfcfc] transition-all duration-200 active:scale-95 ${canScrollPrev ? "" : "invisible"}`}
         >
           <ChevronLeftIcon />
         </button>
         <button
           onClick={scrollNext}
-          aria-label="Next products"
+          aria-label="Sonraki ürünler"
           className={`absolute right-2 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-10 h-10 rounded-full bg-[#000000] text-[#fcfcfc] hover:bg-[#e30a17] hover:text-[#fcfcfc] transition-all duration-200 active:scale-95 ${canScrollNext ? "" : "invisible"}`}
         >
           <ChevronRightIcon />

@@ -13,7 +13,7 @@ export const OrderParcels = async ({ orders }: { orders: any[] }) => {
       {orders.map((order) => (
         <div key={order.id} className="w-full mb-8">
           <div className="border rounded-sm p-4 bg-component-secondary font-semibold text-secondary uppercase">
-            Order #{order.display_id}
+            Sipariş No #{order.display_id}
           </div>
           <div className="border rounded-sm">
             <div className="p-4 border-b">
@@ -34,7 +34,7 @@ export const OrderParcels = async ({ orders }: { orders: any[] }) => {
             <div className="p-4 border-b">
               <OrderParcelItems
                 items={order.items}
-                currency_code={order.currency_code}
+                currency_code="try"
               />
             </div>
             <div className="p-4">

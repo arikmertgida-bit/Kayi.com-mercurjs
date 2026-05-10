@@ -4,8 +4,8 @@ import { z } from "zod"
 import { notifyMessengerUser } from "../../../../../lib/messenger"
 
 const reportSchema = z.object({
-  reason: z.string().min(1, "Reason is required").max(200, "Reason must be at most 200 characters"),
-  comment: z.string().min(1, "Comment is required").max(1000, "Comment must be at most 1000 characters"),
+  reason: z.string().min(1, "Neden zorunludur.").max(200, "Neden en fazla 200 karakter olabilir."),
+  comment: z.string().min(1, "Yorum zorunludur.").max(1000, "Yorum en fazla 1000 karakter olabilir."),
 })
 
 const TABLE = "seller_report"
@@ -38,7 +38,7 @@ async function ensureReportTable(knex: any) {
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
   const customerId = (req as any).auth_context?.actor_id
   if (!customerId) {
-    return res.status(401).json({ message: "Authentication required." })
+    return res.status(401).json({ message: "Bu işlem için giriş yapmanız gerekiyor." })
   }
 
   const sellerId = req.params.id
@@ -59,7 +59,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     .first()
 
   if (!seller) {
-    return res.status(404).json({ message: "Seller not found." })
+    return res.status(404).json({ message: "Satıcı bulunamadı." })
   }
 
   await ensureReportTable(knex)
@@ -70,7 +70,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     .first()
 
   if (existing) {
-    return res.status(409).json({ message: "You have already submitted a report for this seller." })
+    return res.status(409).json({ message: "Bu satıcıyı daha önce bildirdiniz." })
   }
 
   await knex(TABLE).insert({
@@ -94,5 +94,5 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     notificationType: "report_notification",
   })
 
-  return res.status(201).json({ message: "Report submitted successfully." })
+  return res.status(201).json({ message: "Bildiriminiz alındı." })
 }

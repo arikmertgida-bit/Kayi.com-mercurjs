@@ -31,7 +31,7 @@ export const ReviewsWritten = ({
           <p className="text-negative">
             {t('fetchError')}
           </p>
-          <RefreshButton label="Refresh" />
+          <RefreshButton label="Yenile" />
         </div>
       )
     }

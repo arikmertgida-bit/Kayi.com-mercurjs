@@ -97,7 +97,7 @@ export const SellerPageHeader = ({
             </h1>
             {isActive && (
               <span
-                title="Verified"
+                title="Doğrulanmış Satıcı"
                 className="flex-shrink-0 w-4 h-4 md:w-5 md:h-5 bg-blue-500 rounded-full flex items-center justify-center shadow"
               >
                 <svg
@@ -144,7 +144,7 @@ export const SellerPageHeader = ({
           </h1>
           {isActive && (
             <span
-              title="Verified"
+              title="Doğrulanmış Satıcı"
               className="flex-shrink-0 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center shadow"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" className="w-2.5 h-2.5">

@@ -1,21 +1,20 @@
 import { z } from "zod"
 
 export const registerFormSchema = z.object({
-  firstName: z.string().nonempty("Please enter first name"),
-  lastName: z.string().nonempty("Please enter last name"),
-  email: z.string().nonempty("Please enter email").email("Invalid email"),
+  firstName: z.string().nonempty("Ad zorunludur."),
+  lastName: z.string().nonempty("Soyad zorunludur."),
+  email: z.string().nonempty("E-posta adresi zorunludur.").email("Geçerli bir e-posta adresi girin."),
   password: z
     .string()
-    .nonempty("Please enter password")
-    .min(8, "Password must be at least 8 characters long")
+    .nonempty("Şifre zorunludur.")
+    .min(8, "Şifre en az 8 karakter olmalıdır.")
     .regex(/^(?=.*[A-Z])(?=.*[!@#$%^&*])/, {
-      message:
-        "Password must contain at least one uppercase letter and one special character",
+      message: "Şifre en az bir büyük harf ve bir özel karakter içermelidir.",
     }),
   phone: z
     .string()
-    .min(6, "Please enter phone number")
-    .regex(/^\+?\d+$/, { message: "Mobile phone must contain digits only" }),
+    .min(6, "Telefon numarası zorunludur.")
+    .regex(/^\+?\d+$/, { message: "Telefon numarası yalnızca rakam içermelidir." }),
 })
 
 export type RegisterFormData = z.infer<typeof registerFormSchema>

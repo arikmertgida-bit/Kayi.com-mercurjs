@@ -7,6 +7,13 @@ interface OrderTimelineProps {
   currentStatus: OrderStatus
 }
 
+const statusLabels: Record<string, string> = {
+  received: "Alındı",
+  preparing: "Hazırlanıyor",
+  shipped: "Kargoya Verildi",
+  delivered: "Teslim Edildi",
+}
+
 export const OrderTimeline = ({ currentStatus }: OrderTimelineProps) => {
   const statuses: OrderStatus[] = [
     "received",
@@ -51,7 +58,7 @@ export const OrderTimeline = ({ currentStatus }: OrderTimelineProps) => {
                   isActive ? "text-[#1B1B1B]" : "text-[#EEEEEE]"
                 )}
               >
-                {status}
+                {statusLabels[status] ?? status}
               </span>
               <div
                 className={cn(

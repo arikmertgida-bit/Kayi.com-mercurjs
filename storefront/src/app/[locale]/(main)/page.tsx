@@ -7,10 +7,40 @@ import {
 } from "@/components/sections"
 
 import type { Metadata } from "next"
+import { Suspense } from "react"
 import { headers } from "next/headers"
 import Script from "next/script"
 import { listRegions } from "@/lib/data/regions"
 import { toHreflang } from "@/lib/helpers/hreflang"
+
+/**
+ * CLS-safe skeleton for collection product sliders.
+ * min-height reserves space while the server component resolves,
+ * preventing layout shift when content loads.
+ */
+function CollectionSliderSkeleton() {
+  return (
+    <div className="py-4 w-full" style={{ minHeight: "320px" }}>
+      <div className="h-7 w-44 bg-gray-200 rounded animate-pulse mb-3" />
+      <div className="flex gap-3 overflow-hidden">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div
+            key={i}
+            className="home-slider-slide flex-shrink-0 animate-pulse"
+          >
+            <div className="border rounded-sm p-1">
+              <div className="aspect-square w-full bg-gray-200 rounded-sm" />
+              <div className="p-3 space-y-2">
+                <div className="h-4 bg-gray-200 rounded-sm w-3/4" />
+                <div className="h-4 bg-gray-200 rounded-sm w-1/2" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 export const revalidate = 60
 
@@ -162,18 +192,30 @@ export default async function Home({
         <HomeProductSection heading="Yeni Gelen Ürünler" locale={locale} home />
       </div>
       <div className="px-4 lg:px-6 w-full">
-        <CollectionProductSection
-          collectionHandle="firsat-urunleri"
-          locale={locale}
-          allProductsHref="/collections/firsat-urunleri"
-        />
+        <Suspense fallback={<CollectionSliderSkeleton />}>
+          <CollectionProductSection
+            heading="Flaş İndirimler"
+            collectionHandle="flash-sales"
+            locale={locale}
+            allProductsHref="/collections/flash-sales"
+            limit={12}
+            shuffle
+            revalidateSeconds={120}
+          />
+        </Suspense>
       </div>
       <div className="px-4 lg:px-6 w-full">
-        <CollectionProductSection
-          collectionHandle="yeni-sezon"
-          locale={locale}
-          allProductsHref="/collections/yeni-sezon"
-        />
+        <Suspense fallback={<CollectionSliderSkeleton />}>
+          <CollectionProductSection
+            heading="Günün Teklifleri"
+            collectionHandle="daily-deals"
+            locale={locale}
+            allProductsHref="/collections/daily-deals"
+            limit={12}
+            shuffle
+            revalidateSeconds={120}
+          />
+        </Suspense>
       </div>
       <BlogSection />
     </main>

@@ -101,7 +101,11 @@ export async function signup(formData: FormData) {
 
     return createdCustomer
   } catch (error: any) {
-    return error.toString()
+    const msg: string = (error?.message ?? error?.toString() ?? "").toLowerCase()
+    if (msg.includes("already") || msg.includes("exists")) {
+      return "Bu e-posta adresi zaten kayıtlı. Lütfen giriş yapın."
+    }
+    return "Kayıt sırasında bir hata oluştu. Lütfen tekrar deneyin."
   }
 }
 
@@ -118,13 +122,13 @@ export async function login(formData: FormData) {
         revalidateTag(customerCacheTag)
       })
   } catch (error: any) {
-    return error.toString()
+    return "Geçersiz e-posta veya şifre. Lütfen tekrar deneyin."
   }
 
   try {
     await transferCart()
   } catch (error: any) {
-    return error.toString()
+    return "Giriş yapıldı ancak sepet aktarılamadı. Lütfen tekrar deneyin."
   }
 }
 
