@@ -10,6 +10,7 @@ import { Chat } from "../Chat/Chat"
 import Image from "next/image"
 import { convertToLocale } from "@/lib/helpers/money"
 import { StepProgressBar } from "@/components/cells/StepProgressBar/StepProgressBar"
+import { getVendorImage, resolveOwnerMember } from "@/lib/utils/get-vendor-image"
 
 const steps = ["pending", "processing", "sent"]
 
@@ -109,7 +110,7 @@ export const SingleOrderReturn = ({
           <div className="p-4 flex justify-between">
             <div className="flex items-center gap-2">
               <Avatar
-                src={item.order.seller.photo || undefined}
+                src={getVendorImage({ memberPhoto: resolveOwnerMember(item.order.seller?.members)?.photo, sellerPhoto: item.order.seller?.photo })}
               />
               <p className="label-lg text-primary">{item.order.seller.name}</p>
             </div>

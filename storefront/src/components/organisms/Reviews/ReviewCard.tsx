@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils"
 import Image from "next/image"
 import { formatDistanceToNow } from "date-fns"
 import { tr } from "date-fns/locale"
+import { getVendorImage, resolveOwnerMember } from "@/lib/utils/get-vendor-image"
 
 // Pre-built star arrays for ratings 0-5, avoiding repeated array allocation per render
 const STAR_ARRAYS: readonly number[][] = [[], [0], [0, 1], [0, 1, 2], [0, 1, 2, 3], [0, 1, 2, 3, 4]]
@@ -16,15 +17,15 @@ export const ReviewCard = ({ review }: { review: Review }) => {
       key={review.id}
     >
       <div className="flex gap-2 max-lg:items-center lg:flex-col">
-        {review.seller.photo ? (
-          <Image
-            alt="Seller photo"
-            src={review.seller.photo}
+        <Image
+            alt={review.seller.name}
+            src={getVendorImage({ memberPhoto: resolveOwnerMember(review.seller.members)?.photo, sellerPhoto: review.seller.photo })}
             width={32}
             height={32}
-            className="size-8 border border-base-primary rounded-xs"
+            loading="lazy"
+            decoding="async"
+            className="size-8 border border-base-primary rounded-xs aspect-square object-cover"
           />
-        ) : null}
         <p className="label-md text-primary">{review.seller.name}</p>
       </div>
       <div className="col-span-5 flex flex-col lg:flex-row justify-between lg:items-center gap-4">

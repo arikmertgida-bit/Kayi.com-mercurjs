@@ -51,7 +51,7 @@ export interface SingleProductReview {
 export interface SingleProductSeller {
   id: string
   name: string
-  photo: string
+  photo?: string
   rating: number
   reviewCount: number
   verified: boolean
@@ -63,6 +63,7 @@ export interface SingleProductSeller {
   parcel?: string
   date?: string
   created_at?: string
+  members?: import("./seller").SellerMember[]
 }
 
 export interface SingleProductMeasurement {

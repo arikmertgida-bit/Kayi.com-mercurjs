@@ -4,6 +4,7 @@ import { retrieveCustomer } from "@/lib/data/customer"
 import { OrderParcelItems } from "@/components/molecules/OrderParcelItems/OrderParcelItems"
 import { OrderParcelStatus } from "@/components/molecules/OrderParcelStatus/OrderParcelStatus"
 import { OrderParcelActions } from "@/components/molecules/OrderParcelActions/OrderParcelActions"
+import { getVendorImage, resolveOwnerMember } from "@/lib/utils/get-vendor-image"
 
 export const OrderParcels = async ({ orders }: { orders: any[] }) => {
   const user = await retrieveCustomer()
@@ -21,7 +22,7 @@ export const OrderParcels = async ({ orders }: { orders: any[] }) => {
             </div>
             <div className="p-4 border-b md:flex items-center justify-between">
               <div className="flex items-center gap-4 mb-4 md:mb-0">
-                <Avatar src={order.seller.photo} />
+                <Avatar src={getVendorImage({ memberPhoto: resolveOwnerMember(order.seller.members)?.photo, sellerPhoto: order.seller.photo })} />
                 <p className="text-primary">{order.seller.name}</p>
               </div>
               <Chat

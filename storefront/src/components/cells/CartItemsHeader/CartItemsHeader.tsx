@@ -4,6 +4,7 @@ import { format } from "date-fns"
 import { SellerAvatar } from "../SellerAvatar/SellerAvatar"
 import LocalizedClientLink from "@/components/molecules/LocalizedLink/LocalizedLink"
 import { useTranslations } from "next-intl"
+import { getVendorImage, resolveOwnerMember } from "@/lib/utils/get-vendor-image"
 
 export const CartItemsHeader = ({
   seller,
@@ -14,7 +15,7 @@ export const CartItemsHeader = ({
   return (
     <LocalizedClientLink href={`/sellers/${seller.handle}`}>
       <div className="border rounded-sm p-4 flex gap-4 items-center">
-        <SellerAvatar photo={seller.photo} size={32} alt={seller.name} />
+        <SellerAvatar photo={getVendorImage({ memberPhoto: resolveOwnerMember(seller.members)?.photo, sellerPhoto: seller.photo })} size={32} alt={seller.name} />
 
         <div className="lg:flex gap-2">
           <p className="uppercase heading-xs">{seller.name}</p>

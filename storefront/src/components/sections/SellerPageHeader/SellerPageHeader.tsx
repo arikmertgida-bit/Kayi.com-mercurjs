@@ -2,6 +2,7 @@ import Image from "next/image"
 import { HttpTypes } from "@medusajs/types"
 import { SellerProps } from "@/types/seller"
 import { FollowButton } from "@/components/atoms/FollowButton/FollowButton"
+import { getVendorImage, resolveOwnerMember } from "@/lib/utils/get-vendor-image"
 
 export const SellerPageHeader = ({
   seller,
@@ -15,11 +16,8 @@ export const SellerPageHeader = ({
 }) => {
   const isActive = seller.store_status === "ACTIVE"
 
-  const ownerMember =
-    seller.members?.find((m) => m.role === "owner" || m.role === "admin") ??
-    seller.members?.[0]
-
-  const profilePhoto = ownerMember?.photo ?? null
+  const ownerMember = resolveOwnerMember(seller.members)
+  const profilePhoto = getVendorImage({ memberPhoto: ownerMember?.photo, sellerPhoto: seller.photo })
   const profileName = ownerMember?.name ?? null
 
   const AVATAR = 96
@@ -56,27 +54,15 @@ export const SellerPageHeader = ({
           <div
             className="flex-shrink-0 rounded-full shadow-xl overflow-hidden z-10 w-20 h-20 md:w-24 md:h-24"
           >
-            {profilePhoto ? (
-              <Image
-                src={decodeURIComponent(profilePhoto)}
+            <Image
+                src={profilePhoto}
                 alt={profileName || seller.name}
                 width={AVATAR}
                 height={AVATAR}
-                priority
+                loading="lazy"
+                decoding="async"
                 className="object-cover w-full h-full"
               />
-            ) : (
-              <div
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  backgroundImage: "url('/images/vendor/default-seller-avatar.png')",
-                  backgroundSize: "contain",
-                  backgroundPosition: "center",
-                  backgroundRepeat: "no-repeat",
-                }}
-              />
-            )}
           </div>
 
           <div className="w-2.5" />

@@ -4,6 +4,7 @@ import { StarRating } from "@/components/atoms"
 import { SellerAvatar } from "@/components/cells/SellerAvatar/SellerAvatar"
 import { SellerProps } from "@/types/seller"
 import { useTranslations } from "next-intl"
+import { getVendorImage, resolveOwnerMember } from "@/lib/utils/get-vendor-image"
 
 export const SellerInfo = ({
   seller,
@@ -12,11 +13,8 @@ export const SellerInfo = ({
   header?: boolean
 }) => {
   const t = useTranslations('seller')
-  const ownerMember =
-    seller.members?.find((m) => m.role === "owner" || m.role === "admin") ??
-    seller.members?.[0]
-
-  const memberPhoto = ownerMember?.photo ?? seller.photo
+  const ownerMember = resolveOwnerMember(seller.members)
+  const memberPhoto = getVendorImage({ memberPhoto: ownerMember?.photo, sellerPhoto: seller.photo })
   const { name, reviews } = seller
 
   const reviewCount = reviews

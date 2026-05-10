@@ -7,6 +7,7 @@ import { Review, ReviewReply, reportReviewImage, getReviewReplies, createReviewR
 import { likeReview } from "@/lib/data/review-likes"
 import { formatDistanceToNow } from "date-fns"
 import { tr } from "date-fns/locale"
+import { getVendorImage, resolveOwnerMember } from "@/lib/utils/get-vendor-image"
 
 interface Props {
   review: Review
@@ -760,12 +761,7 @@ export const ProductReviewCard = ({ review, currentCustomerId }: Props) => {
             {review.seller_note && review.seller && !replies.some((r) => r.is_seller_reply) && (
               <SellerReplyCard
                 sellerName={review.seller?.name ?? "Satıcı"}
-                sellerPhoto={
-                  (
-                    review.seller?.members?.find((m: { role: string }) => m.role === "owner" || m.role === "admin")
-                    ?? review.seller?.members?.[0]
-                  )?.photo
-                }
+                sellerPhoto={getVendorImage({ memberPhoto: resolveOwnerMember(review.seller?.members)?.photo, sellerPhoto: review.seller?.photo })}
                 sellerHandle={review.seller?.handle ?? ""}
                 note={review.seller_note}
                 onMention={(name) => {
@@ -788,12 +784,7 @@ export const ProductReviewCard = ({ review, currentCustomerId }: Props) => {
                       initialLikes={reply.likes_count ?? 0}
                       initialLikedByMe={reply.is_liked_by_me ?? false}
                       sellerName={reply.seller_name ?? review.seller?.name ?? "Satıcı"}
-                      sellerPhoto={
-                        (
-                          review.seller?.members?.find((m: { role: string }) => m.role === "owner" || m.role === "admin")
-                          ?? review.seller?.members?.[0]
-                        )?.photo
-                      }
+                      sellerPhoto={getVendorImage({ memberPhoto: resolveOwnerMember(review.seller?.members)?.photo, sellerPhoto: review.seller?.photo })}
                       sellerHandle={review.seller?.handle ?? ""}
                       note={reply.content}
                       onMention={(name) => {

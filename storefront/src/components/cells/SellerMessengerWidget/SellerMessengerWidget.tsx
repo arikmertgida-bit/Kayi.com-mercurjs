@@ -14,6 +14,7 @@ import Link from "next/link"
 import { useMessenger } from "@/providers/MessengerProvider"
 import type { Message } from "@/lib/messenger/types"
 import type { SellerProps } from "@/types/seller"
+import { getVendorImage, resolveOwnerMember } from "@/lib/utils/get-vendor-image"
 
 // ────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -24,14 +25,6 @@ function formatTime(iso: string): string {
     hour: "2-digit",
     minute: "2-digit",
   })
-}
-
-function getSellerAvatar(seller: SellerProps): string | null {
-  // Prefer member profile photo (Profil Fotoğrafı), fall back to store photo
-  const owner =
-    seller.members?.find((m) => m.role === "owner" || m.role === "admin") ??
-    seller.members?.[0]
-  return owner?.photo ?? seller.photo ?? null
 }
 
 function CustomerAvatar({ size, src }: { size: number; src?: string | null }) {
@@ -73,34 +66,18 @@ function SellerAvatar({
   seller: SellerProps
   size: number
 }) {
-  const src = getSellerAvatar(seller)
-  if (src) {
-    return (
-      <Image
-        src={decodeURIComponent(src)}
-        alt={seller.name}
-        width={size}
-        height={size}
-        className="rounded-full object-cover aspect-square flex-shrink-0"
-        style={{ width: size, height: size }}
-        unoptimized
-      />
-    )
-  }
+  const src = getVendorImage({ memberPhoto: resolveOwnerMember(seller.members)?.photo, sellerPhoto: seller.photo })
   return (
-    <div
-      role="img"
-      aria-label={seller.name}
-      style={{
-        width: size,
-        height: size,
-        borderRadius: "50%",
-        backgroundImage: "url('/images/vendor/default-seller-avatar.png')",
-        backgroundSize: "contain",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        flexShrink: 0,
-      }}
+    <Image
+      src={src}
+      alt={seller.name}
+      width={size}
+      height={size}
+      className="rounded-full object-cover aspect-square flex-shrink-0"
+      style={{ width: size, height: size }}
+      loading="lazy"
+      decoding="async"
+      unoptimized
     />
   )
 }
@@ -490,7 +467,7 @@ export function SellerMessengerWidget({
             type: "store",
             store_id: seller.id,
             store_name: seller.name ?? "",
-            store_image: getSellerAvatar(seller),
+            store_image: getVendorImage({ memberPhoto: resolveOwnerMember(seller.members)?.photo, sellerPhoto: seller.photo }),
           },
         })
         setConversationId(newConvId)
@@ -618,27 +595,16 @@ export function SellerMessengerWidget({
               }}
             >
               <div className="w-full h-full rounded-full overflow-hidden">
-                {getSellerAvatar(seller) ? (
-                  <Image
-                    src={decodeURIComponent(getSellerAvatar(seller)!)}
-                    alt={seller.name}
-                    width={56}
-                    height={56}
-                    className="object-cover w-full h-full"
-                    unoptimized
-                  />
-                ) : (
-                  <div
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      backgroundImage: "url('/images/vendor/default-seller-avatar.png')",
-                      backgroundSize: "contain",
-                      backgroundPosition: "center",
-                      backgroundRepeat: "no-repeat",
-                    }}
-                  />
-                )}
+                <Image
+                  src={getVendorImage({ memberPhoto: resolveOwnerMember(seller.members)?.photo, sellerPhoto: seller.photo })}
+                  alt={seller.name}
+                  width={56}
+                  height={56}
+                  className="object-cover w-full h-full"
+                  loading="lazy"
+                  decoding="async"
+                  unoptimized
+                />
               </div>
             </div>
 
