@@ -51,6 +51,7 @@
   },
   "devDependencies": {
     "@medusajs/test-utils": "2.11.3",
+    "@medusajs/types": "2.11.3",
     "@swc/core": "1.5.7",
     "@swc/jest": "^0.2.36",
     "@types/jest": "^29.5.13",

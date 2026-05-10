@@ -74,7 +74,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
         filters: {
           order_id: orderIds,
           product_id: productId,
-        },
+        } as any,
       })
       hasPurchased = (lineItems as any[]).length > 0
     }

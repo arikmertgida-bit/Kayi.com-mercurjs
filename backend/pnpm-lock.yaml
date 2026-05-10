@@ -84,6 +84,9 @@ importers:
       '@medusajs/test-utils':
         specifier: 2.11.3
         version: 2.11.3(@medusajs/framework@2.11.3(@medusajs/cli@2.11.3(@types/node@20.19.25))(@types/node@20.19.25)(ioredis@5.10.1)(vite@5.4.21(@types/node@20.19.25)))(@medusajs/medusa@2.11.3)
+      '@medusajs/types':
+        specifier: 2.11.3
+        version: 2.11.3(ioredis@5.10.1)(vite@5.4.21(@types/node@20.19.25))
       '@swc/core':
         specifier: 1.5.7
         version: 1.5.7(@swc/helpers@0.5.17)

@@ -45,7 +45,7 @@ export default async function importImageOptimizerSubscriber({
     if (!product) return
 
     // Only optimize products that came from an import (external URLs)
-    const thumbnailUrl: string | undefined = product.thumbnail
+    const thumbnailUrl: string | undefined = product.thumbnail ?? undefined
     const imageUrls: string[] = (product.images ?? []).map((i: any) => i.url)
 
     const allExternal = [thumbnailUrl, ...imageUrls].filter(

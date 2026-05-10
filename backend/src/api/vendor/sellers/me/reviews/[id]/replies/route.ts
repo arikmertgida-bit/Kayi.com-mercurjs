@@ -1,8 +1,8 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
-import { REVIEW_REPLY_MODULE } from "../../../../../../../modules/review-replies"
-import ReviewReplyService from "../../../../../../../modules/review-replies/service"
-import { enrichRepliesWithCustomerData } from "../../../../../../utils/enrich-replies"
+import { REVIEW_REPLY_MODULE } from "../../../../../../../modules/review-replies/index.js"
+import ReviewReplyService from "../../../../../../../modules/review-replies/service.js"
+import { enrichRepliesWithCustomerData } from "../../../../../../utils/enrich-replies.js"
 // @ts-ignore — import workflow from mercurjs package
 import { updateReviewWorkflow } from "@mercurjs/reviews/workflows"
 

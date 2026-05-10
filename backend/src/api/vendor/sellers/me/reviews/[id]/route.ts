@@ -1,7 +1,7 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
-import { REVIEW_IMAGE_MODULE } from "../../../../../../modules/review-images"
-import ReviewImageService from "../../../../../../modules/review-images/service"
+import { REVIEW_IMAGE_MODULE } from "../../../../../../modules/review-images/index.js"
+import ReviewImageService from "../../../../../../modules/review-images/service.js"
 // @ts-ignore — import workflow from mercurjs package
 import { updateReviewWorkflow } from "@mercurjs/reviews/workflows"
 

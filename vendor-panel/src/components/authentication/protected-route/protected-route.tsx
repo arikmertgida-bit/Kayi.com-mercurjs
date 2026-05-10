@@ -6,7 +6,7 @@ import { SidebarProvider } from "../../../providers/sidebar-provider"
 import { MessengerProvider } from "../../../providers/messenger-provider/MessengerProvider"
 
 export const ProtectedRoute = () => {
-  const { seller, isPending, error } = useMe()
+  const { seller, isPending } = useMe()
 
   const location = useLocation()
 

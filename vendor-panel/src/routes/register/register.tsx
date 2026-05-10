@@ -208,7 +208,7 @@ export const Register = () => {
               {validationError && (
                 <div className="text-center">
                   <Hint className="inline-flex" variant={"error"}>
-                    {t(validationError)}
+                    {t(validationError as never)}
                   </Hint>
                 </div>
               )}
