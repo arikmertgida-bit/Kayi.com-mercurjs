@@ -3256,6 +3256,12 @@
   },
   "attributes": {
     "domain": "Product Attributes",
+    "additionalAttributes": "Additional Attributes",
+    "possibleValueNotFound": "Possible Value Not Found",
+    "possibleValueNotFoundDesc": "The requested possible value could not be found.",
+    "editPossibleValue": "Edit Possible Value",
+    "fetchingPossibleValue": "Fetching possible value details...",
+    "rank": "Rank",
     "create": {
       "successToast": "Attribute was successfully created.",
       "details": "Details",
@@ -3387,6 +3393,7 @@
   },
   "sellers": {
     "domain": "Sellers",
+    "notFound": "Seller not found",
     "fields": {
       "name": "Name",
       "email": "Email",

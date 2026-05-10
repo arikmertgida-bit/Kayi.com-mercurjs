@@ -3158,6 +3158,12 @@
   },
   "attributes": {
     "domain": "Ürün Özellikleri",
+    "additionalAttributes": "Ek Özellikler",
+    "possibleValueNotFound": "Olası Değer Bulunamadı",
+    "possibleValueNotFoundDesc": "İstenen olası değer bulunamadı.",
+    "editPossibleValue": "Olası Değeri Düzenle",
+    "fetchingPossibleValue": "Olası değer detayları yükleniyor...",
+    "rank": "Sıralama",
     "create": {
       "successToast": "Özellik başarıyla oluşturuldu.",
       "details": "Detaylar",
@@ -3334,6 +3340,7 @@
     "store": "Mağaza",
     "activate": "Hesabı etkinleştir",
     "suspend": "Hesabı askıya al",
+    "notFound": "Satıcı bulunamadı",
     "activateConfirm": "Bu hesabı etkinleştirmek istediğinizden emin misiniz?",
     "suspendConfirm": "Bu hesabı askıya almak istediğinizden emin misiniz?"
   },

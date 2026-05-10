@@ -21,8 +21,10 @@ import { ActionMenu } from "../../../../../components/common/action-menu";
 import { RouteDrawer } from "../../../../../components/modals";
 import { FormComponents } from "./components/form-components";
 import { useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 export const ProductAdditionalAttributeSection = () => {
+  const { t } = useTranslation();
   const { id } = useParams();
   const [open, setOpen] = useState(false);
   const { product, isLoading: isProductLoading } = useProduct(id!, {
@@ -89,14 +91,14 @@ export const ProductAdditionalAttributeSection = () => {
     );
   };
 
-  if (isLoading || isProductLoading) return <div>Loading...</div>;
+  if (isLoading || isProductLoading) return <div>{t("general.loading")}</div>;
 
   return (
     <>
       <div>
         <Container className="divide-y p-0 pb-2">
           <div className="flex items-center justify-between px-6 py-4">
-            <Heading level="h2">Additional Attributes</Heading>
+              <Heading level="h2">{t("attributes.additionalAttributes")}</Heading>
             <ActionMenu
               groups={[
                 {
@@ -129,7 +131,7 @@ export const ProductAdditionalAttributeSection = () => {
       {open && (
         <RouteDrawer>
           <RouteDrawer.Header>
-            <Heading level="h2">Additional Attributes</Heading>
+            <Heading level="h2">{t("attributes.additionalAttributes")}</Heading>
           </RouteDrawer.Header>
           <RouteDrawer.Body className="max-h-[calc(86vh)] overflow-y-auto py-2 m-4">
             <FormProvider {...form}>

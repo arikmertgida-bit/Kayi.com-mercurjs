@@ -32,7 +32,7 @@ export const ProductSidebar = () => {
         {filterModal && (
           <div className="md:hidden">
             <div className="mb-4 flex items-center justify-between border-y border-[#f1cada] p-4">
-              <h3 className="heading-md uppercase text-[#8a1d54]">Filters</h3>
+              <h3 className="heading-md uppercase text-[#8a1d54]">{t('filters')}</h3>
               <div
                 onClick={() => setFilterModal(false)}
                 className="cursor-pointer"

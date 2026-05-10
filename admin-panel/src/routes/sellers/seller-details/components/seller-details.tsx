@@ -1,6 +1,7 @@
 import type { AdminProductListResponse } from "@medusajs/types";
 
 import { useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import type { AdminCustomerGroupListResponse } from "@custom-types/customer-group";
 import type { AdminOrderListResponse } from "@custom-types/order";
@@ -27,6 +28,7 @@ const PRODUCT_PREFIX = "sp";
 const CUSTOMER_GROUP_PREFIX = "scg";
 
 export const SellerDetails = () => {
+  const { t } = useTranslation();
   const { id: routeParam } = useParams();
 
   // Detect whether the route param is a seller ID (sel_ prefix) or a handle
@@ -99,17 +101,17 @@ export const SellerDetails = () => {
 
   // While handle is being resolved
   if (handleLoading) {
-    return <div>Loading...</div>;
+    return <div>{t("general.loading")}</div>;
   }
 
   // Handle given but no seller found with that handle
   if (handle && !resolvedId) {
-    return <div>Seller not found</div>;
+    return <div>{t("sellers.notFound")}</div>;
   }
 
   // Data loading
   if (isLoading || ordersLoading || productsLoading || customerGroupsLoading) {
-    return <div>Loading...</div>;
+    return <div>{t("general.loading")}</div>;
   }
 
   return (

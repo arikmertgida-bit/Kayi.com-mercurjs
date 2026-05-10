@@ -12,6 +12,7 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useTranslation } from "react-i18next";
 import { MetadataEditor } from "../../../components/common/metadata-editor";
 import { useAttribute } from "../../../hooks/api/attributes";
 import { useUpdateAttributePossibleValue } from "../../../hooks/api/attributes";
@@ -35,6 +36,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export const EditPossibleValue = () => {
+  const { t } = useTranslation();
   const { id: attributeId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -131,32 +133,32 @@ export const EditPossibleValue = () => {
         {isAttributeLoading ? (
           <>
             <Drawer.Header>
-              <Heading>Loading...</Heading>
+              <Heading>{t("general.loading")}</Heading>
             </Drawer.Header>
             <Drawer.Body>
-              <Text>Fetching possible value details...</Text>
+              <Text>{t("attributes.fetchingPossibleValue")}</Text>
             </Drawer.Body>
           </>
         ) : !possibleValue ? (
           <>
             <Drawer.Header>
-              <Heading>Possible Value Not Found</Heading>
+              <Heading>{t("attributes.possibleValueNotFound")}</Heading>
             </Drawer.Header>
             <Drawer.Body>
-              <Text>The requested possible value could not be found.</Text>
-              <Button onClick={handleClose}>Close</Button>
+              <Text>{t("attributes.possibleValueNotFoundDesc")}</Text>
+              <Button onClick={handleClose}>{t("general.close")}</Button>
             </Drawer.Body>
           </>
         ) : (
           <>
             <Drawer.Header>
-              <Drawer.Title>Edit Possible Value</Drawer.Title>
+              <Drawer.Title>{t("attributes.editPossibleValue")}</Drawer.Title>
             </Drawer.Header>
             <Drawer.Body>
               <form id="edit-possible-value-form" onSubmit={handleSave}>
                 <div className="grid gap-4">
                   <div>
-                    <Label htmlFor="value">Value</Label>
+                    <Label htmlFor="value">{t("fields.value")}</Label>
                     <Input id="value" {...form.register("value")} />
                     {form.formState.errors.value && (
                       <Text className="text-red-500 text-sm mt-1">
@@ -165,7 +167,7 @@ export const EditPossibleValue = () => {
                     )}
                   </div>
                   <div>
-                    <Label htmlFor="rank">Rank</Label>
+                    <Label htmlFor="rank">{t("attributes.rank")}</Label>
                     <Input
                       id="rank"
                       type="number"
@@ -188,14 +190,14 @@ export const EditPossibleValue = () => {
                 onClick={handleClose}
                 disabled={!!isPending}
               >
-                Cancel
+                {t("actions.cancel")}
               </Button>
               <Button
                 type="submit"
                 form="edit-possible-value-form"
                 disabled={!!isPending}
               >
-                Save
+                {t("actions.save")}
               </Button>
             </Drawer.Footer>
           </>

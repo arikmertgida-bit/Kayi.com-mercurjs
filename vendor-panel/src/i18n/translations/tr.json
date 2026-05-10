@@ -3218,7 +3218,7 @@
           "electronics": "Elektronik",
           "motherChild": "Anne & Çocuk",
           "homeLife": "Ev & Yaşam",
-          "supermarket": "Supermarket",
+          "supermarket": "Süpermarket",
           "cosmetics": "Kozmetik",
           "shoesBags": "Ayakkabı & Çanta",
           "sportsOutdoor": "Spor & Outdoor",
@@ -3456,6 +3456,11 @@
     "create": {
       "enterValue": "Değer girin"
     },
-    "domain": "Özellikler"
+    "domain": "Özellikler",
+    "additionalAttributes": "Ek Özellikler",
+    "possibleValues": "Olası Değerler",
+    "possibleValueNotFound": "Olası Değer Bulunamadı",
+    "possibleValueNotFoundDesc": "İstenen olası değer bulunamadı.",
+    "editPossibleValue": "Olası Değeri Düzenle"
   }
 }

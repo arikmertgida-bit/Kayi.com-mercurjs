@@ -35,6 +35,8 @@ export const SellerCustomerGroupsSection = ({
     count: number;
   };
 
+  const { t } = useTranslation();
+
   const { raw } = useSellerOrdersTableQuery({
     pageSize: PAGE_SIZE,
     offset: 0,
@@ -57,7 +59,7 @@ export const SellerCustomerGroupsSection = ({
   return (
     <Container className="mt-2 px-0">
       <div className="px-8 pb-4">
-        <Heading>Customer Groups</Heading>
+        <Heading>{t("customerGroups.domain")}</Heading>
       </div>
       <Divider />
       <_DataTable

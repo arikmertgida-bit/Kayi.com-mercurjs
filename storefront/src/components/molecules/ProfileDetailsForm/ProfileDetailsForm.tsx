@@ -100,7 +100,7 @@ const Form: React.FC<Props> = ({ handleClose, notificationToggle }) => {
             </div>
           </>
         )}
-        <Button className="w-full ">Save</Button>
+        <Button className="w-full ">{t('save')}</Button>
       </div>
     </form>
   )

@@ -16,6 +16,7 @@ import { listMegaMenuCategories } from "@/lib/data/categories"
 import { HttpTypes } from "@medusajs/types"
 import { CollapseIcon } from "@/icons"
 import { SortFilter } from "@/components/cells"
+import { useTranslations } from "next-intl"
 
 const filters = [
   { label: "5", amount: 40 },
@@ -34,6 +35,7 @@ export const MeiliProductSidebar = ({
   const [isOpen, setIsOpen] = useState(false)
 
   const { allSearchParams } = useGetAllSearchParams()
+  const t = useTranslations('listing')
 
   useEffect(() => {
     const handleResize = () => {
@@ -49,10 +51,10 @@ export const MeiliProductSidebar = ({
         onClick={() => setIsOpen(true)}
         className="mb-4 w-full rounded-full border-0 bg-gradient-to-r from-[#f58529] via-[#dd2a7b] to-[#8134af] uppercase text-white shadow-[0_14px_28px_rgba(221,42,123,0.24)]"
       >
-        Filters
+        {t('filters')}
       </Button>
       {isOpen && (
-        <Modal heading="Filters" onClose={() => setIsOpen(false)}>
+        <Modal heading={t('filters')} onClose={() => setIsOpen(false)}>
           <div className="px-4">
             <ProductListingActiveFilters />
             <CategoryFilter initialCategories={initialCategories} />

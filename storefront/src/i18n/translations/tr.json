@@ -144,12 +144,16 @@
     "title": "Siparişlerim",
     "noOrders": "Sipariş yok",
     "noOrdersDesc": "Henüz bir sipariş vermediniz. Sipariş verdiğinizde burada görünecek.",
-    "exploreShop": "Mağazayı Keşfet"
+    "exploreShop": "Mağazayı Keşfet",
+    "trackingTitle": "Sipariş Takibi"
   },
   "returns": {
     "title": "İadeler",
     "noReturns": "İade Yok",
-    "noReturnsDesc": "Henüz iade talebinde bulunmadınız. Bir iade talebinde bulunduğunuzda burada görünecek."
+    "noReturnsDesc": "Henüz iade talebinde bulunmadınız. Bir iade talebinde bulunduğunuzda burada görünecek.",
+    "returnMethods": "İade Yöntemleri",
+    "shippingAddress": "İade Gönderim Adresi",
+    "noShippingMethods": "Kullanılabilir kargo seçeneği yok"
   },
   "wishlist": {
     "title": "Favorilerim",
@@ -194,7 +198,8 @@
     "viewResults": "Sonuçları gör",
     "listingsCount": "{total} İlan",
     "seeMore": "Daha Fazla Gör",
-    "relatedProducts": "Bunlar da İlginizi Çekebilir"
+    "relatedProducts": "Bunlar da İlginizi Çekebilir",
+    "filters": "Filtreler"
   },
   "header": {
     "shippingTo": "Gönderim Yeri:",
@@ -311,7 +316,8 @@
     "passwordUpdatedDesc": "Şifreniz başarıyla güncellendi. Artık yeni şifrenizle giriş yapabilirsiniz.",
     "goToUserPage": "Hesap Sayfasına Git",
     "passwordMismatch": "Yeni şifre ile onay şifresi eşleşmiyor",
-    "somethingWentWrong": "Bir şeyler ters gitti"
+    "somethingWentWrong": "Bir şeyler ters gitti",
+    "save": "Kaydet"
   },
   "errorPage": {
     "title": "Bir hata oluştu",

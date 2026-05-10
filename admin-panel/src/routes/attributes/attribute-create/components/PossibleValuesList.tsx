@@ -126,17 +126,19 @@ const PossibleValuesList = () => {
     });
   };
 
+  const { t } = useTranslation();
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between pb-1">
-        <Label>Possible Values</Label>
+        <Label>{t("attributes.detail.possibleValues")}</Label>
         <Button
           type="button"
           variant="secondary"
           size="small"
           onClick={handleAddValue}
         >
-          Add
+          {t("general.add")}
         </Button>
       </div>
 
