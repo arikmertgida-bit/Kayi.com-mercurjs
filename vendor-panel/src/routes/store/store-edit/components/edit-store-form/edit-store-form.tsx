@@ -162,6 +162,7 @@ export const EditStoreForm = ({ seller }: { seller: StoreVendor }) => {
                     <div className="flex flex-col gap-y-2">
                       <div className="flex flex-col gap-y-1">
                         <Form.Label optional>{t("store.logo")}</Form.Label>
+                        <p className="font-normal font-sans txt-compact-small text-ui-fg-muted">{t("store.bannerSize")}</p>
                       </div>
                       <Form.Control>
                         <FileUpload

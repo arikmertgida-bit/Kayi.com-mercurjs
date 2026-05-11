@@ -208,7 +208,7 @@ export const RulesFormField = ({
                                     value={c.value}
                                   >
                                     <span className="text-ui-fg-subtle">
-                                      {c.label}
+                                      {t(`promotions.form.ruleAttribute.${c.id}`, { defaultValue: c.label })}
                                     </span>
                                   </Select.Item>
                                 ))}
@@ -217,9 +217,10 @@ export const RulesFormField = ({
                           ) : (
                             <DisabledField
                               label={
-                                attributeOptions?.find(
-                                  (ao) => ao.value === fieldRule.attribute
-                                )?.label || ""
+                                (() => {
+                                  const ao = attributeOptions?.find((ao) => ao.value === fieldRule.attribute)
+                                  return ao ? t(`promotions.form.ruleAttribute.${ao.id}`, { defaultValue: ao.label }) : ""
+                                })()
                               }
                               field={field}
                             />
@@ -271,7 +272,7 @@ export const RulesFormField = ({
                                   {options?.map((c) => (
                                     <Select.Item key={c.key} value={c.value}>
                                       <span className="text-ui-fg-subtle">
-                                        {c.label}
+                                        {t(`promotions.form.ruleOperator.${c.value}`, { defaultValue: c.label })}
                                       </span>
                                     </Select.Item>
                                   ))}
@@ -280,9 +281,10 @@ export const RulesFormField = ({
                             ) : (
                               <DisabledField
                                 label={
-                                  options.find(
-                                    (o) => o.value === fieldProps.value
-                                  )?.label || ""
+                                  (() => {
+                                    const o = options.find((o) => o.value === fieldProps.value)
+                                    return o ? t(`promotions.form.ruleOperator.${o.value}`, { defaultValue: o.label }) : ""
+                                  })()
                                 }
                                 field={field}
                               />

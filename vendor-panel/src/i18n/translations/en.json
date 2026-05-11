@@ -2040,6 +2040,17 @@
       "required": "Required",
       "and": "AND",
       "selectAttribute": "Select Attribute",
+      "ruleAttribute": {
+        "customer_group": "Customer Group",
+        "country": "Country",
+        "product": "Product"
+      },
+      "ruleOperator": {
+        "in": "in",
+        "eq": "equals",
+        "nin": "not in",
+        "ne": "not equal"
+      },
       "campaign": {
         "existing": {
           "title": "Existing Campaign",
@@ -2429,7 +2440,8 @@
     },
     "editCompany": "Edit Company",
     "companyDescription": "Manage your company's details",
-    "logo": "Logo"
+    "logo": "Banner Image",
+    "bannerSize": "Size: 1920x400px"
   },
   "regions": {
     "domain": "Regions",
