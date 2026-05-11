@@ -2360,7 +2360,8 @@
     "fields": {
       "languageLabel": "Language",
       "usageInsightsLabel": "Usage insights",
-      "profilePicture": "Profile picture",
+      "profilePicture": "Profile picture or Store Logo",
+      "profileLogoHint": "Size: 512x512px",
       "bio": "Bio"
     },
     "edit": {

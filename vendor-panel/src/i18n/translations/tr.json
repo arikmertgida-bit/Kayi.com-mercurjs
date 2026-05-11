@@ -2360,7 +2360,8 @@
     "fields": {
       "languageLabel": "Dil",
       "usageInsightsLabel": "Kullanım istatistikleri",
-      "profilePicture": "Profil fotoğrafı",
+      "profilePicture": "Profil fotoğrafı veya Mağaza Logosu",
+      "profileLogoHint": "Boyut: 512x512px",
       "bio": "Hakkımda"
     },
     "edit": {

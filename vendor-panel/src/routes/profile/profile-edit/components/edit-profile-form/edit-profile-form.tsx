@@ -181,6 +181,7 @@ export const EditProfileForm = ({ user }: EditProfileProps) => {
                     <div className="flex flex-col gap-y-2">
                       <div className="flex flex-col gap-y-1">
                         <Form.Label>{t("profile.fields.profilePicture")}</Form.Label>
+                        <p className="font-normal font-sans txt-compact-small text-ui-fg-muted">{t("profile.fields.profileLogoHint")}</p>
                       </div>
                       <Form.Control>
                         <FileUpload
