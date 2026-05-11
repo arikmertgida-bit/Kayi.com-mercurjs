@@ -1,6 +1,9 @@
 const { execSync, spawnSync } = require('child_process');
+const path = require('path');
 const https = require('https');
 const http = require('http');
+
+const viteBin = path.join(__dirname, '..', 'node_modules', '.bin', 'vite' + (process.platform === 'win32' ? '.cmd' : ''));
 
 const BACKEND_URL = process.env.BACKEND_INTERNAL_URL || process.env.VITE_MEDUSA_BACKEND_URL || 'http://localhost:9000';
 
@@ -67,7 +70,7 @@ async function launch() {
   // Build then serve as production preview
   console.log('Building vendor panel for production...\n');
   try {
-    execSync('./node_modules/.bin/vite build', { stdio: 'inherit', env: process.env });
+    execSync(`"${viteBin}" build`, { stdio: 'inherit', env: process.env, shell: true });
   } catch (error) {
     console.error('Build failed:', error.message);
     process.exit(1);
@@ -76,9 +79,9 @@ async function launch() {
   const port = process.env.PORT || '7001';
   console.log(`Starting Vite preview server on port ${port}...\n`);
   const result = spawnSync(
-    './node_modules/.bin/vite',
+    viteBin,
     ['preview', '--host', '--port', port],
-    { stdio: 'inherit', env: process.env }
+    { stdio: 'inherit', env: process.env, shell: process.platform === 'win32' }
   );
   if (result.error) {
     console.error('Error starting preview server:', result.error.message);

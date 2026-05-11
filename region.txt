@@ -1,5 +1,0 @@
-﻿ts.find((p) => p.userType !== "SELLER") ?? null
-}
-
-// â”€â”€ ConvRow component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”interface MessengerVendorInboxProps {
-  sellerId:

@@ -9,7 +9,7 @@ import * as zod from "zod"
 import { RouteFocusModal, useRouteModal } from "../../../components/modals"
 import { KeyboundForm } from "../../../components/utilities/keybound-form"
 import { useUpdateProductVariant } from "../../../hooks/api/products"
-import { useRegions } from "../../../hooks/api/regions"
+import { useSellerRegions } from "../../../hooks/api/use-seller-regions"
 import { castNumber } from "../../../lib/cast-number"
 import { VariantPricingForm } from "../common/variant-pricing-form"
 import { ExtendedAdminProduct } from "../../../types/products"
@@ -37,26 +37,23 @@ export const PricingEdit = ({
 }) => {
   const { t } = useTranslation()
   const { handleSuccess } = useRouteModal()
-  // const { mutateAsync, isPending } = useUpdateProductVariantsBatch(product.id)
   const { mutateAsync, isPending } = useUpdateProductVariant(
     product.id,
     variantId!
   )
 
-  const { regions } = useRegions({ limit: 9999 })
+  // Use seller's selected regions to build the currency map.
+  // Only regions the seller has opted into are relevant for price resolution.
+  const { sellerRegions } = useSellerRegions()
   const regionsCurrencyMap = useMemo(() => {
-    if (!regions?.length) {
-      return {}
-    }
-
-    return regions.reduce(
+    return sellerRegions.reduce(
       (acc, reg) => {
         acc[reg.id] = reg.currency_code
         return acc
       },
       {} as Record<string, string>
     )
-  }, [regions])
+  }, [sellerRegions])
 
   const variants = variantId
     ? product.variants?.filter((v) => v.id === variantId)

@@ -6,7 +6,7 @@ import { HttpTypes } from "@medusajs/types"
 export const CollectionProductSection = async ({
   heading,
   collectionHandle,
-  locale = process.env.NEXT_PUBLIC_DEFAULT_REGION || "tr",
+  locale = process.env.NEXT_PUBLIC_DEFAULT_REGION || "",
   allProductsHref,
   limit = 10,
   shuffle = false,

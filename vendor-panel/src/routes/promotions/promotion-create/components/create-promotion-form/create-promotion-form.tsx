@@ -35,6 +35,7 @@ import {
 import { KeyboundForm } from "../../../../../components/utilities/keybound-form"
 import { useCampaigns } from "../../../../../hooks/api/campaigns"
 import { useCreatePromotion } from "../../../../../hooks/api/promotions"
+import { useStore } from "../../../../../hooks/api/store"
 import { getCurrencySymbol } from "../../../../../lib/data/currencies"
 import { DEFAULT_CAMPAIGN_VALUES } from "../../../../campaigns/common/constants"
 import { RulesFormField } from "../../../common/edit-rules/components/rules-form-field"
@@ -75,6 +76,7 @@ export const CreatePromotionForm = () => {
 
   const { t } = useTranslation()
   const { handleSuccess } = useRouteModal()
+  const { store } = useStore()
 
   const form = useForm<z.infer<typeof CreatePromotionSchema>>({
     defaultValues,
@@ -98,6 +100,7 @@ export const CreatePromotionForm = () => {
       const {
         target_rules: targetRulesData = [],
         buy_rules: buyRulesData = [],
+        currency_code: _currencyCode,
         ...applicationMethodData
       } = application_method
 
@@ -115,6 +118,8 @@ export const CreatePromotionForm = () => {
             ? parseInt(rule.values as string)
             : rule.values
       }
+
+      delete applicationMethodRuleData["currency_code"]
 
       const buildRulesData = (
         rules: {
@@ -272,7 +277,7 @@ export const CreatePromotionForm = () => {
         for (const [subKey, subValue] of Object.entries(value)) {
           setValue(
             `application_method.${subKey}` as keyof typeof defaultValues,
-            subValue
+            subValue as any
           )
         }
       } else {
@@ -374,6 +379,18 @@ export const CreatePromotionForm = () => {
       form.setValue("application_method.currency_code", ruleValue as string)
     }
   }
+
+  useEffect(() => {
+    const defaultCurrency = store?.supported_currencies?.find(
+      (c) => c.is_default
+    )?.currency_code
+    if (isFixedValueType && defaultCurrency && !watchCurrencyRule) {
+      const current = form.getValues("application_method.currency_code")
+      if (current !== defaultCurrency) {
+        setValue("application_method.currency_code", defaultCurrency)
+      }
+    }
+  }, [isFixedValueType, store?.supported_currencies, watchCurrencyRule, setValue, form])
 
   return (
     <RouteFocusModal.Form form={form}>

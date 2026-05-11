@@ -5,9 +5,11 @@ import { StoreVendor } from "../../../../../types/user"
 import { ActionMenu } from "../../../../../components/common/action-menu"
 import { Pencil } from "@medusajs/icons"
 import { ImageAvatar } from "../../../../../components/common/image-avatar"
+import { useSellerRegions } from "../../../../../hooks/api/use-seller-regions"
 
 export const StoreGeneralSection = ({ seller }: { seller: StoreVendor }) => {
   const { t } = useTranslation()
+  const { sellerRegions, selectedIds } = useSellerRegions()
 
   return (
     <Container className="divide-y p-0">
@@ -66,6 +68,27 @@ export const StoreGeneralSection = ({ seller }: { seller: StoreVendor }) => {
         <Text size="small" leading="compact">
           {seller.description || "-"}
         </Text>
+      </div>
+      <div className="text-ui-fg-subtle grid grid-cols-2 px-6 py-4">
+        <Text size="small" leading="compact" weight="plus">
+          {t("store.salesRegions")}
+        </Text>
+        <div className="flex flex-col gap-y-1">
+          {selectedIds.length === 0 ? (
+            <Text size="small" leading="compact" className="text-ui-fg-muted">
+              {t("store.salesRegionsNone")}
+            </Text>
+          ) : (
+            sellerRegions.map((region) => (
+              <Text key={region.id} size="small" leading="compact">
+                {region.name}{" "}
+                <span className="text-ui-fg-muted">
+                  ({region.currency_code?.toUpperCase()})
+                </span>
+              </Text>
+            ))
+          )}
+        </div>
       </div>
     </Container>
   )

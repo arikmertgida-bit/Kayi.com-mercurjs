@@ -13,7 +13,7 @@ export const ProductListing = async ({
   collection_id,
   seller_id,
   showSidebar = false,
-  locale = process.env.NEXT_PUBLIC_DEFAULT_REGION || "pl",
+  locale = process.env.NEXT_PUBLIC_DEFAULT_REGION || "",
   page = 1,
 }: {
   category_id?: string | string[]

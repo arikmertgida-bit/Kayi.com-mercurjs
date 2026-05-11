@@ -22,19 +22,17 @@ export default defineConfig(({ mode }) => {
     env.VITE_DISABLE_SELLERS_REGISTRATION || "false"
   const PUBLIC_BASE_URL = env.VITE_PUBLIC_BASE_URL || ""
 
-  /**
-   * Add this to your .env file to specify the project to load admin extensions from.
-   */
   const MEDUSA_PROJECT = env.VITE_MEDUSA_PROJECT || null
   const sources = MEDUSA_PROJECT ? [MEDUSA_PROJECT] : []
 
+  const isDev = mode === "development"
+
   return {
     plugins: [
-      inspect(),
+      // vite-plugin-inspect is a dev-only diagnostic tool — exclude from production builds
+      ...(isDev ? [inspect()] : []),
       react(),
-      inject({
-        sources,
-      }),
+      inject({ sources }),
     ],
     define: {
       __BASE__: JSON.stringify(BASE),
@@ -42,15 +40,15 @@ export default defineConfig(({ mode }) => {
       __STOREFRONT_URL__: JSON.stringify(STOREFRONT_URL),
       __PUBLISHABLE_API_KEY__: JSON.stringify(PUBLISHABLE_API_KEY),
       __TALK_JS_APP_ID__: JSON.stringify(TALK_JS_APP_ID),
-      __DISABLE_SELLERS_REGISTRATION__: JSON.stringify(
-        DISABLE_SELLERS_REGISTRATION
-      ),
+      __DISABLE_SELLERS_REGISTRATION__: JSON.stringify(DISABLE_SELLERS_REGISTRATION),
     },
     server: {
       host: true,
       port: parseInt(process.env.PORT || '5173'),
       open: false,
-      allowedHosts: PUBLIC_BASE_URL ? [PUBLIC_BASE_URL.replace('https://', '').replace('http://', '').split('/')[0]] : [],
+      allowedHosts: PUBLIC_BASE_URL
+        ? [PUBLIC_BASE_URL.replace('https://', '').replace('http://', '').split('/')[0]]
+        : [],
     },
     preview: {
       host: true,
@@ -59,6 +57,13 @@ export default defineConfig(({ mode }) => {
     optimizeDeps: {
       entries: [],
       include: ["recharts"],
+    },
+    build: {
+      // @medusajs/ui, @radix-ui, recharts/d3 have circular inter-dependencies.
+      // manualChunks breaks their initialization order and causes a TDZ crash (white screen).
+      // Rollup's default chunking handles all of this safely.
+      // The limit is raised to silence the cosmetic size warning — it does not affect runtime.
+      chunkSizeWarningLimit: 1400,
     },
   }
 })

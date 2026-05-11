@@ -58,7 +58,13 @@ const getCachedRegionMap = unstable_cache(
 export const getRegion = async (countryCode: string) => {
   try {
     const regionMap = await getCachedRegionMap()
-    return countryCode ? regionMap[countryCode] : regionMap["us"]
+    if (countryCode && regionMap[countryCode]) {
+      return regionMap[countryCode]
+    }
+    // Fall back to the first available region from the database (Single Source of Truth).
+    // This prevents hardcoded country strings from leaking into the codebase.
+    const firstRegion = Object.values(regionMap)[0] ?? null
+    return firstRegion
   } catch (e: any) {
     console.error("[getRegion] error for countryCode:", countryCode, e)
     return null

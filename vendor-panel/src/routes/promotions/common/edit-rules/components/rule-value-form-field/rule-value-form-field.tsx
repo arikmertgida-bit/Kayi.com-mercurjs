@@ -1,11 +1,13 @@
 import { HttpTypes } from "@medusajs/types"
 import { Input, Select } from "@medusajs/ui"
+import { useMemo } from "react"
 import { useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Form } from "../../../../../../components/common/form"
 import { Combobox } from "../../../../../../components/inputs/combobox"
 import { usePromotionRuleValues } from "../../../../../../hooks/api/promotions"
 import { useStore } from "../../../../../../hooks/api/store"
+import { countries } from "../../../../../../lib/data/countries"
 
 type RuleValueFormFieldType = {
   form: any
@@ -51,12 +53,27 @@ export const RuleValueFormField = ({
   )
 
   const { store, isLoading: isStoreLoading } = useStore()
+
+  const isCountryAttribute = attribute?.id === "country"
+
+  const countryOptions = useMemo(() => {
+    if (!isCountryAttribute) return []
+    const displayNames = new Intl.DisplayNames(["tr"], { type: "region" })
+    return countries
+      .map((c) => ({
+        value: c.iso_2,
+        label: displayNames.of(c.iso_2.toUpperCase()) ?? c.display_name,
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label, "tr"))
+  }, [isCountryAttribute])
+
   const { values: options = [] } = usePromotionRuleValues(
     ruleType,
     attribute?.id!,
     buildFilters(attribute?.id, store),
     {
       enabled:
+        !isCountryAttribute &&
         !!attribute?.id &&
         ["select", "multiselect"].includes(attribute.field_type) &&
         !isStoreLoading,
@@ -122,7 +139,7 @@ export const RuleValueFormField = ({
                   </Select.Trigger>
 
                   <Select.Content>
-                    {options?.map((option, i) => (
+                    {(isCountryAttribute ? countryOptions : options)?.map((option, i) => (
                       <Select.Item
                         key={`${identifier}-value-option-${i}`}
                         value={option.value}
@@ -146,7 +163,7 @@ export const RuleValueFormField = ({
                   {...field}
                   ref={ref}
                   placeholder={t("labels.selectValues")}
-                  options={options}
+                  options={isCountryAttribute ? countryOptions : options}
                   onChange={onChange}
                   className="bg-ui-bg-base"
                   disabled={!fieldRule.attribute}

@@ -2430,6 +2430,11 @@
     "removeCurrencyWarning_one": "You are about to remove {{count}} currency from your store. Ensure that you have removed all prices using the currency before proceeding.",
     "removeCurrencyWarning_other": "You are about to remove {{count}} currencies from your store. Ensure that you have removed all prices using the currencies before proceeding.",
     "currencyAlreadyAdded": "The currency has already been added to your store.",
+    "salesRegions": "Sales Regions",
+    "salesRegionsHint": "Select the regions you want to sell in. Currency and pricing inputs for your products will be filtered to your selected regions.",
+    "salesRegionsNone": "No regions selected — all regions are available",
+    "salesRegionsSelected_one": "{{count}} region selected",
+    "salesRegionsSelected_other": "{{count}} regions selected",
     "edit": {
       "header": "Edit Store"
     },

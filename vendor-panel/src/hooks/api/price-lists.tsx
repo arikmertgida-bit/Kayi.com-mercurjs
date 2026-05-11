@@ -7,7 +7,7 @@ import {
   useMutation,
   useQuery,
 } from "@tanstack/react-query"
-import { fetchQuery, sdk } from "../../lib/client"
+import { fetchQuery } from "../../lib/client"
 import { queryClient } from "../../lib/query-client"
 import { queryKeysFactory } from "../../lib/query-key-factory"
 import {
@@ -94,11 +94,9 @@ export const usePriceLists = (
     ...options,
   })
 
-  const price_lists: ExtendedPriceList[] = (data?.price_lists || [])
-    .filter((item) => item.price_list)
-    .map((item) => ({ ...item.price_list, id: item.price_list.id }))
-
-  const count = price_lists?.length
+  // b2c-core returns price lists directly (not wrapped in { price_list_id, price_list })
+  const price_lists = (data?.price_lists || []) as ExtendedPriceList[]
+  const count = data?.count ?? price_lists.length
 
   return { ...data, price_lists, count, ...rest }
 }
@@ -189,7 +187,7 @@ export const useDeletePriceList = (
 
 export const useBatchPriceListPrices = (
   id: string,
-  query?: HttpTypes.AdminPriceListParams,
+  _query?: HttpTypes.AdminPriceListParams,
   options?: UseMutationOptions<
     HttpTypes.AdminPriceListBatchResponse,
     FetchError,
@@ -198,7 +196,14 @@ export const useBatchPriceListPrices = (
 ) => {
   return useMutation({
     mutationFn: (payload) =>
-      sdk.admin.priceList.batchPrices(id, payload, query),
+      fetchQuery(`/vendor/price-lists/${id}/products`, {
+        method: "POST",
+        body: {
+          create: payload.create || [],
+          update: payload.update || [],
+          remove: [],
+        },
+      }),
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({
         queryKey: priceListsQueryKeys.detail(id),

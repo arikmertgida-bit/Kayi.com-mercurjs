@@ -11,8 +11,7 @@ import {
 } from "../../../components/data-grid"
 import { useRouteModal } from "../../../components/modals/index"
 import { usePricePreferences } from "../../../hooks/api/price-preferences"
-import { useRegions } from "../../../hooks/api/regions.tsx"
-import { useStore } from "../../../hooks/api/store"
+import { useSellerRegions } from "../../../hooks/api/use-seller-regions"
 import { ProductCreateSchemaType } from "../product-create/types"
 import { ExtendedAdminProduct } from "../../../types/products.ts"
 
@@ -28,22 +27,26 @@ export const VariantPricingForm = ({
   form,
   product,
 }: VariantPricingFormProps) => {
-  const { store } = useStore()
-  const { regions } = useRegions({ limit: 9999 })
+  const { sellerRegions, sellerCurrencies } = useSellerRegions()
   const { price_preferences: pricePreferences } = usePricePreferences({})
 
   const { setCloseOnEscape } = useRouteModal()
 
+  // Build currency objects matching the shape AdminStore.supported_currencies expects
+  const currencyObjects = sellerCurrencies.map((code) => ({
+    currency_code: code,
+  }))
+
   const columns = useVariantPriceGridColumns({
-    currencies: store?.supported_currencies,
-    regions,
+    currencies: currencyObjects,
+    regions: sellerRegions,
     pricePreferences,
   })
 
   const variants = useWatch({
     control: form.control,
     name: "variants",
-  }) as any
+  }) as unknown as HttpTypes.AdminProductVariant[]
 
   const dataWithProductInfo = useMemo(() => {
     if (!variants?.length) return []
@@ -55,13 +58,13 @@ export const VariantPricingForm = ({
       prices: {},
     }
 
-    return [productInfoRow, ...variants]
+    return [productInfoRow, ...variants] as DataGridVariantRow[]
   }, [variants, product.title, product.id])
 
   return (
     <DataGrid
       columns={columns}
-      data={dataWithProductInfo}
+      data={dataWithProductInfo as HttpTypes.AdminProductVariant[]}
       state={form}
       onEditingChange={(editing) => setCloseOnEscape(!editing)}
     />
@@ -78,7 +81,7 @@ const useVariantPriceGridColumns = ({
   regions = [],
   pricePreferences = [],
 }: {
-  currencies?: HttpTypes.AdminStore["supported_currencies"]
+  currencies?: { currency_code: string }[]
   regions?: HttpTypes.AdminRegion[]
   pricePreferences?: HttpTypes.AdminPricePreference[]
 }) => {

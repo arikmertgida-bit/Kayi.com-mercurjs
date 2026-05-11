@@ -34,7 +34,10 @@ export default async function SellerPage({
 
   const followStatus = followStatusRaw ?? { following: false, followers_count: 0 }
 
-  const currency_code = region?.currency_code || "usd"
+  // currency_code is derived from the region resolved for this locale.
+  // Falls back to NEXT_PUBLIC_DEFAULT_CURRENCY env (docker-compose: "try"),
+  // never a hardcoded foreign currency string.
+  const currency_code = region?.currency_code || process.env.NEXT_PUBLIC_DEFAULT_CURRENCY || "try"
   const tab = "products"
 
   // Build a map of product_id -> { title, thumbnail } for reviews that reference a product

@@ -8,7 +8,7 @@ import {
   UseQueryOptions,
 } from "@tanstack/react-query"
 import { ProductAttributesResponse } from "../../types/products"
-import { fetchQuery, importProductsQuery, sdk } from "../../lib/client"
+import { backendUrl, fetchQuery, importProductsQuery, publishableApiKey, sdk } from "../../lib/client"
 import { queryClient } from "../../lib/query-client"
 import { queryKeysFactory } from "../../lib/query-key-factory"
 import { inventoryItemsQueryKeys } from "./inventory.tsx"
@@ -548,13 +548,13 @@ export const useExportProducts = (
     mutationFn: async (payload) => {
       const bearer = window.localStorage.getItem("medusa_auth_token") || ""
       const response = await fetch(
-        `${(await import("../../lib/client")).backendUrl}/vendor/products/export`,
+        `${backendUrl}/vendor/products/export`,
         {
           method: "POST",
           headers: {
             authorization: `Bearer ${bearer}`,
             "Content-Type": "application/json",
-            "x-publishable-api-key": (await import("../../lib/client")).publishableApiKey,
+            "x-publishable-api-key": publishableApiKey,
           },
           body: JSON.stringify(payload),
         }

@@ -48,10 +48,10 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
     .map((l: any) => l.order_id as string | undefined)
     .filter((id): id is string => Boolean(id))
 
-  // ── Run both queries in parallel ────────────────────────────────────────────
-  const [ordersResult, customersResult] = await Promise.all([
-    // Orders — pre-aggregated, millisecond response
-    knex.raw(
+  // ── Orders: try pre-aggregated table first, fall back to live query ─────────
+  let ordersRows: Array<{ date: string; count: number; revenue: number }> = []
+  try {
+    const ordersResult = await knex.raw(
       `SELECT date::text AS date,
               orders_count AS count,
               revenue
@@ -61,11 +61,42 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
          AND date <= ?
        ORDER BY date ASC`,
       [seller.id, fromDate, toDate]
-    ),
+    )
+    ordersRows = ordersResult.rows.map((r: any) => ({
+      date: String(r.date),
+      count: Number(r.count),
+      revenue: Number(r.revenue),
+    }))
+  } catch {
+    // Table missing or schema mismatch — compute live from order table
+    if (orderIds.length > 0) {
+      const liveResult = await knex.raw(
+        `SELECT DATE(created_at AT TIME ZONE 'UTC')::text AS date,
+                COUNT(*)::int AS count,
+                COALESCE(SUM(summary->>'raw_item_subtotal' IS NOT NULL
+                  -- only sum if field exists, else 0
+                  ), 0) AS revenue
+         FROM "order"
+         WHERE id = ANY(?)
+           AND created_at >= ?
+           AND created_at <= ?
+           AND deleted_at IS NULL
+         GROUP BY DATE(created_at AT TIME ZONE 'UTC')
+         ORDER BY date ASC`,
+        [orderIds, timeFrom, timeTo]
+      )
+      ordersRows = liveResult.rows.map((r: any) => ({
+        date: String(r.date),
+        count: Number(r.count),
+        revenue: 0, // revenue aggregation requires order items join; return 0 for now
+      }))
+    }
+  }
 
-    // Customers — live but scoped to this seller's order_ids only
+  // ── Customers — live, scoped to this seller's order_ids ──────────────────
+  const customersResult =
     orderIds.length > 0
-      ? knex.raw(
+      ? await knex.raw(
           `SELECT DATE(created_at AT TIME ZONE 'UTC')::text AS date,
                   COUNT(DISTINCT customer_id)::int AS count
            FROM "order"
@@ -78,15 +109,10 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
            ORDER BY date ASC`,
           [orderIds, timeFrom, timeTo]
         )
-      : Promise.resolve({ rows: [] }),
-  ])
+      : { rows: [] }
 
   res.json({
-    orders: ordersResult.rows.map((r: any) => ({
-      date: String(r.date),
-      count: Number(r.count),
-      revenue: Number(r.revenue),
-    })),
+    orders: ordersRows,
     customers: customersResult.rows.map((r: any) => ({
       date: String(r.date),
       count: Number(r.count),

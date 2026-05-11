@@ -190,6 +190,7 @@ Multi-vendor marketplace (B2C) built on MedusaJS v2 + MercurJS plugin ecosystem.
 - **Subscribers:** seller approval, product approval, MeiliSearch sync, collection sync, `import-image-optimizer` (product.created eventinde async görsel optimizasyonu — sharp ile WebP 1200×1200)
 - **Jobs:** MeiliSearch cron sync (periodic product index update)
 - **DB connection pool:** `min: 2, max: 10, idleTimeoutMillis: 30000`
+  > **Faz 2 Güncellemesi (Mayıs 2026):** Pool `min: 5, max: 50` olarak artırıldı. Backend `backend-api` (server modu, 2 replika) ve `backend-worker` (worker modu) olarak ikiye ayrıldı. Bağlantılar artık PgBouncer üzerinden yönlendiriliyor (pgbouncer:5432). `backend-lb` nginx reverse proxy, 2 `backend-api` replikasına round-robin yük dağılımı yapar ve dışarıya tek port (:9000) olarak görünür.
 
 #### Backend Docker — Multi-Stage Build Architecture
 
@@ -608,6 +609,11 @@ PostgreSQL + Redis + MinIO + MeiliSearch  (infrastructure layer)
 | `kaycom-vendor-panel-1` | nginx root responds | `wget -qO- http://127.0.0.1/` |
 | `kaycom-storefront-1` | Next.js `✓ Ready` in logs | `wget -qO /dev/null http://127.0.0.1:8000/` |
 | `kaycom-kayi-messenger-1` | `/health` returns 200 | `node -e "require('http').get('http://localhost:4000/health', ...)"` |
+| `kaycom-pgbouncer-1` | process alive (kill -0 1) | `kill -0 1` |
+| `kaycom-backend-api-1` | `/health` returns 200 | `wget -qO- http://localhost:9000/health` |
+| `kaycom-backend-api-2` | `/health` returns 200 | `wget -qO- http://localhost:9000/health` |
+| `kaycom-backend-worker-1` | node process running | `pgrep -f 'node.*main'` |
+| `kaycom-backend-lb-1` | nginx proxies /health | `wget -qO- http://localhost/health` |
 
 ### Healthcheck Commands — BusyBox wget Limitations
 
@@ -960,6 +966,8 @@ PORT=4000
 | Admin Panel | http://localhost:5173 | |
 | Vendor Panel | http://localhost:7001 | |
 | Backend API | http://localhost:9000 | Container-internal: `http://backend:9000` |
+| Backend LB (Faz 3) | http://localhost:9000 | nginx round-robin → 2 backend-api replicas; internal: `http://backend-lb:80` |
+| PgBouncer (Faz 3) | localhost:6432 | Bağlantı havuzu; session mode; max_client_conn=300; internal: `pgbouncer:5432` |
 | Kayi-Messenger | http://localhost:4000 | |
 | MinIO Console | http://localhost:9001 | |
 | MinIO API | http://localhost:9002 | |
@@ -1054,3 +1062,27 @@ PORT=4000
 - [x] `module.d.ts` ambient-only kuralı korundu (import eklenmedi)
 - [x] `DashboardPlugin` re-export kaynağı `./dashboard-app/types` olarak düzeltildi
 - [x] `./render` modülü eksikliği `index.ts`'ten kaldırıldı
+
+### Faz 2 — Backend Split & DB Pool Tuning (Mayıs 2026)
+- [x] **Backend ikiye ayrıldı:** `backend-api` (MEDUSA_WORKER_MODE=server, 2 replika) + `backend-worker` (MEDUSA_WORKER_MODE=worker, tekil)
+  - `backend-api`: HTTP isteklerini karşılar, stateless, 2× replika ile yatay ölçeklenebilir
+  - `backend-worker`: Arka plan işleri (subscribers, jobs, cron) yalnızca bu container'da çalışır
+- [x] **DB bağlantı havuzu artırıldı:** `min: 2, max: 10` → `min: 5, max: 50`
+- [x] **Kaynak limitleri eklendi:** Her servise `mem_limit` + `cpus` ataması yapıldı
+  - postgres: mem_limit: 1g, cpus: 1.0
+  - redis: mem_limit: 512m, cpus: 0.5
+  - backend-api: mem_limit: 1536m, cpus: 2.0
+  - backend-worker: mem_limit: 512m, cpus: 1.0
+- [x] **`DATABASE_URL_READ` env değişkeni** `.env` ve `docker-compose.yml`'e eklendi (şimdilik primary'a işaret ediyor; gerçek read replica hazır olduğunda swap edilecek)
+- [x] **storefront `middleware.ts` TypeScript hatası düzeltildi:** `DEFAULT_REGION` tip uyumsuzluğu (string | undefined → string) null guard ile giderildi
+
+### Faz 3 — PgBouncer & Load Balancer (Mayıs 2026)
+- [x] **PgBouncer eklendi** (`edoburu/pgbouncer`, port 6432:5432, session mode)
+  - `MAX_CLIENT_CONN=300`, `DEFAULT_POOL_SIZE=50`, `AUTH_TYPE=scram-sha-256`
+  - Tüm backend servisleri DB'ye doğrudan değil, PgBouncer üzerinden bağlanıyor (`pgbouncer:5432`)
+  - Healthcheck: `kill -0 1` (BusyBox Alpine'de `nc` mevcut değil)
+- [x] **`backend-lb` nginx reverse proxy eklendi** (nginx:alpine, port 9000:80)
+  - `c:\Kayı.com\backend-lb\nginx.conf` — upstream tanımı: `server backend-api:9000` (round-robin)
+  - Storefront ve kayi-messenger artık `http://backend-lb:80` üzerinden backend'e ulaşıyor
+- [x] **Gereksiz imaj temizlendi:** `kaycom-backend:latest` kaldırıldı (1.1GB geri kazanıldı)
+- [x] **Toplam container sayısı:** 9 → 13 (pgbouncer, backend-api ×2, backend-worker, backend-lb)

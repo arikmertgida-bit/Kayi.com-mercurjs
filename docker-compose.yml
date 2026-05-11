@@ -2,8 +2,8 @@ services:
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
-    mem_limit: 512m
-    cpus: '0.5'
+    mem_limit: 1g
+    cpus: '1.0'
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -28,8 +28,8 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    mem_limit: 256m
-    cpus: '0.25'
+    mem_limit: 512m
+    cpus: '0.5'
     ports:
       - "6380:6379"
     volumes:
@@ -96,19 +96,48 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  backend:
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    restart: unless-stopped
+    mem_limit: 64m
+    cpus: '0.25'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/mercurjs
+      POOL_MODE: session
+      MAX_CLIENT_CONN: "300"
+      DEFAULT_POOL_SIZE: "50"
+      SERVER_RESET_QUERY: "DISCARD ALL"
+      AUTH_TYPE: scram-sha-256
+    ports:
+      - "6432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "kill -0 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  backend-api:
     build:
       context: ./backend
     restart: unless-stopped
-    ports:
-      - "9000:9000"
     depends_on:
-      postgres:
+      pgbouncer:
         condition: service_healthy
       redis:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/mercurjs
+      MEDUSA_WORKER_MODE: server
+      DATABASE_URL: postgres://postgres:postgres@pgbouncer:5432/mercurjs
+      DATABASE_URL_READ: ${DATABASE_URL_READ:-postgres://postgres:postgres@postgres:5432/mercurjs}
       REDIS_URL: redis://redis:6379
       NODE_ENV: production
       JWT_SECRET: ${JWT_SECRET:-supersecret}
@@ -134,14 +163,92 @@ services:
       DEV_REVIEW_BYPASS_EMAIL: ${DEV_REVIEW_BYPASS_EMAIL:-cyclo@gmail.com}
       DEV_REVIEW_BYPASS_ORDER_ID: ${DEV_REVIEW_BYPASS_ORDER_ID:-__dev_bypass_order__}
       NODE_OPTIONS: "--max-old-space-size=512"
-    mem_limit: 1g
-    cpus: '1.5'
+    mem_limit: 1536m
+    cpus: '2.0'
+    deploy:
+      replicas: 2
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:9000/health || exit 1"]
       interval: 60s
       timeout: 10s
       retries: 5
       start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  backend-worker:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    depends_on:
+      pgbouncer:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      MEDUSA_WORKER_MODE: worker
+      DATABASE_URL: postgres://postgres:postgres@pgbouncer:5432/mercurjs
+      DATABASE_URL_READ: ${DATABASE_URL_READ:-postgres://postgres:postgres@postgres:5432/mercurjs}
+      REDIS_URL: redis://redis:6379
+      NODE_ENV: production
+      JWT_SECRET: ${JWT_SECRET:-supersecret}
+      COOKIE_SECRET: ${COOKIE_SECRET:-supersecret}
+      STORE_CORS: ${STORE_CORS:-http://localhost:3000,http://localhost:8000}
+      ADMIN_CORS: ${ADMIN_CORS:-http://localhost:5173,http://localhost:9000}
+      AUTH_CORS: ${AUTH_CORS:-http://localhost:5173,http://localhost:7001,http://localhost:9000}
+      VENDOR_CORS: ${VENDOR_CORS:-http://localhost:7001}
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: "9000"
+      MINIO_USE_SSL: "false"
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin123
+      MINIO_BUCKET: medusa-media
+      MINIO_PUBLIC_URL: http://localhost:9002
+      MEILISEARCH_HOST: http://meilisearch:7700
+      MEILISEARCH_API_KEY: ${MEILI_MASTER_KEY:-masterKey_kayicom}
+      MEILISEARCH_PRODUCT_INDEX_NAME: products
+      STRIPE_SECRET_API_KEY: ${STRIPE_SECRET_API_KEY:-sk_placeholder}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_placeholder}
+      MESSENGER_INTERNAL_URL: http://kayi-messenger:4000
+      MESSENGER_INTERNAL_SECRET: ${MESSENGER_INTERNAL_SECRET:-kayi-internal-secret}
+      DEV_REVIEW_BYPASS_EMAIL: ${DEV_REVIEW_BYPASS_EMAIL:-cyclo@gmail.com}
+      DEV_REVIEW_BYPASS_ORDER_ID: ${DEV_REVIEW_BYPASS_ORDER_ID:-__dev_bypass_order__}
+      NODE_OPTIONS: "--max-old-space-size=512"
+    mem_limit: 512m
+    cpus: '1.0'
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'node.*main' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  backend-lb:
+    image: nginx:alpine
+    restart: unless-stopped
+    mem_limit: 64m
+    cpus: '0.25'
+    ports:
+      - "9000:80"
+    depends_on:
+      backend-api:
+        condition: service_healthy
+    volumes:
+      - ./backend-lb/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
     logging:
       driver: "json-file"
       options:
@@ -163,7 +270,7 @@ services:
     ports:
       - "5173:80"
     depends_on:
-      backend:
+      backend-lb:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ || exit 1"]
@@ -194,7 +301,7 @@ services:
     ports:
       - "7001:80"
     depends_on:
-      backend:
+      backend-lb:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ || exit 1"]
@@ -214,6 +321,7 @@ services:
       args:
         NEXT_PUBLIC_BASE_URL: http://localhost:3000
         NEXT_PUBLIC_DEFAULT_REGION: tr
+        NEXT_PUBLIC_DEFAULT_CURRENCY: try
         NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: ${MEDUSA_PUBLISHABLE_KEY:-pk_3ec25684da2af0f1c3445a1628d4b94fe8754186b265c7218b590414bec64ac2}
         NEXT_PUBLIC_SITE_NAME: "Kayı | Güvenle Al, Güvenle Sat"
         NEXT_PUBLIC_SITE_DESCRIPTION: "Kayı | Güvenle Al, Güvenle Sat"
@@ -221,7 +329,7 @@ services:
         NEXT_PUBLIC_MESSENGER_URL: http://localhost:4000
         NEXT_PUBLIC_MEILISEARCH_HOST: http://localhost:7700
         NEXT_PUBLIC_MINIO_ENDPOINT: ${MINIO_PUBLIC_ENDPOINT:-}
-        MEDUSA_BACKEND_URL: http://backend:9000
+        MEDUSA_BACKEND_URL: http://backend-lb
     restart: unless-stopped
     mem_limit: 512m
     cpus: '1.5'
@@ -229,15 +337,16 @@ services:
     ports:
       - "3000:8000"
     depends_on:
-      backend:
+      backend-lb:
         condition: service_healthy
       meilisearch:
         condition: service_healthy
     environment:
       NODE_ENV: production
-      MEDUSA_BACKEND_URL: http://backend:9000
+      MEDUSA_BACKEND_URL: http://backend-lb
       NEXT_PUBLIC_BASE_URL: http://localhost:3000
       NEXT_PUBLIC_DEFAULT_REGION: tr
+      NEXT_PUBLIC_DEFAULT_CURRENCY: try
       NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: ${MEDUSA_PUBLISHABLE_KEY:-pk_3ec25684da2af0f1c3445a1628d4b94fe8754186b265c7218b590414bec64ac2}
       REVALIDATE_SECRET: ${REVALIDATE_SECRET:-supersecret}
       NEXT_PUBLIC_SITE_NAME: "Kayı | Güvenle Al, Güvenle Sat"
@@ -272,7 +381,7 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
-      backend:
+      backend-lb:
         condition: service_healthy
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/kayi_messenger
@@ -280,7 +389,7 @@ services:
       PORT: "4000"
       NODE_ENV: production
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:5173,http://localhost:7001}
-      BACKEND_URL: http://backend:9000
+      BACKEND_URL: http://backend-lb
       MESSENGER_INTERNAL_SECRET: ${MESSENGER_INTERNAL_SECRET:-kayi-internal-secret}
       MINIO_ENDPOINT: minio
       MINIO_PORT: "9000"

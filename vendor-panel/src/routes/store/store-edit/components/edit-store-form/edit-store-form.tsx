@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Button, Input, Textarea, toast } from "@medusajs/ui"
+import { Button, Checkbox, Hint, Input, Label, Textarea, toast } from "@medusajs/ui"
 import { useFieldArray, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
@@ -10,6 +10,7 @@ import { RouteDrawer, useRouteModal } from "../../../../../components/modals"
 import { KeyboundForm } from "../../../../../components/utilities/keybound-form"
 import { StoreVendor } from "../../../../../types/user"
 import { useUpdateMe } from "../../../../../hooks/api"
+import { useSellerRegions } from "../../../../../hooks/api/use-seller-regions"
 import { MediaSchema } from "../../../../products/product-create/constants"
 import {
   FileType,
@@ -25,6 +26,7 @@ export const EditStoreSchema = z.object({
   phone: z.string().optional(),
   email: z.string().optional(),
   media: z.array(MediaSchema).optional(),
+  selected_region_ids: z.array(z.string()).optional(),
 })
 
 const SUPPORTED_FORMATS = [
@@ -48,6 +50,10 @@ const SUPPORTED_FORMATS_FILE_EXTENSIONS = [
 export const EditStoreForm = ({ seller }: { seller: StoreVendor }) => {
   const { t } = useTranslation()
   const { handleSuccess } = useRouteModal()
+  const { allRegions } = useSellerRegions()
+
+  const existingSelectedIds: string[] =
+    (seller.metadata?.selected_region_ids as string[] | undefined) ?? []
 
   const form = useForm<z.infer<typeof EditStoreSchema>>({
     defaultValues: {
@@ -56,6 +62,7 @@ export const EditStoreForm = ({ seller }: { seller: StoreVendor }) => {
       phone: seller.phone,
       email: seller.email,
       media: [],
+      selected_region_ids: existingSelectedIds,
     },
     resolver: zodResolver(EditStoreSchema),
   })
@@ -134,6 +141,10 @@ export const EditStoreForm = ({ seller }: { seller: StoreVendor }) => {
         phone: values.phone,
         description: values.description,
         photo: uploadedMedia[0]?.url || seller.photo || "",
+        metadata: {
+          ...(seller.metadata ?? {}),
+          selected_region_ids: values.selected_region_ids ?? [],
+        },
       },
       {
         onSuccess: () => {
@@ -232,6 +243,56 @@ export const EditStoreForm = ({ seller }: { seller: StoreVendor }) => {
                   <Form.ErrorMessage />
                 </Form.Item>
               )}
+            />
+
+            {/* ── Sales Regions ─────────────────────────────────────────── */}
+            <Form.Field
+              name="selected_region_ids"
+              control={form.control}
+              render={({ field }) => {
+                const currentIds: string[] = field.value ?? []
+
+                const toggle = (id: string) => {
+                  const next = currentIds.includes(id)
+                    ? currentIds.filter((v) => v !== id)
+                    : [...currentIds, id]
+                  field.onChange(next)
+                }
+
+                return (
+                  <Form.Item>
+                    <div className="flex flex-col gap-y-1">
+                      <Label weight="plus">{t("store.salesRegions")}</Label>
+                      <Hint>{t("store.salesRegionsHint")}</Hint>
+                    </div>
+                    <div className="mt-2 flex flex-col gap-y-2">
+                      {allRegions.map((region) => (
+                        <label
+                          key={region.id}
+                          className="flex cursor-pointer items-center gap-x-2 select-none"
+                        >
+                          <Checkbox
+                            checked={currentIds.includes(region.id)}
+                            onCheckedChange={() => toggle(region.id)}
+                          />
+                          <span className="text-ui-fg-base txt-compact-small">
+                            {region.name}
+                            <span className="text-ui-fg-subtle ml-1">
+                              ({region.currency_code?.toUpperCase()})
+                            </span>
+                          </span>
+                        </label>
+                      ))}
+                      {allRegions.length === 0 && (
+                        <p className="text-ui-fg-muted txt-compact-small">
+                          {t("regions.list.noRecordsMessage")}
+                        </p>
+                      )}
+                    </div>
+                    <Form.ErrorMessage />
+                  </Form.Item>
+                )
+              }}
             />
           </div>
         </RouteDrawer.Body>

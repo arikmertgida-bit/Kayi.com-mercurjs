@@ -21,13 +21,8 @@ export interface ExtendedPriceList extends Omit<HttpTypes.AdminPriceList, 'price
   }>
 }
 
-export interface PriceListData {
-  price_list_id: string
-  price_list: ExtendedPriceList
-}
-
 export interface PriceListListResponse {
-  price_lists: PriceListData[]
+  price_lists: ExtendedPriceList[]
   count: number
   offset: number
   limit: number

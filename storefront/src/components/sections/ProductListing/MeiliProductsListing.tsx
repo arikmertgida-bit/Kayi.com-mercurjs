@@ -52,7 +52,7 @@ export const MeiliProductsListing = ({
   category_id,
   collection_id,
   seller_handle,
-  locale = process.env.NEXT_PUBLIC_DEFAULT_REGION,
+  locale = process.env.NEXT_PUBLIC_DEFAULT_REGION || "",
   currency_code,
   sidebarContent,
   initialCategories,

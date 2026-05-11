@@ -3,14 +3,17 @@ import { defineConfig, loadEnv } from '@medusajs/framework/utils'
 
 loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 
+// Read replica URL — currently mirrors primary; swap with actual replica URL when provisioned
+const DATABASE_URL_READ = process.env.DATABASE_URL_READ || process.env.DATABASE_URL
+
 module.exports = defineConfig({
   projectConfig: {
     workerMode: (process.env.MEDUSA_WORKER_MODE as "shared" | "worker" | "server") || "shared",
     databaseUrl: process.env.DATABASE_URL,
     databaseDriverOptions: {
       pool: {
-        min: 2,
-        max: 10,
+        min: 5,
+        max: 50,
         idleTimeoutMillis: 30000,
         // Bekleyen istek bir bağlantı edinemezse 30sn sonra fail-fast yap (sonsuz queue yerine)
         acquireTimeoutMillis: 30000,

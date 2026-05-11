@@ -1988,8 +1988,8 @@
           "description": "Hangi müşterinin promosyon kodunu kullanmasına izin verilir? Eğer değiştirilmezse, promosyon kodu tüm müşteriler tarafından kullanılabilir."
         },
         "target_rules": {
-          "title": "Promosyon hangi ürünlere uygulanacak?",
-          "description": "Promosyon, aşağıdaki koşulları karşılayan ürünlere uygulanacaktır."
+          "title": "İndirim Hangi Ürünlere Geçerli?",
+          "description": "Yalnızca aşağıdaki koşulları karşılayan ürünlerde indirim uygulanır. Koşul eklenmezse tüm ürünler bu promosyondan yararlanır."
         },
         "buy_rules": {
           "title": "Promosyonu açmak için sepette ne olmalı?",
@@ -2046,10 +2046,10 @@
         "product": "Ürün"
       },
       "ruleOperator": {
-        "in": "içinde",
-        "eq": "eşittir",
-        "nin": "içinde değil",
-        "ne": "eşit değil"
+        "in": "Şunlardan biri",
+        "eq": "Tam olarak",
+        "nin": "Bunlar hariç",
+        "ne": "Dışında"
       },
       "campaign": {
         "existing": {
@@ -2147,6 +2147,14 @@
       }
     },
     "templates": {
+      "amountOffProducts": {
+        "title": "Ürünlerden indirim",
+        "description": "Belirli ürünleri veya ürün koleksiyonlarını indirir"
+      },
+      "amountOffOrder": {
+        "title": "Siparişten indirim",
+        "description": "Toplam sipariş tutarını indirir"
+      },
       "percentageOffProduct": {
         "title": "Ürünlerde yüzde indirimi",
         "description": "Seçili ürünlerde yüzde indirim uygula"
@@ -2428,6 +2436,11 @@
     "removeCurrencyWarning_one": "{{count}} para birimini mağazanızdan kaldırmak üzeresiniz. Devam etmeden önce bu para birimiyle tüm fiyatları kaldırdığınızdan emin olun.",
     "removeCurrencyWarning_other": "{{count}} para birimini mağazanızdan kaldırmak üzeresiniz. Devam etmeden önce bu para birimleriyle tüm fiyatları kaldırdığınızdan emin olun.",
     "currencyAlreadyAdded": "Para birimi mağazanıza zaten eklenmiş.",
+    "salesRegions": "Satış Bölgeleri",
+    "salesRegionsHint": "Satış yapmak istediğiniz bölgeleri seçin. Ürünlerinizin para birimi ve fiyatlandırma alanları seçtiğiniz bölgelere göre otomatik olarak filtrelenecektir.",
+    "salesRegionsNone": "Bölge seçilmedi — tüm bölgeler kullanılabilir",
+    "salesRegionsSelected_one": "{{count}} bölge seçildi",
+    "salesRegionsSelected_other": "{{count}} bölge seçildi",
     "edit": {
       "header": "Mağazayı Düzenle"
     },

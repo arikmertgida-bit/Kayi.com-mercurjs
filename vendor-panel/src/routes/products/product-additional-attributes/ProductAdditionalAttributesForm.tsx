@@ -1,5 +1,3 @@
-"use client"
-
 import { Button, Heading, toast, Tooltip } from "@medusajs/ui"
 import { useTranslation } from "react-i18next"
 import { RouteDrawer } from "../../../components/modals"

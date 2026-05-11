@@ -26,6 +26,13 @@ export interface StoreVendor {
   country_code?: string
   tax_id?: string
   store_status?: "ACTIVE" | "SUSPENDED" | "INACTIVE"
+  /** The Medusa Region ID this seller operates in. Sourced from /vendor/sellers/me. */
+  region_id?: string
+  /** Seller-defined metadata. `selected_region_ids` holds the IDs of regions the seller sells in. */
+  metadata?: {
+    selected_region_ids?: string[]
+    [key: string]: unknown
+  }
 }
 
 export interface TeamMemberProps {
