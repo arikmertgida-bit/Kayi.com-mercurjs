@@ -1,22 +1,8 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
-import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 import { REVIEW_REPLY_MODULE } from "../../../../../../../../modules/review-replies/index.js"
 import ReviewReplyService from "../../../../../../../../modules/review-replies/service.js"
-// @ts-ignore — import workflow from mercurjs package
 import { updateReviewWorkflow } from "@mercurjs/reviews/workflows"
-
-// Helper: resolve seller from vendor auth
-async function resolveSeller(req: MedusaRequest) {
-  const actorId = (req as any).auth_context?.actor_id
-  if (!actorId) return null
-  const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
-  const { data } = await query.graph({
-    entity: "seller",
-    filters: { members: { id: actorId } },
-    fields: ["id", "name"],
-  })
-  return (data?.[0] as any) ?? null
-}
+import { resolveSeller } from "../../../../../../../utils/resolve-seller.js"
 
 // PUT /vendor/sellers/me/reviews/:id/replies/:replyId — seller edits own reply
 export async function PUT(req: MedusaRequest, res: MedusaResponse) {

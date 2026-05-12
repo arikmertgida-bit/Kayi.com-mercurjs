@@ -630,20 +630,14 @@ export const ProductReviewCard = ({ review, currentCustomerId }: Props) => {
       <div className="overflow-hidden rounded-[22px] border border-white/70 bg-gradient-to-br from-[#fff8fb] via-white to-[#fff1e8] shadow-[0_18px_50px_rgba(225,48,108,0.10)] transition-shadow hover:shadow-[0_22px_60px_rgba(245,133,41,0.14)]">
         {/* Header */}
         <div className="flex items-start gap-3 p-4 pb-3">
-          {review.customer?.avatar_url ? (
-            <Image
-              src={review.customer.avatar_url}
-              alt={customerName}
-              width={44}
-              height={44}
-              unoptimized
-              className="rounded-full size-11 object-cover border-2 border-base-primary shrink-0"
-            />
-          ) : (
-            <div className="size-11 rounded-full bg-gradient-to-br from-[#f58529] via-[#dd2a7b] to-[#8134af] flex items-center justify-center text-white text-sm font-bold shrink-0 shadow-md">
-              {initials}
-            </div>
-          )}
+          <Image
+            src={review.customer?.avatar_url ?? "/images/customer-default-avatar.jpg"}
+            alt={customerName}
+            width={44}
+            height={44}
+            unoptimized
+            className="rounded-full size-11 object-cover border-2 border-base-primary shrink-0"
+          />
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div>

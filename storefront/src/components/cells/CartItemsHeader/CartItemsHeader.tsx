@@ -1,5 +1,5 @@
 import { Divider } from "@/components/atoms"
-import { SingleProductSeller } from "@/types/product"
+import { SellerProps } from "@/types/seller"
 import { format } from "date-fns"
 import { SellerAvatar } from "../SellerAvatar/SellerAvatar"
 import LocalizedClientLink from "@/components/molecules/LocalizedLink/LocalizedLink"
@@ -9,7 +9,7 @@ import { getVendorImage, resolveOwnerMember } from "@/lib/utils/get-vendor-image
 export const CartItemsHeader = ({
   seller,
 }: {
-  seller: SingleProductSeller
+  seller: SellerProps
 }) => {
   const t = useTranslations('cart');
   return (

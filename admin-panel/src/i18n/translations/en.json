@@ -2866,7 +2866,7 @@
     "successfulRequest": "We've sent you an email which you can use to reset your password. Check your spam folder if you haven't received it after a few minutes.",
     "successfulResetTitle": "Password reset successful",
     "successfulReset": "Please login in on the login page.",
-    "passwordMismatch": "Passwords do no match",
+    "passwordMismatch": "Passwords do not match",
     "invalidLinkTitle": "Your reset link is invalid",
     "invalidLinkHint": "Try resetting your password again."
   },

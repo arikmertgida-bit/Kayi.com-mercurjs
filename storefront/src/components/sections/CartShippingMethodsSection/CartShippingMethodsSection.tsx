@@ -47,11 +47,21 @@ type ShippingProps = {
         {
           rules: any
           seller_id: string
+          seller_name?: string
           price_type: string
           id: string
           amount?: number
-        }[])
+        })[]
     | null
+}
+
+type ShippingMethodItem = StoreCardShippingMethod & {
+  rules: any
+  seller_id: string
+  seller_name?: string
+  price_type: string
+  id: string
+  amount?: number
 }
 
 const CartShippingMethodsSection: React.FC<ShippingProps> = ({
@@ -61,6 +71,9 @@ const CartShippingMethodsSection: React.FC<ShippingProps> = ({
   const [isLoadingPrices, setIsLoadingPrices] = useState(false)
   const [calculatedPricesMap, setCalculatedPricesMap] = useState<
     Record<string, number>
+  >({})
+  const [selectedShippingMap, setSelectedShippingMap] = useState<
+    Record<string, string>
   >({})
   const [error, setError] = useState<string | null>(null)
   const [missingModal, setMissingModal] = useState(false)
@@ -167,7 +180,8 @@ const CartShippingMethodsSection: React.FC<ShippingProps> = ({
     setError(null)
   }, [isOpen])
 
-  const groupedBySellerId = _shippingMethods?.reduce((acc: any, method) => {
+  const groupedBySellerId = ((_shippingMethods ?? []) as ShippingMethodItem[]).reduce(
+    (acc: Record<string, ShippingMethodItem[]>, method) => {
     const sellerId = method.seller_id!
 
     if (!acc[sellerId]) {
@@ -185,7 +199,7 @@ const CartShippingMethodsSection: React.FC<ShippingProps> = ({
     }
 
     return acc
-  }, {})
+  }, {} as Record<string, ShippingMethodItem[]>)
 
   const handleEdit = () => {
     router.replace(pathname + "?step=delivery")
@@ -259,8 +273,9 @@ const CartShippingMethodsSection: React.FC<ShippingProps> = ({
                         {groupedBySellerId[key][0].seller_name}
                       </Heading>
                       <Listbox
-                        value={cart.shipping_methods?.[0]?.id}
-                        onChange={(value) => {
+                        value={selectedShippingMap[key] ?? ""}
+                        onChange={(value: string) => {
+                          setSelectedShippingMap((prev) => ({ ...prev, [key]: value }))
                           handleSetShippingMethod(value)
                         }}
                       >
@@ -352,7 +367,7 @@ const CartShippingMethodsSection: React.FC<ShippingProps> = ({
             <Button
               onClick={handleSubmit}
               variant="tonal"
-              disabled={!cart.shipping_methods?.[0]}
+              disabled={Object.keys(groupedBySellerId).some((id) => !selectedShippingMap[id])}
               loading={isLoadingPrices}
             >
               {t('continueToPayment')}

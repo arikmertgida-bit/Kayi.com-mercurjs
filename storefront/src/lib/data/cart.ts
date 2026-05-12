@@ -5,6 +5,7 @@ import medusaError from "@/lib/helpers/medusa-error"
 import { HttpTypes } from "@medusajs/types"
 import { revalidatePath, revalidateTag } from "next/cache"
 import { redirect } from "next/navigation"
+import z from "zod"
 import {
   getAuthHeaders,
   getCacheOptions,
@@ -366,6 +367,28 @@ export async function deletePromotionCode(promoId: string) {
 
 // TODO: Pass a POJO instead of a form entity here
 export async function setAddresses(currentState: unknown, formData: FormData) {
+  const addressFieldSchema = z
+    .string()
+    .nullable()
+    .transform((v) => v ?? undefined)
+
+  const addressSchema = z.object({
+    first_name: addressFieldSchema,
+    last_name: addressFieldSchema,
+    address_1: addressFieldSchema,
+    company: addressFieldSchema,
+    postal_code: addressFieldSchema,
+    city: addressFieldSchema,
+    country_code: addressFieldSchema,
+    province: addressFieldSchema,
+    phone: addressFieldSchema,
+  })
+
+  const cartUpdateSchema = z.object({
+    shipping_address: addressSchema,
+    email: addressFieldSchema,
+  })
+
   try {
     if (!formData) {
       throw new Error("No form data found when setting addresses")
@@ -375,12 +398,11 @@ export async function setAddresses(currentState: unknown, formData: FormData) {
       throw new Error("No existing cart found when setting addresses")
     }
 
-    const data = {
+    const parsed = cartUpdateSchema.parse({
       shipping_address: {
         first_name: formData.get("shipping_address.first_name"),
         last_name: formData.get("shipping_address.last_name"),
         address_1: formData.get("shipping_address.address_1"),
-        address_2: "",
         company: formData.get("shipping_address.company"),
         postal_code: formData.get("shipping_address.postal_code"),
         city: formData.get("shipping_address.city"),
@@ -389,30 +411,18 @@ export async function setAddresses(currentState: unknown, formData: FormData) {
         phone: formData.get("shipping_address.phone"),
       },
       email: formData.get("email"),
-    } as any
+    })
 
-    // const sameAsBilling = formData.get("same_as_billing")
-    // if (sameAsBilling === "on") data.billing_address = data.shipping_address
-    data.billing_address = data.shipping_address
-
-    // if (sameAsBilling !== "on")
-    //   data.billing_address = {
-    //     first_name: formData.get("billing_address.first_name"),
-    //     last_name: formData.get("billing_address.last_name"),
-    //     address_1: formData.get("billing_address.address_1"),
-    //     address_2: "",
-    //     company: formData.get("billing_address.company"),
-    //     postal_code: formData.get("billing_address.postal_code"),
-    //     city: formData.get("billing_address.city"),
-    //     country_code: formData.get("billing_address.country_code"),
-    //     province: formData.get("billing_address.province"),
-    //     phone: formData.get("billing_address.phone"),
-    //   }
+    const data: HttpTypes.StoreUpdateCart = {
+      shipping_address: parsed.shipping_address,
+      email: parsed.email,
+      billing_address: parsed.shipping_address,
+    }
 
     await updateCart(data)
     await revalidatePath("/cart")
-  } catch (e: any) {
-    return e.message
+  } catch (e: unknown) {
+    return e instanceof Error ? e.message : "Bir hata oluştu"
   }
 }
 
@@ -444,7 +454,7 @@ export async function placeOrder(cartId?: string) {
     revalidatePath("/user/reviews")
     revalidatePath("/user/orders")
     removeCartId()
-    redirect(`/order/${res?.data?.order_set.orders[0].id}/confirmed`)
+    redirect(`/order-set/${res?.data?.order_set.id}/confirmed`)
   }
 
   return res

@@ -1,6 +1,8 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys, MedusaError, Modules } from "@medusajs/framework/utils"
 import { DEV_BYPASS_EMAIL, DEV_BYPASS_ORDER_ID } from "./constants"
+import { REVIEW_IMAGE_MODULE } from "../../../modules/review-images"
+import ReviewImageService from "../../../modules/review-images/service"
 
 const REVIEW_MODULE = "review"
 const SELLER_MODULE = "seller"
@@ -63,14 +65,55 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     }
   }
 
+  // seller_id is NOT a column on review — it lives in the seller_seller_review_review link table.
+  // Fetch all seller links for "seller" reference reviews in one query.
+  let sellerIdByReview: Record<string, string> = {}
+  const sellerReviewIds = rawReviews
+    .filter((r: any) => r.reference === "seller")
+    .map((r: any) => r.id)
+  if (sellerReviewIds.length > 0) {
+    try {
+      const { data: sellerLinks } = await query.graph({
+        entity: "seller_review",
+        fields: ["seller.id", "review.id"],
+        filters: { review_id: sellerReviewIds },
+      })
+      for (const link of sellerLinks as any[]) {
+        if (link.review?.id && link.seller?.id) {
+          sellerIdByReview[link.review.id] = link.seller.id
+        }
+      }
+    } catch {
+      // seller_review link sorgusu başarısız olursa reference_id null kalır
+    }
+  }
+
+  // Batch fetch images for all reviews (eliminates N+1)
+  const reviewImageService: ReviewImageService = req.scope.resolve(REVIEW_IMAGE_MODULE)
+  const allImages = rawReviews.length > 0
+    ? await reviewImageService.listReviewImages({ review_id: rawReviews.map((r: any) => r.id) })
+    : []
+  // Belt-and-suspenders: ORM may silently ignore boolean-false filter value
+  const visibleImages = (allImages as any[]).filter((img: any) => !img.is_hidden)
+  const imagesByReview = visibleImages.reduce((acc: Record<string, any[]>, img: any) => {
+    acc[img.review_id] = acc[img.review_id] ?? []
+    acc[img.review_id].push(img)
+    return acc
+  }, {})
+
   return res.json({
     reviews: rawReviews.map((review: any) => {
       const avatar_url = (review.customer?.metadata as any)?.avatar_url ?? undefined
       const enrichedCustomer = review.customer
         ? { ...review.customer, avatar_url }
         : review.customer
-      const reference_id = productIdByReview[review.id] ?? review.reference_id ?? null
-      return { ...review, customer: enrichedCustomer, reference_id }
+      const reference_id =
+        productIdByReview[review.id] ??
+        sellerIdByReview[review.id] ??
+        review.reference_id ??
+        null
+      const images = imagesByReview[review.id] ?? []
+      return { ...review, customer: enrichedCustomer, reference_id, images }
     }),
     count: metadata?.count ?? rawReviews.length,
     offset,
@@ -84,7 +127,13 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     return res.status(401).json({ message: "Bu işlem için giriş yapmanız gerekiyor." })
   }
 
-  const body = (req.body ?? {}) as Record<string, any>
+  const body = (req.validatedBody ?? req.body ?? {}) as {
+    order_id?: string
+    reference: "product" | "seller"
+    reference_id: string
+    rating: number
+    customer_note: string | null
+  }
   const orderId =
     typeof body.order_id === "string" &&
     body.order_id.trim() &&
@@ -95,22 +144,6 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   const referenceId = body.reference_id
   const rating = body.rating
   const customerNote = body.customer_note ?? null
-
-  if (reference !== "product" && reference !== "seller") {
-    throw new MedusaError(MedusaError.Types.INVALID_DATA, "reference is invalid")
-  }
-
-  if (typeof referenceId !== "string" || !referenceId.trim()) {
-    throw new MedusaError(MedusaError.Types.INVALID_DATA, "reference_id is required")
-  }
-
-  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-    throw new MedusaError(MedusaError.Types.INVALID_DATA, "rating is invalid")
-  }
-
-  if (customerNote !== null && (typeof customerNote !== "string" || customerNote.length > 300)) {
-    throw new MedusaError(MedusaError.Types.INVALID_DATA, "customer_note is invalid")
-  }
 
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
   const logger = req.scope.resolve<{ warn: (...a: unknown[]) => void }>('logger')

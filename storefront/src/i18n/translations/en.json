@@ -144,7 +144,13 @@
     "title": "Orders",
     "noOrders": "No orders",
     "noOrdersDesc": "You have not placed any orders yet. When you do, they will appear here.",
-    "exploreShop": "Explore the store"
+    "exploreShop": "Explore the store",
+    "statuses": {
+      "received": "Received",
+      "preparing": "Preparing",
+      "shipped": "Shipped",
+      "delivered": "Delivered"
+    }
   },
   "returns": {
     "title": "Returns",
@@ -310,7 +316,7 @@
     "passwordUpdated": "Password updated",
     "passwordUpdatedDesc": "Your password has been updated. You can now login with your new password.",
     "goToUserPage": "Go to user page",
-    "passwordMismatch": "New password and old password cannot be identical",
+    "passwordMismatch": "New password and confirm password do not match",
     "somethingWentWrong": "Something went wrong"
   },
   "errorPage": {

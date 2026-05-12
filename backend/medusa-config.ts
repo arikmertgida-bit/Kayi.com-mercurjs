@@ -141,6 +141,21 @@ module.exports = defineConfig({
       }
     }] : []),
     {
+      resolve: '@medusajs/medusa/fulfillment',
+      options: {
+        providers: [
+          {
+            resolve: './src/modules/geliver-fulfillment',
+            id: 'geliver',
+            options: {
+              apiUrl: process.env.GELIVER_API_URL,
+              apiToken: process.env.GELIVER_API_TOKEN,
+            }
+          }
+        ]
+      }
+    },
+    {
       resolve: '@medusajs/medusa/notification',
       options: {
         providers: [

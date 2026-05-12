@@ -1,4 +1,4 @@
-export const steps = ["Received", "Preparing", "Shipped", "Delivered"]
+export const steps = ["Sipariş Alındı", "Hazırlanıyor", "Kargoya Verildi", "Teslim Edildi"]
 
 export const parcelStatuses = (
   order: "not_fulfilled" | "fulfilled" | "delivered" | "shipped"

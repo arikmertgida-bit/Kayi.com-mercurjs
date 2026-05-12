@@ -2,7 +2,6 @@ import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 import { REVIEW_IMAGE_MODULE } from "../../../../../../modules/review-images/index.js"
 import ReviewImageService from "../../../../../../modules/review-images/service.js"
-// @ts-ignore — import workflow from mercurjs package
 import { updateReviewWorkflow } from "@mercurjs/reviews/workflows"
 
 // Override @mercurjs/reviews vendor GET /vendor/sellers/me/reviews/:id
@@ -34,10 +33,14 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   }
 
   // Attach images from our custom module
+  // Belt-and-suspenders: ORM may silently ignore boolean-false filter value,
+  // so fetch all and filter in code.
   const reviewImageService: ReviewImageService = req.scope.resolve(REVIEW_IMAGE_MODULE)
   let images: Array<{ id: string; url: string; is_hidden: boolean }> = []
   try {
-    images = await reviewImageService.listReviewImages({ review_id: id, is_hidden: false })
+    const allImages = await reviewImageService.listReviewImages({ review_id: id })
+    images = (allImages as Array<{ id: string; url: string; is_hidden: boolean }>)
+      .filter((img) => !img.is_hidden)
   } catch { /* non-critical */ }
 
   return res.json({ review: { ...review, images } })

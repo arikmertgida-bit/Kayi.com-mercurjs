@@ -43,6 +43,15 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
 
   const reviewImageService: ReviewImageService = req.scope.resolve(REVIEW_IMAGE_MODULE)
 
+  // Kümülatif limit kontrolü — DB'deki mevcut görseller (is_hidden dahil) + yeni yüklemeler
+  const existingImages = await reviewImageService.listReviewImages({ review_id })
+  if (existingImages.length + urls.length > 6) {
+    throw new MedusaError(
+      MedusaError.Types.INVALID_DATA,
+      `Bu değerlendirmede zaten ${existingImages.length} görsel var. En fazla 6 görsel eklenebilir.`
+    )
+  }
+
   const images = await reviewImageService.createReviewImages(
     urls.map((url) => ({ review_id, url }))
   )

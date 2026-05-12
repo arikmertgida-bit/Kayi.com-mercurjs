@@ -24,9 +24,8 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     take: parseInt(limit),
   })
 
-  // Get total count with same filters but no pagination
-  const allForCount = await reportService.listReviewImageReports(filters, {})
-  const count = allForCount.length
+  // Get total count using listAndCount (single query, no full table scan without pagination)
+  const [, count] = await reportService.listAndCountReviewImageReports(filters)
 
   // Batch fetch images
   const imageIds = reports.map((r: any) => r.review_image_id).filter(Boolean)

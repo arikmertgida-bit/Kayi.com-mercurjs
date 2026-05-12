@@ -10,7 +10,7 @@ export const OrderReturn = ({ order }: { order: any }) => {
         <h2 className="text-primary label-lg uppercase">Siparişi İade Et</h2>
         <p className="text-secondary label-md max-w-sm">
           Siparişinizi teslim aldıktan sonra 14 gün içinde iade edebilirsiniz.
-          <Link href="/returns" className="underline">
+          <Link href="/order-guide" className="underline">
             İade ve geri ödeme
           </Link>{" "}
           hakkında daha fazla bilgi edinin.

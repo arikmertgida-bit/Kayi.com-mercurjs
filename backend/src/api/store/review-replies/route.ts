@@ -1,5 +1,5 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
-import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
+import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
 import { REVIEW_REPLY_MODULE } from "../../../modules/review-replies"
 import ReviewReplyService from "../../../modules/review-replies/service"
 import { enrichRepliesWithCustomerData } from "../../utils/enrich-replies"
@@ -73,6 +73,24 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       }
     }
   } catch { /* non-critical */ }
+
+  // Notify seller about the customer reply via event (fire-and-forget)
+  const logger = req.scope.resolve<{ warn: (...a: unknown[]) => void }>('logger')
+  const eventBus = req.scope.resolve(Modules.EVENT_BUS) as any
+  eventBus
+    .emit({
+      eventName: "review_notification.customer_reply",
+      body: {
+        data: {
+          reviewId: reply.review_id,
+          customerId,
+          customerName: `${customer.first_name} ${customer.last_name}`.trim() || "Müşteri",
+        },
+      },
+    })
+    .catch((err: Error) => {
+      logger.warn("[review-reply] customer_reply notification event emit failed:", err?.message)
+    })
 
   return res.json({ reply: { ...reply, customer } })
 }

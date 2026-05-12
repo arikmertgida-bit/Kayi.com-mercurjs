@@ -42,7 +42,7 @@ export const CartAddressSection = ({
       : true
   )
 
-  const [message, formAction] = useActionState(setAddresses, sameAsBilling)
+  const [message, formAction] = useActionState(setAddresses, undefined as string | undefined)
 
   useEffect(() => {
     if (!isAddress) {
@@ -95,7 +95,7 @@ export const CartAddressSection = ({
               {t('save')}
             </Button>
             <ErrorMessage
-              error={message !== "success" && message}
+              error={message !== "success" ? message : undefined}
               data-testid="address-error-message"
             />
           </div>
