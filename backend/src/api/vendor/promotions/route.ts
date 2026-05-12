@@ -1,56 +1,50 @@
-import { MedusaRequest, MedusaResponse } from "@medusajs/framework"
-import { Modules } from "@medusajs/framework/utils"
+import { AuthenticatedMedusaRequest, MedusaResponse } from "@medusajs/framework"
+import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
 import { CreatePromotionDTO, IPromotionModuleService } from "@medusajs/types"
 import { fetchSellerByAuthActorId } from "@mercurjs/b2c-core/shared/infra/http/utils/seller"
-import { buildMetaWithSeller, PromotionWithMeta } from "../shared/promotion-types.js"
+import sellerPromotion from "@mercurjs/b2c-core/links/seller-promotion"
+import { buildMetaWithSeller } from "../shared/promotion-types.js"
 
-export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
-  const actorId = (req as any).auth_context?.actor_id as string | undefined
-  if (!actorId) {
-    return res.status(401).json({ message: "Authentication required." })
-  }
+/** Shape of a row returned from the seller_promotion link table. */
+type SellerPromotionLinkRow = { promotion_id: string }
 
-  const seller = await fetchSellerByAuthActorId(actorId, req.scope)
-
-  const promotionService = req.scope.resolve<IPromotionModuleService>(
-    Modules.PROMOTION
-  )
+export const GET = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) => {
+  const seller = await fetchSellerByAuthActorId(req.auth_context.actor_id, req.scope)
+  const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
+  const promotionService = req.scope.resolve<IPromotionModuleService>(Modules.PROMOTION)
 
   const limit = Math.min(parseInt(req.query.limit as string) || 20, 100)
   const offset = parseInt(req.query.offset as string) || 0
 
-  // MikroORM does not expose Promotion.metadata as a filterable mapped property,
-  // so we cannot pass { metadata: { seller_id } } directly to listAndCountPromotions.
-  // Instead we fetch all promotions and filter in memory by metadata.seller_id.
-  const allPromotions = (await promotionService.listPromotions(
-    {},
+  // Query the seller_promotion link table — only rows belonging to this seller.
+  // Pagination is applied here so we never scan the full promotions table.
+  // deleted_at: { $eq: null } excludes soft-deleted link records.
+  const { data, metadata } = await query.graph({
+    entity: sellerPromotion.entryPoint,
+    fields: ["promotion_id"],
+    filters: { seller_id: seller.id, deleted_at: { $eq: null } },
+    pagination: { skip: offset, take: limit },
+  })
+
+  const count = typeof metadata?.count === "number" ? metadata.count : 0
+  const promotionIds = (data as SellerPromotionLinkRow[]).map((r) => r.promotion_id)
+
+  if (promotionIds.length === 0) {
+    return res.json({ promotions: [], count, limit, offset })
+  }
+
+  const promotions = await promotionService.listPromotions(
+    { id: promotionIds },
     { relations: ["application_method", "rules"] }
-  )) as PromotionWithMeta[]
-
-  const owned = allPromotions.filter(
-    (p) =>
-      typeof p.metadata === "object" &&
-      p.metadata !== null &&
-      p.metadata["seller_id"] === seller.id
   )
-
-  const count = owned.length
-  const promotions = owned.slice(offset, offset + limit)
 
   return res.json({ promotions, count, limit, offset })
 }
 
-export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
-  const actorId = (req as any).auth_context?.actor_id as string | undefined
-  if (!actorId) {
-    return res.status(401).json({ message: "Authentication required." })
-  }
-
-  const seller = await fetchSellerByAuthActorId(actorId, req.scope)
-
-  const promotionService = req.scope.resolve<IPromotionModuleService>(
-    Modules.PROMOTION
-  )
+export const POST = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) => {
+  const seller = await fetchSellerByAuthActorId(req.auth_context.actor_id, req.scope)
+  const promotionService = req.scope.resolve<IPromotionModuleService>(Modules.PROMOTION)
+  const remoteLink = req.scope.resolve(ContainerRegistrationKeys.REMOTE_LINK)
 
   // req.body is validated by MedusaJS route middleware to match CreatePromotionDTO shape.
   // Object.assign returns CreatePromotionDTO & { metadata: ... }, a structural subtype of
@@ -69,6 +63,14 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
       metadata: buildMetaWithSeller(body.metadata, seller.id),
     })
   )
+
+  // Register the seller ↔ promotion link so future GET queries use the link table.
+  await remoteLink.create([
+    {
+      seller: { seller_id: seller.id },
+      [Modules.PROMOTION]: { promotion_id: promotion.id },
+    },
+  ])
 
   return res.status(201).json({ promotion })
 }

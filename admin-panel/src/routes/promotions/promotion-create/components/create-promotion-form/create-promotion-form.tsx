@@ -767,7 +767,7 @@ export const CreatePromotionForm = () => {
                             form.getValues().application_method.currency_code
 
                           const currencyInfo =
-                            currencies[currencyCode?.toUpperCase() || "USD"]
+                            currencies[currencyCode?.toUpperCase() || "TRY"]
 
                           return (
                             <Form.Item className="basis-1/2">
@@ -786,7 +786,7 @@ export const CreatePromotionForm = () => {
                                   <CurrencyInput
                                     {...field}
                                     min={0}
-                                    code={currencyCode || "USD"}
+                                    code={currencyCode || "TRY"}
                                     onValueChange={(_value, _name, values) =>
                                       onChange(values?.value)
                                     }
@@ -799,7 +799,7 @@ export const CreatePromotionForm = () => {
                                     symbol={
                                       currencyCode
                                         ? getCurrencySymbol(currencyCode)
-                                        : "$"
+                                        : "₺"
                                     }
                                     value={value}
                                     disabled={!currencyCode}

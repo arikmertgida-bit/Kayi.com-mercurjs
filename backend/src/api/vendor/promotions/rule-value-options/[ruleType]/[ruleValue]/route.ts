@@ -1,35 +1,30 @@
-import { MedusaRequest, MedusaResponse } from "@medusajs/framework"
+import { AuthenticatedMedusaRequest, MedusaResponse } from "@medusajs/framework"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 import { fetchSellerByAuthActorId } from "@mercurjs/b2c-core/shared/infra/http/utils/seller"
+import sellerProduct from "@mercurjs/b2c-core/links/seller-product"
 
-export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
-  const actorId = (req as any).auth_context?.actor_id as string | undefined
-  if (!actorId) {
-    return res.status(401).json({ message: "Authentication required." })
-  }
-
-  const seller = await fetchSellerByAuthActorId(actorId, req.scope)
+export const GET = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) => {
+  const seller = await fetchSellerByAuthActorId(req.auth_context.actor_id, req.scope)
 
   const { ruleType, ruleValue } = req.params
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
-  const knex = req.scope.resolve(ContainerRegistrationKeys.PG_CONNECTION)
 
   const limit = Math.min(parseInt(req.query.limit as string) || 20, 100)
   const offset = parseInt(req.query.offset as string) || 0
 
   // product and product_collection must be scoped to this seller's products
   if (ruleValue === "product") {
-    const productIds = await knex("seller_seller_product_product")
-      .where({
-        "seller_seller_product_product.seller_id": seller.id,
-        "seller_seller_product_product.deleted_at": null,
-      })
-      .pluck("product_id")
+    const { data: links } = await query.graph({
+      entity: sellerProduct.entryPoint,
+      fields: ["product_id"],
+      filters: { seller_id: seller.id, deleted_at: { $eq: null } },
+    })
+    const productIds = (links as Array<{ product_id: string }>).map((l) => l.product_id)
 
     const { data: products, metadata } = await query.graph({
       entity: "product",
       fields: ["id", "title", "thumbnail"],
-      filters: { id: productIds, deleted_at: null },
+      filters: { id: productIds, deleted_at: { $eq: null } },
       pagination: { take: limit, skip: offset },
     })
 
@@ -47,20 +42,18 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
 
   if (ruleValue === "product_collection") {
     // Get collections associated with seller's products
-    const collectionIds: string[] = await knex("product")
-      .innerJoin(
-        "seller_seller_product_product",
-        "product.id",
-        "seller_seller_product_product.product_id"
-      )
-      .where({
-        "seller_seller_product_product.seller_id": seller.id,
-        "seller_seller_product_product.deleted_at": null,
-        "product.deleted_at": null,
-      })
-      .whereNotNull("product.collection_id")
-      .distinct("product.collection_id")
-      .pluck("product.collection_id")
+    const { data: productLinks } = await query.graph({
+      entity: sellerProduct.entryPoint,
+      fields: ["product.collection_id"],
+      filters: { seller_id: seller.id, deleted_at: { $eq: null } },
+    })
+    const collectionIds = [
+      ...new Set(
+        (productLinks as Array<{ product: { collection_id: string | null } }>)
+          .map((l) => l.product?.collection_id)
+          .filter((id): id is string => id != null)
+      ),
+    ]
 
     const { data: collections, metadata } = await query.graph({
       entity: "product_collection",

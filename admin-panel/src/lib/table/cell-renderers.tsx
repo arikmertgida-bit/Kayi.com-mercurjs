@@ -231,12 +231,12 @@ const DisplayIdRenderer: CellRenderer = (value, _row, _column, _t) => {
 }
 
 const CurrencyRenderer: CellRenderer = (value, row, _column, _t) => {
-  const currencyCode = row.currency_code || 'USD'
+  const currencyCode = row.currency_code || 'TRY'
   return <MoneyAmountCell currencyCode={currencyCode} amount={value} align="right" />
 }
 
 const TotalRenderer: CellRenderer = (value, row, _column, _t) => {
-  const currencyCode = row.currency_code || 'USD'
+  const currencyCode = row.currency_code || 'TRY'
   return <TotalCell currencyCode={currencyCode} total={value} />
 }
 

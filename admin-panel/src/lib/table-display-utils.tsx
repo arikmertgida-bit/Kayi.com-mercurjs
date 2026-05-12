@@ -119,7 +119,7 @@ export const DISPLAY_STRATEGIES = {
   currency: {
     default: (value: any, row: any) => {
       if (value === null || value === undefined) return '-'
-      const currencyCode = row.currency_code || 'USD'
+      const currencyCode = row.currency_code || 'TRY'
       const formatted = getStylizedAmount(value, currencyCode)
       
       return (

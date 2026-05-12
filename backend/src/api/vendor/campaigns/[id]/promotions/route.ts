@@ -1,21 +1,12 @@
-import { MedusaRequest, MedusaResponse } from "@medusajs/framework"
-import { Modules } from "@medusajs/framework/utils"
+import { AuthenticatedMedusaRequest, MedusaResponse } from "@medusajs/framework"
+import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
 import { IPromotionModuleService } from "@medusajs/types"
 import { fetchSellerByAuthActorId } from "@mercurjs/b2c-core/shared/infra/http/utils/seller"
-import {
-  CampaignWithMeta,
-  PromotionWithMeta,
-  sellerOwnsCampaign,
-  sellerOwnsPromotion,
-} from "../../../shared/promotion-types.js"
+import sellerCampaign from "@mercurjs/b2c-core/links/seller-campaign"
+import sellerPromotion from "@mercurjs/b2c-core/links/seller-promotion"
 
-export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
-  const actorId = (req as any).auth_context?.actor_id as string | undefined
-  if (!actorId) {
-    return res.status(401).json({ message: "Authentication required." })
-  }
-
-  const seller = await fetchSellerByAuthActorId(actorId, req.scope)
+export const POST = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) => {
+  const seller = await fetchSellerByAuthActorId(req.auth_context.actor_id, req.scope)
 
   const promotionService = req.scope.resolve<IPromotionModuleService>(
     Modules.PROMOTION
@@ -23,8 +14,13 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
 
   const { id } = req.params
 
-  const campaign = await promotionService.retrieveCampaign(id) as CampaignWithMeta
-  if (!sellerOwnsCampaign(campaign, seller.id)) {
+  const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
+  const { data: campaignOwnerLinks } = await query.graph({
+    entity: sellerCampaign.entryPoint,
+    fields: ["campaign_id"],
+    filters: { seller_id: seller.id, campaign_id: id, deleted_at: { $eq: null } },
+  })
+  if (campaignOwnerLinks.length === 0) {
     return res.status(403).json({ message: "Bu kampanya size ait değil." })
   }
 
@@ -32,9 +28,13 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
   const promotionIds: string[] = body.promotion_ids ?? []
 
   for (const promotionId of promotionIds) {
-    const promotion = await promotionService.retrievePromotion(promotionId) as PromotionWithMeta
-    if (!sellerOwnsPromotion(promotion, seller.id)) {
-      return res.status(403).json({ message: `${promotionId} promosyonu size ait değil.` })
+    const { data: promotionOwnerLinks } = await query.graph({
+      entity: sellerPromotion.entryPoint,
+      fields: ["promotion_id"],
+      filters: { seller_id: seller.id, promotion_id: promotionId, deleted_at: { $eq: null } },
+    })
+    if (promotionOwnerLinks.length === 0) {
+      return res.status(403).json({ message: `${promotionId} promosyönu size ait değil.` })
     }
   }
 

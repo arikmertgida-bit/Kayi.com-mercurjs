@@ -280,10 +280,10 @@ export const EditPromotionDetailsForm = ({
                   name="value"
                   render={({ field: { onChange, ...field } }) => {
                     const currencyCode =
-                      promotion.application_method?.currency_code ?? "USD"
+                      promotion.application_method?.currency_code ?? "TRY"
 
                     const currencyInfo =
-                      currencies[currencyCode?.toUpperCase() || "USD"]
+                      currencies[currencyCode?.toUpperCase() || "TRY"]
 
                     return (
                       <Form.Item>

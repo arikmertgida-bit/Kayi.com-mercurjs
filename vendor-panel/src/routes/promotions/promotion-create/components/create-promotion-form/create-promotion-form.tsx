@@ -67,10 +67,11 @@ const defaultValues = {
 type TabState = Record<Tab, ProgressStatus>
 
 export const CreatePromotionForm = () => {
-  const [tab, setTab] = useState<Tab>(Tab.TYPE)
+  // Only one template exists — skip the TYPE tab and start directly on PROMOTION.
+  const [tab, setTab] = useState<Tab>(Tab.PROMOTION)
   const [tabState, setTabState] = useState<TabState>({
-    [Tab.TYPE]: "in-progress",
-    [Tab.PROMOTION]: "not-started",
+    [Tab.TYPE]: "completed",
+    [Tab.PROMOTION]: "in-progress",
     [Tab.CAMPAIGN]: "not-started",
   })
 
@@ -320,17 +321,21 @@ export const CreatePromotionForm = () => {
   const isTargetTypeOrder = targetType === "order"
 
   const formData = form.getValues()
-  let campaignQuery: object = {}
+  const currencyFilter = isFixedValueType
+    ? formData.application_method.currency_code
+    : undefined
 
-  if (isFixedValueType && formData.application_method.currency_code) {
-    campaignQuery = {
-      budget: {
-        currency_code: formData.application_method.currency_code,
-      },
-    }
-  }
+  // Vendor campaigns are already scoped to this seller — fetch all and filter client-side.
+  // Sending budget[currency_code] as a query param causes a 400 on the vendor endpoint.
+  const { campaigns: allCampaigns } = useCampaigns({})
 
-  const { campaigns } = useCampaigns(campaignQuery)
+  const campaigns = currencyFilter
+    ? (allCampaigns ?? []).filter(
+        (c) =>
+          !c.budget?.currency_code ||
+          c.budget.currency_code === currencyFilter
+      )
+    : (allCampaigns ?? [])
 
   const watchCampaignChoice = useWatch({
     control: form.control,
@@ -370,27 +375,41 @@ export const CreatePromotionForm = () => {
     (rule) => rule.attribute === "currency_code"
   )
 
+  const watchCurrencyCode = useWatch({
+    control: form.control,
+    name: "application_method.currency_code",
+  })
+
+  const storeCurrency =
+    store?.supported_currencies?.find(
+      (c) => c.currency_code?.toLowerCase() === "try"
+    )?.currency_code ??
+    store?.supported_currencies?.find((c) => c.is_default)?.currency_code ??
+    "TRY"
+
   if (watchCurrencyRule) {
     const formData = form.getValues()
     const currencyCode = formData.application_method.currency_code
     const ruleValue = watchCurrencyRule.values
 
-    if (!Array.isArray(ruleValue) && currencyCode !== ruleValue) {
+    if (!Array.isArray(ruleValue) && ruleValue && currencyCode !== ruleValue) {
       form.setValue("application_method.currency_code", ruleValue as string)
     }
   }
 
+  const ruleHasSelectedValue =
+    watchCurrencyRule != null &&
+    !Array.isArray(watchCurrencyRule.values) &&
+    !!watchCurrencyRule.values
+
   useEffect(() => {
-    const defaultCurrency = store?.supported_currencies?.find(
-      (c) => c.is_default
-    )?.currency_code
-    if (isFixedValueType && defaultCurrency && !watchCurrencyRule) {
+    if (isFixedValueType && storeCurrency && !ruleHasSelectedValue) {
       const current = form.getValues("application_method.currency_code")
-      if (current !== defaultCurrency) {
-        setValue("application_method.currency_code", defaultCurrency)
+      if (current !== storeCurrency) {
+        setValue("application_method.currency_code", storeCurrency)
       }
     }
-  }, [isFixedValueType, store?.supported_currencies, watchCurrencyRule, setValue, form])
+  }, [isFixedValueType, storeCurrency, ruleHasSelectedValue, setValue, form])
 
   return (
     <RouteFocusModal.Form form={form}>
@@ -403,15 +422,7 @@ export const CreatePromotionForm = () => {
           <RouteFocusModal.Header>
             <div className="flex w-full items-center justify-between gap-x-4">
               <div className="-my-2 w-full max-w-[600px] border-l">
-                <ProgressTabs.List className="grid w-full grid-cols-3">
-                  <ProgressTabs.Trigger
-                    className="w-full"
-                    value={Tab.TYPE}
-                    status={tabState[Tab.TYPE]}
-                  >
-                    {t("promotions.tabs.template")}
-                  </ProgressTabs.Trigger>
-
+                <ProgressTabs.List className="grid w-full grid-cols-2">
                   <ProgressTabs.Trigger
                     className="w-full"
                     value={Tab.PROMOTION}
@@ -735,7 +746,7 @@ export const CreatePromotionForm = () => {
                         name="application_method.value"
                         render={({ field: { onChange, value, ...field } }) => {
                           const currencyCode =
-                            form.getValues().application_method.currency_code
+                            watchCurrencyCode || storeCurrency
 
                           return (
                             <Form.Item className="basis-1/2">
@@ -757,11 +768,11 @@ export const CreatePromotionForm = () => {
                                     onValueChange={(value) => {
                                       onChange(value ? parseInt(value) : "")
                                     }}
-                                    code={currencyCode || "USD"}
+                                    code={currencyCode || storeCurrency || "TRY"}
                                     symbol={
-                                      currencyCode
-                                        ? getCurrencySymbol(currencyCode)
-                                        : "$"
+                                      getCurrencySymbol(
+                                        currencyCode || storeCurrency || "TRY"
+                                      )
                                     }
                                     value={value}
                                     // disabled={!currencyCode}

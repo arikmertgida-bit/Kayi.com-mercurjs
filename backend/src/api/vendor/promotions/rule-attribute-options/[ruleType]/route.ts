@@ -1,4 +1,4 @@
-import { MedusaRequest, MedusaResponse } from "@medusajs/framework"
+import { AuthenticatedMedusaRequest, MedusaResponse } from "@medusajs/framework"
 import { ApplicationMethodType, PromotionType, RuleOperator } from "@medusajs/framework/utils"
 import { fetchSellerByAuthActorId } from "@mercurjs/b2c-core/shared/infra/http/utils/seller"
 
@@ -128,13 +128,8 @@ const buyGetTargetRules = [
   },
 ]
 
-export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
-  const actorId = (req as any).auth_context?.actor_id as string | undefined
-  if (!actorId) {
-    return res.status(401).json({ message: "Authentication required." })
-  }
-
-  await fetchSellerByAuthActorId(actorId, req.scope)
+export const GET = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) => {
+  await fetchSellerByAuthActorId(req.auth_context.actor_id, req.scope)
 
   const { ruleType } = req.params
   const promotionType = req.query.promotion_type as string | undefined

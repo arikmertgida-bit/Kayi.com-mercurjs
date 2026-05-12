@@ -3,11 +3,35 @@ import { useLoaderData, useParams } from "react-router-dom"
 import { TwoColumnPageSkeleton } from "../../../components/common/skeleton"
 import { TwoColumnPage } from "../../../components/layout/pages"
 import { useDashboardExtension } from "../../../extensions"
-import { usePromotion, usePromotionRules } from "../../../hooks/api/promotions"
+import {
+  usePromotion,
+  usePromotionRuleAttributes,
+  usePromotionRules,
+} from "../../../hooks/api/promotions"
+import { ExtendedPromotionRuleWithValues } from "../../../types/promotion"
 import { CampaignSection } from "./components/campaign-section"
 import { PromotionConditionsSection } from "./components/promotion-conditions-section"
 import { PromotionGeneralSection } from "./components/promotion-general-section"
 import { promotionLoader } from "./loader"
+
+/** Enrich raw API rules with human-readable labels from the attribute options. */
+function enrichRules(
+  rawRules: any[] | undefined,
+  attrs: any[] | undefined
+): ExtendedPromotionRuleWithValues[] {
+  if (!rawRules?.length) return []
+  return rawRules.map((rule) => {
+    const attrDef = (attrs ?? []).find((a: any) => a.value === rule.attribute)
+    return {
+      ...rule,
+      values: rule.values ?? [],
+      attribute_label: attrDef?.label ?? rule.attribute,
+      operator_label:
+        attrDef?.operators?.find((op: any) => op.value === rule.operator)
+          ?.label ?? rule.operator,
+    }
+  })
+}
 
 export const PromotionDetail = () => {
   const initialData = useLoaderData() as Awaited<
@@ -27,6 +51,20 @@ export const PromotionDetail = () => {
   const { rules } = usePromotionRules(id!, "rules", query)
   const { rules: targetRules } = usePromotionRules(id!, "target_rules", query)
   const { rules: buyRules } = usePromotionRules(id!, "buy_rules", query)
+
+  // Fetch attribute option definitions to enrich rules with human-readable labels.
+  const { attributes: rulesAttrs } = usePromotionRuleAttributes(
+    "rules",
+    promotion?.type
+  )
+  const { attributes: targetAttrs } = usePromotionRuleAttributes(
+    "target_rules",
+    promotion?.type
+  )
+  const { attributes: buyAttrs } = usePromotionRuleAttributes(
+    "buy_rules",
+    promotion?.type
+  )
 
   const { getWidgets } = useDashboardExtension()
 
@@ -49,17 +87,17 @@ export const PromotionDetail = () => {
     >
       <TwoColumnPage.Main>
         <PromotionGeneralSection promotion={promotion} />
-        <PromotionConditionsSection 
-          rules={rules || []} 
-          ruleType="rules" 
+        <PromotionConditionsSection
+          rules={enrichRules(rules, rulesAttrs)}
+          ruleType="rules"
         />
         <PromotionConditionsSection
-          rules={targetRules || []}
+          rules={enrichRules(targetRules, targetAttrs)}
           ruleType="target_rules"
         />
         {promotion.type === "buyget" && (
           <PromotionConditionsSection
-            rules={buyRules || []}
+            rules={enrichRules(buyRules, buyAttrs)}
             ruleType="buy_rules"
           />
         )}
@@ -70,3 +108,4 @@ export const PromotionDetail = () => {
     </TwoColumnPage>
   )
 }
+

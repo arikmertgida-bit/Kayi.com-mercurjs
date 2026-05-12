@@ -34,7 +34,8 @@ export type CampaignWithMeta = WithMetadata<CampaignDTO>
  * Returns `undefined` if metadata is not a plain object or seller_id
  * is not a string — ensuring corrupted data fails the ownership check.
  */
-function extractSellerId(meta: Record<string, unknown>): string | undefined {
+function extractSellerId(meta: Record<string, unknown> | undefined | null): string | undefined {
+  if (meta == null) return undefined
   const raw = meta["seller_id"]
   return typeof raw === "string" ? raw : undefined
 }

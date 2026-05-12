@@ -14,20 +14,24 @@ export const PromotionAddCampaign = () => {
 
   let campaignQuery = {}
 
-  if (promotion?.application_method?.currency_code) {
-    campaignQuery = {
-      budget: {
-        currency_code: promotion?.application_method?.currency_code,
-      },
-    }
-  }
+  // budget[currency_code] query param causes 400 on the vendor endpoint.
+  // Fetch all campaigns and filter client-side instead.
+  const currencyCode = promotion?.application_method?.currency_code
 
   const {
-    campaigns,
+    campaigns: allCampaigns,
     isPending: areCampaignsLoading,
     isError: isCampaignError,
     error: campaignError,
   } = useCampaigns(campaignQuery)
+
+  const campaigns = currencyCode
+    ? (allCampaigns ?? []).filter(
+        (c) =>
+          !c.budget?.currency_code ||
+          c.budget.currency_code === currencyCode
+      )
+    : (allCampaigns ?? [])
   if (isError || isCampaignError) {
     throw error || campaignError
   }

@@ -1,12 +1,13 @@
-import { MedusaRequest, MedusaResponse } from "@medusajs/framework"
-import { Modules } from "@medusajs/framework/utils"
+import { AuthenticatedMedusaRequest, MedusaResponse } from "@medusajs/framework"
+import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
 import {
   CampaignBudgetTypeValues,
   CreateCampaignDTO,
   IPromotionModuleService,
 } from "@medusajs/types"
 import { fetchSellerByAuthActorId } from "@mercurjs/b2c-core/shared/infra/http/utils/seller"
-import { buildMetaWithSeller, CampaignWithMeta } from "../shared/promotion-types.js"
+import sellerCampaign from "@mercurjs/b2c-core/links/seller-campaign"
+import { buildMetaWithSeller } from "../shared/promotion-types.js"
 
 type CreateCampaignBody = {
   name: string
@@ -22,53 +23,46 @@ type CreateCampaignBody = {
   metadata?: unknown
 }
 
-export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
-  const actorId = (req as any).auth_context?.actor_id as string | undefined
-  if (!actorId) {
-    return res.status(401).json({ message: "Authentication required." })
-  }
+/** Shape of a row returned from the seller_campaign link table. */
+type SellerCampaignLinkRow = { campaign_id: string }
 
-  const seller = await fetchSellerByAuthActorId(actorId, req.scope)
-
-  const promotionService = req.scope.resolve<IPromotionModuleService>(
-    Modules.PROMOTION
-  )
+export const GET = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) => {
+  const seller = await fetchSellerByAuthActorId(req.auth_context.actor_id, req.scope)
+  const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
+  const promotionService = req.scope.resolve<IPromotionModuleService>(Modules.PROMOTION)
 
   const limit = Math.min(parseInt(req.query.limit as string) || 20, 100)
   const offset = parseInt(req.query.offset as string) || 0
 
-  // MikroORM does not expose Campaign.metadata as a filterable mapped property,
-  // so we cannot pass { metadata: { seller_id } } directly to listAndCountCampaigns.
-  // Instead we fetch all campaigns and filter in memory by metadata.seller_id.
-  const allCampaigns = (await promotionService.listCampaigns(
-    {},
+  // Query the seller_campaign link table — only rows belonging to this seller.
+  // Pagination is applied here so we never scan the full campaigns table.
+  // deleted_at: { $eq: null } excludes soft-deleted link records.
+  const { data, metadata } = await query.graph({
+    entity: sellerCampaign.entryPoint,
+    fields: ["campaign_id"],
+    filters: { seller_id: seller.id, deleted_at: { $eq: null } },
+    pagination: { skip: offset, take: limit },
+  })
+
+  const count = typeof metadata?.count === "number" ? metadata.count : 0
+  const campaignIds = (data as SellerCampaignLinkRow[]).map((r) => r.campaign_id)
+
+  if (campaignIds.length === 0) {
+    return res.json({ campaigns: [], count, limit, offset })
+  }
+
+  const campaigns = await promotionService.listCampaigns(
+    { id: campaignIds },
     { relations: ["budget", "promotions"] }
-  )) as CampaignWithMeta[]
-
-  const owned = allCampaigns.filter(
-    (c) =>
-      typeof c.metadata === "object" &&
-      c.metadata !== null &&
-      c.metadata["seller_id"] === seller.id
   )
-
-  const count = owned.length
-  const campaigns = owned.slice(offset, offset + limit)
 
   return res.json({ campaigns, count, limit, offset })
 }
 
-export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
-  const actorId = (req as any).auth_context?.actor_id as string | undefined
-  if (!actorId) {
-    return res.status(401).json({ message: "Authentication required." })
-  }
-
-  const seller = await fetchSellerByAuthActorId(actorId, req.scope)
-
-  const promotionService = req.scope.resolve<IPromotionModuleService>(
-    Modules.PROMOTION
-  )
+export const POST = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) => {
+  const seller = await fetchSellerByAuthActorId(req.auth_context.actor_id, req.scope)
+  const promotionService = req.scope.resolve<IPromotionModuleService>(Modules.PROMOTION)
+  const remoteLink = req.scope.resolve(ContainerRegistrationKeys.REMOTE_LINK)
 
   const body = req.body as CreateCampaignBody
 
@@ -86,6 +80,14 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
   const campaign = await promotionService.createCampaigns(
     Object.assign(baseDto, { metadata: buildMetaWithSeller(body.metadata, seller.id) })
   )
+
+  // Register the seller ↔ campaign link so future GET queries use the link table.
+  await remoteLink.create([
+    {
+      seller: { seller_id: seller.id },
+      [Modules.PROMOTION]: { campaign_id: campaign.id },
+    },
+  ])
 
   return res.status(201).json({ campaign })
 }
