@@ -7,6 +7,7 @@ export enum PromotionStatus {
   ACTIVE = "ACTIVE",
   INACTIVE = "INACTIVE",
   DRAFT = "DRAFT",
+  PENDING_APPROVAL = "PENDING_APPROVAL",
 }
 
 export type StatusColors = "grey" | "orange" | "green" | "red" | "grey"
@@ -23,11 +24,26 @@ export const promotionStatusMap: StatusMap = {
     "red",
     `${i18n.t("promotions.fields.campaign")} ${i18n.t("statuses.expired").toLowerCase()}`,
   ],
+  [PromotionStatus.PENDING_APPROVAL]: ["orange", i18n.t("statuses.pendingApproval")],
+}
+
+/** Promotion tipi genişletilmiş metadata support için */
+type PromotionWithMeta = HttpTypes.AdminPromotion & {
+  metadata?: Record<string, unknown> | null
 }
 
 export const getPromotionStatus = (promotion: HttpTypes.AdminPromotion) => {
   const date = new Date()
   const campaign = promotion.campaign
+  const meta = (promotion as PromotionWithMeta).metadata
+
+  // Vendor promosyonu onay bekliyorsa önce kontrol et — diğer durumlara göre önceliklidir.
+  if (
+    meta?.seller_id &&
+    meta?.approval_status === "pending"
+  ) {
+    return promotionStatusMap[PromotionStatus.PENDING_APPROVAL]
+  }
 
   if (!campaign) {
     return promotionStatusMap[promotion.status!.toUpperCase()]

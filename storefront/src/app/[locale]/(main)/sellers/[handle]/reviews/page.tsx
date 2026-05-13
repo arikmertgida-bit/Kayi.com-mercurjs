@@ -23,7 +23,7 @@ export default async function SellerReviewsPage({
   ])
 
   const followStatus = followStatusRaw ?? { following: false, followers_count: 0 }
-  const currency_code = region?.currency_code || "usd"
+  const currency_code = region?.currency_code || process.env.NEXT_PUBLIC_DEFAULT_CURRENCY || "try"
   const tab = "reviews"
 
   return (

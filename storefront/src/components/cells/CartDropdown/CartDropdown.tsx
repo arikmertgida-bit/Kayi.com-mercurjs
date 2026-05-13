@@ -31,22 +31,22 @@ export const CartDropdown = () => {
 
   const total = convertToLocale({
     amount: cart?.total || 0,
-    currency_code: cart?.currency_code || "eur",
+    currency_code: cart?.currency_code || "try",
   })
 
   const delivery = convertToLocale({
     amount: cart?.shipping_subtotal || 0,
-    currency_code: cart?.currency_code || "eur",
+    currency_code: cart?.currency_code || "try",
   })
 
   const tax = convertToLocale({
     amount: cart?.tax_total || 0,
-    currency_code: cart?.currency_code || "eur",
+    currency_code: cart?.currency_code || "try",
   })
 
   const items = convertToLocale({
     amount: cart?.item_subtotal || 0,
-    currency_code: cart?.currency_code || "eur",
+    currency_code: cart?.currency_code || "try",
   })
 
   useEffect(() => {
@@ -98,7 +98,7 @@ export const CartDropdown = () => {
                     <CartDropdownItem
                       key={`${item.product_id}-${item.variant_id}`}
                       item={item}
-                      currency_code={cart?.currency_code || "eur"}
+                      currency_code={cart?.currency_code || "try"}
                     />
                   ))}
                 </div>

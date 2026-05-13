@@ -28,7 +28,7 @@ const SingleCollectionsPage = async ({
 
   if (!collection) return <NotFound />
 
-  const currency_code = (await getRegion(locale))?.currency_code || "usd"
+  const currency_code = (await getRegion(locale))?.currency_code || process.env.NEXT_PUBLIC_DEFAULT_CURRENCY || "try"
   const megaMenuCategories = await listMegaMenuCategories().catch(() => [])
 
   const breadcrumbsItems = [

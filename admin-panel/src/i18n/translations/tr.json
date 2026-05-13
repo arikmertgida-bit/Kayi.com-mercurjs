@@ -2125,6 +2125,35 @@
         "description": "Müşterilere ücretsiz kargo sağlar"
       }
     },
+    "pendingApproval": {
+      "domain": "Promosyon Onayları",
+      "columns": {
+        "code": "Promosyon Kodu",
+        "sellerId": "Satıcı ID",
+        "discount": "İndirim",
+        "status": "Durum",
+        "actions": "İşlemler"
+      },
+      "actions": {
+        "approve": "Onayla",
+        "reject": "Reddet",
+        "confirmReject": "Reddi Onayla",
+        "cancel": "İptal"
+      },
+      "toasts": {
+        "approveSuccess": "Promosyon onaylandı.",
+        "approveFail": "Promosyon onaylanamadı.",
+        "rejectSuccess": "Promosyon reddedildi.",
+        "rejectFail": "Promosyon reddedilemedi."
+      },
+      "rejectModal": {
+        "title": "Promosyonu Reddet",
+        "reasonLabel": "Red Gerekçesi",
+        "reasonPlaceholder": "Gerekçe girin (min 5 karakter)",
+        "reasonMinLength": "Gerekçe en az 5 karakter olmalıdır."
+      },
+      "noRecords": "Onay bekleyen promosyon bulunamadı."
+    },
     "campaign_currency": {
       "tooltip": "Bu promosyonun para birimi. Detaylar sekmesinden değiştirin."
     },

@@ -9,6 +9,7 @@ import {
 
 import { retrieveCustomer } from "@/lib/data/customer"
 import { getUserWishlists } from "@/lib/data/wishlist"
+import { getProductPromotions, ProductPromotion } from "@/lib/data/promotions"
 import { AdditionalAttributeProps } from "@/types/product"
 import { SellerProps } from "@/types/seller"
 import { Wishlist } from "@/types/wishlist"
@@ -32,6 +33,9 @@ export const ProductDetails = async ({
     wishlist = response.wishlists
   }
 
+  const { promotions } = await getProductPromotions(product.id ?? "")
+  const activePromotion: ProductPromotion | null = promotions[0] ?? null
+
   return (
     <div>
       <ProductDetailsHeader
@@ -39,6 +43,7 @@ export const ProductDetails = async ({
         locale={locale}
         user={user}
         wishlist={wishlist}
+        activePromotion={activePromotion}
       />
       <ProductPageDetails details={product?.description || ""} />
       <ProductAdditionalAttributes

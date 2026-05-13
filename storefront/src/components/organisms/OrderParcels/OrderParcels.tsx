@@ -35,7 +35,7 @@ export const OrderParcels = async ({ orders }: { orders: any[] }) => {
             <div className="p-4 border-b">
               <OrderParcelItems
                 items={order.items}
-                currency_code="try"
+                currency_code={order.currency_code || "try"}
               />
             </div>
             <div className="p-4">

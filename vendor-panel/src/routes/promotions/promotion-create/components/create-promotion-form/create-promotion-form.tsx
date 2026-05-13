@@ -154,11 +154,22 @@ export const CreatePromotionForm = () => {
         },
         {
           onSuccess: ({ promotion }) => {
-            toast.success(
-              t("promotions.toasts.promotionCreateSuccess", {
-                code: promotion.code,
-              })
-            )
+            // Vendor promosyonları trusted değilse pending onaya düşer.
+            // metadata.approval_status kontrolü ile kullanıcıya doğru mesaj verilir.
+            const meta = (promotion as unknown as { metadata?: Record<string, unknown> | null })
+              .metadata
+            const isPending =
+              meta?.seller_id !== undefined && meta?.approval_status === "pending"
+
+            if (isPending) {
+              toast.success(t("promotions.toasts.promotionPendingApproval"))
+            } else {
+              toast.success(
+                t("promotions.toasts.promotionCreateSuccess", {
+                  code: promotion.code,
+                })
+              )
+            }
 
             handleSuccess(`/promotions/${promotion.id}`)
           },

@@ -56,7 +56,7 @@ export const StickyAddToCart = ({
 
     try {
       if (!isVariantStockMaxLimitReached) {
-        onAddToCart(storeCartLineItem as any, variantPrice?.currency_code || "eur")
+        onAddToCart(storeCartLineItem as any, variantPrice?.currency_code || "try")
       }
       await addToCart({
         variantId: selectedVariant.id,

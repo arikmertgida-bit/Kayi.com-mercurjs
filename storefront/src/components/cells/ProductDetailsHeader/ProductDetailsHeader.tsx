@@ -14,12 +14,18 @@ import { toast } from "@/lib/helpers/toast"
 import { useCartContext } from "@/components/providers"
 import { AdditionalAttributeProps } from "@/types/product"
 import { useTranslations } from "next-intl"
+import { DiscountBadge } from "@/components/atoms/DiscountBadge/DiscountBadge"
+import { BudgetProgressBar } from "@/components/atoms/BudgetProgressBar/BudgetProgressBar"
+import { CampaignCountdown } from "@/components/molecules/CampaignCountdown/CampaignCountdown"
+import { PromotionStrip } from "@/components/molecules/PromotionStrip/PromotionStrip"
+import { ProductPromotion } from "@/lib/data/promotions"
 
 export const ProductDetailsHeader = ({
   product,
   locale,
   user,
   wishlist,
+  activePromotion,
 }: {
   product: HttpTypes.StoreProduct & {
     seller?: SellerProps
@@ -29,6 +35,7 @@ export const ProductDetailsHeader = ({
   locale: string
   user: HttpTypes.StoreCustomer | null
   wishlist?: Wishlist[]
+  activePromotion?: ProductPromotion | null
 }) => {
   const { onAddToCart, cart } = useCartContext()
   const [isAdding, setIsAdding] = useState(false)
@@ -72,7 +79,7 @@ export const ProductDetailsHeader = ({
 
     try {
       if (!isVariantStockMaxLimitReached) {
-        onAddToCart(storeCartLineItem, variantPrice?.currency_code || "eur")
+        onAddToCart(storeCartLineItem, variantPrice?.currency_code || "try")
       }
       await addToCart({
         variantId: selectedVariant.id,
@@ -107,6 +114,12 @@ export const ProductDetailsHeader = ({
                     {variantPrice.original_price}
                   </span>
                 )}
+                {activePromotion && (
+                  <DiscountBadge
+                    value={activePromotion.discount_value}
+                    type={activePromotion.discount_type}
+                  />
+                )}
               </>
             ) : hasAnyPrice && hasVariants && !allOptionsSelected ? (
               <span className="label-md text-secondary pt-2 pb-4">
@@ -118,6 +131,26 @@ export const ProductDetailsHeader = ({
               </span>
             )}
           </div>
+
+          {/* Promotion details */}
+          {activePromotion && (
+            <div className="mt-3 flex flex-col gap-2">
+              {activePromotion.display_code && (
+                <PromotionStrip
+                  displayCode={activePromotion.display_code}
+                  scope={activePromotion.scope}
+                />
+              )}
+              {activePromotion.campaign?.ends_at && (
+                <CampaignCountdown endsAt={activePromotion.campaign.ends_at} />
+              )}
+              {activePromotion.campaign?.budget_remaining_pct !== undefined && (
+                <BudgetProgressBar
+                  remainingPct={activePromotion.campaign.budget_remaining_pct}
+                />
+              )}
+            </div>
+          )}
         </div>
         <div>
           <WishlistButton

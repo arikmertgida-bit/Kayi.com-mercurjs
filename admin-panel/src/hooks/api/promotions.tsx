@@ -6,11 +6,44 @@ import {
   UseMutationOptions,
   useQuery,
   UseQueryOptions,
+  useQueryClient,
 } from "@tanstack/react-query"
 import { sdk } from "../../lib/client"
 import { queryClient } from "../../lib/query-client"
 import { queryKeysFactory } from "../../lib/query-key-factory"
 import { campaignsQueryKeys } from "./campaigns"
+
+// ─── Pending Promotion types ──────────────────────────────────────────────────
+
+export interface PendingPromotionApplicationMethod {
+  type: string
+  value: number | string | null
+}
+
+export interface PendingPromotionMetadata {
+  seller_id?: string
+  approval_status?: string
+  promotion_scope?: string
+  financed_by?: string
+}
+
+export interface PendingPromotion {
+  id: string
+  code: string
+  type: string
+  status: string
+  metadata: PendingPromotionMetadata | null
+  application_method: PendingPromotionApplicationMethod | null
+}
+
+export interface PendingPromotionsResponse {
+  promotions: PendingPromotion[]
+  count: number
+  limit: number
+  offset: number
+}
+
+export const pendingPromotionsQueryKeys = queryKeysFactory("pending-promotions")
 
 const PROMOTIONS_QUERY_KEY = "promotions" as const
 export const promotionsQueryKeys = {
@@ -279,6 +312,83 @@ export const usePromotionUpdateRules = (
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: promotionsQueryKeys.all })
 
+      options?.onSuccess?.(data, variables, context)
+    },
+    ...options,
+  })
+}
+
+// ─── Pending Promotion Approval Queue Hooks ───────────────────────────────────
+
+export const usePendingPromotions = (
+  query?: { limit?: number; offset?: number },
+  options?: Omit<
+    UseQueryOptions<
+      Record<string, unknown>,
+      Error,
+      PendingPromotionsResponse,
+      QueryKey
+    >,
+    "queryFn" | "queryKey"
+  >
+) => {
+  const { data, ...rest } = useQuery({
+    queryKey: pendingPromotionsQueryKeys.list(query),
+    queryFn: () =>
+      sdk.client.fetch<Record<string, unknown>>("/admin/promotions", {
+        method: "GET",
+        query: { status: "pending", ...query },
+      }),
+    ...options,
+  })
+
+  return { ...data, ...rest }
+}
+
+export const useApprovePromotion = (
+  options?: UseMutationOptions<
+    { promotion: PendingPromotion },
+    Error,
+    { id: string; trust_level?: "standard" | "trusted" }
+  >
+) => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, trust_level }) =>
+      sdk.client.fetch<{ promotion: PendingPromotion }>(
+        `/admin/promotions/${id}/approve`,
+        {
+          method: "POST",
+          body: trust_level ? { trust_level } : {},
+        }
+      ),
+    onSuccess: (data, variables, context) => {
+      qc.invalidateQueries({ queryKey: pendingPromotionsQueryKeys.lists() })
+      options?.onSuccess?.(data, variables, context)
+    },
+    ...options,
+  })
+}
+
+export const useRejectPromotion = (
+  options?: UseMutationOptions<
+    { promotion: PendingPromotion },
+    Error,
+    { id: string; reason: string }
+  >
+) => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, reason }) =>
+      sdk.client.fetch<{ promotion: PendingPromotion }>(
+        `/admin/promotions/${id}/reject`,
+        {
+          method: "POST",
+          body: { reason },
+        }
+      ),
+    onSuccess: (data, variables, context) => {
+      qc.invalidateQueries({ queryKey: pendingPromotionsQueryKeys.lists() })
       options?.onSuccess?.(data, variables, context)
     },
     ...options,

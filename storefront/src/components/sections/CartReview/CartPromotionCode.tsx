@@ -7,6 +7,17 @@ import { applyPromotions } from "@/lib/data/cart"
 import { toast } from "@/lib/helpers/toast"
 import { useTranslations } from "next-intl"
 
+/**
+ * Strips the platform namespace prefix from a stored promotion code.
+ * "KAYI-sel_xxx-SUMMER20" → "SUMMER20"
+ * Falls back to the original code if the pattern does not match.
+ */
+function toDisplayCode(code: string | null | undefined): string {
+  if (!code) return ""
+  const match = code.match(/^KAYI-[^-]+-(.+)$/)
+  return match ? match[1] : code
+}
+
 export default function CartPromotionCode({
   cart,
 }: {
@@ -28,8 +39,8 @@ export default function CartPromotionCode({
         toast.error({ title: t('notFound') })
       }
       setPromotionCode("")
-    } catch (err) {
-      console.error("[CartPromotionCode] Failed to apply promotion:", err)
+    } catch {
+      // Silently ignore — toast.error already shown for known failures
     } finally {
       setIsLoading(false)
     }
@@ -49,7 +60,7 @@ export default function CartPromotionCode({
             key={promo.id}
             className="mb-4 flex flex-row gap-x-2 items-center"
           >
-            <Label className="text-md">{promo.code}</Label>
+            <Label className="text-md">{toDisplayCode(promo.code)}</Label>
           </div>
         ))}
       </div>

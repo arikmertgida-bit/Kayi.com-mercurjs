@@ -2005,7 +2005,8 @@
       "promotionTabError": "Devam etmeden önce Promosyon Sekmesindeki hataları düzeltin"
     },
     "toasts": {
-      "promotionCreateSuccess": "Promosyon ({{code}}) başarıyla oluşturuldu."
+      "promotionCreateSuccess": "Promosyon ({{code}}) başarıyla oluşturuldu.",
+      "promotionPendingApproval": "Promosyon admin onayına gönderildi. Yönetici onayından sonra otomatik olarak yayınlanacaktır."
     },
     "create": {},
     "edit": {
@@ -2935,7 +2936,8 @@
     "enabled": "Etkin",
     "disabled": "Devre Dışı",
     "inactive": "Pasif",
-    "draft": "Taslak"
+    "draft": "Taslak",
+    "pendingApproval": "Onay Bekliyor"
   },
   "labels": {
     "productVariant": "Ürün Varyantı",

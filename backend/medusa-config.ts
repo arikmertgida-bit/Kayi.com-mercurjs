@@ -12,12 +12,10 @@ module.exports = defineConfig({
     databaseUrl: process.env.DATABASE_URL,
     databaseDriverOptions: {
       pool: {
-        min: 5,
-        max: 50,
+        min: 2,
+        max: 20,           // PgBouncer kurulana kadar güvenli limit (PostgreSQL default max_connections=100)
         idleTimeoutMillis: 30000,
-        // Bekleyen istek bir bağlantı edinemezse 30sn sonra fail-fast yap (sonsuz queue yerine)
-        acquireTimeoutMillis: 30000,
-        // Yeni bağlantı kurulumu 5sn içinde tamamlanmazsa hızla hata döndür
+        acquireTimeoutMillis: 10000,
         createTimeoutMillis: 5000,
       },
     },

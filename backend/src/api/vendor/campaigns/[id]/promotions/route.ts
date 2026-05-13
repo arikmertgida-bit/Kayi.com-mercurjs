@@ -27,15 +27,25 @@ export const POST = async (req: AuthenticatedMedusaRequest, res: MedusaResponse)
   const body = req.body as { promotion_ids?: string[] }
   const promotionIds: string[] = body.promotion_ids ?? []
 
-  for (const promotionId of promotionIds) {
-    const { data: promotionOwnerLinks } = await query.graph({
-      entity: sellerPromotion.entryPoint,
-      fields: ["promotion_id"],
-      filters: { seller_id: seller.id, promotion_id: promotionId, deleted_at: { $eq: null } },
+  if (promotionIds.length === 0) {
+    return res.status(400).json({ message: "promotion_ids boş olamaz." })
+  }
+
+  // Adım 5: Tek sorguda tüm ownership'leri kontrol et (N+1 yerine batch sorgu).
+  const { data: ownerLinks } = await query.graph({
+    entity: sellerPromotion.entryPoint,
+    fields: ["promotion_id"],
+    filters: {
+      seller_id: seller.id,
+      promotion_id: promotionIds,
+      deleted_at: { $eq: null },
+    },
+  })
+
+  if ((ownerLinks as Array<{ promotion_id: string }>).length !== promotionIds.length) {
+    return res.status(403).json({
+      message: "Bir veya daha fazla promosyon size ait değil.",
     })
-    if (promotionOwnerLinks.length === 0) {
-      return res.status(403).json({ message: `${promotionId} promosyönu size ait değil.` })
-    }
   }
 
   const result = await promotionService.addPromotionsToCampaign({

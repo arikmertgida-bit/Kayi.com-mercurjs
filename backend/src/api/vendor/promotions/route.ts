@@ -1,9 +1,14 @@
 import { AuthenticatedMedusaRequest, MedusaResponse } from "@medusajs/framework"
-import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
-import { CreatePromotionDTO, IPromotionModuleService } from "@medusajs/types"
+import { ContainerRegistrationKeys, Modules, PromotionStatus } from "@medusajs/framework/utils"
+import { CreatePromotionDTO, IPromotionModuleService, PromotionDTO } from "@medusajs/types"
 import { fetchSellerByAuthActorId } from "@mercurjs/b2c-core/shared/infra/http/utils/seller"
 import sellerPromotion from "@mercurjs/b2c-core/links/seller-promotion"
-import { buildMetaWithSeller } from "../shared/promotion-types.js"
+import {
+  SellerWithMeta,
+  buildMetaWithSeller,
+  buildNamespacedCode,
+  stripNamespaceFromCode,
+} from "../shared/promotion-types.js"
 
 /** Shape of a row returned from the seller_promotion link table. */
 type SellerPromotionLinkRow = { promotion_id: string }
@@ -42,14 +47,16 @@ export const GET = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) 
 }
 
 export const POST = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) => {
-  const seller = await fetchSellerByAuthActorId(req.auth_context.actor_id, req.scope)
+  const seller = await fetchSellerByAuthActorId(
+    req.auth_context.actor_id,
+    req.scope,
+    ["id", "metadata"]
+  ) as SellerWithMeta
   const promotionService = req.scope.resolve<IPromotionModuleService>(Modules.PROMOTION)
   const remoteLink = req.scope.resolve(ContainerRegistrationKeys.REMOTE_LINK)
 
   // req.body is validated by MedusaJS route middleware to match CreatePromotionDTO shape.
-  // Object.assign returns CreatePromotionDTO & { metadata: ... }, a structural subtype of
-  // CreatePromotionDTO — no `as any` cast needed.
-  const body = req.body as CreatePromotionDTO & { metadata?: unknown }
+  const body = req.body as CreatePromotionDTO & { metadata?: unknown; code?: string }
 
   const applicationMethod = body.application_method
   if (applicationMethod?.target_type === "shipping_methods") {
@@ -58,19 +65,46 @@ export const POST = async (req: AuthenticatedMedusaRequest, res: MedusaResponse)
     })
   }
 
-  const promotion = await promotionService.createPromotions(
-    Object.assign({} as CreatePromotionDTO, body, {
-      metadata: buildMetaWithSeller(body.metadata, seller.id),
+  // Adım 1: is_automatic güvenlik engeli — computeActions() satıcı sınırı tanımaz.
+  if (body.is_automatic === true) {
+    return res.status(400).json({
+      message: "Satıcı promosyonları otomatik olamaz. is_automatic false olarak ayarlayın.",
     })
-  )
+  }
 
-  // Register the seller ↔ promotion link so future GET queries use the link table.
-  await remoteLink.create([
-    {
-      seller: { seller_id: seller.id },
-      [Modules.PROMOTION]: { promotion_id: promotion.id },
-    },
-  ])
+  // Adım 2: Kodu seller-namespaced formata çevir.
+  const namespacedCode = body.code ? buildNamespacedCode(body.code, seller.id) : body.code
 
-  return res.status(201).json({ promotion })
+  // Set the MedusaJS status field to mirror the approval decision.
+  // Pending vendors → inactive so that computeActions() cannot apply the promo.
+  // Trusted/auto-publish vendors → active immediately.
+  const autoPublish = seller.metadata?.auto_publish_promotions === true
+
+  const promotion = (await promotionService.createPromotions(
+    Object.assign({} as CreatePromotionDTO, body, {
+      code: namespacedCode,
+      status: autoPublish ? PromotionStatus.ACTIVE : PromotionStatus.INACTIVE,
+      metadata: buildMetaWithSeller(body.metadata, seller.id, seller.metadata ?? null),
+    })
+  )) as unknown as PromotionDTO
+
+  // Adım 4: Atomicity — link başarısız olursa promotion'ı temizle (orphan önleme).
+  try {
+    await remoteLink.create([
+      {
+        seller: { seller_id: seller.id },
+        [Modules.PROMOTION]: { promotion_id: promotion.id },
+      },
+    ])
+  } catch (linkError) {
+    await promotionService.deletePromotions(promotion.id).catch(() => {})
+    throw linkError
+  }
+
+  return res.status(201).json({
+    promotion,
+    display_code: promotion.code
+      ? stripNamespaceFromCode(promotion.code, seller.id)
+      : null,
+  })
 }

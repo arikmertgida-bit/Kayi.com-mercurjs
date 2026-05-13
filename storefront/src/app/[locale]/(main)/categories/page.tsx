@@ -93,7 +93,7 @@ async function AllCategories({
     },
   ]
 
-  const currency_code = (await getRegion(locale))?.currency_code || "usd"
+  const currency_code = (await getRegion(locale))?.currency_code || process.env.NEXT_PUBLIC_DEFAULT_CURRENCY || "try"
 
   // Fetch categories on server side for sidebar
   const megaMenuCategories = await listMegaMenuCategories().catch(() => [])

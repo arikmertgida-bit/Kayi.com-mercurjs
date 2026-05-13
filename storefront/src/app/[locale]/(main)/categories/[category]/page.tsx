@@ -112,7 +112,7 @@ async function Category({
 
   const allCategoryIds = getAllCategoryIds(category)
 
-  const currency_code = (await getRegion(locale))?.currency_code || "usd"
+  const currency_code = (await getRegion(locale))?.currency_code || process.env.NEXT_PUBLIC_DEFAULT_CURRENCY || "try"
   const ua = (await headers()).get("user-agent") || ""
   const bot = isBot(ua)
 

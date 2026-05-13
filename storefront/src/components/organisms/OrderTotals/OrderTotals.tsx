@@ -6,7 +6,7 @@ export const OrderTotals = ({ orderSet }: { orderSet: any }) => {
   const subtotal = orderSet.total - delivery
   const total = orderSet.total
 
-  const currency_code = "try" // Türkiye bölgesi — her zaman TRY
+  const currency_code = orderSet.currency_code || "try"
 
   return (
     <Card className="mb-8 p-4">

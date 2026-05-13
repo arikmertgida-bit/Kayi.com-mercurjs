@@ -2004,8 +2004,10 @@
       "requiredField": "Required field",
       "promotionTabError": "Fix errors in Promotion Tab before proceeding"
     },
+    "pendingApprovalBanner": "This promotion is awaiting admin approval and cannot be edited until approved.",
     "toasts": {
-      "promotionCreateSuccess": "Promotion ({{code}}) was successfully created."
+      "promotionCreateSuccess": "Promotion ({{code}}) was successfully created.",
+      "promotionPendingApproval": "Promotion sent for admin approval. It will be published automatically once approved."
     },
     "create": {},
     "edit": {
@@ -2921,7 +2923,8 @@
     "inactive": "Inactive",
     "draft": "Draft",
     "enabled": "Enabled",
-    "disabled": "Disabled"
+    "disabled": "Disabled",
+    "pendingApproval": "Pending Approval"
   },
   "labels": {
     "productVariant": "Product Variant",

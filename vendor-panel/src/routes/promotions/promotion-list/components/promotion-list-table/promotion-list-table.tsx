@@ -33,7 +33,7 @@ export const PromotionListTable = () => {
     error,
   } = usePromotions({
     ...searchParams,
-    fields: "+status",
+    fields: "+status,+metadata",
   })
 
   const promotions = data?.filter((item) => item !== null)

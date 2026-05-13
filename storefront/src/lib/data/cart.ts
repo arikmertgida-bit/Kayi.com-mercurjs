@@ -300,9 +300,12 @@ export async function applyPromotions(codes: string[]) {
       const cartCacheTag = await getCacheTag("carts")
       revalidateTag(cartCacheTag)
       const cartWithPromotions = cart as StoreCartWithPromotions
-      const applied = cartWithPromotions.promotions?.some((promotion) =>
-        promotion.code != null && codes.includes(promotion.code)
-      )
+      // Backend resolves vendor codes to namespaced DB codes, so we cannot
+      // compare promotion.code directly against the user-entered codes.
+      // Success is defined as: at least one promotion is now on the cart.
+      const applied =
+        cartWithPromotions.promotions != null &&
+        (cartWithPromotions.promotions as CartPromotion[]).length > 0
       return applied
     })
     .catch(medusaError)

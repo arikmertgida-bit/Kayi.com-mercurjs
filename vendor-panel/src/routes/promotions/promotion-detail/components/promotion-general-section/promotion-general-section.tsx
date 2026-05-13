@@ -1,6 +1,6 @@
 import { PencilSquare, Trash } from "@medusajs/icons"
 import { HttpTypes } from "@medusajs/types"
-import { Badge, Container, Copy, Heading, Text, usePrompt } from "@medusajs/ui"
+import { Alert, Badge, Container, Copy, Heading, Text, usePrompt } from "@medusajs/ui"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
@@ -9,6 +9,11 @@ import { useDeletePromotion } from "../../../../../hooks/api/promotions"
 import { formatCurrency } from "../../../../../lib/format-currency"
 import { formatPercentage } from "../../../../../lib/percentage-helpers"
 import { StatusCell } from "../../../../../components/table/table-cells/promotion/status-cell"
+
+/** HttpTypes.AdminPromotion lacks a metadata field — extend for runtime approval_status check. */
+type PromotionWithMeta = HttpTypes.AdminPromotion & {
+  metadata?: Record<string, unknown> | null
+}
 
 type PromotionGeneralSectionProps = {
   promotion: HttpTypes.AdminPromotion
@@ -68,9 +73,17 @@ export const PromotionGeneralSection = ({
   }
 
   const displayValue = getDisplayValue(promotion)
+  const isPendingApproval =
+    (promotion as PromotionWithMeta).metadata?.seller_id !== undefined &&
+    (promotion as PromotionWithMeta).metadata?.approval_status === "pending"
 
   return (
     <Container className="divide-y p-0">
+      {isPendingApproval && (
+        <Alert variant="warning" className="mx-6 my-4">
+          {t("promotions.pendingApprovalBanner")}
+        </Alert>
+      )}
       <div className="flex items-center justify-between px-6 py-4">
         <div className="flex flex-col">
           <Heading>{promotion.code}</Heading>
@@ -82,11 +95,15 @@ export const PromotionGeneralSection = ({
             groups={[
               {
                 actions: [
-                  {
-                    icon: <PencilSquare />,
-                    label: t("actions.edit"),
-                    to: `/promotions/${promotion.id}/edit`,
-                  },
+                  ...(!isPendingApproval
+                    ? [
+                        {
+                          icon: <PencilSquare />,
+                          label: t("actions.edit"),
+                          to: `/promotions/${promotion.id}/edit`,
+                        },
+                      ]
+                    : []),
                 ],
               },
               {

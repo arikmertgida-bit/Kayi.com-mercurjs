@@ -274,6 +274,10 @@ const useCoreRoutes = (): Omit<INavItem, "pathname">[] => {
           label: t("campaigns.domain"),
           to: "/campaigns",
         },
+        {
+          label: t("promotions.pendingApproval.domain"),
+          to: "/promotions/pending",
+        },
       ],
     },
     {

@@ -2226,6 +2226,35 @@
         "title": "Free shipping",
         "description": "Provide free shipping to customers"
       }
+    },
+    "pendingApproval": {
+      "domain": "Promotion Approvals",
+      "columns": {
+        "code": "Promo Code",
+        "sellerId": "Seller ID",
+        "discount": "Discount",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "actions": {
+        "approve": "Approve",
+        "reject": "Reject",
+        "confirmReject": "Confirm Reject",
+        "cancel": "Cancel"
+      },
+      "toasts": {
+        "approveSuccess": "Promotion approved.",
+        "approveFail": "Could not approve promotion.",
+        "rejectSuccess": "Promotion rejected.",
+        "rejectFail": "Could not reject promotion."
+      },
+      "rejectModal": {
+        "title": "Reject Promotion",
+        "reasonLabel": "Rejection Reason",
+        "reasonPlaceholder": "Enter reason (min 5 characters)",
+        "reasonMinLength": "Reason must be at least 5 characters."
+      },
+      "noRecords": "No pending promotions found."
     }
   },
   "campaigns": {

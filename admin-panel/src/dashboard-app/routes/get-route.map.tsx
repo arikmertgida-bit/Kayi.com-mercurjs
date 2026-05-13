@@ -402,6 +402,13 @@ export function getRouteMap({
                   lazy: () => import("../../routes/promotions/promotion-list"),
                 },
                 {
+                  path: "pending",
+                  lazy: () =>
+                    import(
+                      "../../routes/promotions/promotion-pending-list"
+                    ),
+                },
+                {
                   path: "create",
                   lazy: () =>
                     import("../../routes/promotions/promotion-create"),

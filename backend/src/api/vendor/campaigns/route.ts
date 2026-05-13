@@ -7,7 +7,7 @@ import {
 } from "@medusajs/types"
 import { fetchSellerByAuthActorId } from "@mercurjs/b2c-core/shared/infra/http/utils/seller"
 import sellerCampaign from "@mercurjs/b2c-core/links/seller-campaign"
-import { buildMetaWithSeller } from "../shared/promotion-types.js"
+import { SellerWithMeta, buildMetaWithSeller, buildNamespacedIdentifier } from "../shared/promotion-types.js"
 
 type CreateCampaignBody = {
   name: string
@@ -53,22 +53,34 @@ export const GET = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) 
 
   const campaigns = await promotionService.listCampaigns(
     { id: campaignIds },
-    { relations: ["budget", "promotions"] }
+    { relations: ["budget"] }
   )
 
   return res.json({ campaigns, count, limit, offset })
 }
 
 export const POST = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) => {
-  const seller = await fetchSellerByAuthActorId(req.auth_context.actor_id, req.scope)
+  const seller = await fetchSellerByAuthActorId(
+    req.auth_context.actor_id,
+    req.scope,
+    ["id", "metadata"]
+  ) as SellerWithMeta
   const promotionService = req.scope.resolve<IPromotionModuleService>(Modules.PROMOTION)
   const remoteLink = req.scope.resolve(ContainerRegistrationKeys.REMOTE_LINK)
 
   const body = req.body as CreateCampaignBody
 
+  // Adım 6: Satıcı kampanyalarında budget.limit zorunlu.
+  if (!body.budget?.limit) {
+    return res.status(400).json({
+      message: "Satıcı kampanyaları için budget.limit zorunludur.",
+    })
+  }
+
+  const namespacedIdentifier = buildNamespacedIdentifier(body.campaign_identifier, seller.id)
   const baseDto: CreateCampaignDTO = {
     name: body.name,
-    campaign_identifier: body.campaign_identifier,
+    campaign_identifier: namespacedIdentifier,
     description: body.description,
     starts_at: body.starts_at != null ? new Date(body.starts_at) : undefined,
     ends_at: body.ends_at != null ? new Date(body.ends_at) : undefined,
@@ -78,16 +90,21 @@ export const POST = async (req: AuthenticatedMedusaRequest, res: MedusaResponse)
   // Object.assign returns CreateCampaignDTO & { metadata: ... }, which is a structural
   // subtype of CreateCampaignDTO — no `as any` cast needed.
   const campaign = await promotionService.createCampaigns(
-    Object.assign(baseDto, { metadata: buildMetaWithSeller(body.metadata, seller.id) })
+    Object.assign(baseDto, { metadata: buildMetaWithSeller(body.metadata, seller.id, seller.metadata ?? null) })
   )
 
-  // Register the seller ↔ campaign link so future GET queries use the link table.
-  await remoteLink.create([
-    {
-      seller: { seller_id: seller.id },
-      [Modules.PROMOTION]: { campaign_id: campaign.id },
-    },
-  ])
+  // Adım 4: Atomicity — link başarısız olursa campaign'i temizle (orphan önleme).
+  try {
+    await remoteLink.create([
+      {
+        seller: { seller_id: seller.id },
+        [Modules.PROMOTION]: { campaign_id: campaign.id },
+      },
+    ])
+  } catch (linkError) {
+    await promotionService.deleteCampaigns(campaign.id).catch(() => {})
+    throw linkError
+  }
 
   return res.status(201).json({ campaign })
 }
