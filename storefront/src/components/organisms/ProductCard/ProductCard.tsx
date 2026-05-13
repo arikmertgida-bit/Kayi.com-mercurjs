@@ -10,17 +10,22 @@ import { getProductPrice } from "@/lib/helpers/get-product-price"
 import { WishlistButton } from "@/components/cells/WishlistButton/WishlistButton"
 import { useAgeVerification } from "@/providers/AgeVerificationProvider"
 import { useTranslations } from "next-intl"
+import { DiscountBadge } from "@/components/atoms/DiscountBadge/DiscountBadge"
+import { BudgetProgressBar } from "@/components/atoms/BudgetProgressBar/BudgetProgressBar"
+import type { ProductPromotion } from "@/lib/data/promotions"
 
 export const ProductCard = ({
   product,
   api_product,
   isEager = false,
   sliderCard = false,
+  activePromotion = null,
 }: {
   product: Hit<HttpTypes.StoreProduct> | Partial<Hit<BaseHit>>
   api_product?: HttpTypes.StoreProduct | null
   isEager?: boolean
   sliderCard?: boolean
+  activePromotion?: ProductPromotion | null
 }) => {
   const { isVerified, verify } = useAgeVerification()
   const t = useTranslations('listing')
@@ -52,6 +57,11 @@ export const ProductCard = ({
         <div className="absolute top-2 right-2 z-10">
           <WishlistButton productId={api_product.id} />
         </div>
+        {activePromotion && (
+          <div className="absolute top-2 left-2 z-10 pointer-events-none">
+            <DiscountBadge value={activePromotion.discount_value} type={activePromotion.discount_type} />
+          </div>
+        )}
         {/* +18 rozeti — sadece doğrulanmış kullanıcılara gösterilir */}
         {isAdult && isVerified && (
           <span
@@ -131,6 +141,11 @@ export const ProductCard = ({
           </Button>
         </LocalizedClientLink>
       </div>
+      {activePromotion?.campaign?.budget_remaining_pct !== undefined &&
+        activePromotion.campaign.budget_remaining_pct !== null &&
+        activePromotion.campaign.budget_remaining_pct <= 50 && (
+        <BudgetProgressBar remainingPct={activePromotion.campaign.budget_remaining_pct} />
+      )}
       <LocalizedClientLink
         href={`/products/${product.handle}`}
         aria-label={`Go to ${productName} page`}

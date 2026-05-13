@@ -85,9 +85,14 @@ export const PromotionPendingList = () => {
     return type ? `${value}${type}` : `${value}`
   }
 
-  const stripNamespace = (code: string): string => {
-    const idx = code.lastIndexOf("_")
-    return idx !== -1 ? code.slice(idx + 1) : code
+  const stripNamespace = (code: string, sellerId?: string): string => {
+    if (sellerId) {
+      const prefix = `KAYI-${sellerId}-`
+      if (code.startsWith(prefix)) return code.slice(prefix.length)
+    }
+    // Fallback: strip "KAYI-<anything>-" prefix (two leading hyphen-separated segments).
+    const match = /^KAYI-[^-]+-(.+)$/.exec(code)
+    return match ? match[1] : code
   }
 
   const pageCount = Math.ceil(count / PAGE_SIZE) || 1
@@ -169,6 +174,9 @@ export const PromotionPendingList = () => {
                 {t("promotions.pendingApproval.columns.status")}
               </Table.HeaderCell>
               <Table.HeaderCell>
+                {t("promotions.pendingApproval.columns.products", "Ürünler")}
+              </Table.HeaderCell>
+              <Table.HeaderCell>
                 {t("promotions.pendingApproval.columns.actions")}
               </Table.HeaderCell>
             </Table.Row>
@@ -178,12 +186,12 @@ export const PromotionPendingList = () => {
               <Table.Row key={promotion.id}>
                 <Table.Cell>
                   <Text className="text-sm font-mono">
-                    {stripNamespace(promotion.code ?? "")}
+                    {stripNamespace(promotion.code ?? "", promotion.seller_id ?? undefined)}
                   </Text>
                 </Table.Cell>
                 <Table.Cell>
                   <Text className="text-sm">
-                    {promotion.metadata?.seller_id ?? "—"}
+                    {promotion.seller_id ?? "—"}
                   </Text>
                 </Table.Cell>
                 <Table.Cell>
@@ -194,8 +202,15 @@ export const PromotionPendingList = () => {
                 </Table.Cell>
                 <Table.Cell>
                   <Badge color="orange">
-                    {promotion.metadata?.approval_status ?? promotion.status}
+                    {promotion.approval_status ?? promotion.status}
                   </Badge>
+                </Table.Cell>
+                <Table.Cell>
+                  <Text className="text-xs text-ui-fg-subtle">
+                    {promotion.application_method?.target_rules
+                      ?.flatMap((r) => r.values?.map((v) => v.value) ?? [])
+                      .join(", ") || "—"}
+                  </Text>
                 </Table.Cell>
                 <Table.Cell>
                   <div className="flex items-center gap-2">
@@ -222,7 +237,7 @@ export const PromotionPendingList = () => {
             {!isLoading && (promotions as PendingPromotion[]).length === 0 && (
               <Table.Row>
                 <Table.Cell
-                  {...({ colSpan: 5 } as React.TdHTMLAttributes<HTMLTableCellElement>)}
+                  {...({ colSpan: 6 } as React.TdHTMLAttributes<HTMLTableCellElement>)}
                   className="py-8 text-center"
                 >
                   <Text className="text-center text-ui-fg-subtle py-8">

@@ -32,6 +32,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLogout } from "../../../hooks/api";
 import { useReviewImageReports } from "../../../hooks/api/review-image-reports";
 import { useProductReports } from "../../../hooks/api/product-reports";
+import { usePendingPromotions } from "../../../hooks/api/promotions";
 import { queryClient } from "../../../lib/query-client";
 import { useExtension } from "../../../providers/extension-provider";
 import { useSearch } from "../../../providers/search-provider";
@@ -189,6 +190,7 @@ const useCoreRoutes = (): Omit<INavItem, "pathname">[] => {
   const location = useLocation();
   const { count: pendingReportCount = 0 } = useReviewImageReports({ status: "pending", limit: 1 });
   const { count: pendingProductReportCount = 0 } = useProductReports({ status: "pending", limit: 1 });
+  const { count: pendingPromotionCount = 0 } = usePendingPromotions({ limit: 1 });
   const { unreadCount: messengerUnreadCount } = useMessengerAdmin();
 
   // Badge sıfırlama: sayfaya girilince localStorage'a mevcut sayıyı kaydet
@@ -199,6 +201,14 @@ const useCoreRoutes = (): Omit<INavItem, "pathname">[] => {
   }
   const seenCount = typeof window !== "undefined" ? parseInt(localStorage.getItem(SEEN_KEY) || "0", 10) : 0;
   const unseenProductReportCount = Math.max(0, pendingProductReportCount - seenCount);
+
+  const PROMO_SEEN_KEY = "promotions_pending_seen_count";
+  const isOnPendingPromotions = location.pathname.startsWith("/promotions/pending");
+  if (isOnPendingPromotions && typeof window !== "undefined") {
+    localStorage.setItem(PROMO_SEEN_KEY, String(pendingPromotionCount));
+  }
+  const seenPromoCount = typeof window !== "undefined" ? parseInt(localStorage.getItem(PROMO_SEEN_KEY) || "0", 10) : 0;
+  const unseenPromoCount = Math.max(0, pendingPromotionCount - seenPromoCount);
 
   return [
     {
@@ -277,6 +287,7 @@ const useCoreRoutes = (): Omit<INavItem, "pathname">[] => {
         {
           label: t("promotions.pendingApproval.domain"),
           to: "/promotions/pending",
+          badge: unseenPromoCount > 0 ? unseenPromoCount : undefined,
         },
       ],
     },

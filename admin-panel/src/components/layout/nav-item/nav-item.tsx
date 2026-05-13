@@ -17,6 +17,7 @@ type ItemType = "core" | "extension" | "setting"
 type NestedItemProps = {
   label: string
   to: string
+  badge?: number
 }
 
 export type INavItem = {
@@ -222,6 +223,11 @@ export const NavItem = ({
                           <Text size="small" weight="plus" leading="compact">
                             {item.label}
                           </Text>
+                          {item.badge != null && item.badge > 0 && (
+                            <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-semibold text-white leading-none">
+                              {item.badge > 99 ? "99+" : item.badge}
+                            </span>
+                          )}
                         </NavLink>
                       </NavItemTooltip>
                     </li>

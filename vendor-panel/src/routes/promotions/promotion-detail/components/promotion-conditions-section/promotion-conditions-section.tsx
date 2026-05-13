@@ -5,12 +5,41 @@ import { useTranslation } from "react-i18next"
 import { ActionMenu } from "../../../../../components/common/action-menu"
 import { BadgeListSummary } from "../../../../../components/common/badge-list-summary"
 import { NoRecords } from "../../../../../components/common/empty-table-content"
-import { ExtendedPromotionRuleWithValues, FormattedPromotionRuleTypes } from "../../../../../types/promotion"
+import { ExtendedPromotionRuleWithValues, ExtendedPromotionRuleValue, FormattedPromotionRuleTypes } from "../../../../../types/promotion"
+
+/** Renders product values as a thumbnail grid instead of text badges. */
+function ProductRuleGrid({ values }: { values: ExtendedPromotionRuleValue[] }) {
+  return (
+    <div className="flex flex-wrap gap-2 mt-1">
+      {values.map((v, i) => (
+        <div
+          key={v.id ?? v.value ?? i}
+          className="flex items-center gap-2 rounded-md border border-ui-border-base bg-ui-bg-base px-2 py-1"
+        >
+          {v.thumbnail ? (
+            <img
+              src={v.thumbnail}
+              alt={v.label ?? v.value ?? ""}
+              className="h-8 w-8 rounded-sm object-cover object-center flex-shrink-0"
+            />
+          ) : (
+            <div className="h-8 w-8 rounded-sm bg-ui-bg-subtle flex-shrink-0" />
+          )}
+          <span className="txt-compact-small truncate max-w-[120px]">
+            {v.label ?? v.value}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
 
 type RuleProps = {
   rule: ExtendedPromotionRuleWithValues
 }
 function RuleBlock({ rule }: RuleProps) {
+  const hasProductThumbnails = (rule.values ?? []).some((v) => v.thumbnail)
+
   const getValuesList = (): string[] => {
     if (rule.field_type === "number") {
       return Array.isArray(rule.values) 
@@ -21,8 +50,8 @@ function RuleBlock({ rule }: RuleProps) {
   }
 
   return (
-    <div className="bg-ui-bg-subtle shadow-borders-base align-center flex justify-around rounded-md p-2">
-      <div className="text-ui-fg-subtle txt-compact-xsmall flex items-center whitespace-nowrap">
+    <div className="bg-ui-bg-subtle shadow-borders-base rounded-md p-2">
+      <div className="text-ui-fg-subtle txt-compact-xsmall flex flex-wrap items-center gap-1">
         <Badge
           size="2xsmall"
           key="rule-attribute"
@@ -35,12 +64,18 @@ function RuleBlock({ rule }: RuleProps) {
           {rule.operator_label}
         </span>
 
-        <BadgeListSummary
-          inline
-          className="!txt-compact-small-plus"
-          list={getValuesList()}
-        />
+        {!hasProductThumbnails && (
+          <BadgeListSummary
+            inline
+            className="!txt-compact-small-plus"
+            list={getValuesList()}
+          />
+        )}
       </div>
+
+      {hasProductThumbnails && (
+        <ProductRuleGrid values={rule.values ?? []} />
+      )}
     </div>
   )
 }

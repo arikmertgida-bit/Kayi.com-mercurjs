@@ -21,7 +21,7 @@ export const templates = [
       application_method: {
         allocation: "each",
         target_type: "items",
-        type: "fixed",
+        type: "percentage",
       },
     },
   },

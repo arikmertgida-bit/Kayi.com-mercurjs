@@ -15,9 +15,22 @@ import { campaignsQueryKeys } from "./campaigns"
 
 // ─── Pending Promotion types ──────────────────────────────────────────────────
 
+export interface PendingPromotionRuleValue {
+  id?: string
+  value: string
+}
+
+export interface PendingPromotionRule {
+  id?: string
+  attribute: string
+  operator: string
+  values?: PendingPromotionRuleValue[]
+}
+
 export interface PendingPromotionApplicationMethod {
   type: string
   value: number | string | null
+  target_rules?: PendingPromotionRule[]
 }
 
 export interface PendingPromotionMetadata {
@@ -32,6 +45,8 @@ export interface PendingPromotion {
   code: string
   type: string
   status: string
+  seller_id: string | null
+  approval_status: string
   metadata: PendingPromotionMetadata | null
   application_method: PendingPromotionApplicationMethod | null
 }
@@ -335,9 +350,9 @@ export const usePendingPromotions = (
   const { data, ...rest } = useQuery({
     queryKey: pendingPromotionsQueryKeys.list(query),
     queryFn: () =>
-      sdk.client.fetch<Record<string, unknown>>("/admin/promotions", {
+      sdk.client.fetch<Record<string, unknown>>("/admin/pending-promotions", {
         method: "GET",
-        query: { status: "pending", ...query },
+        query: { approval_status: "pending", ...query },
       }),
     ...options,
   })
@@ -353,7 +368,9 @@ export const useApprovePromotion = (
   >
 ) => {
   const qc = useQueryClient()
+  const { onSuccess: callerOnSuccess, ...restOptions } = options ?? {}
   return useMutation({
+    ...restOptions,
     mutationFn: ({ id, trust_level }) =>
       sdk.client.fetch<{ promotion: PendingPromotion }>(
         `/admin/promotions/${id}/approve`,
@@ -364,9 +381,8 @@ export const useApprovePromotion = (
       ),
     onSuccess: (data, variables, context) => {
       qc.invalidateQueries({ queryKey: pendingPromotionsQueryKeys.lists() })
-      options?.onSuccess?.(data, variables, context)
+      callerOnSuccess?.(data, variables, context)
     },
-    ...options,
   })
 }
 
@@ -378,7 +394,9 @@ export const useRejectPromotion = (
   >
 ) => {
   const qc = useQueryClient()
+  const { onSuccess: callerOnSuccess, ...restOptions } = options ?? {}
   return useMutation({
+    ...restOptions,
     mutationFn: ({ id, reason }) =>
       sdk.client.fetch<{ promotion: PendingPromotion }>(
         `/admin/promotions/${id}/reject`,
@@ -389,8 +407,7 @@ export const useRejectPromotion = (
       ),
     onSuccess: (data, variables, context) => {
       qc.invalidateQueries({ queryKey: pendingPromotionsQueryKeys.lists() })
-      options?.onSuccess?.(data, variables, context)
+      callerOnSuccess?.(data, variables, context)
     },
-    ...options,
   })
 }

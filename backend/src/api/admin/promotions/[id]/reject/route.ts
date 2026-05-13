@@ -1,6 +1,7 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework"
-import { Modules, PromotionStatus } from "@medusajs/framework/utils"
+import { ContainerRegistrationKeys, Modules, PromotionStatus } from "@medusajs/framework/utils"
 import { IEventBusModuleService, IPromotionModuleService } from "@medusajs/types"
+import sellerPromotion from "@mercurjs/b2c-core/links/seller-promotion"
 import { z } from "zod"
 import { PromotionWithMeta } from "../../../../vendor/shared/promotion-types.js"
 
@@ -53,28 +54,23 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     return res.status(404).json({ message: "Promosyon bulunamadı." })
   }
 
-  const sellerId =
-    typeof promotion.metadata?.seller_id === "string"
-      ? promotion.metadata.seller_id
-      : null
-
-  // Preserve existing metadata and set rejection fields
-  const existingMeta =
-    typeof promotion.metadata === "object" && promotion.metadata !== null
-      ? promotion.metadata
-      : {}
-
-  const updatedMeta: Record<string, unknown> = {
-    ...existingMeta,
-    approval_status: "rejected",
-    rejection_reason: reason,
-  }
-
-  // Deactivate the promotion at the MedusaJS level — ensures computeActions() and
-  // the checkout guard both treat it as ineligible, not just metadata-rejected.
+  // Reject: set status to 'draft' to distinguish rejected from pending (inactive).
+  // Status convention for vendor promotions:
+  //   inactive = pending, active = approved, draft = rejected.
+  // NOTE: The promotion table has no metadata column — status is the source of truth.
   const updated = (await promotionService.updatePromotions(
-    Object.assign({ id }, { status: PromotionStatus.INACTIVE, metadata: updatedMeta })
+    { id, status: "draft" as typeof PromotionStatus.INACTIVE }
   )) as PromotionWithMeta
+
+  // Resolve the owning seller_id from the seller_promotion link table.
+  const linkQuery = req.scope.resolve(ContainerRegistrationKeys.QUERY)
+  const { data: linkRows } = await linkQuery.graph({
+    entity: sellerPromotion.entryPoint,
+    fields: ["seller_id"],
+    filters: { promotion_id: id, deleted_at: { $eq: null } },
+  })
+  const sellerId =
+    (linkRows[0] as { seller_id?: string } | undefined)?.seller_id ?? null
 
   // Emit event for downstream handlers (e.g. resend email notification)
   await eventBus.emit({

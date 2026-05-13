@@ -2006,7 +2006,8 @@
     },
     "toasts": {
       "promotionCreateSuccess": "Promosyon ({{code}}) başarıyla oluşturuldu.",
-      "promotionPendingApproval": "Promosyon admin onayına gönderildi. Yönetici onayından sonra otomatik olarak yayınlanacaktır."
+      "promotionPendingApproval": "Promosyon admin onayına gönderildi. Yönetici onayından sonra otomatik olarak yayınlanacaktır.",
+      "cannotSetActive": "Bu işlemi sadece yönetici yapabilir, talebiniz inceleme sırasına alınmıştır"
     },
     "create": {},
     "edit": {

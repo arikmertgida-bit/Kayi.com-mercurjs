@@ -1,4 +1,5 @@
 import { useLoaderData, useParams } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 
 import { TwoColumnPageSkeleton } from "../../../components/common/skeleton"
 import { TwoColumnPage } from "../../../components/layout/pages"
@@ -17,18 +18,19 @@ import { promotionLoader } from "./loader"
 /** Enrich raw API rules with human-readable labels from the attribute options. */
 function enrichRules(
   rawRules: any[] | undefined,
-  attrs: any[] | undefined
+  attrs: any[] | undefined,
+  t: (key: string, options?: Record<string, string>) => string
 ): ExtendedPromotionRuleWithValues[] {
   if (!rawRules?.length) return []
   return rawRules.map((rule) => {
     const attrDef = (attrs ?? []).find((a: any) => a.value === rule.attribute)
+    const apiOperatorLabel =
+      attrDef?.operators?.find((op: any) => op.value === rule.operator)?.label ?? rule.operator
     return {
       ...rule,
       values: rule.values ?? [],
-      attribute_label: attrDef?.label ?? rule.attribute,
-      operator_label:
-        attrDef?.operators?.find((op: any) => op.value === rule.operator)
-          ?.label ?? rule.operator,
+      attribute_label: t(`promotions.form.ruleAttribute.${attrDef?.id}`, { defaultValue: attrDef?.label ?? rule.attribute }),
+      operator_label: t(`promotions.form.ruleOperator.${rule.operator}`, { defaultValue: apiOperatorLabel }),
     }
   })
 }
@@ -37,6 +39,8 @@ export const PromotionDetail = () => {
   const initialData = useLoaderData() as Awaited<
     ReturnType<typeof promotionLoader>
   >
+  const { t } = useTranslation()
+  const tStr = t as unknown as (key: string, options?: Record<string, string>) => string
 
   const { id } = useParams()
   const { promotion, isLoading } = usePromotion(id!, {
@@ -88,16 +92,16 @@ export const PromotionDetail = () => {
       <TwoColumnPage.Main>
         <PromotionGeneralSection promotion={promotion} />
         <PromotionConditionsSection
-          rules={enrichRules(rules, rulesAttrs)}
+          rules={enrichRules(rules, rulesAttrs, tStr)}
           ruleType="rules"
         />
         <PromotionConditionsSection
-          rules={enrichRules(targetRules, targetAttrs)}
+          rules={enrichRules(targetRules, targetAttrs, tStr)}
           ruleType="target_rules"
         />
         {promotion.type === "buyget" && (
           <PromotionConditionsSection
-            rules={enrichRules(buyRules, buyAttrs)}
+            rules={enrichRules(buyRules, buyAttrs, tStr)}
             ruleType="buy_rules"
           />
         )}

@@ -7,6 +7,8 @@ import {
 } from "@/components/organisms"
 import { PRODUCT_LIMIT } from "@/const"
 import { listProductsWithSort } from "@/lib/data/products"
+import { getProductPromotions } from "@/lib/data/promotions"
+import type { ProductPromotion } from "@/lib/data/promotions"
 
 export const ProductListing = async ({
   category_id,
@@ -39,6 +41,17 @@ export const ProductListing = async ({
 
   const pages = Math.ceil(totalCount / PRODUCT_LIMIT) || 1
 
+  const promotionResults = await Promise.all(
+    products.map((p) =>
+      getProductPromotions(p.id).catch(() => ({ promotions: [] }))
+    )
+  )
+  const promotionsMap: Record<string, ProductPromotion | null> = {}
+  products.forEach((p, i) => {
+    const list = promotionResults[i]?.promotions ?? []
+    promotionsMap[p.id] = list.length > 0 ? list[0] : null
+  })
+
   return (
     <div className="py-4">
       <ProductListingHeader total={totalCount} />
@@ -49,7 +62,7 @@ export const ProductListing = async ({
         {showSidebar && <ProductSidebar />}
         <section className={showSidebar ? "col-span-3" : "col-span-4"}>
           <div className="grid grid-cols-1 min-[425px]:grid-cols-2 lg:grid-cols-3 min-[1440px]:grid-cols-4 gap-4">
-            <ProductsList products={products} />
+            <ProductsList products={products} promotionsMap={promotionsMap} />
           </div>
           <ProductsPagination pages={pages} />
         </section>

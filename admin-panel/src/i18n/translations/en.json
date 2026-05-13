@@ -2234,6 +2234,7 @@
         "sellerId": "Seller ID",
         "discount": "Discount",
         "status": "Status",
+        "products": "Products",
         "actions": "Actions"
       },
       "actions": {

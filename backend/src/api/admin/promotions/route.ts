@@ -67,7 +67,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 
     let promotions = (await promotionService.listPromotions(
       { id: promotionIds },
-      { relations: ["application_method"] }
+      { relations: ["application_method", "application_method.target_rules"] }
     )) as PromotionWithMeta[]
 
     // Post-filter by metadata.approval_status on the already-bounded result set.
@@ -86,7 +86,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 
   const scanned = (await promotionService.listPromotions(
     {},
-    { relations: ["application_method"], take: SCAN_WINDOW, skip: parsedOffset }
+    { relations: ["application_method", "application_method.target_rules"], take: SCAN_WINDOW, skip: parsedOffset, order: { created_at: "DESC" } }
   )) as PromotionWithMeta[]
 
   const filtered = status

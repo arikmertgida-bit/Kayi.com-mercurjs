@@ -24,7 +24,7 @@ export const GET = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) 
   }
 
   const promotion = await promotionService.retrievePromotion(id, {
-    relations: ["application_method", "application_method.buy_rules"],
+    relations: ["application_method", "application_method.buy_rules", "application_method.buy_rules.values"],
   })
 
   const buyRules = promotion.application_method?.buy_rules ?? []

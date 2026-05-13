@@ -1,6 +1,7 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework"
 import { ContainerRegistrationKeys, Modules, PromotionStatus } from "@medusajs/framework/utils"
 import { IEventBusModuleService, IPromotionModuleService } from "@medusajs/types"
+import sellerPromotion from "@mercurjs/b2c-core/links/seller-promotion"
 import { PromotionWithMeta } from "../../../../vendor/shared/promotion-types.js"
 
 const SELLER_MODULE = "seller"
@@ -54,29 +55,24 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     return res.status(404).json({ message: "Promosyon bulunamadı." })
   }
 
-  // Preserve existing metadata and set approval_status = "approved"
-  const existingMeta =
-    typeof promotion.metadata === "object" && promotion.metadata !== null
-      ? promotion.metadata
-      : {}
-
-  const updatedMeta: Record<string, unknown> = {
-    ...existingMeta,
-    approval_status: "approved",
-  }
-
   // Activate the promotion at the MedusaJS level so that computeActions()
   // and the checkout guard both agree on its eligibility.
+  // NOTE: The promotion table has no metadata column — status is the source of truth.
+  //   inactive = pending, active = approved, draft = rejected.
   const updated = (await promotionService.updatePromotions(
-    Object.assign({ id }, { status: PromotionStatus.ACTIVE, metadata: updatedMeta })
+    { id, status: PromotionStatus.ACTIVE }
   )) as PromotionWithMeta
 
-  // If trust_level: "trusted" is requested, flip the seller's auto_publish flag so
-  // subsequent promotions from this seller are approved immediately.
+  // Resolve the owning seller_id from the seller_promotion link table.
+  // Cannot use promotion.metadata because the table has no metadata column.
+  const linkQuery = req.scope.resolve(ContainerRegistrationKeys.QUERY)
+  const { data: linkRows } = await linkQuery.graph({
+    entity: sellerPromotion.entryPoint,
+    fields: ["seller_id"],
+    filters: { promotion_id: id, deleted_at: { $eq: null } },
+  })
   const sellerId =
-    typeof promotion.metadata?.seller_id === "string"
-      ? promotion.metadata.seller_id
-      : null
+    (linkRows[0] as { seller_id?: string } | undefined)?.seller_id ?? null
 
   if (body?.trust_level === "trusted" && sellerId) {
     try {

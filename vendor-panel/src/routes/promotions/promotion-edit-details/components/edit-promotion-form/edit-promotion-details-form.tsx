@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { AdminPromotion } from "@medusajs/types"
-import { Button, Input, RadioGroup, Text } from "@medusajs/ui"
+import { Button, Input, RadioGroup, Text, toast } from "@medusajs/ui"
 import { useForm } from "react-hook-form"
 import { Trans, useTranslation } from "react-i18next"
 import * as zod from "zod"
@@ -29,6 +29,10 @@ export const EditPromotionDetailsForm = ({
   const { t } = useTranslation()
   const { handleSuccess } = useRouteModal()
 
+  const isSeller = Boolean(
+    (promotion as unknown as { metadata?: Record<string, unknown> | null }).metadata?.seller_id
+  )
+
   const form = useForm<zod.infer<typeof EditPromotionSchema>>({
     defaultValues: {
       is_automatic: promotion.is_automatic!.toString(),
@@ -43,6 +47,11 @@ export const EditPromotionDetailsForm = ({
   const { mutateAsync, isPending } = useUpdatePromotion(promotion.id)
 
   const handleSubmit = form.handleSubmit(async (data) => {
+    if (data.status === "active") {
+      toast.warning(t("promotions.toasts.cannotSetActive"))
+      return
+    }
+
     await mutateAsync(
       {
         is_automatic: data.is_automatic === "true",
@@ -54,6 +63,9 @@ export const EditPromotionDetailsForm = ({
       },
       {
         onSuccess: () => {
+          if (isSeller) {
+            toast.success(t("promotions.toasts.promotionPendingApproval"))
+          }
           handleSuccess()
         },
       }
@@ -92,10 +104,13 @@ export const EditPromotionDetailsForm = ({
 
                         <RadioGroup.ChoiceBox
                           value={"active"}
+                          disabled={isSeller}
                           label={t("promotions.form.status.active.title")}
-                          description={t(
-                            "promotions.form.status.active.description"
-                          )}
+                          description={
+                            isSeller
+                              ? t("promotions.toasts.cannotSetActive")
+                              : t("promotions.form.status.active.description")
+                          }
                         />
 
                         <RadioGroup.ChoiceBox

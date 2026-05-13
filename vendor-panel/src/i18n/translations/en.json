@@ -2007,7 +2007,8 @@
     "pendingApprovalBanner": "This promotion is awaiting admin approval and cannot be edited until approved.",
     "toasts": {
       "promotionCreateSuccess": "Promotion ({{code}}) was successfully created.",
-      "promotionPendingApproval": "Promotion sent for admin approval. It will be published automatically once approved."
+      "promotionPendingApproval": "Promotion sent for admin approval. It will be published automatically once approved.",
+      "cannotSetActive": "Only administrators can activate promotions, your request has been added to the review queue"
     },
     "create": {},
     "edit": {

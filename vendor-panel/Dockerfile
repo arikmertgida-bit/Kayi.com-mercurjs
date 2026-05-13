@@ -1,3 +1,8 @@
+# syntax=docker/dockerfile:1
+# check=skip=SecretsUsedInArgOrEnv
+# VITE_MEDUSA_PUBLISHABLE_KEY is an intentionally public Vite build-time variable
+# (baked into the client JS bundle). It is NOT a runtime secret.
+
 # ── Stage 1: Build ────────────────────────────────────────────────────────────
 FROM node:22-alpine AS builder
 RUN corepack enable && corepack prepare pnpm@10.33.0 --activate

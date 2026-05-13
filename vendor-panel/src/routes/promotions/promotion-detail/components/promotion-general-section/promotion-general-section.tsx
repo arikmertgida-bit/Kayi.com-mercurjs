@@ -45,6 +45,7 @@ export const PromotionGeneralSection = ({
   promotion,
 }: PromotionGeneralSectionProps) => {
   const { t } = useTranslation()
+  const tStr = t as unknown as (key: string, options?: object) => string
   const prompt = usePrompt()
   const navigate = useNavigate()
   const { mutateAsync } = useDeletePromotion(promotion.id)
@@ -157,8 +158,8 @@ export const PromotionGeneralSection = ({
           {t("promotions.fields.type")}
         </Text>
 
-        <Text size="small" leading="compact" className="text-pretty capitalize">
-          {promotion.type}
+        <Text size="small" leading="compact" className="text-pretty">
+          {tStr(`promotions.form.type.${promotion.type}.title`, { defaultValue: promotion.type ?? "" })}
         </Text>
       </div>
 
@@ -184,8 +185,8 @@ export const PromotionGeneralSection = ({
           {t("promotions.fields.allocation")}
         </Text>
 
-        <Text size="small" leading="compact" className="text-pretty capitalize">
-          {promotion.application_method?.allocation!}
+        <Text size="small" leading="compact" className="text-pretty">
+          {tStr(`promotions.form.allocation.${promotion.application_method?.allocation}.title`, { defaultValue: promotion.application_method?.allocation ?? "" })}
         </Text>
       </div>
     </Container>

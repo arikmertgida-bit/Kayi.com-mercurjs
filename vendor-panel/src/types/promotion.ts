@@ -4,6 +4,7 @@ export interface ExtendedPromotionRuleValue {
   id?: string
   value?: string
   label?: string
+  thumbnail?: string
 }
 
 export interface ExtendedPromotionRule extends Omit<HttpTypes.AdminPromotionRule, 'values'> {
