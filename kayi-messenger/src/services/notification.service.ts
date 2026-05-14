@@ -1,4 +1,5 @@
 import { Server as SocketServer } from "socket.io"
+import { MessageType } from "@prisma/client"
 import { MessageService } from "../services/message.service"
 import { resolveDisplayName } from "../lib/user-cache"
 import prisma from "../lib/prisma"
@@ -59,19 +60,26 @@ export const NotificationService = {
   /**
    * Sends a system notification message into a conversation.
    * Used for review events (e.g., "Yeni yorum aldınız").
+   * Optional `options.messageType` overrides the default NOTIFICATION type.
+   * Optional `options.metadata` attaches structured data (e.g. promotion payload).
    */
   async sendSystemMessage(
     io: SocketServer,
     conversationId: string,
     senderId: string,
-    content: string
+    content: string,
+    options?: {
+      messageType?: MessageType
+      metadata?: Record<string, unknown>
+    }
   ) {
     const message = await MessageService.create({
       conversationId,
       senderId,
       senderType: "ADMIN",
       content,
-      messageType: "NOTIFICATION",
+      messageType: options?.messageType ?? "NOTIFICATION",
+      ...(options?.metadata !== undefined ? { metadata: options.metadata } : {}),
     })
 
     io.to(`conversation:${conversationId}`).emit("message_received", message)

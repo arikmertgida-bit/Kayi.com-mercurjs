@@ -11,6 +11,7 @@ import { ThreadListItem } from "./components/ThreadListItem"
 import { ProductContextCard } from "./components/ProductContextCard"
 import { VendorContextCard } from "./components/VendorContextCard"
 import { ChatHeader } from "./components/ChatHeader"
+import { PromotionMessageCard } from "./PromotionMessageCard"
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -437,16 +438,38 @@ export function MessengerInbox({
               messages.map((msg: Message, idx: number) => {
                 const isMine = msg.senderId === currentUserId
                 const isNotification = msg.messageType === "NOTIFICATION"
+                const isPromotion = msg.messageType === "PROMOTION"
                 const prevMsg = messages[idx - 1]
                 const nextMsg = messages[idx + 1]
                 const isLastInGroup =
                   nextMsg?.senderId !== msg.senderId ||
                   !nextMsg ||
-                  nextMsg.messageType === "NOTIFICATION"
+                  nextMsg.messageType === "NOTIFICATION" ||
+                  nextMsg.messageType === "PROMOTION"
                 const isFirstInGroup =
                   !prevMsg ||
                   prevMsg.senderId !== msg.senderId ||
-                  prevMsg.messageType === "NOTIFICATION"
+                  prevMsg.messageType === "NOTIFICATION" ||
+                  prevMsg.messageType === "PROMOTION"
+
+                if (isPromotion) {
+                  return (
+                    <div key={msg.id} className="w-full my-3 px-1">
+                      {msg.metadata ? (
+                        <PromotionMessageCard
+                          metadata={msg.metadata as Record<string, unknown>}
+                          fallbackContent={msg.content}
+                        />
+                      ) : (
+                        <div className="flex justify-center">
+                          <span className="text-xs text-gray-400 bg-gray-100 rounded-full px-3 py-1">
+                            {msg.content}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )
+                }
 
                 if (isNotification) {
                   return (

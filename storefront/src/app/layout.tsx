@@ -16,6 +16,7 @@ const funnelDisplay = Funnel_Display({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600"],
   display: "swap",
+  preload: false,
   fallback: ["system-ui", "sans-serif"],
 })
 

@@ -77,6 +77,11 @@ export const POST = async (req: AuthenticatedMedusaRequest, res: MedusaResponse)
     })
   }
 
+  // Adım 7: Başlangıç tarihi geçmişte olamaz.
+  if (body.starts_at && new Date(body.starts_at) < new Date()) {
+    return res.status(400).json({ message: "Başlangıç tarihi geçmişte olamaz." })
+  }
+
   const namespacedIdentifier = buildNamespacedIdentifier(body.campaign_identifier, seller.id)
   const baseDto: CreateCampaignDTO = {
     name: body.name,

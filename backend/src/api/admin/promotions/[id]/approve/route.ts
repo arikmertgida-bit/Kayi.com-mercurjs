@@ -55,10 +55,16 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     return res.status(404).json({ message: "Promosyon bulunamadı." })
   }
 
+  // Idempotency guard: already-active promotions must return 409 so that
+  // a double-click or retry does not re-fire the seller.promotion_approved event
+  // and trigger a duplicate broadcast to all past customers.
+  if (promotion.status === PromotionStatus.ACTIVE) {
+    return res.status(409).json({ message: "Bu promosyon zaten onaylanmış." })
+  }
+
   // Activate the promotion at the MedusaJS level so that computeActions()
   // and the checkout guard both agree on its eligibility.
-  // NOTE: The promotion table has no metadata column — status is the source of truth.
-  //   inactive = pending, active = approved, draft = rejected.
+  // NOTE: Status convention — inactive = pending, active = approved, draft = rejected.
   const updated = (await promotionService.updatePromotions(
     { id, status: PromotionStatus.ACTIVE }
   )) as PromotionWithMeta

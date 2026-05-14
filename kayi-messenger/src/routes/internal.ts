@@ -1,8 +1,9 @@
 import { Router, Request, Response } from "express"
 import { z } from "zod"
 import { Server as SocketServer } from "socket.io"
-import { UserType, ConversationType } from "@prisma/client"
+import { UserType, ConversationType, MessageType } from "@prisma/client"
 import { ConversationService } from "../services/conversation.service"
+import { MessageService } from "../services/message.service"
 import { NotificationService } from "../services/notification.service"
 
 if (!process.env.MESSENGER_INTERNAL_SECRET) {
@@ -21,13 +22,15 @@ const notifySchema = z.object({
   targetUserId: z.string().min(1, "targetUserId is required"),
   targetUserType: userTypeEnum,
   senderName: z.string().max(100).optional(),
-  preview: z.string().min(1, "preview is required").max(200),
+  preview: z.string().min(1, "preview is required").max(1000),
   conversationId: z.string().optional(),
   sourceUserId: z.string().optional(),
   sourceUserType: userTypeEnum.optional(),
   subject: z.string().max(255).optional(),
   conversationType: z.enum(["DIRECT", "ADMIN_SUPPORT"]).optional(),
   notificationType: z.string().min(1).max(100).optional(),
+  messageType: z.nativeEnum(MessageType).optional(),
+  metadata: z.record(z.unknown()).optional(),
 })
 
 /**
@@ -81,6 +84,8 @@ export function createInternalRouter(io: SocketServer): Router {
       subject,
       conversationType,
       notificationType,
+      messageType,
+      metadata,
     } = parsed.data
 
     // Always emit real-time notification to user room
@@ -98,7 +103,8 @@ export function createInternalRouter(io: SocketServer): Router {
           io,
           conversationId,
           "system",
-          preview
+          preview,
+          { messageType, metadata }
         )
       } catch (err) {
         // Non-critical — notification already sent via socket
@@ -119,7 +125,8 @@ export function createInternalRouter(io: SocketServer): Router {
           io,
           conv.id,
           "system",
-          preview
+          preview,
+          { messageType, metadata }
         )
       } catch (err) {
         console.warn("[internal/notify] Could not auto-create conversation:", err)
@@ -127,6 +134,28 @@ export function createInternalRouter(io: SocketServer): Router {
     }
 
     res.json({ sent: true })
+  })
+
+  /**
+   * POST /api/internal/delete-promotion-messages
+   *
+   * Hard-deletes all PROMOTION-type messages for the given promotion_id.
+   * Called by the backend when a vendor deletes a promotion so customers
+   * no longer see expired/invalid promotion cards in their inbox.
+   *
+   * Body:
+   *   promotion_id — the Medusa promotion ID embedded in message metadata
+   */
+  router.post("/delete-promotion-messages", async (req: Request, res: Response) => {
+    const schema = z.object({ promotion_id: z.string().min(1) })
+    const parsed = schema.safeParse(req.body)
+    if (!parsed.success) {
+      res.status(400).json({ message: parsed.error.errors[0].message })
+      return
+    }
+
+    const deleted = await MessageService.deleteByPromotionId(parsed.data.promotion_id)
+    res.json({ deleted })
   })
 
   return router

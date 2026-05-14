@@ -350,10 +350,33 @@ export function MessengerVendorInbox({ sellerId: _sellerId }: MessengerVendorInb
                 const isFirstInGroup = !prevMsg || prevMsg.senderId !== msg.senderId || prevMsg.messageType === "NOTIFICATION"
 
                 if (isNotification) {
+                  const hasUrl = /https?:\/\//.test(msg.content)
+                  const renderContent = (): React.ReactNode => {
+                    if (!hasUrl) return msg.content
+                    const urlRegex = /https?:\/\/[^\s]+/g
+                    const parts = msg.content.split(urlRegex)
+                    const urls = msg.content.match(urlRegex) ?? []
+                    return parts.map((part, i) => (
+                      <span key={i}>
+                        {part}
+                        {urls[i] && (
+                          <a
+                            href={urls[i]}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline text-ui-fg-interactive hover:opacity-80"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            Promosyonu Görüntüle →
+                          </a>
+                        )}
+                      </span>
+                    ))
+                  }
                   return (
-                    <div key={msg.id} className="flex justify-center">
-                      <span className="text-xs text-ui-fg-muted bg-ui-bg-base border border-ui-border-base rounded-full px-3 py-1">
-                        {msg.content}
+                    <div key={msg.id} className="flex justify-center my-1">
+                      <span className={`text-xs text-ui-fg-muted bg-ui-bg-base border border-ui-border-base ${hasUrl ? "rounded-xl px-4 py-2 max-w-[85%] text-center block" : "rounded-full px-3 py-1"}`}>
+                        {renderContent()}
                       </span>
                     </div>
                   )

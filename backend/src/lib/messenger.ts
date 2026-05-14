@@ -35,6 +35,39 @@ interface NotifyParams {
   conversationType?: "DIRECT" | "ADMIN_SUPPORT"
   /** Notification type emitted to the client socket (e.g. "review_notification", "new_message") */
   notificationType?: string
+  /** Message type to persist (default: NOTIFICATION). Use PROMOTION for promotion broadcasts. */
+  messageType?: "TEXT" | "IMAGE" | "NOTIFICATION" | "PROMOTION"
+  /** Structured payload attached to the persisted message (e.g. promotion card data). */
+  metadata?: Record<string, unknown>
+}
+
+/**
+ * Deletes all PROMOTION-type messages linked to the given promotion_id.
+ * Called when a promotion is deleted so users no longer see expired/invalid promotions.
+ * Failures are caught and logged — never throws.
+ */
+export async function deletePromotionMessages(promotionId: string): Promise<void> {
+  try {
+    const response = await fetch(
+      `${MESSENGER_URL}/api/internal/delete-promotion-messages`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-internal-secret": INTERNAL_SECRET,
+        },
+        body: JSON.stringify({ promotion_id: promotionId }),
+        signal: AbortSignal.timeout(5000),
+      }
+    )
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => "")
+      console.warn(`[messenger] delete-promotion-messages failed (${response.status}): ${text}`)
+    }
+  } catch (err) {
+    console.warn("[messenger] delete-promotion-messages error:", (err as Error).message)
+  }
 }
 
 /**

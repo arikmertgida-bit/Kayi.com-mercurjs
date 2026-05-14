@@ -1,6 +1,6 @@
 import { AuthenticatedMedusaRequest, MedusaResponse } from "@medusajs/framework"
 import { ContainerRegistrationKeys, Modules, PromotionStatus } from "@medusajs/framework/utils"
-import { CreatePromotionDTO, IPromotionModuleService, PromotionDTO } from "@medusajs/types"
+import { CreatePromotionDTO, IEventBusModuleService, IPromotionModuleService, PromotionDTO } from "@medusajs/types"
 import { fetchSellerByAuthActorId } from "@mercurjs/b2c-core/shared/infra/http/utils/seller"
 import sellerPromotion from "@mercurjs/b2c-core/links/seller-promotion"
 import {
@@ -99,6 +99,25 @@ export const POST = async (req: AuthenticatedMedusaRequest, res: MedusaResponse)
   } catch (linkError) {
     await promotionService.deletePromotions(promotion.id).catch(() => {})
     throw linkError
+  }
+
+  // Trusted vendor (autoPublish = true): the promotion is already ACTIVE, so
+  // emit the broadcast event immediately. Standard vendors go through admin
+  // approval, which fires the same event when approved.
+  if (autoPublish) {
+    try {
+      const eventBus = req.scope.resolve<IEventBusModuleService>(Modules.EVENT_BUS)
+      await eventBus.emit({
+        name: "seller.promotion_approved",
+        data: {
+          promotion_id: promotion.id,
+          seller_id: seller.id,
+          promotion_code: promotion.code ?? "",
+        },
+      })
+    } catch {
+      // Non-fatal: broadcast failure does not roll back the promotion creation.
+    }
   }
 
   return res.status(201).json({

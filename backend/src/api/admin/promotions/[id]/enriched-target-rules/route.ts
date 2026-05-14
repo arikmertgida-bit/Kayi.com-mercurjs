@@ -1,38 +1,25 @@
-import { AuthenticatedMedusaRequest, MedusaResponse } from "@medusajs/framework"
+import { MedusaRequest, MedusaResponse } from "@medusajs/framework"
 import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
 import { IPromotionModuleService } from "@medusajs/types"
-import { fetchSellerByAuthActorId } from "@mercurjs/b2c-core/shared/infra/http/utils/seller"
-import sellerPromotion from "@mercurjs/b2c-core/links/seller-promotion"
 
-/** Runtime shape of a product row from query.graph */
 type ProductRow = { id: string; title: string; thumbnail: string | null }
 
-export const GET = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) => {
-  const seller = await fetchSellerByAuthActorId(req.auth_context.actor_id, req.scope)
-
-  const promotionService = req.scope.resolve<IPromotionModuleService>(
-    Modules.PROMOTION
-  )
-
+export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   const { id } = req.params
 
+  const promotionService = req.scope.resolve<IPromotionModuleService>(Modules.PROMOTION)
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
-  const { data: ownerLinks } = await query.graph({
-    entity: sellerPromotion.entryPoint,
-    fields: ["promotion_id"],
-    filters: { seller_id: seller.id, promotion_id: id, deleted_at: { $eq: null } },
-  })
-  if (ownerLinks.length === 0) {
-    return res.status(403).json({ message: "Bu promosyon size ait değil." })
-  }
 
   const promotion = await promotionService.retrievePromotion(id, {
-    relations: ["application_method", "application_method.target_rules", "application_method.target_rules.values"],
+    relations: [
+      "application_method",
+      "application_method.target_rules",
+      "application_method.target_rules.values",
+    ],
   })
 
   const targetRules = promotion.application_method?.target_rules ?? []
 
-  // Collect all product IDs from product_id attribute rules.
   const productIds: string[] = []
   for (const rule of targetRules) {
     if (rule.attribute === "items.product.id") {
@@ -44,7 +31,6 @@ export const GET = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) 
     }
   }
 
-  // Batch-fetch product title + thumbnail when products are referenced.
   const productMap = new Map<string, { title: string; thumbnail: string | null }>()
   if (productIds.length > 0) {
     const { data: productRows } = await query.graph({
@@ -57,7 +43,6 @@ export const GET = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) 
     }
   }
 
-  // Return enriched target rules: product values get a populated `label` and `thumbnail`.
   const enrichedRules = targetRules.map((rule) => ({
     ...rule,
     values: (rule.values ?? []).map((v) => {
@@ -67,5 +52,5 @@ export const GET = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) 
     }),
   }))
 
-  return res.set("Cache-Control", "no-store").json({ rules: enrichedRules })
+  return res.set("Cache-Control", "no-cache, no-store, must-revalidate").json({ rules: enrichedRules })
 }

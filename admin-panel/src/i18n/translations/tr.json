@@ -2261,6 +2261,13 @@
       "list": {
         "noRecordsMessage": "Promosyonun uygulanacağı ürünleri kısıtlamak için bir şart ekleyin."
       }
+    },
+    "rule": {
+      "attributeLabels": {
+        "customer_groups_id": "Müşteri Grupları",
+        "shipping_address_country_code": "Teslimat Ülkesi",
+        "items_product_id": "Ürünler"
+      }
     }
   },
   "campaigns": {

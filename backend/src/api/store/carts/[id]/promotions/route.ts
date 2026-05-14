@@ -66,8 +66,9 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
     })
   }
 
-  // Normalize every input code to uppercase for case-insensitive matching
-  const inputCodes = body.promo_codes.map((c) => String(c).toUpperCase())
+  // Preserve raw codes for logging; resolution logic below handles both
+  // full namespaced codes (KAYI-sel_xxx-CODE) and short user codes (CODE).
+  const rawCodes = body.promo_codes.map((c) => String(c).trim())
 
   // Step 1: Fetch cart items with their product IDs
   const { data: cartRows } = await query.graph({
@@ -100,31 +101,45 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
     }
   }
 
-  // Step 3: For each input code, try seller-namespaced exact match, then platform fallback.
-  // Exact match allows B-tree index usage on the `code` column — no ILIKE, no full table scan.
+  // Step 3: For each input code, collect ALL matching promotions across all sellers.
+  // - Full namespaced code (KAYI-sel_xxx-CODE): matched directly, no uppercase transform
+  //   (seller ID segment is case-sensitive in the DB).
+  // - Short code (CODE): uppercased, tried against every seller whose products are in
+  //   the cart so that a code shared by multiple sellers applies to each independently.
   const matchResults = await Promise.all(
-    inputCodes.map(async (inputCode): Promise<PromotionWithMeta | null> => {
-      // Try each seller: KAYI-{sellerId}-{CODE}
+    rawCodes.map(async (rawCode): Promise<PromotionWithMeta[]> => {
+      // Customer pasted a full namespaced code → direct exact match
+      if (/^KAYI-/i.test(rawCode)) {
+        const direct = (await promotionService.listPromotions(
+          { code: rawCode, status: ["active"] },
+          { take: 1 }
+        )) as PromotionWithMeta[]
+        return direct[0] ? [direct[0]] : []
+      }
+
+      // Short code: uppercase, then scan ALL sellers in cart (collect every match)
+      const upperCode = rawCode.toUpperCase()
+      const found: PromotionWithMeta[] = []
       for (const sellerId of sellerIds) {
-        const namespacedCode = `KAYI-${sellerId}-${inputCode}`
+        const namespacedCode = `KAYI-${sellerId}-${upperCode}`
         const results = (await promotionService.listPromotions(
           { code: namespacedCode, status: ["active"] },
           { take: 1 }
         )) as PromotionWithMeta[]
-        if (results[0]) return results[0]
+        if (results[0]) found.push(results[0])
       }
+      if (found.length > 0) return found
 
       // Platform-level fallback: exact match without namespace
-      // (applies to platform-wide promotions that have no seller_id in metadata)
       const fallback = (await promotionService.listPromotions(
-        { code: inputCode, status: ["active"] },
+        { code: upperCode, status: ["active"] },
         { take: 1 }
       )) as PromotionWithMeta[]
-      return fallback[0] ?? null
+      return fallback[0] ? [fallback[0]] : []
     })
   )
 
-  const matched = matchResults.filter((p): p is PromotionWithMeta => p !== null)
+  const matched = matchResults.flat().filter((p): p is PromotionWithMeta => p !== null)
 
   // Approval gate: reject promotions that are pending or rejected.
   // Platform promotions (no metadata.approval_status) pass through unconditionally.
@@ -153,7 +168,7 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
 
   if (isolated.length === 0) {
     logger.warn(
-      `[store/carts/promotions] No approved promotions matched for codes: ${inputCodes.join(", ")}`
+      `[store/carts/promotions] No approved promotions matched for codes: ${rawCodes.join(", ")}`
     )
     return res.status(404).json({
       message: "Girilen kupon kodları bulunamadı veya henüz onaylanmamış.",

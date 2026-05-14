@@ -189,6 +189,21 @@ export const PromotionGeneralSection = ({
           {tStr(`promotions.form.allocation.${promotion.application_method?.allocation}.title`, { defaultValue: promotion.application_method?.allocation ?? "" })}
         </Text>
       </div>
+
+      {(promotion as PromotionWithMeta).metadata?.broadcast_recipient_count != null && (
+        <div className="text-ui-fg-subtle grid grid-cols-2 items-start px-6 py-4">
+          <Text size="small" weight="plus" leading="compact">
+            {t("promotions.fields.broadcastRecipients")}
+          </Text>
+
+          <Text size="small" leading="compact" className="text-pretty">
+            {tStr("promotions.broadcastRecipientsCount", {
+              count: (promotion as PromotionWithMeta).metadata?.broadcast_recipient_count as number,
+              defaultValue: `${(promotion as PromotionWithMeta).metadata?.broadcast_recipient_count} müşteri`,
+            })}
+          </Text>
+        </div>
+      )}
     </Container>
   )
 }

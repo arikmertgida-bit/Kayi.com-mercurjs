@@ -1977,6 +1977,7 @@
       "campaign": "Kampanya",
       "method": "Yöntem",
       "allocation": "Dağıtım",
+      "broadcastRecipients": "Bildirilen Müşteri Sayısı",
       "addCondition": "Şart ekle",
       "clearAll": "Tümünü Temizle",
       "amount": {
@@ -2009,6 +2010,7 @@
       "promotionPendingApproval": "Promosyon admin onayına gönderildi. Yönetici onayından sonra otomatik olarak yayınlanacaktır.",
       "cannotSetActive": "Bu işlemi sadece yönetici yapabilir, talebiniz inceleme sırasına alınmıştır"
     },
+    "broadcastRecipientsCount": "{{count}} müşteriye iletildi",
     "create": {},
     "edit": {
       "title": "Promosyon Detaylarını Düzenle",
@@ -2242,6 +2244,7 @@
         "header": "Kampanya Bütçesini Düzenle"
       }
     },
+    "softCapWarning": "Operasyonel yoğunluk nedeniyle kullanım sayısında %5 sapma olabilir.",
     "promotions": {
       "remove": {
         "title": "Promosyonu kampanyadan kaldır",
@@ -2938,7 +2941,8 @@
     "disabled": "Devre Dışı",
     "inactive": "Pasif",
     "draft": "Taslak",
-    "pendingApproval": "Onay Bekliyor"
+    "pendingApproval": "Onay Bekliyor",
+    "rejected": "Reddedildi"
   },
   "labels": {
     "productVariant": "Ürün Varyantı",

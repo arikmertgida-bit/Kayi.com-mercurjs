@@ -60,6 +60,7 @@ const Content = ({ stackedModalOpen, children }: ContentProps) => {
 
   return (
     <FocusModal.Content
+      aria-describedby={undefined}
       onEscapeKeyDown={
         shouldPreventClose
           ? (e) => {

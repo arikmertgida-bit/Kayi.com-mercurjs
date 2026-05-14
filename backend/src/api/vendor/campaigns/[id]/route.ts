@@ -81,6 +81,11 @@ export const PUT = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) 
 
   const body = req.body as UpdateCampaignBody
 
+  // Başlangıç tarihi geçmişte olamaz.
+  if (body.starts_at && new Date(body.starts_at) < new Date()) {
+    return res.status(400).json({ message: "Başlangıç tarihi geçmişte olamaz." })
+  }
+
   const baseDto: UpdateCampaignDTO = { id }
   if (body.name !== undefined) baseDto.name = body.name
   if (body.description !== undefined) baseDto.description = body.description

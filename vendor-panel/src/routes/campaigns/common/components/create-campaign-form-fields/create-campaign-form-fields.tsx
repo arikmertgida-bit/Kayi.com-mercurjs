@@ -357,6 +357,9 @@ export const CreateCampaignFormFields = <T extends CampaignFormFields | WithNest
                   )}
                 </Form.Control>
                 <Form.ErrorMessage />
+                <Text size="xsmall" className="text-ui-fg-muted mt-1">
+                  {t("campaigns.softCapWarning")}
+                </Text>
               </Form.Item>
             )
           }}

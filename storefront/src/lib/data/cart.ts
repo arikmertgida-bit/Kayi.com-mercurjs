@@ -17,11 +17,6 @@ import {
 import { getRegion } from "./regions"
 import { parseVariantIdsFromError } from "@/lib/helpers/parse-variant-error"
 
-type CartPromotion = { code: string; id: string }
-type StoreCartWithPromotions = HttpTypes.StoreCart & {
-  promotions?: CartPromotion[]
-}
-
 /**
  * Retrieves a cart by its ID. If no ID is provided, it will use the cart ID from the cookies.
  * @param cartId - optional - The ID of the cart to retrieve.
@@ -294,21 +289,23 @@ export async function applyPromotions(codes: string[]) {
     ...(await getAuthHeaders()),
   }
 
-  return sdk.store.cart
-    .update(cartId, { promo_codes: codes }, {}, headers)
-    .then(async ({ cart }) => {
-      const cartCacheTag = await getCacheTag("carts")
-      revalidateTag(cartCacheTag)
-      const cartWithPromotions = cart as StoreCartWithPromotions
-      // Backend resolves vendor codes to namespaced DB codes, so we cannot
-      // compare promotion.code directly against the user-entered codes.
-      // Success is defined as: at least one promotion is now on the cart.
-      const applied =
-        cartWithPromotions.promotions != null &&
-        (cartWithPromotions.promotions as CartPromotion[]).length > 0
-      return applied
-    })
-    .catch(medusaError)
+  // Use the custom /store/carts/:id/promotions endpoint which resolves
+  // short vendor codes ("SUMMER16") to their namespaced DB counterparts
+  // ("KAYI-sel_xxx-SUMMER16") before applying. Medusa's built-in
+  // sdk.store.cart.update does not perform this resolution.
+  const res = await fetchQuery(`/store/carts/${cartId}/promotions`, {
+    method: "POST",
+    headers,
+    body: { promo_codes: codes },
+  })
+
+  if (res.ok) {
+    const cartCacheTag = await getCacheTag("carts")
+    revalidateTag(cartCacheTag)
+    return true
+  }
+
+  return false
 }
 
 export async function removeShippingMethod(shippingMethodId: string) {

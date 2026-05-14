@@ -1977,6 +1977,7 @@
       "campaign": "Campaign",
       "method": "Method",
       "allocation": "Allocation",
+      "broadcastRecipients": "Broadcast Recipients",
       "addCondition": "Add condition",
       "clearAll": "Clear all",
       "amount": {
@@ -2010,6 +2011,7 @@
       "promotionPendingApproval": "Promotion sent for admin approval. It will be published automatically once approved.",
       "cannotSetActive": "Only administrators can activate promotions, your request has been added to the review queue"
     },
+    "broadcastRecipientsCount": "Sent to {{count}} customers",
     "create": {},
     "edit": {
       "title": "Edit Promotion Details",
@@ -2255,6 +2257,7 @@
         "noRecordsMessage": "There are no promotions in the campaign."
       }
     },
+    "softCapWarning": "Due to operational load, usage count may vary by up to 5%.",
     "deleteCampaignWarning": "You are about to delete the campaign {{name}}. This action cannot be undone.",
     "totalSpend": "<0>{{amount}}</0> <1>{{currency}}</1>"
   },
@@ -2925,7 +2928,8 @@
     "draft": "Draft",
     "enabled": "Enabled",
     "disabled": "Disabled",
-    "pendingApproval": "Pending Approval"
+    "pendingApproval": "Pending Approval",
+    "rejected": "Rejected"
   },
   "labels": {
     "productVariant": "Product Variant",

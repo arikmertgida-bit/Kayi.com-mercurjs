@@ -160,6 +160,7 @@ services:
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_placeholder}
       MESSENGER_INTERNAL_URL: http://kayi-messenger:4000
       MESSENGER_INTERNAL_SECRET: ${MESSENGER_INTERNAL_SECRET:-kayi-internal-secret}
+      VENDOR_PANEL_URL: ${VENDOR_PANEL_URL:-http://localhost:7001}
       DEV_REVIEW_BYPASS_EMAIL: ${DEV_REVIEW_BYPASS_EMAIL:-cyclo@gmail.com}
       DEV_REVIEW_BYPASS_ORDER_ID: ${DEV_REVIEW_BYPASS_ORDER_ID:-__dev_bypass_order__}
       NODE_OPTIONS: "--max-old-space-size=512"
@@ -214,6 +215,7 @@ services:
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_placeholder}
       MESSENGER_INTERNAL_URL: http://kayi-messenger:4000
       MESSENGER_INTERNAL_SECRET: ${MESSENGER_INTERNAL_SECRET:-kayi-internal-secret}
+      VENDOR_PANEL_URL: ${VENDOR_PANEL_URL:-http://localhost:7001}
       DEV_REVIEW_BYPASS_EMAIL: ${DEV_REVIEW_BYPASS_EMAIL:-cyclo@gmail.com}
       DEV_REVIEW_BYPASS_ORDER_ID: ${DEV_REVIEW_BYPASS_ORDER_ID:-__dev_bypass_order__}
       NODE_OPTIONS: "--max-old-space-size=512"

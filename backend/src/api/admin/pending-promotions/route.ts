@@ -96,12 +96,69 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const count = filtered.length
   const paginated = filtered.slice(parsedOffset, parsedOffset + parsedLimit)
 
-  // Augment each promotion with its owning seller_id from the link table.
-  const promotions = paginated.map((p) => ({
-    ...p,
-    seller_id: promotionToSellerMap.get(p.id) ?? null,
-    approval_status: toApprovalStatus(p.status),
-  }))
+  // Collect seller IDs and product IDs for enrichment.
+  const sellerIds = [...new Set(
+    paginated.map((p) => promotionToSellerMap.get(p.id)).filter((id): id is string => !!id)
+  )]
+  const productIds: string[] = []
+  for (const p of paginated) {
+    for (const tr of p.application_method?.target_rules ?? []) {
+      if (tr.attribute === "items.product.id") {
+        for (const v of tr.values ?? []) {
+          if (typeof v.value === "string") productIds.push(v.value)
+        }
+      }
+    }
+  }
+
+  // Batch-fetch seller names.
+  const sellerNameMap = new Map<string, string>()
+  if (sellerIds.length > 0) {
+    const { data: sellerRows } = await query.graph({
+      entity: "seller",
+      fields: ["id", "name"],
+      filters: { id: sellerIds },
+    })
+    for (const s of sellerRows as { id: string; name: string }[]) {
+      sellerNameMap.set(s.id, s.name)
+    }
+  }
+
+  // Batch-fetch product titles.
+  const productTitleMap = new Map<string, string>()
+  if (productIds.length > 0) {
+    const { data: productRows } = await query.graph({
+      entity: "product",
+      fields: ["id", "title"],
+      filters: { id: productIds },
+    })
+    for (const p of productRows as { id: string; title: string }[]) {
+      productTitleMap.set(p.id, p.title)
+    }
+  }
+
+  // Augment each promotion with seller info, approval status, and enriched product labels.
+  const promotions = paginated.map((p) => {
+    const sid = promotionToSellerMap.get(p.id) ?? null
+    return {
+      ...p,
+      seller_id: sid,
+      seller_name: sid ? (sellerNameMap.get(sid) ?? null) : null,
+      approval_status: toApprovalStatus(p.status),
+      application_method: p.application_method
+        ? {
+            ...p.application_method,
+            target_rules: (p.application_method.target_rules ?? []).map((tr) => ({
+              ...tr,
+              values: (tr.values ?? []).map((v) => {
+                const title = typeof v.value === "string" ? productTitleMap.get(v.value) : undefined
+                return title ? { ...v, label: title } : v
+              }),
+            })),
+          }
+        : p.application_method,
+    }
+  })
 
   return res.json({ promotions, count, limit: parsedLimit, offset: parsedOffset })
 }

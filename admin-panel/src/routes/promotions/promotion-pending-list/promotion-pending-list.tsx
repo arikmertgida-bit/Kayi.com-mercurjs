@@ -191,7 +191,7 @@ export const PromotionPendingList = () => {
                 </Table.Cell>
                 <Table.Cell>
                   <Text className="text-sm">
-                    {promotion.seller_id ?? "—"}
+                    {promotion.seller_name ?? promotion.seller_id ?? "—"}
                   </Text>
                 </Table.Cell>
                 <Table.Cell>
@@ -208,7 +208,7 @@ export const PromotionPendingList = () => {
                 <Table.Cell>
                   <Text className="text-xs text-ui-fg-subtle">
                     {promotion.application_method?.target_rules
-                      ?.flatMap((r) => r.values?.map((v) => v.value) ?? [])
+                      ?.flatMap((r) => r.values?.map((v) => v.label ?? v.value) ?? [])
                       .join(", ") || "—"}
                   </Text>
                 </Table.Cell>

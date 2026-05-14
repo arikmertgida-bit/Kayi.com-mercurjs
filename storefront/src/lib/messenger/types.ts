@@ -2,7 +2,7 @@
 // Keep in sync with Prisma schema
 
 export type UserType = "CUSTOMER" | "SELLER" | "ADMIN"
-export type MessageType = "TEXT" | "IMAGE" | "NOTIFICATION"
+export type MessageType = "TEXT" | "IMAGE" | "NOTIFICATION" | "PROMOTION"
 export type ConversationType = "DIRECT" | "ADMIN_SUPPORT"
 export type ConversationContextType = "PRODUCT_BASED" | "VENDOR_BASED"
 
@@ -26,6 +26,7 @@ export interface Message {
   content: string
   messageType: MessageType
   imageUrl: string | null
+  metadata?: Record<string, unknown> | null
   readAt: string | null
   createdAt: string
   deletedForAll?: boolean

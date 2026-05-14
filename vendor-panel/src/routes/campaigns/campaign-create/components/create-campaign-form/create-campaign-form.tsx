@@ -18,7 +18,13 @@ export const CreateCampaignSchema = zod.object({
   name: zod.string().min(1),
   description: zod.string().optional(),
   campaign_identifier: zod.string().min(1),
-  starts_at: zod.date().nullable(),
+  starts_at: zod
+    .date()
+    .nullable()
+    .refine(
+      (d) => !d || d >= new Date(new Date().setHours(0, 0, 0, 0)),
+      { message: "Başlangıç tarihi geçmişte olamaz." }
+    ),
   ends_at: zod.date().nullable(),
   budget: zod.object({
     limit: zod.number().min(0).nullish(),

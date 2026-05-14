@@ -6,7 +6,17 @@ import {
 } from "@medusajs/types"
 import sellerCampaign from "@mercurjs/b2c-core/links/seller-campaign"
 import { CampaignWithMeta } from "../api/vendor/shared/promotion-types.js"
-import { notifyMessengerUser } from "../lib/messenger.js"
+import { notifyMessengerUser, deletePromotionMessages } from "../lib/messenger.js"
+
+/**
+ * Minimal Redis client interface for duplicate-notification guard.
+ * Resolved from the DI container — if unavailable (dev/test without Redis),
+ * the guard is skipped and the notification is sent anyway (graceful degrade).
+ */
+interface MinimalRedisClient {
+  get(key: string): Promise<string | null>
+  set(key: string, value: string, exMode: "EX", ttl: number): Promise<unknown>
+}
 
 /** Payload shape emitted by campaigns/[id]/route.ts PUT handler and order-promotion-budget-check.ts */
 interface BudgetExhaustedPayload {
@@ -100,6 +110,15 @@ export default async function promotionBudgetExhaustedSubscriber({
         )
         deactivatedCount++
         logger.info(`[budget-exhausted] Deactivated promotion ${promo.id}`)
+
+        // Fire-and-forget: remove the promotion card from all customer inboxes.
+        // Non-blocking — a messenger failure must never roll back the deactivation.
+        deletePromotionMessages(promo.id).catch((err: unknown) =>
+          logger.warn(
+            `[budget-exhausted] Could not delete messenger messages for promotion ${promo.id}: ` +
+              (err instanceof Error ? err.message : String(err))
+          )
+        )
       } catch (err: unknown) {
         logger.warn(
           `[budget-exhausted] Failed to deactivate promotion ${promo.id}: ` +
@@ -135,24 +154,46 @@ export default async function promotionBudgetExhaustedSubscriber({
     )
   }
 
-  // ── Messenger notification (existing logic) ─────────────────────────────────
+  // ── Messenger notification — mutex-guarded to prevent duplicate messages ──────
+  // Under flash-sale conditions multiple "promotion.budget_exhausted" events may
+  // fire nearly simultaneously. Deactivation is idempotent, but notifyMessengerUser
+  // is not — Redis mutex ensures only one notification per campaign per minute.
+  let shouldNotify = true
   try {
-    notifyMessengerUser({
-      targetUserId: targetSellerId,
-      targetUserType: "SELLER",
-      notificationType: "budget_exhausted",
-      preview: "Kampanya bütçeniz tükendi. Kampanyanız otomatik olarak duraklatıldı.",
-      subject: "Kampanya Bütçe Uyarısı",
-    })
+    const redis = container.resolve<MinimalRedisClient>("redisClient")
+    const notifyKey = `budget_exhausted_notify:${campaign_id}`
+    const alreadyNotified = await redis.get(notifyKey)
+    if (alreadyNotified) {
+      shouldNotify = false
+      logger.info(
+        `[budget-exhausted] Duplicate seller notification suppressed for campaign ${campaign_id}`
+      )
+    } else {
+      await redis.set(notifyKey, "1", "EX", 60)
+    }
+  } catch {
+    // Redis unavailable — proceed with notification (graceful degrade).
+  }
 
-    logger.info(
-      `[budget-exhausted] Notification dispatched to seller ${targetSellerId} for campaign ${campaign_id}`
-    )
-  } catch (err: unknown) {
-    logger.warn(
-      "[budget-exhausted] Failed to dispatch budget exhausted notification:",
-      err instanceof Error ? err.message : err
-    )
+  if (shouldNotify) {
+    try {
+      notifyMessengerUser({
+        targetUserId: targetSellerId,
+        targetUserType: "SELLER",
+        notificationType: "budget_exhausted",
+        preview: "Kampanya bütçeniz tükendi. Kampanyanız otomatik olarak duraklatıldı.",
+        subject: "Kampanya Bütçe Uyardısı",
+      })
+
+      logger.info(
+        `[budget-exhausted] Notification dispatched to seller ${targetSellerId} for campaign ${campaign_id}`
+      )
+    } catch (err: unknown) {
+      logger.warn(
+        "[budget-exhausted] Failed to dispatch budget exhausted notification:",
+        err instanceof Error ? err.message : err
+      )
+    }
   }
 }
 

@@ -62,6 +62,7 @@ const Content = forwardRef<
 >(({ className, ...props }, ref) => {
   return (
     <Drawer.Content
+      aria-describedby={undefined}
       ref={ref}
       className={clx(className)}
       overlayProps={{

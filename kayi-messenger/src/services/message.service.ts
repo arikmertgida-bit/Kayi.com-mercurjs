@@ -1,5 +1,5 @@
 import prisma from "../lib/prisma"
-import { MessageType, UserType } from "@prisma/client"
+import { MessageType, UserType, Prisma } from "@prisma/client"
 
 export interface CreateMessageInput {
   conversationId: string
@@ -8,6 +8,7 @@ export interface CreateMessageInput {
   content: string
   messageType?: MessageType
   imageUrl?: string
+  metadata?: Record<string, unknown>
 }
 
 export const MessageService = {
@@ -24,6 +25,7 @@ export const MessageService = {
           content: input.content,
           messageType: input.messageType ?? MessageType.TEXT,
           imageUrl: input.imageUrl,
+          ...(input.metadata !== undefined ? { metadata: input.metadata as Prisma.InputJsonObject } : {}),
         },
       }),
       // Bump conversation updatedAt
@@ -111,5 +113,24 @@ export const MessageService = {
       })
       return prisma.message.findUnique({ where: { id: messageId } })
     }
+  },
+
+  /**
+   * Hard-deletes all PROMOTION-type messages that contain the given promotion_id
+   * in their metadata JSON field. Called when a promotion is deleted so users
+   * no longer see outdated/invalid promotion cards.
+   */
+  async deleteByPromotionId(promotionId: string): Promise<number> {
+    // Prisma 5 PostgreSQL JSONB path filter
+    const result = await prisma.message.deleteMany({
+      where: {
+        messageType: "PROMOTION",
+        metadata: {
+          path: ["promotion_id"],
+          equals: promotionId,
+        },
+      },
+    })
+    return result.count
   },
 }

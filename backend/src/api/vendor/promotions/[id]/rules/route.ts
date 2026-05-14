@@ -32,10 +32,21 @@ export const GET = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) 
 
   const rules = promotion.rules ?? []
 
-  // Collect all customer group IDs referenced by rules with attribute "customer_group_id".
+  // Country code → display name static map (ISO 3166-1 alpha-2).
+  const COUNTRY_DISPLAY_NAMES: Record<string, string> = {
+    tr: "Türkiye", us: "ABD", de: "Almanya", gb: "Birleşik Krallık", fr: "Fransa",
+    nl: "Hollanda", be: "Belçika", at: "Avusturya", it: "İtalya", es: "İspanya",
+    gr: "Yunanistan", ru: "Rusya", pl: "Polonya", se: "İsveç", no: "Norveç",
+    dk: "Danimarka", fi: "Finlandiya", ch: "İsviçre", pt: "Portekiz", ie: "İrlanda",
+    ro: "Romanya", bg: "Bulgaristan", hu: "Macaristan", cz: "Çekya", sk: "Slovakya",
+    hr: "Hırvatistan", si: "Slovenya", az: "Azerbaycan", sa: "Suudi Arabistan",
+    ae: "BAE", kw: "Kuveyt", qa: "Katar", jo: "Ürdün", eg: "Mısır",
+  }
+
+  // Collect all customer group IDs referenced by rules with attribute "customer.groups.id".
   const cgIds: string[] = []
   for (const rule of rules) {
-    if (rule.attribute === "customer_group_id") {
+    if (rule.attribute === "customer.groups.id") {
       for (const v of rule.values ?? []) {
         if (typeof v.value === "string" && v.value.startsWith("cusgroup_")) {
           cgIds.push(v.value)
@@ -57,12 +68,20 @@ export const GET = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) 
     }
   }
 
-  // Return enriched rules: values with a populated `label` for customer groups.
+  // Return enriched rules: values with a populated `label` for customer groups and country codes.
   const enrichedRules = rules.map((rule) => ({
     ...rule,
     values: (rule.values ?? []).map((v) => {
-      const name = typeof v.value === "string" ? cgMap.get(v.value) : undefined
-      return name !== undefined ? { ...v, label: name } : v
+      if (typeof v.value !== "string") return v
+      // Customer group enrichment
+      const cgName = cgMap.get(v.value)
+      if (cgName !== undefined) return { ...v, label: cgName }
+      // Country code enrichment
+      if (rule.attribute === "shipping_address.country_code") {
+        const countryName = COUNTRY_DISPLAY_NAMES[v.value.toLowerCase()]
+        if (countryName) return { ...v, label: countryName }
+      }
+      return v
     }),
   }))
 

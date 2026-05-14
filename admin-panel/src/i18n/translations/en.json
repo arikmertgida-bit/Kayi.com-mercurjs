@@ -2256,6 +2256,13 @@
         "reasonMinLength": "Reason must be at least 5 characters."
       },
       "noRecords": "No pending promotions found."
+    },
+    "rule": {
+      "attributeLabels": {
+        "customer_groups_id": "Customer Groups",
+        "shipping_address_country_code": "Shipping Country",
+        "items_product_id": "Products"
+      }
     }
   },
   "campaigns": {

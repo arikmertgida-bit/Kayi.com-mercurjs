@@ -2,7 +2,7 @@ import { useLoaderData, useParams } from "react-router-dom"
 
 import { TwoColumnPageSkeleton } from "../../../components/common/skeleton"
 import { TwoColumnPage } from "../../../components/layout/pages"
-import { usePromotion, usePromotionRules } from "../../../hooks/api/promotions"
+import { useEnrichedAdminPromotionRules, usePromotion, usePromotionRules } from "../../../hooks/api/promotions"
 import { useExtension } from "../../../providers/extension-provider"
 import { CampaignSection } from "./components/campaign-section"
 import { PromotionConditionsSection } from "./components/promotion-conditions-section"
@@ -26,6 +26,10 @@ export const PromotionDetail = () => {
   const { rules: targetRules } = usePromotionRules(id!, "target_rules", query)
   const { rules: buyRules } = usePromotionRules(id!, "buy_rules", query)
 
+  // Enriched rules for display (with customer group names, country names, product titles + thumbnails).
+  const { rules: enrichedRules } = useEnrichedAdminPromotionRules(id!, "rules")
+  const { rules: enrichedTargetRules } = useEnrichedAdminPromotionRules(id!, "target_rules")
+
   const { getWidgets } = useExtension()
 
   if (isLoading || !promotion) {
@@ -48,13 +52,18 @@ export const PromotionDetail = () => {
     >
       <TwoColumnPage.Main>
         <PromotionGeneralSection promotion={promotion} />
-        <PromotionConditionsSection rules={rules || []} ruleType={"rules"} />
+        <PromotionConditionsSection
+          rules={rules || []}
+          ruleType={"rules"}
+          enrichedRules={enrichedRules.length > 0 ? enrichedRules : undefined}
+        />
         <PromotionConditionsSection
           rules={targetRules || []}
           ruleType={"target_rules"}
           applicationMethodTargetType={
             promotion.application_method?.target_type ?? "items"
           }
+          enrichedRules={enrichedTargetRules.length > 0 ? enrichedTargetRules : undefined}
         />
         {promotion.type === "buyget" && (
           <PromotionConditionsSection

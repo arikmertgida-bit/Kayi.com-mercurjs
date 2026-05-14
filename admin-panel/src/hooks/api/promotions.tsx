@@ -18,6 +18,7 @@ import { campaignsQueryKeys } from "./campaigns"
 export interface PendingPromotionRuleValue {
   id?: string
   value: string
+  label?: string
 }
 
 export interface PendingPromotionRule {
@@ -46,6 +47,7 @@ export interface PendingPromotion {
   type: string
   status: string
   seller_id: string | null
+  seller_name: string | null
   approval_status: string
   metadata: PendingPromotionMetadata | null
   application_method: PendingPromotionApplicationMethod | null
@@ -128,6 +130,48 @@ export const usePromotionRules = (
   })
 
   return { ...data, ...rest }
+}
+
+/** Enriched rule value shape returned by the custom admin enrichment endpoints. */
+export interface AdminEnrichedRuleValue {
+  id?: string
+  value?: string
+  label?: string
+  thumbnail?: string
+}
+
+export interface AdminEnrichedRule {
+  id?: string
+  attribute: string
+  operator: string
+  values?: AdminEnrichedRuleValue[]
+  attribute_label?: string
+  operator_label?: string
+  field_type?: string
+}
+
+/**
+ * Fetches enriched rules from the custom admin endpoint.
+ * ruleType: "rules" → /admin/promotions/{id}/enriched-rules
+ * ruleType: "target_rules" → /admin/promotions/{id}/enriched-target-rules
+ */
+export const useEnrichedAdminPromotionRules = (
+  id: string | null,
+  ruleType: "rules" | "target_rules"
+) => {
+  const path =
+    ruleType === "rules"
+      ? `/admin/promotions/${id}/enriched-rules`
+      : `/admin/promotions/${id}/enriched-target-rules`
+
+  const { data, ...rest } = useQuery({
+    queryKey: [PROMOTIONS_QUERY_KEY, id, `enriched-${ruleType}`],
+    enabled: !!id,
+    queryFn: () =>
+      sdk.client.fetch<{ rules: AdminEnrichedRule[] }>(path, { method: "GET" }),
+  })
+
+  return { rules: data?.rules ?? [], ...rest }
 }
 
 export const usePromotions = (

@@ -1,5 +1,5 @@
 import { AuthenticatedMedusaRequest, MedusaResponse } from "@medusajs/framework"
-import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
+import { ContainerRegistrationKeys, Modules, PromotionStatus } from "@medusajs/framework/utils"
 import { IPromotionModuleService, Logger, UpdatePromotionDTO } from "@medusajs/types"
 import { fetchSellerByAuthActorId } from "@mercurjs/b2c-core/shared/infra/http/utils/seller"
 import sellerPromotion from "@mercurjs/b2c-core/links/seller-promotion"
@@ -10,6 +10,7 @@ import {
   buildNamespacedCode,
   stripNamespaceFromCode,
 } from "../../shared/promotion-types.js"
+import { deletePromotionMessages } from "../../../../lib/messenger.js"
 
 export const GET = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) => {
   const seller = await fetchSellerByAuthActorId(req.auth_context.actor_id, req.scope)
@@ -73,10 +74,17 @@ export const PUT = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) 
   // Adım 2: Güncelleme sırasında da kodu seller-namespaced formata çevir.
   const namespacedCode = body.code ? buildNamespacedCode(body.code, seller.id) : body.code
 
+  // Reddedilen (draft) promosyonlar vendor tarafından düzenlendiğinde otomatik
+  // olarak "pending review" kuyruğuna geri girer (status = inactive).
+  // Admin bu promosyonu tekrar görmeli ve onaylamalıdır.
+  const current = await promotionService.retrievePromotion(id)
+  const isDraft = current.status === "draft"
+
   const promotion = await promotionService.updatePromotions(
     Object.assign({} as UpdatePromotionDTO, body, {
       id,
       code: namespacedCode,
+      ...(isDraft ? { status: PromotionStatus.INACTIVE } : {}),
       metadata: buildMetaWithSeller(body.metadata, seller.id, seller.metadata ?? null),
     })
   ) as PromotionWithMeta
@@ -137,6 +145,15 @@ export const DELETE = async (req: AuthenticatedMedusaRequest, res: MedusaRespons
     }
     throw linkError
   }
+
+  // Non-blocking: delete all PROMOTION messages for this promotion from kayi-messenger
+  // so customers no longer see the expired/invalid promotion card in their inbox.
+  // Fire-and-forget — a messenger failure must never block or roll back the promotion deletion.
+  deletePromotionMessages(id).catch((err: unknown) =>
+    logger.warn(
+      `[vendor/promotions/delete] Could not delete messenger messages for promotion ${id}: ${String(err)}`
+    )
+  )
 
   return res.status(200).json({ id, object: "promotion", deleted: true })
 }

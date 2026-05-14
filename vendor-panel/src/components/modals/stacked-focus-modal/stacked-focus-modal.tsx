@@ -75,6 +75,7 @@ const Content = forwardRef<
 >(({ className, ...props }, ref) => {
   return (
     <FocusModal.Content
+      aria-describedby={undefined}
       ref={ref}
       className={clx("!top-6", className)}
       overlayProps={{

@@ -96,9 +96,8 @@ export const HeroSlider = () => {
                 alt={slide.alt}
                 fill
                 className="object-cover"
-                priority={index === 0}
                 fetchPriority={index === 0 ? "high" : "low"}
-                loading={index === 0 ? undefined : "lazy"}
+                loading={index === 0 ? "eager" : "lazy"}
                 quality={index === 0 ? 85 : 75}
                 sizes="100vw"
               />

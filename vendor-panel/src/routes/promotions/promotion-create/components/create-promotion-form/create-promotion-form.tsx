@@ -431,6 +431,12 @@ export const CreatePromotionForm = () => {
           className="flex h-full flex-col overflow-hidden"
         >
           <RouteFocusModal.Header>
+            <RouteFocusModal.Title className="sr-only">
+              {t("promotions.tabs.details")}
+            </RouteFocusModal.Title>
+            <RouteFocusModal.Description className="sr-only">
+              {t("promotions.tabs.details")}
+            </RouteFocusModal.Description>
             <div className="flex w-full items-center justify-between gap-x-4">
               <div className="-my-2 w-full max-w-[600px] border-l">
                 <ProgressTabs.List className="grid w-full grid-cols-2">
@@ -510,14 +516,14 @@ export const CreatePromotionForm = () => {
                   <Heading level="h1" className="text-fg-base">
                     {t(`promotions.sections.details`)}
 
-                    {currentTemplate?.title && (
+                    {currentTemplate?.titleKey && (
                       <Badge
                         className="ml-2 align-middle"
                         color="grey"
                         size="2xsmall"
                         rounded="full"
                       >
-                        {currentTemplate?.title}
+                        {t(currentTemplate.titleKey as any)}
                       </Badge>
                     )}
                   </Heading>
@@ -532,91 +538,103 @@ export const CreatePromotionForm = () => {
                     </Alert>
                   )}
 
-                  <Form.Field
-                    control={form.control}
-                    name="is_automatic"
-                    render={({ field }) => {
-                      return (
-                        <Form.Item>
-                          <Form.Label>
-                            {t("promotions.form.method.label")}
-                          </Form.Label>
+                  <div className="flex gap-x-4">
+                    <div className="flex-1">
+                      <Form.Field
+                        control={form.control}
+                        name="is_automatic"
+                        render={({ field }) => {
+                          return (
+                            <Form.Item>
+                              <Form.Label htmlFor={undefined}>
+                                {t("promotions.form.method.label")}
+                              </Form.Label>
 
-                          <Form.Control>
-                            <RadioGroup
-                              className="flex gap-y-3"
-                              {...field}
-                              value={field.value}
-                              onValueChange={field.onChange}
-                            >
-                              <RadioGroup.ChoiceBox
-                                value={"false"}
-                                label={t("promotions.form.method.code.title")}
-                                description={t(
-                                  "promotions.form.method.code.description"
-                                )}
-                                className={clx("basis-1/2")}
-                              />
+                              <Form.Control>
+                                <RadioGroup
+                                  className="flex gap-y-3"
+                                  {...field}
+                                  value={field.value}
+                                  onValueChange={field.onChange}
+                                >
+                                  <RadioGroup.ChoiceBox
+                                    value={"false"}
+                                    label={t("promotions.form.method.code.title")}
+                                    description={t(
+                                      "promotions.form.method.code.description"
+                                    )}
+                                    className="w-full"
+                                  />
 
-                              <RadioGroup.ChoiceBox
-                                value={"true"}
-                                label={t(
-                                  "promotions.form.method.automatic.title"
-                                )}
-                                description={t(
-                                  "promotions.form.method.automatic.description"
-                                )}
-                                className={clx("basis-1/2")}
-                              />
-                            </RadioGroup>
-                          </Form.Control>
-                          <Form.ErrorMessage />
-                        </Form.Item>
-                      )
-                    }}
-                  />
+                                  {/* Otomatik seçeneği platforma uygun değil, gizlendi */}
+                                  {/*
+                                  <RadioGroup.ChoiceBox
+                                    value={"true"}
+                                    label={t(
+                                      "promotions.form.method.automatic.title"
+                                    )}
+                                    description={t(
+                                      "promotions.form.method.automatic.description"
+                                    )}
+                                    className={clx("basis-1/2")}
+                                  />
+                                  */}
+                                </RadioGroup>
+                              </Form.Control>
+                              <Form.ErrorMessage />
+                            </Form.Item>
+                          )
+                        }}
+                      />
+                    </div>
 
-                  <Form.Field
-                    control={form.control}
-                    name="status"
-                    render={({ field }) => {
-                      return (
-                        <Form.Item>
-                          <Form.Label>
-                            {t("promotions.form.status.label")}
-                          </Form.Label>
+                    <div className="flex-1">
+                      <Form.Field
+                        control={form.control}
+                        name="status"
+                        render={({ field }) => {
+                          return (
+                            <Form.Item>
+                              <Form.Label htmlFor={undefined}>
+                                {t("promotions.form.status.label")}
+                              </Form.Label>
 
-                          <Form.Control>
-                            <RadioGroup
-                              className="flex gap-y-3"
-                              {...field}
-                              value={field.value}
-                              onValueChange={field.onChange}
-                            >
-                              <RadioGroup.ChoiceBox
-                                value={"draft"}
-                                label={t("promotions.form.status.draft.title")}
-                                description={t(
-                                  "promotions.form.status.draft.description"
-                                )}
-                                className={clx("basis-1/2")}
-                              />
+                              <Form.Control>
+                                <RadioGroup
+                                  className="flex gap-y-3"
+                                  {...field}
+                                  value={field.value}
+                                  onValueChange={field.onChange}
+                                >
+                                  <RadioGroup.ChoiceBox
+                                    value={"draft"}
+                                    label={t("promotions.form.status.draft.title")}
+                                    description={t(
+                                      "promotions.form.status.draft.description"
+                                    )}
+                                    className="w-full"
+                                  />
 
-                              <RadioGroup.ChoiceBox
-                                value={"active"}
-                                label={t("promotions.form.status.active.title")}
-                                description={t(
-                                  "promotions.form.status.active.description"
-                                )}
-                                className={clx("basis-1/2")}
-                              />
-                            </RadioGroup>
-                          </Form.Control>
-                          <Form.ErrorMessage />
-                        </Form.Item>
-                      )
-                    }}
-                  />
+                                  {/* Aktif seçeneği kaldırıldı; promosyonlar onay sürecine girer */}
+                                  {/*
+                                  <RadioGroup.ChoiceBox
+                                    value={"active"}
+                                    label={t("promotions.form.status.active.title")}
+                                    description={t(
+                                      "promotions.form.status.active.description"
+                                    )}
+                                    className={clx("basis-1/2")}
+                                  />
+                                  */}
+                                </RadioGroup>
+                              </Form.Control>
+                              <Form.ErrorMessage />
+                            </Form.Item>
+                          )
+                        }}
+                      />
+                    </div>
+                  </div>
 
                   <div className="flex gap-y-4">
                     <Form.Field

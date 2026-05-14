@@ -57,9 +57,19 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   // Reject: set status to 'draft' to distinguish rejected from pending (inactive).
   // Status convention for vendor promotions:
   //   inactive = pending, active = approved, draft = rejected.
-  // NOTE: The promotion table has no metadata column — status is the source of truth.
+  // Also update metadata.approval_status so the vendor panel can show "Reddedildi"
+  // instead of "Onay Bekliyor" (getPromotionStatus checks approval_status first).
   const updated = (await promotionService.updatePromotions(
-    { id, status: "draft" as typeof PromotionStatus.INACTIVE }
+    Object.assign(
+      { id, status: "draft" as typeof PromotionStatus.INACTIVE },
+      {
+        metadata: {
+          ...(promotion.metadata ?? {}),
+          approval_status: "rejected",
+          rejection_reason: reason,
+        },
+      }
+    )
   )) as PromotionWithMeta
 
   // Resolve the owning seller_id from the seller_promotion link table.

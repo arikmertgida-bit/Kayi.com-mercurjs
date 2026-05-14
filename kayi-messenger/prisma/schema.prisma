@@ -26,6 +26,7 @@ enum MessageType {
   TEXT
   IMAGE
   NOTIFICATION
+  PROMOTION
 }
 
 enum ConversationContextType {
@@ -75,6 +76,7 @@ model Message {
   content        String
   messageType    MessageType  @default(TEXT)
   imageUrl       String?
+  metadata       Json?
   readAt         DateTime?
   createdAt      DateTime     @default(now())
   deletedForAll  Boolean      @default(false)
