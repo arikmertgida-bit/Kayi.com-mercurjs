@@ -17,6 +17,7 @@ export const GET = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) 
   const seller = await fetchSellerByAuthActorId(req.auth_context.actor_id, req.scope)
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
   const promotionService = req.scope.resolve<IPromotionModuleService>(Modules.PROMOTION)
+  const knex = req.scope.resolve(ContainerRegistrationKeys.PG_CONNECTION)
 
   const limit = Math.min(parseInt(req.query.limit as string) || 20, 100)
   const offset = parseInt(req.query.offset as string) || 0
@@ -43,7 +44,16 @@ export const GET = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) 
     { relations: ["application_method", "rules"] }
   )
 
-  return res.json({ promotions, count, limit, offset })
+  // Merge metadata from the raw jsonb column (ORM entity does not include it).
+  const metaRows: { id: string; metadata: Record<string, unknown> | null }[] =
+    await knex("promotion").select("id", "metadata").whereIn("id", promotionIds)
+  const metaMap = new Map(metaRows.map((r) => [r.id, r.metadata]))
+  const promotionsWithMeta = promotions.map((p) => ({
+    ...p,
+    metadata: metaMap.get(p.id) ?? null,
+  }))
+
+  return res.json({ promotions: promotionsWithMeta, count, limit, offset })
 }
 
 export const POST = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) => {
@@ -84,9 +94,21 @@ export const POST = async (req: AuthenticatedMedusaRequest, res: MedusaResponse)
     Object.assign({} as CreatePromotionDTO, body, {
       code: namespacedCode,
       status: autoPublish ? PromotionStatus.ACTIVE : PromotionStatus.INACTIVE,
-      metadata: buildMetaWithSeller(body.metadata, seller.id, seller.metadata ?? null),
     })
   )) as unknown as PromotionDTO
+
+  // Raw knex: write seller ownership metadata to the promotion.metadata jsonb column.
+  // MedusaJS promotion ORM entity does not support metadata; we added the column manually.
+  const knex = req.scope.resolve(ContainerRegistrationKeys.PG_CONNECTION)
+  const metaPayload = buildMetaWithSeller(body.metadata, seller.id, seller.metadata ?? null)
+  await knex("promotion")
+    .where({ id: promotion.id })
+    .update({
+      metadata: knex.raw(
+        `COALESCE(metadata, '{}'::jsonb) || ?::jsonb`,
+        [JSON.stringify(metaPayload)]
+      ),
+    })
 
   // Adım 4: Atomicity — link başarısız olursa promotion'ı temizle (orphan önleme).
   try {

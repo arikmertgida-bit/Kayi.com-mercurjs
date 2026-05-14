@@ -2012,6 +2012,8 @@
       "cannotSetActive": "Only administrators can activate promotions, your request has been added to the review queue"
     },
     "broadcastRecipientsCount": "Sent to {{count}} customers",
+    "pendingApprovalBanner": "This promotion is pending admin approval. It will be published automatically once approved.",
+    "rejectedBanner": "This promotion was rejected by an admin. You can edit it and resubmit for approval.",
     "create": {},
     "edit": {
       "title": "Edit Promotion Details",

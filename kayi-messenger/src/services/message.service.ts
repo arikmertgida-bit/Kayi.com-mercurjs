@@ -117,19 +117,29 @@ export const MessageService = {
 
   /**
    * Hard-deletes all PROMOTION-type messages that contain the given promotion_id
-   * in their metadata JSON field. Called when a promotion is deleted so users
-   * no longer see outdated/invalid promotion cards.
+   * OR promotionCode in their metadata JSON field.
+   * Called when a promotion is deleted so users no longer see outdated cards.
+   * promotionCode fallback handles legacy messages created before promotion_id was added.
    */
-  async deleteByPromotionId(promotionId: string): Promise<number> {
-    // Prisma 5 PostgreSQL JSONB path filter
-    const result = await prisma.message.deleteMany({
-      where: {
+  async deleteByPromotionId(promotionId: string, promotionCode?: string): Promise<number> {
+    // Prisma 5 PostgreSQL JSONB path filter — match by promotion_id (primary key)
+    const conditions: Prisma.MessageWhereInput[] = [
+      {
         messageType: "PROMOTION",
-        metadata: {
-          path: ["promotion_id"],
-          equals: promotionId,
-        },
+        metadata: { path: ["promotion_id"], equals: promotionId },
       },
+    ]
+
+    // Fallback: also delete by promotionCode for messages created before promotion_id was added
+    if (promotionCode) {
+      conditions.push({
+        messageType: "PROMOTION",
+        metadata: { path: ["promotionCode"], equals: promotionCode },
+      })
+    }
+
+    const result = await prisma.message.deleteMany({
+      where: { OR: conditions },
     })
     return result.count
   },

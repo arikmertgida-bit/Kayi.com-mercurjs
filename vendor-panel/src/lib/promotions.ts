@@ -29,34 +29,25 @@ export const promotionStatusMap: StatusMap = {
   [PromotionStatus.REJECTED]: ["red", i18n.t("statuses.rejected")],
 }
 
-/** Promotion tipi genişletilmiş metadata support için */
-type PromotionWithMeta = HttpTypes.AdminPromotion & {
-  metadata?: Record<string, unknown> | null
-}
-
 export const getPromotionStatus = (promotion: HttpTypes.AdminPromotion) => {
   const date = new Date()
   const campaign = promotion.campaign
-  const meta = (promotion as PromotionWithMeta).metadata
 
-  // Vendor promosyonu onay bekliyorsa önce kontrol et — diğer durumlara göre önceliklidir.
-  if (
-    meta?.seller_id &&
-    meta?.approval_status === "pending"
-  ) {
+  // Vendor panelinde status field'ı onay durumunu doğrudan kodlar:
+  //   inactive = admin onayı bekleniyor
+  //   draft    = admin tarafından reddedildi
+  //   active   = onaylandı (kampanya zamanlamasına göre ek kontroller yapılır)
+  if (promotion.status === "inactive") {
     return promotionStatusMap[PromotionStatus.PENDING_APPROVAL]
   }
 
-  // Reddedilen promosyonlar: approval_status = "rejected"
-  if (
-    meta?.seller_id &&
-    meta?.approval_status === "rejected"
-  ) {
+  if (promotion.status === "draft") {
     return promotionStatusMap[PromotionStatus.REJECTED]
   }
 
+  // status === "active" — kampanya zamanlaması / bütçe kontrolü
   if (!campaign) {
-    return promotionStatusMap[promotion.status!.toUpperCase()]
+    return promotionStatusMap[PromotionStatus.ACTIVE]
   }
 
   if (campaign.starts_at && new Date(campaign.starts_at!) > date) {
@@ -71,5 +62,5 @@ export const getPromotionStatus = (promotion: HttpTypes.AdminPromotion) => {
     return promotionStatusMap[PromotionStatus.EXPIRED]
   }
 
-  return promotionStatusMap[promotion.status!.toUpperCase()]
+  return promotionStatusMap[PromotionStatus.ACTIVE]
 }

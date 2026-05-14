@@ -54,23 +54,23 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     return res.status(404).json({ message: "Promosyon bulunamadı." })
   }
 
-  // Reject: set status to 'draft' to distinguish rejected from pending (inactive).
-  // Status convention for vendor promotions:
-  //   inactive = pending, active = approved, draft = rejected.
-  // Also update metadata.approval_status so the vendor panel can show "Reddedildi"
-  // instead of "Onay Bekliyor" (getPromotionStatus checks approval_status first).
+  // Reject: set status to 'draft' (vendor convention: draft = rejected).
+  // Also write rejection metadata directly via raw knex since the MedusaJS
+  // promotion ORM entity does not have a metadata column — we added it manually.
+  const knex = req.scope.resolve(ContainerRegistrationKeys.PG_CONNECTION)
   const updated = (await promotionService.updatePromotions(
-    Object.assign(
-      { id, status: "draft" as typeof PromotionStatus.INACTIVE },
-      {
-        metadata: {
-          ...(promotion.metadata ?? {}),
-          approval_status: "rejected",
-          rejection_reason: reason,
-        },
-      }
-    )
+    { id, status: "draft" as typeof PromotionStatus.INACTIVE }
   )) as PromotionWithMeta
+
+  // Raw SQL: write rejection metadata to the promotion.metadata jsonb column.
+  await knex("promotion")
+    .where({ id })
+    .update({
+      metadata: knex.raw(
+        `COALESCE(metadata, '{}'::jsonb) || ?::jsonb`,
+        [JSON.stringify({ approval_status: "rejected", rejection_reason: reason })]
+      ),
+    })
 
   // Resolve the owning seller_id from the seller_promotion link table.
   const linkQuery = req.scope.resolve(ContainerRegistrationKeys.QUERY)

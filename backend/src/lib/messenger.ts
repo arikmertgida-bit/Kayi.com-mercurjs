@@ -42,12 +42,16 @@ interface NotifyParams {
 }
 
 /**
- * Deletes all PROMOTION-type messages linked to the given promotion_id.
+ * Deletes all PROMOTION-type messages linked to the given promotionId.
+ * Optionally also matches by promotionCode for legacy messages.
  * Called when a promotion is deleted so users no longer see expired/invalid promotions.
  * Failures are caught and logged — never throws.
  */
-export async function deletePromotionMessages(promotionId: string): Promise<void> {
+export async function deletePromotionMessages(promotionId: string, promotionCode?: string): Promise<void> {
   try {
+    const body: Record<string, string> = { promotion_id: promotionId }
+    if (promotionCode) body.promotion_code = promotionCode
+
     const response = await fetch(
       `${MESSENGER_URL}/api/internal/delete-promotion-messages`,
       {
@@ -56,7 +60,7 @@ export async function deletePromotionMessages(promotionId: string): Promise<void
           "Content-Type": "application/json",
           "x-internal-secret": INTERNAL_SECRET,
         },
-        body: JSON.stringify({ promotion_id: promotionId }),
+        body: JSON.stringify(body),
         signal: AbortSignal.timeout(5000),
       }
     )

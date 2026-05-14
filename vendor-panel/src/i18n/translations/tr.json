@@ -2011,6 +2011,8 @@
       "cannotSetActive": "Bu işlemi sadece yönetici yapabilir, talebiniz inceleme sırasına alınmıştır"
     },
     "broadcastRecipientsCount": "{{count}} müşteriye iletildi",
+    "pendingApprovalBanner": "Bu promosyon admin onayı bekleniyor. Onaylandıktan sonra otomatik olarak yayınlanacaktır.",
+    "rejectedBanner": "Bu promosyon admin tarafından reddedildi. Düzenleyerek yeniden onaya gönderebilirsiniz.",
     "create": {},
     "edit": {
       "title": "Promosyon Detaylarını Düzenle",

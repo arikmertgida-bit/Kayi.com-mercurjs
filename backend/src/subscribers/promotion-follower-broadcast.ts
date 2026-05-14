@@ -293,25 +293,21 @@ export default async function promotionFollowerBroadcastSubscriber({
   )
 
   // ── 7. Recipient count'u promotion metadata'ya kaydet ─────────────────────
-  // Vendor panelde "Bu promosyon X müşteriye iletildi." şeklinde gösterilir.
-  // Non-fatal: metadata kayıt hatası broadcast'i geri almaz.
+  // Raw knex ile yaz — MedusaJS promotion ORM entity metadata desteklemiyor;
+  // kolonu manuel olarak ekledik (ALTER TABLE promotion ADD COLUMN metadata jsonb).
   try {
-    const promotionService = container.resolve<IPromotionModuleService>(Modules.PROMOTION)
-    const currentPromotion = await promotionService.retrievePromotion(promotion_id)
-    const existingMeta =
-      typeof (currentPromotion as unknown as Record<string, unknown>).metadata === "object" &&
-      (currentPromotion as unknown as Record<string, unknown>).metadata !== null
-        ? ((currentPromotion as unknown as Record<string, unknown>).metadata as Record<string, unknown>)
-        : {}
-    await promotionService.updatePromotions(
-      Object.assign({ id: promotion_id }, {
-        metadata: {
-          ...existingMeta,
-          broadcast_recipient_count: recipients.length,
-          broadcast_sent_at: new Date().toISOString(),
-        },
+    const knex = container.resolve(ContainerRegistrationKeys.PG_CONNECTION)
+    await knex("promotion")
+      .where({ id: promotion_id })
+      .update({
+        metadata: knex.raw(
+          `COALESCE(metadata, '{}'::jsonb) || ?::jsonb`,
+          [JSON.stringify({
+            broadcast_recipient_count: recipients.length,
+            broadcast_sent_at: new Date().toISOString(),
+          })]
+        ),
       })
-    )
     logger.info(
       `[promotion-broadcast] Saved recipient count (${recipients.length}) to promotion metadata for ${promotion_id}`
     )

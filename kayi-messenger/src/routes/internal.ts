@@ -144,17 +144,24 @@ export function createInternalRouter(io: SocketServer): Router {
    * no longer see expired/invalid promotion cards in their inbox.
    *
    * Body:
-   *   promotion_id — the Medusa promotion ID embedded in message metadata
+   *   promotion_id    — the Medusa promotion ID embedded in message metadata
+   *   promotion_code  — (optional) namespaced code for legacy message fallback
    */
   router.post("/delete-promotion-messages", async (req: Request, res: Response) => {
-    const schema = z.object({ promotion_id: z.string().min(1) })
+    const schema = z.object({
+      promotion_id: z.string().min(1),
+      promotion_code: z.string().optional(),
+    })
     const parsed = schema.safeParse(req.body)
     if (!parsed.success) {
       res.status(400).json({ message: parsed.error.errors[0].message })
       return
     }
 
-    const deleted = await MessageService.deleteByPromotionId(parsed.data.promotion_id)
+    const deleted = await MessageService.deleteByPromotionId(
+      parsed.data.promotion_id,
+      parsed.data.promotion_code
+    )
     res.json({ deleted })
   })
 

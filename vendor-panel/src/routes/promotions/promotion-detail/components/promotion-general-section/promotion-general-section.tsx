@@ -74,15 +74,23 @@ export const PromotionGeneralSection = ({
   }
 
   const displayValue = getDisplayValue(promotion)
-  const isPendingApproval =
-    (promotion as PromotionWithMeta).metadata?.seller_id !== undefined &&
-    (promotion as PromotionWithMeta).metadata?.approval_status === "pending"
+  const isPendingApproval = promotion.status === "inactive"
+  const isRejected = promotion.status === "draft"
+  const rejectionReason = (promotion as PromotionWithMeta).metadata?.rejection_reason as string | undefined
 
   return (
     <Container className="divide-y p-0">
       {isPendingApproval && (
         <Alert variant="warning" className="mx-6 my-4">
           {t("promotions.pendingApprovalBanner")}
+        </Alert>
+      )}
+      {isRejected && (
+        <Alert variant="error" className="mx-6 my-4">
+          {t("promotions.rejectedBanner")}
+          {rejectionReason && (
+            <span className="block mt-1 text-ui-fg-subtle text-small">{rejectionReason}</span>
+          )}
         </Alert>
       )}
       <div className="flex items-center justify-between px-6 py-4">
