@@ -4,10 +4,16 @@ import { decodeToken, resolveIdentity } from "../middleware/auth"
 import { MessageService } from "../services/message.service"
 import { ConversationService } from "../services/conversation.service"
 import { NotificationService } from "../services/notification.service"
+import {
+  redisTypingSet,
+  redisTypingClear,
+  redisTypingGet,
+  redisTypingClearAll,
+  redisTypingTrackConv,
+  redisRoomJoin,
+  redisRoomLeave,
+} from "../lib/redis"
 import prisma from "../lib/prisma"
-
-/** Map of conversationId → Set of typing userIds */
-const typingUsers = new Map<string, Set<string>>()
 
 export function registerSocketHandlers(io: SocketServer, socket: Socket): void {
   const { userId, userType } = socket.data as { userId: string; userType: string }
@@ -31,6 +37,8 @@ export function registerSocketHandlers(io: SocketServer, socket: Socket): void {
       }
 
       socket.join(`conversation:${conversationId}`)
+      // Track presence so notifyAbsentParticipants can check Redis instead of fetchSockets()
+      await redisRoomJoin(conversationId, userId)
       socket.emit("joined_conversation", { conversationId })
     } catch (err) {
       console.error("[socket] join_conversation error", err)
@@ -41,6 +49,8 @@ export function registerSocketHandlers(io: SocketServer, socket: Socket): void {
   // ── Leave Conversation ─────────────────────────────────────────────────────
   socket.on("leave_conversation", (conversationId: string) => {
     socket.leave(`conversation:${conversationId}`)
+    // Fire-and-forget — non-critical cleanup
+    redisRoomLeave(conversationId, userId).catch(() => {})
     _clearTyping(io, conversationId, userId)
   })
 
@@ -56,7 +66,19 @@ export function registerSocketHandlers(io: SocketServer, socket: Socket): void {
 
         if (!content || !conversationId) return
 
-        if (typeof content !== "string" || content.trim().length > 10_000) {
+        if (typeof content !== "string") {
+          socket.emit("error", { event: "send_message", message: "Invalid message content" })
+          return
+        }
+
+        const trimmed = content.trim()
+
+        if (trimmed.length === 0) {
+          socket.emit("error", { event: "send_message", message: "Message cannot be empty" })
+          return
+        }
+
+        if (trimmed.length > 10_000) {
           socket.emit("error", { event: "send_message", message: "Message too long (max 10,000 characters)" })
           return
         }
@@ -75,7 +97,7 @@ export function registerSocketHandlers(io: SocketServer, socket: Socket): void {
           conversationId,
           senderId: userId,
           senderType: userType as UserType,
-          content,
+          content: trimmed,
           messageType: "TEXT",  // IMAGE messages must go through /api/upload REST endpoint
         })
 
@@ -83,7 +105,7 @@ export function registerSocketHandlers(io: SocketServer, socket: Socket): void {
         io.to(`conversation:${conversationId}`).emit("message_received", message)
 
         // Notify participants who are not in the room (offline/background)
-        await NotificationService.notifyAbsentParticipants(io, conversationId, userId, content.slice(0, 60))
+        await NotificationService.notifyAbsentParticipants(io, conversationId, userId, trimmed.slice(0, 60))
 
         // Stop typing indicator when message is sent
         _clearTyping(io, conversationId, userId)
@@ -94,15 +116,21 @@ export function registerSocketHandlers(io: SocketServer, socket: Socket): void {
   )
 
   // ── Typing Indicators ──────────────────────────────────────────────────────
-  socket.on("typing_start", (conversationId: string) => {
-    if (!typingUsers.has(conversationId)) {
-      typingUsers.set(conversationId, new Set())
+  socket.on("typing_start", async (conversationId: string) => {
+    try {
+      // Track and set in parallel — both are independent Redis writes
+      await Promise.all([
+        redisTypingTrackConv(conversationId, userId),
+        redisTypingSet(conversationId, userId),
+      ])
+      const typingUserIds = await redisTypingGet(conversationId)
+      socket.to(`conversation:${conversationId}`).emit("typing_update", {
+        conversationId,
+        typingUserIds,
+      })
+    } catch {
+      // Non-critical — typing indicators are best-effort
     }
-    typingUsers.get(conversationId)!.add(userId)
-    socket.to(`conversation:${conversationId}`).emit("typing_update", {
-      conversationId,
-      typingUserIds: [...typingUsers.get(conversationId)!],
-    })
   })
 
   socket.on("typing_stop", (conversationId: string) => {
@@ -143,9 +171,10 @@ export function registerSocketHandlers(io: SocketServer, socket: Socket): void {
             deleteForAll: false,
           })
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("[socket] delete_message error", err)
-        socket.emit("error", { event: "delete_message", message: err.message ?? "Internal error" })
+        const message = err instanceof Error ? err.message : "Internal error"
+        socket.emit("error", { event: "delete_message", message })
       }
     }
   )
@@ -174,28 +203,33 @@ export function registerSocketHandlers(io: SocketServer, socket: Socket): void {
   // ── Disconnect ─────────────────────────────────────────────────────────────
   socket.on("disconnect", () => {
     console.info(`[socket] Disconnected: ${userId} — socket ${socket.id}`)
-    // Clean up all typing indicators for this user
-    for (const [convId, users] of typingUsers.entries()) {
-      if (users.has(userId)) {
-        users.delete(userId)
-        if (users.size === 0) typingUsers.delete(convId)
-        io.to(`conversation:${convId}`).emit("typing_update", {
-          conversationId: convId,
-          typingUserIds: [...users],
-        })
-      }
-    }
+    // Clean up typing indicators for this user across all tracked conversations
+    redisTypingClearAll(userId)
+      .then(async (conversationIds) => {
+        for (const convId of conversationIds) {
+          const typingUserIds = await redisTypingGet(convId)
+          io.to(`conversation:${convId}`).emit("typing_update", {
+            conversationId: convId,
+            typingUserIds,
+          })
+        }
+      })
+      .catch(() => {})
   })
 }
 
+/**
+ * Clears a user's typing indicator in a conversation and broadcasts the updated list.
+ * Fire-and-forget — errors are swallowed since typing indicators are best-effort.
+ */
 function _clearTyping(io: SocketServer, conversationId: string, userId: string): void {
-  const users = typingUsers.get(conversationId)
-  if (users?.has(userId)) {
-    users.delete(userId)
-    if (users.size === 0) typingUsers.delete(conversationId)
-    io.to(`conversation:${conversationId}`).emit("typing_update", {
-      conversationId,
-      typingUserIds: [...users],
+  redisTypingClear(conversationId, userId)
+    .then(() => redisTypingGet(conversationId))
+    .then((typingUserIds) => {
+      io.to(`conversation:${conversationId}`).emit("typing_update", {
+        conversationId,
+        typingUserIds,
+      })
     })
-  }
+    .catch(() => {})
 }

@@ -7,6 +7,7 @@ import {
 } from "@medusajs/types"
 import { fetchSellerByAuthActorId } from "@mercurjs/b2c-core/shared/infra/http/utils/seller"
 import sellerCampaign from "@mercurjs/b2c-core/links/seller-campaign"
+import sellerPromotion from "@mercurjs/b2c-core/links/seller-promotion"
 import {
   CampaignWithMeta,
   SellerWithMeta,
@@ -124,19 +125,34 @@ export const DELETE = async (req: AuthenticatedMedusaRequest, res: MedusaRespons
   const remoteLink = req.scope.resolve(ContainerRegistrationKeys.REMOTE_LINK)
   const logger = req.scope.resolve<Logger>(ContainerRegistrationKeys.LOGGER)
 
+  // Kampanyaya bağlı is_automatic:true promosyon ID'lerini şimdi çek.
+  // Soft-delete sonrası campaign_id ile sorgulama güvenilir sonver olmayabilir.
+  const embeddedPromos = await promotionService.listPromotions(
+    { campaign_id: id, is_automatic: true } as Parameters<typeof promotionService.listPromotions>[0],
+    { select: ["id"] }
+  )
+  const embeddedPromoIds = embeddedPromos.map((p) => p.id)
+
   // Inline Step/Compensate saga — garantili atomik silme:
   // Step 1: Entity soft-delete. Başarısız olursa link dokunulmaz → güvenli fırlatma.
   await promotionService.deleteCampaigns(id)
 
-  // Step 2: Link kaydını temizle.
+  // Step 2: Link kayıtlarını temizle.
+  //   → seller_campaign link (kampanya)
+  //   → seller_promotion link'leri (kampanyaya gömülü is_automatic:true promosyonlar)
   // Compensation: dismiss başarısız olursa soft-delete geri alınır (restoreCampaigns).
   try {
-    await remoteLink.dismiss([
+    const linkDismissList = [
       {
         seller: { seller_id: seller.id },
         [Modules.PROMOTION]: { campaign_id: id },
       },
-    ])
+      ...embeddedPromoIds.map((promoId) => ({
+        seller: { seller_id: seller.id },
+        [Modules.PROMOTION]: { promotion_id: promoId },
+      })),
+    ]
+    await remoteLink.dismiss(linkDismissList)
   } catch (linkError) {
     try {
       await promotionService.restoreCampaigns(id)

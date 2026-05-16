@@ -14,7 +14,6 @@ import {
   emitTypingStart,
   emitTypingStop,
   emitMessagesRead,
-  emitDeleteMessage,
 } from "../../lib/messenger/socket"
 import {
   getConversations,
@@ -62,7 +61,9 @@ interface MessengerContextValue {
   }) => Promise<string>
   sendMessage: (content: string) => Promise<void>
   uploadImage: (file: File) => Promise<void>
+  uploadSidebarImage: (file: File, getOrCreateConvId: () => Promise<string>) => Promise<void>
   deleteMessage: (messageId: string, deleteForAll: boolean) => Promise<void>
+  deleteSidebarMessage: (messageId: string, deleteForAll: boolean) => Promise<void>
   deleteConversation: (conversationId: string, deleteForAll: boolean) => Promise<void>
   startTyping: () => void
   stopTyping: () => void
@@ -335,7 +336,7 @@ export function MessengerProvider({ children, sellerId, sellerName }: MessengerP
   }, [])
 
   const sendSidebarMessage = useCallback(async (content: string) => {
-    if (!pinnedConvIdRef.current) return
+    if (!pinnedConvIdRef.current || !content.trim()) return
     const { message } = await apiSendMessage(pinnedConvIdRef.current, content)
     setPinnedMessages((prev) => {
       if (prev.some((m) => m.id === message.id)) return prev
@@ -390,13 +391,52 @@ export function MessengerProvider({ children, sellerId, sellerName }: MessengerP
     await apiUploadImage(activeConvRef.current, file)
   }, [])
 
+  const uploadSidebarImage = useCallback(async (file: File, getOrCreateConvId: () => Promise<string>) => {
+    let convId = pinnedConvIdRef.current
+    if (!convId) {
+      convId = await getOrCreateConvId()
+    }
+    await apiUploadImage(convId, file)
+  }, [])
+
   const deleteMessage = useCallback(async (messageId: string, deleteForAll: boolean) => {
     if (!activeConvRef.current) return
     const convId = activeConvRef.current
-    setMessages((prev) => prev.filter((m) => m.id !== messageId))
-    emitDeleteMessage(messageId, convId, deleteForAll)
+    // Optimistic update — REST is the single source of truth;
+    // the backend broadcasts "message_deleted" to the room after persisting.
+    if (deleteForAll) {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === messageId
+            ? { ...m, content: "[Bu mesaj silindi]", deletedForAll: true, imageUrl: null }
+            : m
+        )
+      )
+    } else {
+      setMessages((prev) => prev.filter((m) => m.id !== messageId))
+    }
     await apiDeleteMessage(convId, messageId, deleteForAll).catch((err) => {
-      console.error("[deleteMessage] REST fallback error", err)
+      console.error("[deleteMessage] error", err)
+    })
+  }, [])
+
+  const deleteSidebarMessage = useCallback(async (messageId: string, deleteForAll: boolean) => {
+    if (!pinnedConvIdRef.current) return
+    const convId = pinnedConvIdRef.current
+    // Optimistic update — REST is the single source of truth.
+    if (deleteForAll) {
+      setPinnedMessages((prev) =>
+        prev.map((m) =>
+          m.id === messageId
+            ? { ...m, content: "[Bu mesaj silindi]", deletedForAll: true, imageUrl: null }
+            : m
+        )
+      )
+    } else {
+      setPinnedMessages((prev) => prev.filter((m) => m.id !== messageId))
+    }
+    await apiDeleteMessage(convId, messageId, deleteForAll).catch((err) => {
+      console.error("[deleteSidebarMessage] error", err)
     })
   }, [])
 
@@ -460,7 +500,9 @@ export function MessengerProvider({ children, sellerId, sellerName }: MessengerP
         startConversation,
         sendMessage,
         uploadImage,
+        uploadSidebarImage,
         deleteMessage,
+        deleteSidebarMessage,
         deleteConversation,
         startTyping,
         stopTyping,

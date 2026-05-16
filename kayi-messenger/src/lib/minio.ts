@@ -37,8 +37,14 @@ export async function ensureBucket(): Promise<void> {
 }
 
 /**
- * Returns the full public URL for a stored object key.
+ * Returns a direct public URL for the given object key.
+ * The medusa-media bucket has a public read policy (s3:GetObject for *),
+ * so no signing is required. The URL is constructed from PUBLIC_URL which
+ * is set to the externally accessible MinIO address (e.g. http://localhost:9002).
  */
-export function objectUrl(key: string): string {
-  return `${PUBLIC_URL}/${BUCKET}/${key}`
+export function generatePresignedGetUrl(
+  key: string,
+  _expirySeconds = 604_800
+): Promise<string> {
+  return Promise.resolve(`${PUBLIC_URL}/${BUCKET}/${key}`)
 }

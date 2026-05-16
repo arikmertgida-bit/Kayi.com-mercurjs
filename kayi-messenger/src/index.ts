@@ -3,6 +3,8 @@ import express from "express"
 import cors from "cors"
 import { createServer } from "http"
 import { Server as SocketServer } from "socket.io"
+import { createAdapter } from "@socket.io/redis-adapter"
+import { Redis } from "ioredis"
 import { UserType } from "@prisma/client"
 import { decodeToken, resolveIdentity } from "./middleware/auth"
 import { registerSocketHandlers } from "./socket/handlers"
@@ -46,6 +48,14 @@ app.get("/health", (_req, res) => {
 // API routes (conversations doesn't need io)
 app.use("/api/conversations", conversationRoutes)
 
+// ── Redis clients for Socket.io pub/sub adapter (horizontal scaling) ─────
+const REDIS_URL = process.env.REDIS_URL ?? "redis://localhost:6379"
+const redisPub = new Redis(REDIS_URL, { lazyConnect: false, maxRetriesPerRequest: null })
+const redisSub = redisPub.duplicate()
+
+redisPub.on("error", (err: Error) => { console.error("[redis-pub] connection error:", err.message) })
+redisSub.on("error", (err: Error) => { console.error("[redis-sub] connection error:", err.message) })
+
 // ── HTTP + Socket.io ───────────────────────────────────────────────────────
 const httpServer = createServer(app)
 
@@ -61,6 +71,12 @@ const io = new SocketServer(httpServer, {
   pingInterval: 25000,
   pingTimeout: 20000,
 })
+
+// Register pub/sub Redis adapter so Socket.io events broadcast across all replicas
+io.adapter(createAdapter(redisPub, redisSub))
+
+// Register io on Express so route handlers can emit socket events via req.app.get("io")
+app.set("io", io)
 
 // JWT authentication for Socket.io handshake
 io.use((socket, next) => {

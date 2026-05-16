@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, useCallback } from "react"
 import Image from "next/image"
 import { useMessenger } from "@/providers/MessengerProvider"
 import type { Message } from "@/lib/messenger/types"
+import { MSG } from "@/lib/messenger/strings"
+import { Modal } from "@/components/molecules/Modal/Modal"
 
 interface MessengerChatBoxProps {
   /** The other participant's display info */
@@ -278,6 +280,7 @@ export function MessengerChatBox({
   const [isSending, setIsSending] = useState(false)
   const [sendError, setSendError] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<{ messageId: string; deleteForAll: boolean } | null>(null)
   const [pendingImage, setPendingImage] = useState<File | null>(null)
   const [pendingImagePreview, setPendingImagePreview] = useState<string | null>(null)
   const [productInfo, setProductInfo] = useState<{ title: string; thumbnail: string | null; handle: string | null } | null>(null)
@@ -386,13 +389,17 @@ export function MessengerChatBox({
   }
 
   const handleDeleteMessage = useCallback(async (messageId: string, deleteForAll: boolean) => {
-    setDeleteTarget(null)
     try {
       await deleteMessage(messageId, deleteForAll)
     } catch (err) {
       console.error("[MessengerChatBox] delete error:", err)
     }
   }, [deleteMessage])
+
+  const handleRequestPendingDelete = useCallback((messageId: string, deleteForAll: boolean) => {
+    setDeleteTarget(null)
+    setPendingDelete({ messageId, deleteForAll })
+  }, [])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -405,6 +412,7 @@ export function MessengerChatBox({
   const isOtherTyping = typingUserIds.includes(otherUser.id)
 
   return (
+    <>
     <div className="flex flex-col h-full bg-white rounded-2xl overflow-hidden">
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 bg-white">
@@ -498,7 +506,7 @@ export function MessengerChatBox({
                 currentUserId={currentUserId}
                 isDeleteTarget={deleteTarget === msg.id}
                 onRequestDelete={(id) => setDeleteTarget(deleteTarget === id ? null : id)}
-                onConfirmDelete={handleDeleteMessage}
+                onConfirmDelete={handleRequestPendingDelete}
                 onCancelDelete={() => setDeleteTarget(null)}
               />
             )
@@ -594,5 +602,32 @@ export function MessengerChatBox({
         </div>
       </div>
     </div>
-  )
+
+    {/* Delete confirmation modal */}
+    {pendingDelete && (
+      <Modal heading={MSG.DELETE_CONFIRM_TITLE} onClose={() => setPendingDelete(null)}>
+        <div className="px-4">
+          <p className="text-sm text-gray-700 mb-6">{MSG.DELETE_CONFIRM_DESC}</p>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => setPendingDelete(null)}
+              className="px-4 py-2 text-sm rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              {MSG.DELETE_CANCEL}
+            </button>
+            <button
+              onClick={() => {
+                handleDeleteMessage(pendingDelete.messageId, pendingDelete.deleteForAll)
+                setPendingDelete(null)
+              }}
+              className="px-4 py-2 text-sm rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
+            >
+              {MSG.DELETE_FOR_ME}
+            </button>
+          </div>
+        </div>
+      </Modal>
+    )}
+  </>
+)
 }

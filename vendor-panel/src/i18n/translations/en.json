@@ -3426,7 +3426,9 @@
     "chatOptions": "Chat options",
     "deleteOnlyForMe": "Delete only for me",
     "storeContext": "Customer is writing about your store, not a specific product.",
-    "product": "Product"
+    "product": "Product",
+    "deleteConfirmTitle": "Delete Message",
+    "deleteConfirmDesc": "This message will be permanently deleted."
   },
   "team": {
     "domain": "Team",

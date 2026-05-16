@@ -65,13 +65,24 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const linkFilters: Record<string, unknown> = { deleted_at: { $eq: null } }
   if (seller_id) linkFilters.seller_id = seller_id
 
-  // Fetch ALL matching link rows (up to 500) so we can do status filtering in JS.
-  // This is acceptable because the total number of vendor promotions is bounded.
+  // approval_status → promotion.status dönüşüm tablosu (vendor durum kuralı):
+  //   pending  → inactive  (oluşturuldu, inceleme bekliyor)
+  //   approved → active    (admin onayladı, checkout'ta etkin)
+  //   rejected → draft     (admin reddetti)
+  const approvalToStatus: Record<string, string> = {
+    pending: "inactive",
+    approved: "active",
+    rejected: "draft",
+  }
+  const promotionStatus = approvalToStatus[approval_status] ?? "inactive"
+
+  // Link tablosundan TÜM satır ID'lerini çek — 500 limiti kaldırıldı.
+  // Link satırları yalnızca UUID içerir (~36 byte); 10.000 satır bile < 400 KB.
+  // is_automatic filtresi promotionService düzeyinde status ile uygulanıyor.
   const { data: linkRows } = await query.graph({
     entity: sellerPromotion.entryPoint,
     fields: ["promotion_id", "seller_id"],
     filters: linkFilters,
-    pagination: { skip: 0, take: 500 },
   })
 
   const allLinks = linkRows as SellerPromotionLinkRow[]
@@ -82,19 +93,29 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     return res.json({ promotions: [], count: 0, limit: parsedLimit, offset: parsedOffset })
   }
 
-  // Fetch promotions for all linked IDs with application_method relations.
-  const allPromotions = (await promotionService.listPromotions(
-    { id: allPromoIds },
-    { relations: ["application_method", "application_method.target_rules", "application_method.target_rules.values"] }
-  )) as PromotionWithMeta[]
+  // İki paralel DB sorgusu — status filtresi + pagination tamamen DB düzeyinde:
+  // (1) count: bu approval_status'a sahip toplam promosyon sayısı
+  // (2) page: skip/take ile doğrudan sayfalanmış + tam ilişkili çıktı
+  const [countResult, paginated] = await Promise.all([
+    promotionService.listPromotions(
+      { id: allPromoIds, status: [promotionStatus] } as unknown as Parameters<typeof promotionService.listPromotions>[0],
+      { select: ["id"] }
+    ),
+    promotionService.listPromotions(
+      { id: allPromoIds, status: [promotionStatus] } as unknown as Parameters<typeof promotionService.listPromotions>[0],
+      {
+        relations: [
+          "application_method",
+          "application_method.target_rules",
+          "application_method.target_rules.values",
+        ],
+        skip: parsedOffset,
+        take: parsedLimit,
+      }
+    ) as Promise<PromotionWithMeta[]>,
+  ])
 
-  // Filter by approval_status using the status-based mapping.
-  const targetApproval = approval_status
-  const filtered = allPromotions.filter((p) => toApprovalStatus(p.status) === targetApproval)
-
-  // Apply pagination on the filtered set.
-  const count = filtered.length
-  const paginated = filtered.slice(parsedOffset, parsedOffset + parsedLimit)
+  const count = countResult.length
 
   // Collect seller IDs and product IDs for enrichment.
   const sellerIds = [...new Set(

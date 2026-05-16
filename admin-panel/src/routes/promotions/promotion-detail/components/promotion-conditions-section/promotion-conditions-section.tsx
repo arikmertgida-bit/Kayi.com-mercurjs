@@ -36,7 +36,12 @@ function ProductRuleGrid({ values }: { values: AdminEnrichedRuleValue[] }) {
   )
 }
 
-const ATTR_I18N_MAP: Record<string, string> = {
+type AttrI18nKey =
+  | "promotions.rule.attributeLabels.customer_groups_id"
+  | "promotions.rule.attributeLabels.shipping_address_country_code"
+  | "promotions.rule.attributeLabels.items_product_id"
+
+const ATTR_I18N_MAP: Record<string, AttrI18nKey> = {
   "customer.groups.id": "promotions.rule.attributeLabels.customer_groups_id",
   "shipping_address.country_code": "promotions.rule.attributeLabels.shipping_address_country_code",
   "items.product.id": "promotions.rule.attributeLabels.items_product_id",

@@ -64,19 +64,27 @@ export async function resolveDisplayName(userId: string): Promise<string> {
 
   // 3. Backend API lookup (resolves names even for first-time users)
   try {
-    const res = await fetch(
-      `${BACKEND_URL}/store/messenger-internal/user-name/${encodeURIComponent(userId)}`,
-      {
-        headers: { "x-internal-secret": INTERNAL_SECRET },
-      }
-    )
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 2000)
+    let res: Response
+    try {
+      res = await fetch(
+        `${BACKEND_URL}/store/messenger-internal/user-name/${encodeURIComponent(userId)}`,
+        {
+          headers: { "x-internal-secret": INTERNAL_SECRET },
+          signal: controller.signal,
+        }
+      )
+    } finally {
+      clearTimeout(timeoutId)
+    }
     if (res.ok) {
       const data = (await res.json()) as { userId: string; displayName: string }
       if (data.displayName && data.displayName !== userId) {
         // Persist to cache + DB so future lookups are instant
         cacheSet(userId, data.displayName)
         try {
-          const userType: UserType = userId.startsWith("cus_") ? "CUSTOMER" : "SELLER"
+          const userType: UserType = userId.startsWith("cus_") ? "CUSTOMER" : userId.startsWith("usr_") ? "ADMIN" : "SELLER"
           await prisma.userProfile.upsert({
             where: { userId },
             update: { displayName: data.displayName, userType },
@@ -93,4 +101,64 @@ export async function resolveDisplayName(userId: string): Promise<string> {
   }
 
   return userId
+}
+
+/**
+ * Resolve display names for multiple user IDs in a single batched operation.
+ * Priority: in-memory cache → bulk DB query → concurrent API lookups.
+ * Significantly reduces N+1 HTTP calls when enriching conversation participant lists.
+ */
+export async function bulkResolveDisplayNames(
+  userIds: readonly string[]
+): Promise<Map<string, string>> {
+  const result = new Map<string, string>()
+  if (userIds.length === 0) return result
+
+  // 1. In-memory cache
+  const uncachedIds: string[] = []
+  for (const uid of userIds) {
+    const cached = userNameCache.get(uid)
+    if (cached) {
+      result.set(uid, cached)
+    } else {
+      uncachedIds.push(uid)
+    }
+  }
+
+  if (uncachedIds.length === 0) return result
+
+  // 2. Bulk DB lookup — single query instead of N queries
+  const dbMissIds: string[] = []
+  try {
+    const profiles = await prisma.userProfile.findMany({
+      where: { userId: { in: uncachedIds } },
+      select: { userId: true, displayName: true },
+    })
+    const foundInDb = new Set<string>()
+    for (const p of profiles) {
+      if (p.displayName) {
+        cacheSet(p.userId, p.displayName)
+        result.set(p.userId, p.displayName)
+        foundInDb.add(p.userId)
+      }
+    }
+    for (const uid of uncachedIds) {
+      if (!foundInDb.has(uid)) dbMissIds.push(uid)
+    }
+  } catch {
+    // Fall back to API for all uncached IDs
+    dbMissIds.push(...uncachedIds)
+  }
+
+  if (dbMissIds.length === 0) return result
+
+  // 3. Concurrent API lookups for remaining misses (no sequential N+1)
+  await Promise.allSettled(
+    dbMissIds.map(async (uid) => {
+      const name = await resolveDisplayName(uid)
+      result.set(uid, name)
+    })
+  )
+
+  return result
 }

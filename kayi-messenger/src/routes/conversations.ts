@@ -2,7 +2,7 @@ import { Router } from "express"
 import { z } from "zod"
 import { authMiddleware, AuthRequest, resolveIdentity } from "../middleware/auth"
 import { ConversationService } from "../services/conversation.service"
-import { userNameCache, resolveDisplayName } from "../lib/user-cache"
+import { userNameCache, bulkResolveDisplayNames } from "../lib/user-cache"
 import { UserType, ConversationType, ConversationContextType } from "@prisma/client"
 import prisma from "../lib/prisma"
 
@@ -69,18 +69,19 @@ router.get("/", authMiddleware, async (req: AuthRequest, res) => {
     const limit = Math.min(parseInt((req.query.limit as string) || "20", 10), 100)
     const offset = Math.max(parseInt((req.query.offset as string) || "0", 10), 0)
     const conversations = await ConversationService.listForUser(userId, limit, offset)
-    // Enrich each participant with resolved displayName (cache → DB → Medusa API → fallback)
-    const enriched = await Promise.all(
-      conversations.map(async (conv) => ({
-        ...conv,
-        participants: await Promise.all(
-          conv.participants.map(async (p) => ({
-            ...p,
-            displayName: await resolveDisplayName(p.userId),
-          }))
-        ),
-      }))
-    )
+    // Collect all unique participant IDs and bulk-resolve display names.
+    // Single DB query + concurrent API fallback — eliminates N+1 Medusa API calls.
+    const allParticipantIds = [
+      ...new Set(conversations.flatMap((c) => c.participants.map((p) => p.userId))),
+    ]
+    const nameMap = await bulkResolveDisplayNames(allParticipantIds)
+    const enriched = conversations.map((conv) => ({
+      ...conv,
+      participants: conv.participants.map((p) => ({
+        ...p,
+        displayName: nameMap.get(p.userId) ?? p.userId,
+      })),
+    }))
     res.json({ conversations: enriched, limit, offset })
   } catch (err) {
     console.error("[conversations] GET /", err)
@@ -331,12 +332,25 @@ router.delete("/:id", authMiddleware, async (req: AuthRequest, res) => {
     const conversationId = req.params.id
 
     if (deleteForAll) {
+      // Fetch participant IDs BEFORE deletion — cascade will remove them from DB
+      const participants = await prisma.conversationParticipant.findMany({
+        where: { conversationId },
+        select: { userId: true },
+      })
+
       await ConversationService.deleteForAll(conversationId, userId)
-      // Broadcast to all sockets so every panel removes it from their list
-      const io = req.app.get("io")
+
+      // Broadcast to every participant:
+      // 1) conversation room — catches users currently viewing this conversation
+      // 2) personal user rooms — catches users on conversation list but not inside this chat
+      const io = req.app.get("io") as import("socket.io").Server | undefined
       if (io) {
-        io.to(conversationId).emit("conversation_deleted", { conversationId })
+        io.to(`conversation:${conversationId}`).emit("conversation_deleted", { conversationId })
+        for (const p of participants) {
+          io.to(`user:${p.userId}`).emit("conversation_deleted", { conversationId })
+        }
       }
+
       res.json({ success: true, deleted: true })
     } else {
       await ConversationService.hideForUser(conversationId, userId)

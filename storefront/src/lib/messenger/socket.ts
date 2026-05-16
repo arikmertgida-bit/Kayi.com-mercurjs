@@ -1,6 +1,5 @@
 "use client"
 
-import { useEffect, useRef, useCallback } from "react"
 import { io, Socket } from "socket.io-client"
 import type {
   Message,
@@ -57,51 +56,6 @@ export function connectSocket(tokenOverride?: string | null, displayName?: strin
 export function disconnectSocket(): void {
   socketInstance?.disconnect()
   socketInstance = null
-}
-
-// ── Event Hooks ────────────────────────────────────────────────────────────
-
-export interface UseSocketEventsOptions {
-  onMessage?: (message: Message) => void
-  onTypingUpdate?: (payload: TypingUpdatePayload) => void
-  onReadReceipt?: (payload: ReadReceiptPayload) => void
-  onNotification?: (payload: NotificationPayload) => void
-}
-
-/**
- * Subscribes to socket events. Pass stable callbacks (memoised with useCallback).
- * Returns the socket instance.
- */
-export function useSocketEvents(options: UseSocketEventsOptions): Socket | null {
-  const socketRef = useRef<Socket | null>(null)
-
-  useEffect(() => {
-    const socket = connectSocket()
-    socketRef.current = socket
-
-    if (options.onMessage) {
-      socket.on("message_received", options.onMessage)
-    }
-    if (options.onTypingUpdate) {
-      socket.on("typing_update", options.onTypingUpdate)
-    }
-    if (options.onReadReceipt) {
-      socket.on("read_receipt", options.onReadReceipt)
-    }
-    if (options.onNotification) {
-      socket.on("notification", options.onNotification)
-    }
-
-    return () => {
-      if (options.onMessage) socket.off("message_received", options.onMessage)
-      if (options.onTypingUpdate) socket.off("typing_update", options.onTypingUpdate)
-      if (options.onReadReceipt) socket.off("read_receipt", options.onReadReceipt)
-      if (options.onNotification) socket.off("notification", options.onNotification)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  return socketRef.current
 }
 
 // ── Emitters ───────────────────────────────────────────────────────────────

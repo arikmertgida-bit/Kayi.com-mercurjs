@@ -61,8 +61,10 @@ export function MessengerAdminInbox({ adminId }: MessengerAdminInboxProps) {
   const [pendingImagePreview, setPendingImagePreview] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [deleteMenuPos, setDeleteMenuPos] = useState<{ top: number; left?: number; right?: number } | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<{ messageId: string; deleteForAll: boolean } | null>(null)
   const [convMenuTarget, setConvMenuTarget] = useState<string | null>(null)
   const [convMenuPos, setConvMenuPos] = useState<{ top: number; right: number } | null>(null)
+  const [pendingDeleteConv, setPendingDeleteConv] = useState<{ convId: string; deleteForAll: boolean } | null>(null)
   const [mobileView, setMobileView] = useState<"list" | "chat">("list")
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
@@ -188,15 +190,23 @@ export function MessengerAdminInbox({ adminId }: MessengerAdminInboxProps) {
 
   const handleDeleteMessage = useCallback(
     async (messageId: string, deleteForAll: boolean) => {
-      setDeleteTarget(null)
-      setDeleteMenuPos(null)
       try {
         await deleteMessage(messageId, deleteForAll)
       } catch (err) {
         console.error("[MessengerAdminInbox] delete error:", err)
       }
+      setPendingDelete(null)
     },
     [deleteMessage]
+  )
+
+  const handleRequestDelete = useCallback(
+    (messageId: string, deleteForAll: boolean) => {
+      setDeleteTarget(null)
+      setDeleteMenuPos(null)
+      setPendingDelete({ messageId, deleteForAll })
+    },
+    []
   )
 
   const handleOpenConversation = useCallback(
@@ -429,10 +439,11 @@ export function MessengerAdminInbox({ adminId }: MessengerAdminInboxProps) {
                               onClick={() => setLightboxSrc(msg.imageUrl!)}
                               className="block border-0 p-0 cursor-zoom-in rounded-lg overflow-hidden"
                             >
-                              <img src={msg.imageUrl} alt={t("messenger.image")} className="max-w-full rounded-lg mb-1 hover:opacity-90 transition-opacity" />
+                              <img src={msg.imageUrl} alt={t("messenger.image")} className="max-w-full rounded-lg hover:opacity-90 transition-opacity" />
                             </button>
-                          ) : null}
-                          <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                          ) : (
+                            <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                          )}
                           <p className={`text-xs mt-1 opacity-60 text-right ${isMe ? "text-ui-fg-on-inverted" : "text-ui-fg-muted"}`}>
                             {formatTime(msg.createdAt)}
                             {isMe && isLastMine && msg.readAt && (
@@ -584,12 +595,12 @@ export function MessengerAdminInbox({ adminId }: MessengerAdminInboxProps) {
             className="bg-ui-bg-overlay rounded-xl shadow-elevation-modal border border-ui-border-base p-1.5 flex flex-col gap-0.5 min-w-[160px]"
             onClick={(e) => e.stopPropagation()}
           >
-            <button onClick={() => handleDeleteMessage(deleteTarget, false)} className="text-left text-sm px-3 py-1.5 rounded-lg hover:bg-ui-bg-base-hover text-ui-fg-base transition-colors">
+            <button onClick={() => handleRequestDelete(deleteTarget, false)} className="text-left text-sm px-3 py-1.5 rounded-lg hover:bg-ui-bg-base-hover text-ui-fg-base transition-colors">
               {t("messages.delete")}
             </button>
             <button
               disabled={messages.find((m) => m.id === deleteTarget)?.senderId !== adminId}
-              onClick={() => handleDeleteMessage(deleteTarget, true)}
+              onClick={() => handleRequestDelete(deleteTarget, true)}
               className="text-left text-sm px-3 py-1.5 rounded-lg hover:bg-ui-tag-red-bg text-ui-tag-red-text disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               {t("messages.deleteForEveryone")}
@@ -611,13 +622,13 @@ export function MessengerAdminInbox({ adminId }: MessengerAdminInboxProps) {
             onClick={(e) => e.stopPropagation()}
           >
             <button
-              onClick={() => { const id = convMenuTarget; setConvMenuTarget(null); setConvMenuPos(null); deleteConversation(id, false) }}
+              onClick={() => { const id = convMenuTarget; setConvMenuTarget(null); setConvMenuPos(null); setPendingDeleteConv({ convId: id!, deleteForAll: false }) }}
               className="w-full text-left px-4 py-2.5 hover:bg-ui-bg-base-hover text-ui-fg-base transition-colors"
             >
               {t("messages.delete")}
             </button>
             <button
-              onClick={() => { const id = convMenuTarget; setConvMenuTarget(null); setConvMenuPos(null); deleteConversation(id, true) }}
+              onClick={() => { const id = convMenuTarget; setConvMenuTarget(null); setConvMenuPos(null); setPendingDeleteConv({ convId: id!, deleteForAll: true }) }}
               className="w-full text-left px-4 py-2.5 hover:bg-ui-tag-red-bg text-ui-tag-red-text transition-colors"
             >
               {t("messages.deleteForEveryone")}
@@ -640,6 +651,56 @@ export function MessengerAdminInbox({ adminId }: MessengerAdminInboxProps) {
           </button>
           <img src={lightboxSrc} alt={t("messenger.image")} className="max-w-[90vw] max-h-[90vh] rounded-xl object-contain" onClick={(e) => e.stopPropagation()} />
         </div>
+      )}
+
+      {/* Delete confirmation dialog */}
+      {pendingDelete && (
+        <>
+          <div className="fixed inset-0 z-[10000] bg-black/40" onClick={() => setPendingDelete(null)} />
+          <div className="fixed z-[10001] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-ui-bg-base rounded-xl shadow-elevation-modal border border-ui-border-base p-6 w-full max-w-sm">
+            <p className="text-sm font-semibold text-ui-fg-base mb-2">{t("messages.deleteConfirmTitle")}</p>
+            <p className="text-sm text-ui-fg-subtle mb-6">{t("messages.deleteConfirmDesc")}</p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setPendingDelete(null)}
+                className="px-4 py-2 text-sm rounded-lg border border-ui-border-base bg-ui-bg-base hover:bg-ui-bg-base-hover text-ui-fg-base transition-colors"
+              >
+                {t("messages.close")}
+              </button>
+              <button
+                onClick={() => handleDeleteMessage(pendingDelete.messageId, pendingDelete.deleteForAll)}
+                className="px-4 py-2 text-sm rounded-lg bg-ui-tag-red-bg hover:opacity-90 text-ui-tag-red-text font-medium transition-opacity"
+              >
+                {t("messages.delete")}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Conversation delete confirmation dialog */}
+      {pendingDeleteConv && (
+        <>
+          <div className="fixed inset-0 z-[10000] bg-black/40" onClick={() => setPendingDeleteConv(null)} />
+          <div className="fixed z-[10001] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-ui-bg-base rounded-xl shadow-elevation-modal border border-ui-border-base p-6 w-full max-w-sm">
+            <p className="text-sm font-semibold text-ui-fg-base mb-2">{t("messages.deleteConfirmTitle")}</p>
+            <p className="text-sm text-ui-fg-subtle mb-6">{t("messages.deleteConfirmDesc")}</p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setPendingDeleteConv(null)}
+                className="px-4 py-2 text-sm rounded-lg border border-ui-border-base bg-ui-bg-base hover:bg-ui-bg-base-hover text-ui-fg-base transition-colors"
+              >
+                {t("messages.close")}
+              </button>
+              <button
+                onClick={() => { deleteConversation(pendingDeleteConv.convId, pendingDeleteConv.deleteForAll); setPendingDeleteConv(null) }}
+                className="px-4 py-2 text-sm rounded-lg bg-ui-tag-red-bg hover:opacity-90 text-ui-tag-red-text font-medium transition-opacity"
+              >
+                {t("messages.delete")}
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </>
   )

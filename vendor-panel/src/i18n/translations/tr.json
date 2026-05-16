@@ -3446,7 +3446,9 @@
     "chatOptions": "Sohbet seçenekleri",
     "deleteOnlyForMe": "Sadece benim için sil",
     "storeContext": "Müşteri mağazanız hakkında yazıyor, belirli bir ürün hakkında değil.",
-    "product": "Ürün"
+    "product": "Ürün",
+    "deleteConfirmTitle": "Mesajı Sil",
+    "deleteConfirmDesc": "Bu mesaj kalıcı olarak silinecektir."
   },
   "team": {
     "domain": "Ekip",

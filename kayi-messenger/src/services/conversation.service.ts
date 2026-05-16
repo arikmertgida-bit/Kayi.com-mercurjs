@@ -14,6 +14,31 @@ export interface FindOrCreateConversationInput {
   metadata?: Record<string, unknown>
 }
 
+/**
+ * Retries a SERIALIZABLE transaction on serialization failure (PostgreSQL error 40001 / Prisma P2034).
+ * Uses truncated exponential backoff with jitter to avoid thundering-herd under high concurrency.
+ */
+async function withSerializableRetry<T>(
+  fn: () => Promise<T>,
+  maxAttempts = 5,
+  baseDelayMs = 50
+): Promise<T> {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await fn()
+    } catch (err: unknown) {
+      const isSerializationError =
+        err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2034"
+      if (!isSerializationError || attempt === maxAttempts) throw err
+      const jitter = Math.random() * 30
+      const delay = Math.min(baseDelayMs * 2 ** (attempt - 1) + jitter, 500)
+      await new Promise<void>((resolve) => setTimeout(resolve, delay))
+    }
+  }
+  // TypeScript control-flow: unreachable — the loop always returns or throws
+  throw new Error("withSerializableRetry: unreachable")
+}
+
 export const ConversationService = {
   /**
    * Finds an existing direct conversation between two participants,
@@ -26,7 +51,8 @@ export const ConversationService = {
     const resolvedContextType: ConversationContextType =
       (contextType as ConversationContextType) ?? (productId ? ConversationContextType.PRODUCT_BASED : ConversationContextType.VENDOR_BASED)
 
-    return prisma.$transaction(async (tx) => {
+    return withSerializableRetry(() =>
+      prisma.$transaction(async (tx) => {
       // Try to find existing conversation with both participants.
       // Filter by contextType AND productId (explicit null for VENDOR_BASED) so that
       // a VENDOR_BASED conversation never merges with a PRODUCT_BASED one, and
@@ -78,7 +104,10 @@ export const ConversationService = {
           messages: true,
         },
       })
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable })
+    },
+    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+  )
+  )
   },
 
   /**
@@ -133,11 +162,14 @@ export const ConversationService = {
   },
 
   /**
-   * Returns the total unread message count for a user across all conversations.
+   * Returns the total unread message count for a user across all non-hidden conversations.
    */
   async totalUnreadCount(userId: string): Promise<number> {
     const result = await prisma.conversationParticipant.aggregate({
-      where: { userId },
+      where: {
+        userId,
+        conversation: { hides: { none: { userId } } },
+      },
       _sum: { unreadCount: true },
     })
     return result._sum.unreadCount ?? 0

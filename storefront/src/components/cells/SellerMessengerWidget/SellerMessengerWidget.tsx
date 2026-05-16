@@ -402,7 +402,9 @@ export function SellerMessengerWidget({
 
   // Auto-scroll
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+    requestAnimationFrame(() => {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+    })
   }, [messages, typingUserIds])
 
   // Auto-resize textarea

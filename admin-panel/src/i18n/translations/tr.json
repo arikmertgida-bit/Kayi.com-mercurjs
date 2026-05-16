@@ -3387,7 +3387,9 @@
     "deleteForEveryone": "Herkesten sil",
     "close": "Kapat",
     "connectionLost": "Bağlantı kesildi. Yeniden bağlanılıyor...",
-    "imageUploadFailed": "Görsel yüklenemedi"
+    "imageUploadFailed": "Görsel yüklenemedi",
+    "deleteConfirmTitle": "Mesajı Sil",
+    "deleteConfirmDesc": "Bu mesaj kalıcı olarak silinecektir."
   },
   "messenger": {
     "searchConversations": "Konuşma ara...",

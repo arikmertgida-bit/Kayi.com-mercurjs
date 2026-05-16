@@ -5,11 +5,7 @@ import {
 } from "@medusajs/types"
 import sellerCampaign from "@mercurjs/b2c-core/links/seller-campaign"
 import { notifyMessengerUser } from "../lib/messenger.js"
-
-interface MinimalRedisClient {
-  get(key: string): Promise<string | null>
-  set(key: string, value: string, exMode: "EX", ttl: number): Promise<unknown>
-}
+import { getRedisClient } from "../lib/redis-client.js"
 
 interface BudgetExhaustedPayload {
   campaign_id: string
@@ -139,20 +135,22 @@ export default async function promotionBudgetExhaustedSubscriber({
 
   // ── Messenger notification — mutex-guarded to prevent duplicate messages ──────
   let shouldNotify = true
-  try {
-    const redis = container.resolve<MinimalRedisClient>("redisClient")
-    const notifyKey = `budget_exhausted_notify:${campaign_id}`
-    const alreadyNotified = await redis.get(notifyKey)
-    if (alreadyNotified) {
-      shouldNotify = false
-      logger.info(
-        `[budget-exhausted] Duplicate seller notification suppressed for campaign ${campaign_id}`
-      )
-    } else {
-      await redis.set(notifyKey, "1", "EX", 60)
+  const redis = getRedisClient()
+  if (redis) {
+    try {
+      const notifyKey = `budget_exhausted_notify:${campaign_id}`
+      const alreadyNotified = await redis.get(notifyKey)
+      if (alreadyNotified) {
+        shouldNotify = false
+        logger.info(
+          `[budget-exhausted] Duplicate seller notification suppressed for campaign ${campaign_id}`
+        )
+      } else {
+        await redis.set(notifyKey, "1", "EX", 60)
+      }
+    } catch {
+      // Redis operation failed — proceed with notification (graceful degrade).
     }
-  } catch {
-    // Redis unavailable — proceed with notification (graceful degrade).
   }
 
   if (shouldNotify) {

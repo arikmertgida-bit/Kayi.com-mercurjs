@@ -1,7 +1,5 @@
 import {
   CampaignDTO,
-  FilterableCampaignProps,
-  FilterablePromotionProps,
   PromotionDTO,
 } from "@medusajs/types"
 import { SellerDTO } from "@mercurjs/framework"
@@ -22,12 +20,6 @@ export type WithMetadata<T> = T & { metadata: Record<string, unknown> }
  * fetchSellerByAuthActorId to populate this at runtime.
  */
 export type SellerWithMeta = SellerDTO & { metadata?: Record<string, unknown> | null }
-
-/** Filter type for seller-scoped campaign list queries. */
-export type SellerCampaignFilter = WithMetadata<FilterableCampaignProps>
-
-/** Filter type for seller-scoped promotion list queries. */
-export type SellerPromotionFilter = WithMetadata<FilterablePromotionProps>
 
 /**
  * MedusaJS v2 stores `metadata` as JSONB on promotions and campaigns at

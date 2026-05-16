@@ -36,34 +36,33 @@ export const GET = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) 
     return res.json({ promotions: [], count: 0, limit, offset })
   }
 
-  // is_automatic: false → kampanya tarafından oluşturulan otomatik promotionları gizle.
-  // Kampanya ve promosyon modülleri bu sayede tamamen bağımsız hale gelir.
+  // is_automatic: false → kampanya tarafından oluşturulan otomatik promosyonları gizle.
   //
-  // O(m) optimizasyonu: iki aşamalı sorgu — ilk aşamada sadece id seçilerek
-  // count alınır (relations yükü yok), ikinci aşamada yalnızca sayfa boyutundaki
-  // kayıtlar tam ilişkilerle çekilir.
-  const countOnlyPromotions = await promotionService.listPromotions(
-    { id: allPromotionIds, is_automatic: false },
-    { select: ["id"] }
-  )
+  // İki paralel DB sorgusu — her ikisi de DB seviyesinde filtreliyor:
+  // (1) count: bu satıcıya ait toplam is_automatic:false promosyon sayısı
+  // (2) page: skip/take ile DB'den doğrudan sayfalanmış çıktı + tam ilişkiler
+  // Not: link tablosu sorgusu kaçınılmaz — is_automatic sütunu link tablosunda yok;
+  //      satıcıya ait ID'leri almak için link tablosuna gidilmesi gerekiyor.
+  const [countResult, pagePromotions] = await Promise.all([
+    promotionService.listPromotions(
+      { id: allPromotionIds, is_automatic: false } as Parameters<typeof promotionService.listPromotions>[0],
+      { select: ["id"] }
+    ),
+    promotionService.listPromotions(
+      { id: allPromotionIds, is_automatic: false } as Parameters<typeof promotionService.listPromotions>[0],
+      { relations: ["application_method", "rules"], skip: offset, take: limit }
+    ),
+  ])
 
-  const count = countOnlyPromotions.length
-  const pageIds = countOnlyPromotions
-    .slice(offset, offset + limit)
-    .map((p) => p.id)
+  const count = countResult.length
 
-  if (pageIds.length === 0) {
+  if (pagePromotions.length === 0) {
     return res.json({ promotions: [], count, limit, offset })
   }
 
-  const pagePromotions = await promotionService.listPromotions(
-    { id: pageIds },
-    { relations: ["application_method", "rules"] }
-  )
-
   // Merge metadata from the raw jsonb column (ORM entity does not include it).
   const metaRows: { id: string; metadata: Record<string, unknown> | null }[] =
-    await knex("promotion").select("id", "metadata").whereIn("id", pageIds)
+    await knex("promotion").select("id", "metadata").whereIn("id", pagePromotions.map((p) => p.id))
   const metaMap = new Map(metaRows.map((r) => [r.id, r.metadata]))
   const promotionsWithMeta = pagePromotions.map((p) => ({
     ...p,
@@ -99,15 +98,18 @@ export const POST = async (req: AuthenticatedMedusaRequest, res: MedusaResponse)
     })
   }
 
-  // Adım 2: Ters yön çakışma kontrolü — hedeflenen ürünler aktif kampanya promosyonunda var mı?
-  // Yalnızca is_automatic: false promosyonlar için (cart-wide kuponlar bu kontrolden muaf).
+  // Adım 2: Çakışma kontrolü — hedeflenen ürünler herhangi bir kampanya veya
+  // başka bir promosyon kodunda kullanılıyor mu?
+  //
+  // Tek DB sorgusu + O(n) Set lookup:
+  //   - Önceki 2 ayrı listPromotions (is_automatic:true ve is_automatic:false) yerine
+  //     tek bir sorgu ile tüm mevcut promosyonlar çekilir.
+  //   - Ürün ID'leri Set'e atılır, çakışma O(1) lookup ile tespit edilir.
+  //   - İki aşamalı nested loop (O(n×m)) yerine O(n) tek geçiş.
   {
-    // values alanı iki farklı formatta gelebilir:
-    //   - İstek gövdesinden (frontend): string[]       → ["prod_01xxx"]
-    //   - DB'den okunan mevcut promosyon: { value: string }[]
     type TargetRuleShape = { attribute?: string; values?: unknown[] }
     type AppMethodShape = { target_rules?: TargetRuleShape[] }
-    type PromoShape = { application_method?: AppMethodShape }
+    type PromoShape = { application_method?: AppMethodShape; is_automatic?: boolean }
 
     const incomingTargetRules: TargetRuleShape[] =
       ((body.application_method as AppMethodShape | undefined)?.target_rules) ?? []
@@ -134,8 +136,9 @@ export const POST = async (req: AuthenticatedMedusaRequest, res: MedusaResponse)
       const existingPromoIds = (promoLinks as SellerPromotionLinkRow[]).map((r) => r.promotion_id)
 
       if (existingPromoIds.length > 0) {
-        const campaignPromos = await promotionService.listPromotions(
-          { id: existingPromoIds, is_automatic: true } as Parameters<typeof promotionService.listPromotions>[0],
+        // Tek sorgu — is_automatic filtresi yok: hem kampanya hem manuel promosyonlar alınır.
+        const allExistingPromos = await promotionService.listPromotions(
+          { id: existingPromoIds } as Parameters<typeof promotionService.listPromotions>[0],
           {
             relations: [
               "application_method",
@@ -145,67 +148,42 @@ export const POST = async (req: AuthenticatedMedusaRequest, res: MedusaResponse)
           }
         )
 
-        for (const promo of campaignPromos) {
+        // Tüm mevcut promosyonların hedef ürün ID'lerini tek Set'e yükle — O(n) geçiş.
+        // Set lookup O(1): nested find() döngüsünün O(n×m) karmaşıklığını ortadan kaldırır.
+        const occupiedProductIds = new Map<string, PromoShape>()
+        for (const promo of allExistingPromos) {
           const targetRules = (promo as PromoShape).application_method?.target_rules ?? []
           for (const rule of targetRules) {
             if (rule.attribute === "items.product.id") {
-              const ruleProductIds = (rule.values ?? []).map((v) => (v as { value?: string })?.value)
-              const conflictId = incomingProductIds.find((pid) => ruleProductIds.includes(pid))
-              if (conflictId) {
-                const productService = req.scope.resolve<{
-                  listProducts: (filter: { id: string[] }) => Promise<Array<{ title?: string }>>
-                }>(Modules.PRODUCT)
-                let productName = conflictId
-                try {
-                  const [product] = await productService.listProducts({ id: [conflictId] })
-                  if (product?.title) productName = product.title
-                } catch {
-                  // product name unavailable — use id
+              for (const v of rule.values ?? []) {
+                const pid = typeof v === "string" ? v : (v as { value?: string })?.value
+                if (pid && !occupiedProductIds.has(pid)) {
+                  occupiedProductIds.set(pid, promo as PromoShape)
                 }
-                return res.status(400).json({
-                  message: `${productName} adlı ürün bir kampanyaya dahil edilmiş olduğundan promosyon kodu oluşturulamaz.`,
-                })
               }
             }
           }
         }
 
-        // Adım 2b: Mükerrer manuel promosyon engeli — hedeflenen ürünler başka bir aktif/bekleyen
-        //           manuel promosyon kodunda (`is_automatic: false`) kullanılıyor mu?
-        const manualPromos = await promotionService.listPromotions(
-          { id: existingPromoIds, is_automatic: false } as Parameters<typeof promotionService.listPromotions>[0],
-          {
-            relations: [
-              "application_method",
-              "application_method.target_rules",
-              "application_method.target_rules.values",
-            ],
+        const conflictId = incomingProductIds.find((pid) => occupiedProductIds.has(pid))
+        if (conflictId) {
+          const productService = req.scope.resolve<{
+            listProducts: (filter: { id: string[] }) => Promise<Array<{ title?: string }>>
+          }>(Modules.PRODUCT)
+          let productName = conflictId
+          try {
+            const [product] = await productService.listProducts({ id: [conflictId] })
+            if (product?.title) productName = product.title
+          } catch {
+            // product name unavailable — use id
           }
-        )
-
-        for (const promo of manualPromos) {
-          const targetRules = (promo as PromoShape).application_method?.target_rules ?? []
-          for (const rule of targetRules) {
-            if (rule.attribute === "items.product.id") {
-              const ruleProductIds = (rule.values ?? []).map((v) => (v as { value?: string })?.value)
-              const conflictId = incomingProductIds.find((pid) => ruleProductIds.includes(pid))
-              if (conflictId) {
-                const productService = req.scope.resolve<{
-                  listProducts: (filter: { id: string[] }) => Promise<Array<{ title?: string }>>
-                }>(Modules.PRODUCT)
-                let productName = conflictId
-                try {
-                  const [product] = await productService.listProducts({ id: [conflictId] })
-                  if (product?.title) productName = product.title
-                } catch {
-                  // product name unavailable — fallback to id
-                }
-                return res.status(400).json({
-                  message: `${productName} adlı ürüne promosyon kodu tanımlıdır. Aynı ürün için yeni bir promosyon kodu oluşturulamaz.`,
-                })
-              }
-            }
-          }
+          const conflictingPromo = occupiedProductIds.get(conflictId)
+          const isCampaignBased = conflictingPromo?.is_automatic === true
+          return res.status(400).json({
+            message: isCampaignBased
+              ? `${productName} adlı ürün bir kampanyaya dahil edilmiş olduğundan promosyon kodu oluşturulamaz.`
+              : `${productName} adlı ürüne promosyon kodu tanımlıdır. Aynı ürün için yeni bir promosyon kodu oluşturulamaz.`,
+          })
         }
       }
     }

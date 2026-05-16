@@ -5,6 +5,7 @@ import { authMiddleware, AuthRequest, resolveIdentity } from "../middleware/auth
 import { requireConversationParticipant } from "../middleware/conversation-participant"
 import { MessageService } from "../services/message.service"
 import { NotificationService } from "../services/notification.service"
+import { generatePresignedGetUrl } from "../lib/minio"
 
 // 30 messages per minute per authenticated user
 const messageSendLimiter = rateLimit({
@@ -32,7 +33,22 @@ export function createMessageRouter(io: SocketServer) {
       const limit = Math.min(parseInt(req.query.limit as string || "30", 10), 100)
 
       const messages = await MessageService.list(conversationId, userId, cursor, limit)
-      res.json({ messages })
+      // Transform IMAGE messages: stored object keys → presigned GET URLs.
+      // Messages uploaded before this change store full http:// URLs (pass through unchanged).
+      const enrichedMessages = await Promise.all(
+        messages.map(async (msg) => {
+          if (
+            msg.messageType === "IMAGE" &&
+            msg.imageUrl !== null &&
+            msg.imageUrl !== undefined &&
+            !msg.imageUrl.startsWith("http")
+          ) {
+            return { ...msg, imageUrl: await generatePresignedGetUrl(msg.imageUrl) }
+          }
+          return msg
+        })
+      )
+      res.json({ messages: enrichedMessages })
     } catch (err) {
       console.error("[messages] GET /:id/messages", err)
       res.status(500).json({ error: "Internal server error" })
@@ -64,10 +80,6 @@ export function createMessageRouter(io: SocketServer) {
     } catch (err: any) {
       if (err.message === "Forbidden" || err.message === "Only the sender can delete for all") {
         res.status(403).json({ error: err.message })
-        return
-      }
-      if (err.message === "Message not found") {
-        res.status(404).json({ error: err.message })
         return
       }
       console.error("[messages] DELETE /:id/messages/:msgId", err)

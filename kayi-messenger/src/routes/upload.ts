@@ -5,7 +5,7 @@ import multer from "multer"
 import { v4 as uuidv4 } from "uuid"
 import { authMiddleware, AuthRequest, resolveIdentity } from "../middleware/auth"
 import { requireConversationParticipant } from "../middleware/conversation-participant"
-import { minioClient, BUCKET, objectUrl } from "../lib/minio"
+import { minioClient, BUCKET, generatePresignedGetUrl } from "../lib/minio"
 import { MessageService } from "../services/message.service"
 import { NotificationService } from "../services/notification.service"
 
@@ -71,24 +71,28 @@ export function createUploadRouter(io: SocketServer) {
           "Content-Type": req.file.mimetype,
         })
 
-        const imageUrl = objectUrl(key)
-
         const message = await MessageService.create({
           conversationId,
           senderId: userId,
           senderType: userType,
           content: "[image]",
           messageType: "IMAGE",
-          imageUrl,
+          // Store the object key (not a public URL) so access is gated by presigned URL generation
+          imageUrl: key,
         })
 
+        // Generate a presigned URL for immediate display; clients requesting messages later
+        // will receive fresh presigned URLs from GET /conversations/:id/messages
+        const presignedUrl = await generatePresignedGetUrl(key)
+        const messageWithUrl = { ...message, imageUrl: presignedUrl }
+
         // Broadcast to all participants in the conversation room
-        io.to(`conversation:${conversationId}`).emit("message_received", message)
+        io.to(`conversation:${conversationId}`).emit("message_received", messageWithUrl)
 
         // Notify participants who are not in the room (offline/background)
         await NotificationService.notifyAbsentParticipants(io, conversationId, userId, "[image]")
 
-        res.status(201).json({ message, imageUrl })
+        res.status(201).json({ message: messageWithUrl, imageUrl: presignedUrl })
       } catch (err) {
         console.error("[upload] POST /", err)
         res.status(500).json({ error: "Internal server error" })

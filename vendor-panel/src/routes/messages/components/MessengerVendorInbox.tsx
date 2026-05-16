@@ -78,6 +78,7 @@ export function MessengerVendorInbox({ sellerId: _sellerId }: MessengerVendorInb
     closeConversation,
     sendMessage,
     uploadImage,
+    deleteMessage,
     deleteConversation,
     startTyping,
     stopTyping,
@@ -93,6 +94,10 @@ export function MessengerVendorInbox({ sellerId: _sellerId }: MessengerVendorInb
   const [pendingImage, setPendingImage] = useState<File | null>(null)
   const [pendingImagePreview, setPendingImagePreview] = useState<string | null>(null)
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+  const [deleteMenuPos, setDeleteMenuPos] = useState<{ top: number; left?: number; right?: number } | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<{ messageId: string; deleteForAll: boolean } | null>(null)
+  const [pendingDeleteConv, setPendingDeleteConv] = useState<{ convId: string; deleteForAll: boolean } | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -112,14 +117,18 @@ export function MessengerVendorInbox({ sellerId: _sellerId }: MessengerVendorInb
 
   // Active conversation context (PRODUCT or VENDOR) — drives ChatHeader + context cards
   const [activeContext, setActiveContext] = useState<MessageContext | null>(null)
+  // Tracks whether context data is still being fetched — used to render skeleton and prevent CLS (S7)
+  const [isContextLoading, setIsContextLoading] = useState(false)
   useEffect(() => {
     const conv = activeConv
-    if (!conv) { setActiveContext(null); return }
+    if (!conv) { setActiveContext(null); setIsContextLoading(false); return }
 
     // ADMIN_SUPPORT konuşmalarında ürün/mağaza bağlam kartı gösterilmez
-    if (conv.type === "ADMIN_SUPPORT") { setActiveContext(null); return }
+    if (conv.type === "ADMIN_SUPPORT") { setActiveContext(null); setIsContextLoading(false); return }
 
     const isProduct = conv.contextType === "PRODUCT_BASED" || (conv.contextType !== "VENDOR_BASED" && !!conv.productId)
+
+    setIsContextLoading(true)
 
     if (isProduct && conv.productId) {
       const pid = conv.productId
@@ -139,8 +148,10 @@ export function MessengerVendorInbox({ sellerId: _sellerId }: MessengerVendorInb
           })
         })
         .catch(() => setActiveContext(null))
+        .finally(() => setIsContextLoading(false))
     } else {
       setActiveContext({ type: "VENDOR", data: { id: "", name: "", handle: "", photo: null } })
+      setIsContextLoading(false)
     }
   }, [activeConv?.id])
 
@@ -152,11 +163,12 @@ export function MessengerVendorInbox({ sellerId: _sellerId }: MessengerVendorInb
 
   const isOtherTyping = typingUserIds.length > 0
 
-  // Auto-scroll to bottom
+  // Auto-scroll to bottom — deferred to next animation frame to avoid forced synchronous layout reflow (S8)
   useEffect(() => {
-    const container = messagesContainerRef.current
-    if (!container) return
-    container.scrollTop = container.scrollHeight
+    const frameId = requestAnimationFrame(() => {
+      bottomRef.current?.scrollIntoView({ block: "end" })
+    })
+    return () => cancelAnimationFrame(frameId)
   }, [messages, typingUserIds])
 
   const handleSend = useCallback(async () => {
@@ -196,6 +208,34 @@ export function MessengerVendorInbox({ sellerId: _sellerId }: MessengerVendorInb
       setIsSending(false)
     }
   }, [text, pendingImage, pendingImagePreview, isSending, activeConversationId, sendMessage, stopTyping, uploadImage])
+
+  const handleDeleteMessage = useCallback(
+    async (messageId: string, deleteForAll: boolean) => {
+      try {
+        await deleteMessage(messageId, deleteForAll)
+      } catch (err) {
+        console.error("[MessengerVendorInbox] delete error:", err)
+      }
+      setPendingDelete(null)
+    },
+    [deleteMessage]
+  )
+
+  const handleRequestDelete = useCallback(
+    (messageId: string, deleteForAll: boolean) => {
+      setDeleteTarget(null)
+      setDeleteMenuPos(null)
+      setPendingDelete({ messageId, deleteForAll })
+    },
+    []
+  )
+
+  const handleRequestDeleteConv = useCallback(
+    (convId: string, deleteForAll: boolean) => {
+      setPendingDeleteConv({ convId, deleteForAll })
+    },
+    []
+  )
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -290,7 +330,7 @@ export function MessengerVendorInbox({ sellerId: _sellerId }: MessengerVendorInb
                 conv={conv}
                 isActive={conv.id === activeConversationId}
                 onOpen={handleOpenConversation}
-                onDelete={deleteConversation}
+                onDelete={handleRequestDeleteConv}
               />
             ))
           )}
@@ -311,11 +351,20 @@ export function MessengerVendorInbox({ sellerId: _sellerId }: MessengerVendorInb
             onClose={() => { closeConversation(); setMobileView('list') }}
           />
 
-          {/* Context card — product or vendor */}
-          {activeContext?.type === "PRODUCT" && (
+          {/* Context card — product or vendor. Skeleton prevents CLS while data loads (S7). */}
+          {isContextLoading && (
+            <div className="px-4 py-2 border-b border-ui-border-base flex items-center gap-3 h-[72px] flex-shrink-0 animate-pulse">
+              <div className="w-12 h-12 rounded-xl bg-ui-bg-component flex-shrink-0" />
+              <div className="flex-1 space-y-2">
+                <div className="h-3 bg-ui-bg-component rounded w-3/4" />
+                <div className="h-2.5 bg-ui-bg-component rounded w-1/2" />
+              </div>
+            </div>
+          )}
+          {!isContextLoading && activeContext?.type === "PRODUCT" && (
             <ProductContextCard product={activeContext.data} />
           )}
-          {activeContext?.type === "VENDOR" && (
+          {!isContextLoading && activeContext?.type === "VENDOR" && (
             <VendorContextCard />
           )}
 
@@ -406,10 +455,11 @@ export function MessengerVendorInbox({ sellerId: _sellerId }: MessengerVendorInb
                           onClick={() => setLightboxSrc(msg.imageUrl!)}
                           className="block border-0 p-0 cursor-zoom-in rounded-lg overflow-hidden"
                         >
-                          <img src={msg.imageUrl} alt={t("messenger.image")} className="max-w-full rounded-lg mb-1 hover:opacity-90 transition-opacity" />
+                          <img src={msg.imageUrl} alt={t("messenger.image")} className="max-w-full rounded-lg hover:opacity-90 transition-opacity" />
                         </button>
-                      ) : null}
-                      <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                      ) : (
+                        <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                      )}
                       <p
                         className={`text-xs mt-1 opacity-60 text-right ${
                           isMe ? "text-ui-fg-on-inverted" : "text-ui-fg-muted"
@@ -421,7 +471,31 @@ export function MessengerVendorInbox({ sellerId: _sellerId }: MessengerVendorInb
                         )}
                       </p>
 
-                      {/* Vendor cannot delete messages — admin only */}
+                      {/* Delete button */}
+                      {!msg.deletedForAll && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (deleteTarget === msg.id) {
+                              setDeleteTarget(null)
+                              setDeleteMenuPos(null)
+                            } else {
+                              const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect()
+                              setDeleteMenuPos(
+                                isMe
+                                  ? { top: rect.bottom + 4, right: window.innerWidth - rect.right }
+                                  : { top: rect.bottom + 4, left: rect.left }
+                              )
+                              setDeleteTarget(msg.id)
+                            }
+                          }}
+                          className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-full bg-ui-bg-base/80 shadow text-ui-fg-muted hover:text-ui-fg-base opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                            <circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" />
+                          </svg>
+                        </button>
+                      )}
                     </div>
                   </div>
                 )
@@ -530,7 +604,36 @@ export function MessengerVendorInbox({ sellerId: _sellerId }: MessengerVendorInb
       )}
     </div>
 
-    {/* Vendor cannot delete messages — admin only */}
+    {/* Delete message dropdown */}
+    {deleteTarget && deleteMenuPos && (
+      <>
+        <div className="fixed inset-0 z-[9998]" onClick={() => { setDeleteTarget(null); setDeleteMenuPos(null) }} />
+        <div
+          style={{
+            position: "fixed",
+            top: deleteMenuPos.top,
+            ...(deleteMenuPos.right !== undefined ? { right: deleteMenuPos.right } : { left: deleteMenuPos.left }),
+            zIndex: 9999,
+          }}
+          className="bg-ui-bg-overlay rounded-xl shadow-elevation-modal border border-ui-border-base p-1.5 flex flex-col gap-0.5 min-w-[160px]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button onClick={() => handleRequestDelete(deleteTarget, false)} className="text-left text-sm px-3 py-1.5 rounded-lg hover:bg-ui-bg-base-hover text-ui-fg-base transition-colors">
+            {t("messages.deleteOnlyForMe")}
+          </button>
+          <button
+            disabled={messages.find((m) => m.id === deleteTarget)?.senderType !== "SELLER"}
+            onClick={() => handleRequestDelete(deleteTarget, true)}
+            className="text-left text-sm px-3 py-1.5 rounded-lg hover:bg-ui-tag-red-bg text-ui-tag-red-text disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            {t("messages.deleteForEveryone")}
+          </button>
+          <button onClick={() => { setDeleteTarget(null); setDeleteMenuPos(null) }} className="text-left text-xs px-3 py-1 text-ui-fg-muted hover:text-ui-fg-base transition-colors">
+            {t("messages.close")}
+          </button>
+        </div>
+      </>
+    )}
 
     {/* Lightbox */}
     {lightboxSrc && (
@@ -552,6 +655,56 @@ export function MessengerVendorInbox({ sellerId: _sellerId }: MessengerVendorInb
           onClick={(e) => e.stopPropagation()}
         />
       </div>
+    )}
+
+    {/* Delete confirmation dialog */}
+    {pendingDelete && (
+      <>
+        <div className="fixed inset-0 z-[10000] bg-black/40" onClick={() => setPendingDelete(null)} />
+        <div className="fixed z-[10001] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-ui-bg-base rounded-xl shadow-elevation-modal border border-ui-border-base p-6 w-full max-w-sm">
+          <p className="text-sm font-semibold text-ui-fg-base mb-2">{t("messages.deleteConfirmTitle")}</p>
+          <p className="text-sm text-ui-fg-subtle mb-6">{t("messages.deleteConfirmDesc")}</p>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => setPendingDelete(null)}
+              className="px-4 py-2 text-sm rounded-lg border border-ui-border-base bg-ui-bg-base hover:bg-ui-bg-base-hover text-ui-fg-base transition-colors"
+            >
+              {t("messages.close")}
+            </button>
+            <button
+              onClick={() => handleDeleteMessage(pendingDelete.messageId, pendingDelete.deleteForAll)}
+              className="px-4 py-2 text-sm rounded-lg bg-ui-tag-red-bg hover:opacity-90 text-ui-tag-red-text font-medium transition-opacity"
+            >
+              {t("messages.delete")}
+            </button>
+          </div>
+        </div>
+      </>
+    )}
+
+    {/* Conversation delete confirmation dialog */}
+    {pendingDeleteConv && (
+      <>
+        <div className="fixed inset-0 z-[10000] bg-black/40" onClick={() => setPendingDeleteConv(null)} />
+        <div className="fixed z-[10001] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-ui-bg-base rounded-xl shadow-elevation-modal border border-ui-border-base p-6 w-full max-w-sm">
+          <p className="text-sm font-semibold text-ui-fg-base mb-2">{t("messages.deleteConfirmTitle")}</p>
+          <p className="text-sm text-ui-fg-subtle mb-6">{t("messages.deleteConfirmDesc")}</p>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => setPendingDeleteConv(null)}
+              className="px-4 py-2 text-sm rounded-lg border border-ui-border-base bg-ui-bg-base hover:bg-ui-bg-base-hover text-ui-fg-base transition-colors"
+            >
+              {t("messages.close")}
+            </button>
+            <button
+              onClick={() => { deleteConversation(pendingDeleteConv.convId, pendingDeleteConv.deleteForAll); setPendingDeleteConv(null) }}
+              className="px-4 py-2 text-sm rounded-lg bg-ui-tag-red-bg hover:opacity-90 text-ui-tag-red-text font-medium transition-opacity"
+            >
+              {t("messages.delete")}
+            </button>
+          </div>
+        </div>
+      </>
     )}
     </>
   )

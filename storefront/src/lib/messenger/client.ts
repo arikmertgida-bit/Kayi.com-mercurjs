@@ -47,8 +47,11 @@ async function request<T>(
 
 // ── Conversations ──────────────────────────────────────────────────────────
 
-export async function getConversations(): Promise<{ conversations: Conversation[] }> {
-  return request("/api/conversations")
+export async function getConversations(
+  limit = 20,
+  offset = 0
+): Promise<{ conversations: Conversation[] }> {
+  return request(`/api/conversations?limit=${limit}&offset=${offset}`)
 }
 
 export async function findOrCreateConversation(payload: {

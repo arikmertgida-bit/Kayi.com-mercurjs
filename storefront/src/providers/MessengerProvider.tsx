@@ -16,7 +16,6 @@ import {
   emitTypingStart,
   emitTypingStop,
   emitMessagesRead,
-  emitDeleteMessage,
 } from "@/lib/messenger/socket"
 import {
   getConversations,
@@ -71,6 +70,8 @@ interface MessengerContextValue {
   stopTyping: () => void
   markRead: (conversationId: string) => Promise<void>
   refreshConversations: () => Promise<void>
+  loadMoreConversations: () => Promise<void>
+  hasMoreConversations: boolean
 }
 
 const MessengerContext = createContext<MessengerContextValue | null>(null)
@@ -107,6 +108,9 @@ export function MessengerProvider({ children, userId, authToken, userName, notif
   const [isConnected, setIsConnected] = useState(false)
   const [isLoadingMessages, setIsLoadingMessages] = useState(false)
   const [isWidgetOpen, setIsWidgetOpen] = useState(false)
+  const [hasMoreConversations, setHasMoreConversations] = useState(false)
+  const conversationsOffsetRef = useRef(0)
+  const PAGE_SIZE = 20
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const activeConvRef = useRef<string | null>(null)
   const conversationsRef = useRef<Conversation[]>([])
@@ -201,14 +205,16 @@ export function MessengerProvider({ children, userId, authToken, userName, notif
       setUnreadCount((n) => n + 1)
       // If this notification is for a conversation we don't have yet, refresh the list
       if (payload.conversationId && !conversationsRef.current.find((c) => c.id === payload.conversationId)) {
-        getConversations()
-          .then((r) =>
+        getConversations(PAGE_SIZE, 0)
+          .then((r) => {
             setConversations(
               r.conversations.sort(
                 (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
               )
             )
-          )
+            setHasMoreConversations(r.conversations.length === PAGE_SIZE)
+            conversationsOffsetRef.current = r.conversations.length
+          })
           .catch(console.error)
       }
     }
@@ -225,8 +231,13 @@ export function MessengerProvider({ children, userId, authToken, userName, notif
     })
 
     // Initial data
+    conversationsOffsetRef.current = 0
     Promise.all([
-      getConversations().then((r) => setConversations(r.conversations)),
+      getConversations(PAGE_SIZE, 0).then((r) => {
+        setConversations(r.conversations)
+        setHasMoreConversations(r.conversations.length === PAGE_SIZE)
+        conversationsOffsetRef.current = r.conversations.length
+      }),
       getUnreadCount().then((r) => setUnreadCount(r.count)),
     ]).catch(console.error)
 
@@ -236,6 +247,11 @@ export function MessengerProvider({ children, userId, authToken, userName, notif
     }
 
     return () => {
+      // Clear pending typing timer so it cannot fire emitTypingStop on a closed socket
+      if (typingTimerRef.current) {
+        clearTimeout(typingTimerRef.current)
+        typingTimerRef.current = null
+      }
       socket.off("connect", onConnect)
       socket.off("disconnect", onDisconnect)
       socket.off("message_received", onMessage)
@@ -357,7 +373,8 @@ export function MessengerProvider({ children, userId, authToken, userName, notif
   const deleteMessage = useCallback(async (messageId: string, deleteForAll: boolean) => {
     if (!activeConvRef.current) return
     const convId = activeConvRef.current
-    // Optimistic update
+    // Optimistic update — REST is the single source of truth;
+    // the backend broadcasts "message_deleted" to the room after persisting.
     if (deleteForAll) {
       setMessages((prev) =>
         prev.map((m) =>
@@ -369,11 +386,9 @@ export function MessengerProvider({ children, userId, authToken, userName, notif
     } else {
       setMessages((prev) => prev.filter((m) => m.id !== messageId))
     }
-    // Socket emit (also hits REST via socket handler)
-    emitDeleteMessage(messageId, convId, deleteForAll)
-    // Also call REST to ensure persistence if socket is temporarily down
+    // REST call — server handles DB write + socket broadcast (no double-fire)
     await apiDeleteMessage(convId, messageId, deleteForAll).catch((err) => {
-      console.error("[deleteMessage] REST fallback error", err)
+      console.error("[deleteMessage] error", err)
     })
   }, [])
 
@@ -425,12 +440,27 @@ export function MessengerProvider({ children, userId, authToken, userName, notif
 
   const refreshConversations = useCallback(async () => {
     const [convsRes, countRes] = await Promise.all([
-      getConversations(),
+      getConversations(PAGE_SIZE, 0),
       getUnreadCount(),
     ])
     setConversations(convsRes.conversations)
+    setHasMoreConversations(convsRes.conversations.length === PAGE_SIZE)
+    conversationsOffsetRef.current = convsRes.conversations.length
     setUnreadCount(countRes.count)
   }, [])
+
+  const loadMoreConversations = useCallback(async () => {
+    if (!hasMoreConversations) return
+    const offset = conversationsOffsetRef.current
+    const res = await getConversations(PAGE_SIZE, offset)
+    setConversations((prev) => {
+      const existingIds = new Set(prev.map((c) => c.id))
+      const newOnes = res.conversations.filter((c) => !existingIds.has(c.id))
+      return [...prev, ...newOnes]
+    })
+    setHasMoreConversations(res.conversations.length === PAGE_SIZE)
+    conversationsOffsetRef.current = offset + res.conversations.length
+  }, [hasMoreConversations])
 
   return (
     <MessengerContext.Provider
@@ -456,6 +486,8 @@ export function MessengerProvider({ children, userId, authToken, userName, notif
         stopTyping,
         markRead,
         refreshConversations,
+        loadMoreConversations,
+        hasMoreConversations,
       }}
     >
       {children}

@@ -41,6 +41,10 @@ export const MSG = {
   CONFIRM_DELETE: "Seçenekler",
   DELETE_CANCEL: "Kapat",
 
+  // Delete confirmation modal
+  DELETE_CONFIRM_TITLE: "Mesajı Sil",
+  DELETE_CONFIRM_DESC: "Bu mesaj kalıcı olarak silinecektir.",
+
   // Seller fallback name (PDP chat modal)
   SELLER_FALLBACK: "Satıcı",
 } as const

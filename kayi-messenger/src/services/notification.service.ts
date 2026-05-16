@@ -2,6 +2,7 @@ import { Server as SocketServer } from "socket.io"
 import { MessageType } from "@prisma/client"
 import { MessageService } from "../services/message.service"
 import { resolveDisplayName } from "../lib/user-cache"
+import { redisRoomMembers } from "../lib/redis"
 import prisma from "../lib/prisma"
 
 /**
@@ -25,7 +26,8 @@ export const NotificationService = {
 
   /**
    * Notifies all participants of a conversation who are NOT currently in the room.
-   * Used after a message is sent (text or image) to push offline/background notifications.
+   * Uses Redis SET (room:active:{conversationId}) for O(1) presence checks instead
+   * of io.fetchSockets() which performs a distributed query across all pods.
    */
   async notifyAbsentParticipants(
     io: SocketServer,
@@ -41,12 +43,18 @@ export const NotificationService = {
     const otherParticipants =
       conversation?.participants.filter((p) => p.userId !== senderId) ?? []
 
-    const roomSockets = await io.in(`conversation:${conversationId}`).fetchSockets()
-    const senderName = await resolveDisplayName(senderId)
+    if (otherParticipants.length === 0) return
+
+    // Redis SMEMBERS is O(N) where N = active users in room (bounded, typically < 10).
+    // Vastly faster than io.fetchSockets() which performs a distributed query across all pods.
+    // Run both in parallel since they are independent.
+    const [activeInRoom, senderName] = await Promise.all([
+      redisRoomMembers(conversationId),
+      resolveDisplayName(senderId),
+    ])
 
     for (const other of otherParticipants) {
-      const otherInRoom = roomSockets.some((s) => s.data.userId === other.userId)
-      if (!otherInRoom) {
+      if (!activeInRoom.has(other.userId)) {
         NotificationService.notifyUser(io, other.userId, {
           type: "new_message",
           conversationId,

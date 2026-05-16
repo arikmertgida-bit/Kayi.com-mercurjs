@@ -39,11 +39,13 @@ export function MessengerChat({
   otherName = "Destek",
 }: MessengerChatProps) {
   const {
+    conversations,
     pinnedMessages,
     typingUserIds,
     isLoadingMessages,
     sendSidebarMessage,
-    uploadImage,
+    uploadSidebarImage,
+    deleteSidebarMessage,
     startTyping,
     stopTyping,
     openSidebarConversation,
@@ -53,31 +55,37 @@ export function MessengerChat({
   const [text, setText] = useState("")
   const [isSending, setIsSending] = useState(false)
   const [isInitializing, setIsInitializing] = useState(true)
+  const [adminUserId, setAdminUserId] = useState<string | null>(null)
+  const [localConvId, setLocalConvId] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+  const [deleteMenuPos, setDeleteMenuPos] = useState<{ top: number; left?: number; right?: number } | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<{ messageId: string; deleteForAll: boolean } | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const initializedRef = useRef(false)
-  const { i18n } = useTranslation()
-  void typingTimerRef
+  const { i18n, t } = useTranslation()
 
-  // ── On mount: fetch real admin ID and open/create support conversation ──
+  // ── On mount: fetch admin ID + open existing conversation (no auto-create) ──
+  // Conversation is created lazily in handleSend so that merely opening the drawer
+  // does NOT create an empty entry in the admin panel's messages list.
   useEffect(() => {
     if (initializedRef.current || !currentUserId) return
     initializedRef.current = true
 
     fetchQuery("/vendor/support/admin-contact", { method: "GET" })
-      .then((data: any) => {
-        const adminUserId = data?.adminUserId
-        if (!adminUserId) throw new Error("No admin user found")
-        return startConversation({
-          targetUserId: adminUserId,
-          targetUserType: "ADMIN",
-          type: "ADMIN_SUPPORT",
-          subject: "Satıcı Destek",
-        })
-      })
-      .then((cid) => {
-        if (cid) openSidebarConversation(cid)
+      .then(async (data: any) => {
+        const aid = data?.adminUserId
+        if (!aid) throw new Error("No admin user found")
+        setAdminUserId(aid)
+        // Open existing ADMIN_SUPPORT conversation if one already exists.
+        // Do NOT call startConversation here — that would push an empty conversation
+        // into admin’s /messages before any message has been typed.
+        const existing = conversations.find((c: any) => c.type === "ADMIN_SUPPORT")
+        if (existing) {
+          setLocalConvId(existing.id)
+          await openSidebarConversation(existing.id)
+        }
       })
       .catch((err) => {
         console.error(err)
@@ -94,16 +102,35 @@ export function MessengerChat({
 
   const handleSend = useCallback(async () => {
     const content = text.trim()
+    // Hard guard: never send empty content
     if (!content || isSending) return
     setIsSending(true)
     setText("")
     stopTyping()
     try {
+      // Lazily create the ADMIN_SUPPORT conversation on the very first message.
+      // This prevents an empty conversation from appearing in the admin panel
+      // just because the vendor opened the Destek drawer.
+      if (!localConvId) {
+        if (!adminUserId) return
+        const cid = await startConversation({
+          targetUserId: adminUserId,
+          targetUserType: "ADMIN",
+          type: "ADMIN_SUPPORT",
+          subject: "Satıcı Destek",
+        })
+        if (!cid) return
+        setLocalConvId(cid)
+        // Await openSidebarConversation so pinnedConvIdRef is updated
+        // (it syncs from state on every render; the await getMessages inside
+        // openSidebarConversation gives React time to commit the re-render).
+        await openSidebarConversation(cid)
+      }
       await sendSidebarMessage(content)
     } finally {
       setIsSending(false)
     }
-  }, [text, isSending, sendSidebarMessage, stopTyping])
+  }, [text, isSending, localConvId, adminUserId, sendSidebarMessage, startConversation, openSidebarConversation, stopTyping])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -123,7 +150,19 @@ export function MessengerChat({
     const file = e.target.files?.[0]
     if (!file) return
     try {
-      await uploadImage(file)
+      await uploadSidebarImage(file, async () => {
+        if (localConvId) return localConvId
+        if (!adminUserId) throw new Error("Admin user not found")
+        const cid = await startConversation({
+          targetUserId: adminUserId,
+          targetUserType: "ADMIN",
+          type: "ADMIN_SUPPORT",
+          subject: "Satıcı Destek",
+        })
+        setLocalConvId(cid)
+        await openSidebarConversation(cid)
+        return cid
+      })
     } finally {
       e.target.value = ""
     }
@@ -132,6 +171,27 @@ export function MessengerChat({
   const isOtherTyping = typingUserIds.length > 0
   const myMessages = pinnedMessages.filter((m) => m.senderType === "SELLER")
   const lastMyMessageId = myMessages[myMessages.length - 1]?.id
+
+  const handleDeleteMessage = useCallback(
+    async (messageId: string, deleteForAll: boolean) => {
+      try {
+        await deleteSidebarMessage(messageId, deleteForAll)
+      } catch (err) {
+        console.error("[MessengerChat] delete error:", err)
+      }
+      setPendingDelete(null)
+    },
+    [deleteSidebarMessage]
+  )
+
+  const handleRequestDelete = useCallback(
+    (messageId: string, deleteForAll: boolean) => {
+      setDeleteTarget(null)
+      setDeleteMenuPos(null)
+      setPendingDelete({ messageId, deleteForAll })
+    },
+    []
+  )
 
   if (isInitializing && pinnedMessages.length === 0) {
     return (
@@ -142,6 +202,7 @@ export function MessengerChat({
   }
 
   return (
+    <>
     <div className="flex flex-col h-full">
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1 scroll-smooth">
@@ -210,9 +271,10 @@ export function MessengerChat({
                     <p className="text-xs font-medium mb-1 opacity-70">{otherName}</p>
                   )}
                   {msg.messageType === "IMAGE" && msg.imageUrl ? (
-                    <img src={msg.imageUrl} alt="Görsel" className="max-w-full rounded-lg mb-1" />
-                  ) : null}
-                  <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                    <img src={msg.imageUrl} alt="Görsel" className="max-w-full rounded-lg" />
+                  ) : (
+                    <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                  )}
                   <p
                     className={`text-xs mt-1 opacity-60 text-right ${
                       isMine ? "text-ui-fg-on-inverted" : "text-ui-fg-muted"
@@ -223,6 +285,31 @@ export function MessengerChat({
                       <span className="ml-1">· Görüldü</span>
                     )}
                   </p>
+                  {/* Delete button */}
+                  {!msg.deletedForAll && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (deleteTarget === msg.id) {
+                          setDeleteTarget(null)
+                          setDeleteMenuPos(null)
+                        } else {
+                          const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect()
+                          setDeleteMenuPos(
+                            isMine
+                              ? { top: rect.bottom + 4, right: window.innerWidth - rect.right }
+                              : { top: rect.bottom + 4, left: rect.left }
+                          )
+                          setDeleteTarget(msg.id)
+                        }
+                      }}
+                      className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-full bg-ui-bg-base/80 shadow text-ui-fg-muted hover:text-ui-fg-base opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                        <circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" />
+                      </svg>
+                    </button>
+                  )}
                 </div>
               </div>
             )
@@ -285,5 +372,62 @@ export function MessengerChat({
         </div>
       </div>
     </div>
+
+    {/* Delete message dropdown */}
+    {deleteTarget && deleteMenuPos && (
+      <>
+        <div className="fixed inset-0 z-[9998]" onClick={() => { setDeleteTarget(null); setDeleteMenuPos(null) }} />
+        <div
+          style={{
+            position: "fixed",
+            top: deleteMenuPos.top,
+            ...(deleteMenuPos.right !== undefined ? { right: deleteMenuPos.right } : { left: deleteMenuPos.left }),
+            zIndex: 9999,
+          }}
+          className="bg-ui-bg-overlay rounded-xl shadow-elevation-modal border border-ui-border-base p-1.5 flex flex-col gap-0.5 min-w-[160px]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button onClick={() => handleRequestDelete(deleteTarget, false)} className="text-left text-sm px-3 py-1.5 rounded-lg hover:bg-ui-bg-base-hover text-ui-fg-base transition-colors">
+            {t("messages.deleteOnlyForMe")}
+          </button>
+          <button
+            disabled={pinnedMessages.find((m) => m.id === deleteTarget)?.senderType !== "SELLER"}
+            onClick={() => handleRequestDelete(deleteTarget, true)}
+            className="text-left text-sm px-3 py-1.5 rounded-lg hover:bg-ui-tag-red-bg text-ui-tag-red-text disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            {t("messages.deleteForEveryone")}
+          </button>
+          <button onClick={() => { setDeleteTarget(null); setDeleteMenuPos(null) }} className="text-left text-xs px-3 py-1 text-ui-fg-muted hover:text-ui-fg-base transition-colors">
+            {t("messages.close")}
+          </button>
+        </div>
+      </>
+    )}
+
+    {/* Delete confirmation dialog */}
+    {pendingDelete && (
+      <>
+        <div className="fixed inset-0 z-[10000] bg-black/40" onClick={() => setPendingDelete(null)} />
+        <div className="fixed z-[10001] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-ui-bg-base rounded-xl shadow-elevation-modal border border-ui-border-base p-6 w-full max-w-sm">
+          <p className="text-sm font-semibold text-ui-fg-base mb-2">{t("messages.deleteConfirmTitle")}</p>
+          <p className="text-sm text-ui-fg-subtle mb-6">{t("messages.deleteConfirmDesc")}</p>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => setPendingDelete(null)}
+              className="px-4 py-2 text-sm rounded-lg border border-ui-border-base bg-ui-bg-base hover:bg-ui-bg-base-hover text-ui-fg-base transition-colors"
+            >
+              {t("messages.close")}
+            </button>
+            <button
+              onClick={() => handleDeleteMessage(pendingDelete.messageId, pendingDelete.deleteForAll)}
+              className="px-4 py-2 text-sm rounded-lg bg-ui-tag-red-bg hover:opacity-90 text-ui-tag-red-text font-medium transition-opacity"
+            >
+              {t("messages.delete")}
+            </button>
+          </div>
+        </div>
+      </>
+    )}
+  </>
   )
 }

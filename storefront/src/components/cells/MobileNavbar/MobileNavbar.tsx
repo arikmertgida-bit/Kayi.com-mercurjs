@@ -13,12 +13,10 @@ export const MobileNavbar = ({
   childrenCategories,
   parentCategories,
   menuCategories = [],
-  collections = [],
 }: {
   childrenCategories: HttpTypes.StoreProductCategory[];
   parentCategories: HttpTypes.StoreProductCategory[];
   menuCategories?: HttpTypes.StoreProductCategory[];
-  collections?: HttpTypes.StoreCollection[];
 }) => {
   const [openMenu, setOpenMenu] = useState(false);
   const [openAccordion, setOpenAccordion] = useState<string | null>(null);
@@ -134,23 +132,6 @@ export const MobileNavbar = ({
               {t('allProducts')}
             </LocalizedClientLink>
 
-            {collections.map((collection) => {
-              const href = `/collections/${collection.handle}`
-              return (
-                <LocalizedClientLink
-                  key={collection.id}
-                  href={href}
-                  onClick={closeMenuHandler}
-                  className={cn(
-                    'flex items-center gap-2 px-4 py-[6px] text-sm font-bold uppercase tracking-wide transition-colors hover:bg-gray-50',
-                    isActive(href) ? 'text-[#e30a17]' : 'text-gray-800'
-                  )}
-                >
-                  <span className='w-2 h-2 rounded-full bg-[#e30a17] flex-shrink-0' />
-                  {collection.title}
-                </LocalizedClientLink>
-              )
-            })}
           </div>
         </div>
 

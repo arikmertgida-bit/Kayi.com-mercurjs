@@ -12,6 +12,7 @@ import { ProductContextCard } from "./components/ProductContextCard"
 import { VendorContextCard } from "./components/VendorContextCard"
 import { ChatHeader } from "./components/ChatHeader"
 import { PromotionMessageCard } from "./PromotionMessageCard"
+import { Modal } from "@/components/molecules/Modal/Modal"
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -56,8 +57,8 @@ function Avatar({
       width={size}
       height={size}
       className="rounded-full object-cover aspect-square flex-shrink-0"
+      sizes={`${size}px`}
       style={{ width: size, height: size }}
-      unoptimized
     />
   )
 }
@@ -110,12 +111,13 @@ export function MessengerInbox({
   const [sendError, setSendError] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [deleteMenuPos, setDeleteMenuPos] = useState<{ top: number; left?: number; right?: number } | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<{ messageId: string; deleteForAll: boolean } | null>(null)
+  const [pendingDeleteConv, setPendingDeleteConv] = useState<{ convId: string; deleteForAll: boolean } | null>(null)
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('list')
   const [pendingImage, setPendingImage] = useState<File | null>(null)
   const [pendingImagePreview, setPendingImagePreview] = useState<string | null>(null)
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
-  const messagesContainerRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -144,12 +146,18 @@ export function MessengerInbox({
 
   // Active conversation context (PRODUCT or VENDOR) — drives ChatHeader + context cards
   const [activeContext, setActiveContext] = useState<MessageContext | null>(null)
+  // Tracks whether context data is still being fetched — used to render skeleton and prevent CLS (S7)
+  const [isContextLoading, setIsContextLoading] = useState(false)
 
   useEffect(() => {
     const conv = activeConv
-    if (!conv) { setActiveContext(null); return }
+    if (!conv) { setActiveContext(null); setIsContextLoading(false); return }
 
     const isProduct = conv.contextType === "PRODUCT_BASED" || (conv.contextType !== "VENDOR_BASED" && !!conv.productId)
+
+    if (conv.type === "ADMIN_SUPPORT") { setActiveContext(null); setIsContextLoading(false); return }
+
+    setIsContextLoading(true)
 
     if (isProduct && conv.productId) {
       const pid = conv.productId
@@ -171,10 +179,11 @@ export function MessengerInbox({
           }
         })
         .catch(() => setActiveContext(null))
+        .finally(() => setIsContextLoading(false))
     } else if (!isProduct) {
       const sellerParticipant = conv.participants.find((p) => p.userType === "SELLER")
       const memberId = sellerParticipant?.userId
-      if (!memberId) { setActiveContext(null); return }
+      if (!memberId) { setActiveContext(null); setIsContextLoading(false); return }
 
       fetch(`/api/vendor-info/${encodeURIComponent(memberId)}`)
         .then((r) => r.ok ? r.json() : null)
@@ -195,16 +204,19 @@ export function MessengerInbox({
           }
         })
         .catch(() => setActiveContext(null))
+        .finally(() => setIsContextLoading(false))
     } else {
       setActiveContext(null)
+      setIsContextLoading(false)
     }
   }, [activeConv?.id])
 
-  // Auto-scroll to bottom
+  // Auto-scroll to bottom — deferred to next animation frame to avoid forced synchronous layout reflow (S8)
   useEffect(() => {
-    const container = messagesContainerRef.current
-    if (!container) return
-    container.scrollTop = container.scrollHeight
+    const frameId = requestAnimationFrame(() => {
+      bottomRef.current?.scrollIntoView({ block: "end" })
+    })
+    return () => cancelAnimationFrame(frameId)
   }, [messages, typingUserIds])
 
   // Reset send error when switching conversations
@@ -303,6 +315,10 @@ export function MessengerInbox({
     setMobileView('chat')
   }, [openConversation])
 
+  const handleRequestDeleteConv = useCallback((convId: string, deleteForAll: boolean) => {
+    setPendingDeleteConv({ convId, deleteForAll })
+  }, [])
+
   // Filter out ghost conversations (created by findOrCreate but with no messages yet).
   // A conversation is visible if it has at least one message, or if it's currently open.
   const visibleConversations = conversations.filter(
@@ -390,7 +406,7 @@ export function MessengerInbox({
                 currentUserId={currentUserId}
                 isActive={conv.id === activeConversationId}
                 onOpen={handleOpenConversation}
-                onDelete={deleteConversation}
+                onDelete={handleRequestDeleteConv}
               />
             ))
           )}
@@ -410,16 +426,25 @@ export function MessengerInbox({
             isAdminSupport={isAdminSupportConv}
           />
 
-          {/* Context card — sticky under header */}
-          {activeContext?.type === "PRODUCT" && (
+          {/* Context card — sticky under header. Skeleton prevents CLS while data loads (S7). */}
+          {isContextLoading && (
+            <div className="px-4 py-2 border-b border-gray-100 flex items-center gap-3 h-[72px] flex-shrink-0 animate-pulse">
+              <div className="w-12 h-12 rounded-xl bg-gray-200 flex-shrink-0" />
+              <div className="flex-1 space-y-2">
+                <div className="h-3 bg-gray-200 rounded w-3/4" />
+                <div className="h-2.5 bg-gray-200 rounded w-1/2" />
+              </div>
+            </div>
+          )}
+          {!isContextLoading && activeContext?.type === "PRODUCT" && (
             <ProductContextCard product={activeContext.data} locale={locale} />
           )}
-          {activeContext?.type === "VENDOR" && (
+          {!isContextLoading && activeContext?.type === "VENDOR" && (
             <VendorContextCard vendor={activeContext.data} locale={locale} />
           )}
 
           {/* Messages */}
-          <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-1 bg-gray-50/40">
+          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-1 bg-gray-50/40">
             {isLoadingMessages ? (
               <div className="flex justify-center items-center h-full">
                 <div className="w-6 h-6 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
@@ -718,6 +743,8 @@ export function MessengerInbox({
                   <img
                     src={pendingImagePreview}
                     alt="Gönderilecek görsel"
+                    width={48}
+                    height={48}
                     className="w-12 h-12 rounded-xl object-cover border border-gray-200"
                   />
                   <button
@@ -809,14 +836,24 @@ export function MessengerInbox({
           onClick={(e) => e.stopPropagation()}
         >
           <button
-            onClick={() => handleDeleteMessage(deleteTarget, false)}
+            onClick={() => {
+              const id = deleteTarget!
+              setDeleteTarget(null)
+              setDeleteMenuPos(null)
+              setPendingDelete({ messageId: id, deleteForAll: false })
+            }}
             className="text-left text-sm px-3 py-1.5 rounded-lg hover:bg-gray-50 text-gray-700"
           >
             {MSG.DELETE_FOR_ME}
           </button>
           <button
             disabled={messages.find((m) => m.id === deleteTarget)?.senderId !== currentUserId}
-            onClick={() => handleDeleteMessage(deleteTarget, true)}
+            onClick={() => {
+              const id = deleteTarget!
+              setDeleteTarget(null)
+              setDeleteMenuPos(null)
+              setPendingDelete({ messageId: id, deleteForAll: true })
+            }}
             className="text-left text-sm px-3 py-1.5 rounded-lg hover:bg-red-50 text-red-600 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {MSG.DELETE_FOR_ALL}
@@ -829,6 +866,58 @@ export function MessengerInbox({
           </button>
         </div>
       </>
+    )}
+
+    {/* Delete confirmation modal */}
+    {pendingDelete && (
+      <Modal heading={MSG.DELETE_CONFIRM_TITLE} onClose={() => setPendingDelete(null)}>
+        <div className="px-4">
+          <p className="text-sm text-gray-700 mb-6">{MSG.DELETE_CONFIRM_DESC}</p>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => setPendingDelete(null)}
+              className="px-4 py-2 text-sm rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              {MSG.DELETE_CANCEL}
+            </button>
+            <button
+              onClick={() => {
+                handleDeleteMessage(pendingDelete.messageId, pendingDelete.deleteForAll)
+                setPendingDelete(null)
+              }}
+              className="px-4 py-2 text-sm rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
+            >
+              {pendingDelete.deleteForAll ? MSG.DELETE_FOR_ALL : MSG.DELETE_FOR_ME}
+            </button>
+          </div>
+        </div>
+      </Modal>
+    )}
+
+    {/* Conversation delete confirmation modal */}
+    {pendingDeleteConv && (
+      <Modal heading={MSG.DELETE_CONFIRM_TITLE} onClose={() => setPendingDeleteConv(null)}>
+        <div className="px-4">
+          <p className="text-sm text-gray-700 mb-6">{MSG.DELETE_CONFIRM_DESC}</p>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => setPendingDeleteConv(null)}
+              className="px-4 py-2 text-sm rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              {MSG.DELETE_CANCEL}
+            </button>
+            <button
+              onClick={() => {
+                deleteConversation(pendingDeleteConv.convId, pendingDeleteConv.deleteForAll)
+                setPendingDeleteConv(null)
+              }}
+              className="px-4 py-2 text-sm rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
+            >
+              {pendingDeleteConv.deleteForAll ? MSG.DELETE_FOR_ALL : MSG.DELETE_FOR_ME}
+            </button>
+          </div>
+        </div>
+      </Modal>
     )}
 
     {/* Lightbox */}

@@ -88,7 +88,8 @@ export const MessageService = {
       },
     })
 
-    if (!message) throw new Error("Message not found")
+    // Idempotent: if already deleted, return null instead of throwing
+    if (!message) return null
 
     // Check requester is a participant
     const isParticipant = message.conversation.participants.some(

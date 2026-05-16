@@ -15,8 +15,6 @@ export async function Footer() {
             <LocalizedClientLink href="/order-guide" className="block label-md">{t('orderGuide')}</LocalizedClientLink>
             <LocalizedClientLink href="#" className="block label-md">{t('trackOrder')}</LocalizedClientLink>
             <LocalizedClientLink href="#" className="block label-md">{t('returns')}</LocalizedClientLink>
-            <LocalizedClientLink href="#" className="block label-md">{t('delivery')}</LocalizedClientLink>
-            <LocalizedClientLink href="#" className="block label-md">{t('payment')}</LocalizedClientLink>
           </nav>
         </div>
 
@@ -25,7 +23,6 @@ export async function Footer() {
           <h2 className="heading-sm text-primary mb-3 uppercase">{t('about')}</h2>
           <nav className="space-y-3" aria-label="About navigation">
             <LocalizedClientLink href="/about-us" className="block label-md">{t('aboutUs')}</LocalizedClientLink>
-            <LocalizedClientLink href="#" className="block label-md">{t('blog')}</LocalizedClientLink>
             <LocalizedClientLink href="/privacy-policy" className="block label-md">{t('privacyPolicy')}</LocalizedClientLink>
             <LocalizedClientLink href="/terms-and-conditions" className="block label-md">{t('termsConditions')}</LocalizedClientLink>
           </nav>

@@ -5,17 +5,7 @@ import {
   IPromotionModuleService,
 } from "@medusajs/types"
 import { PromotionWithMeta } from "../lib/promotion-types.js"
-
-/**
- * Minimal Redis client interface used for idempotency guard and per-campaign mutex.
- * Resolved from the DI container — if not available (test/dev without Redis),
- * the in-memory fallback below takes over automatically.
- */
-interface MinimalRedisClient {
-  get(key: string): Promise<string | null>
-  set(key: string, value: string, exMode: "EX", ttl: number): Promise<unknown>
-  del(key: string): Promise<unknown>
-}
+import { getRedisClient } from "../lib/redis-client.js"
 
 /**
  * Module-level in-memory lock map used when Redis is unavailable.
@@ -187,42 +177,56 @@ export default async function orderPromotionBudgetCheckSubscriber({
             ? promo.metadata.seller_id
             : undefined
 
-        let redis: MinimalRedisClient | undefined
         let shouldEmit = true
 
         const mutexKey = `budget_check:${campaignId}`
         const lockKey = `budget_exhausted:${campaignId}`
 
-        try {
-          redis = container.resolve<MinimalRedisClient>("redisClient")
+        const redis = getRedisClient()
 
-          // Per-campaign processing mutex (5s TTL — prevents concurrent budget checks
-          // from racing each other during flash sale burst traffic).
-          const mutexHeld = await redis.get(mutexKey)
-          if (mutexHeld) {
-            logger.info(
-              `[order-promotion-budget-check] Budget check mutex held for campaign ${campaignId} — skipping (another worker is processing)`
-            )
-            continue
-          }
-          await redis.set(mutexKey, "1", "EX", 5)
+        if (redis) {
+          try {
+            // Per-campaign processing mutex (5s TTL — prevents concurrent budget checks
+            // from racing each other during flash sale burst traffic).
+            const mutexHeld = await redis.get(mutexKey)
+            if (mutexHeld) {
+              logger.info(
+                `[order-promotion-budget-check] Budget check mutex held for campaign ${campaignId} — skipping (another worker is processing)`
+              )
+              continue
+            }
+            await redis.set(mutexKey, "1", "EX", 5)
 
-          // Idempotency guard: prevents the same campaign_id from emitting
-          // budget_exhausted more than once within 60 seconds.
-          const alreadyFired = await redis.get(lockKey)
-          if (alreadyFired) {
-            logger.info(
-              `[order-promotion-budget-check] Duplicate event suppressed for campaign ${campaignId}`
-            )
-            shouldEmit = false
-          } else {
-            await redis.set(lockKey, "1", "EX", 60)
+            // Idempotency guard: prevents the same campaign_id from emitting
+            // budget_exhausted more than once within 60 seconds.
+            const alreadyFired = await redis.get(lockKey)
+            if (alreadyFired) {
+              logger.info(
+                `[order-promotion-budget-check] Duplicate event suppressed for campaign ${campaignId}`
+              )
+              shouldEmit = false
+            } else {
+              await redis.set(lockKey, "1", "EX", 60)
+            }
+          } catch {
+            // Redis operation failed — fall back to in-memory locks for this request.
+            const mutexAcquired = acquireInMemoryLock(mutexKey, 5_000)
+            if (!mutexAcquired) {
+              logger.info(
+                `[order-promotion-budget-check] (in-memory) Budget check mutex held for campaign ${campaignId} — skipping`
+              )
+              continue
+            }
+            const idempotencyAcquired = acquireInMemoryLock(lockKey, 60_000)
+            if (!idempotencyAcquired) {
+              logger.info(
+                `[order-promotion-budget-check] (in-memory) Duplicate event suppressed for campaign ${campaignId}`
+              )
+              shouldEmit = false
+            }
           }
-        } catch {
-          // Redis not available or "redisClient" not registered.
-          // Fall back to module-level in-memory locks.
-          // Correctness: protects within a single Node.js process (workerMode:"shared").
-          // For multi-process deployments (workerMode:"worker"), configure Redis.
+        } else {
+          // REDIS_URL not configured — in-memory fallback (single-process protection).
           const mutexAcquired = acquireInMemoryLock(mutexKey, 5_000)
           if (!mutexAcquired) {
             logger.info(
@@ -254,11 +258,13 @@ export default async function orderPromotionBudgetCheckSubscriber({
 
         // Release the processing mutex so subsequent workers can re-check
         // after the deactivation subscriber has run.
-        if (redis) {
+        const redisForRelease = getRedisClient()
+        if (redisForRelease) {
           try {
-            await redis.del(mutexKey)
+            await redisForRelease.del(mutexKey)
           } catch {
             // Non-fatal — TTL will expire the key automatically
+            releaseInMemoryLock(mutexKey)
           }
         } else {
           releaseInMemoryLock(mutexKey)
