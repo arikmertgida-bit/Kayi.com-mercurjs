@@ -148,7 +148,6 @@ export const RulesFormField = ({
                         ?.filter(
                           ({ id }) =>
                             id === "customer_group" ||
-                            id === "country" ||
                             id === "product"
                         )
                         ?.filter((attr) => {

@@ -1,7 +1,6 @@
 import { PencilSquare, Trash } from "@medusajs/icons"
 import { AdminCampaignResponse } from "@medusajs/types"
 import {
-  Badge,
   Container,
   Heading,
   StatusBadge,
@@ -13,7 +12,6 @@ import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import { ActionMenu } from "../../../../../components/common/action-menu"
 import { useDeleteCampaign } from "../../../../../hooks/api/campaigns"
-import { currencies } from "../../../../../lib/data/currencies"
 import {
   campaignStatus,
   statusColor,
@@ -117,21 +115,6 @@ export const CampaignGeneralSection = ({
           {campaign.description || "-"}
         </Text>
       </div>
-
-      {campaign?.budget && campaign.budget.type === "spend" && (
-        <div className="text-ui-fg-subtle grid grid-cols-2 items-center px-6 py-4">
-          <Text size="small" leading="compact" weight="plus">
-            {t("fields.currency")}
-          </Text>
-
-          <div>
-            <Badge size="xsmall">{campaign?.budget.currency_code}</Badge>
-            <Text className="inline pl-3" size="small" leading="compact">
-              {currencies[campaign?.budget.currency_code?.toUpperCase()]?.name}
-            </Text>
-          </div>
-        </div>
-      )}
     </Container>
   )
 }

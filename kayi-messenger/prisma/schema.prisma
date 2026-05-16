@@ -85,6 +85,10 @@ model Message {
 
   @@index([conversationId, createdAt])
   @@index([senderId])
+  // GIN index on the metadata JSONB column — enables fast path-based lookups
+  // used by deleteByPromotionId (WHERE metadata @> '{"promotion_id":"..."}').
+  // Without this index, deletion of 10 M+ messages would require a full table scan.
+  @@index([metadata(ops: JsonbPathOps)], type: Gin, map: "idx_message_metadata_gin")
 }
 
 model UserProfile {

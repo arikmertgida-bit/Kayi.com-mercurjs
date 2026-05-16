@@ -6,7 +6,7 @@ import sellerPromotion from "@mercurjs/b2c-core/links/seller-promotion"
 import {
   PromotionWithMeta,
   stripNamespaceFromCode,
-} from "../../../../vendor/shared/promotion-types.js"
+} from "../../../../../lib/promotion-types.js"
 
 /** Shape of a row returned from the seller_product link table. */
 type SellerProductLinkRow = { seller_id: string }

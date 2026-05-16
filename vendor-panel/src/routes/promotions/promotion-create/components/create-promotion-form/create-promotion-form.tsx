@@ -33,13 +33,10 @@ import {
   useRouteModal,
 } from "../../../../../components/modals"
 import { KeyboundForm } from "../../../../../components/utilities/keybound-form"
-import { useCampaigns } from "../../../../../hooks/api/campaigns"
 import { useCreatePromotion } from "../../../../../hooks/api/promotions"
 import { useStore } from "../../../../../hooks/api/store"
 import { getCurrencySymbol } from "../../../../../lib/data/currencies"
-import { DEFAULT_CAMPAIGN_VALUES } from "../../../../campaigns/common/constants"
 import { RulesFormField } from "../../../common/edit-rules/components/rules-form-field"
-import { AddCampaignPromotionFields } from "../../../promotion-add-campaign/components/add-campaign-promotion-form"
 import { Tab } from "./constants"
 import { CreatePromotionSchema } from "./form-schema"
 import { templates } from "./templates"
@@ -61,7 +58,6 @@ const defaultValues = {
     target_rules: [],
     buy_rules: [],
   },
-  campaign: undefined,
 }
 
 type TabState = Record<Tab, ProgressStatus>
@@ -72,7 +68,7 @@ export const CreatePromotionForm = () => {
   const [tabState, setTabState] = useState<TabState>({
     [Tab.TYPE]: "completed",
     [Tab.PROMOTION]: "in-progress",
-    [Tab.CAMPAIGN]: "not-started",
+    [Tab.CAMPAIGN]: "not-started", // kept for TabState type compatibility
   })
 
   const { t } = useTranslation()
@@ -83,7 +79,7 @@ export const CreatePromotionForm = () => {
     defaultValues,
     resolver: zodResolver(CreatePromotionSchema),
   })
-  const { setValue, reset, getValues } = form
+  const { setValue, reset } = form
 
   const { mutateAsync: createPromotion } = useCreatePromotion()
 
@@ -180,8 +176,7 @@ export const CreatePromotionForm = () => {
       )
     },
     async (error) => {
-      const { campaign: _campaign, ...rest } = error || {}
-      const errorInPromotionTab = !!Object.keys(rest || {}).length
+      const errorInPromotionTab = !!Object.keys(error || {}).length
 
       if (errorInPromotionTab) {
         toast.error(t("promotions.errors.promotionTabError"))
@@ -229,39 +224,6 @@ export const CreatePromotionForm = () => {
         setTab(tab)
         break
       }
-    }
-  }
-
-  const handleContinue = async () => {
-    switch (tab) {
-      case Tab.TYPE:
-        handleTabChange(Tab.PROMOTION)
-        break
-      case Tab.PROMOTION: {
-        const valid =
-          !!form.getValues("code") ||
-          !!form.getValues("application_method.value")
-
-        if (valid) {
-          handleTabChange(Tab.CAMPAIGN)
-        }
-
-        if (!form.getValues("code")) {
-          form.setError("code", {
-            message: "error",
-          })
-        }
-
-        if (!form.getValues("application_method.value")) {
-          form.setError("application_method.value", {
-            message: "error",
-          })
-        }
-
-        break
-      }
-      case Tab.CAMPAIGN:
-        break
     }
   }
 
@@ -331,52 +293,6 @@ export const CreatePromotionForm = () => {
 
   const isTargetTypeOrder = targetType === "order"
 
-  const formData = form.getValues()
-  const currencyFilter = isFixedValueType
-    ? formData.application_method.currency_code
-    : undefined
-
-  // Vendor campaigns are already scoped to this seller — fetch all and filter client-side.
-  // Sending budget[currency_code] as a query param causes a 400 on the vendor endpoint.
-  const { campaigns: allCampaigns } = useCampaigns({})
-
-  const campaigns = currencyFilter
-    ? (allCampaigns ?? []).filter(
-        (c) =>
-          !c.budget?.currency_code ||
-          c.budget.currency_code === currencyFilter
-      )
-    : (allCampaigns ?? [])
-
-  const watchCampaignChoice = useWatch({
-    control: form.control,
-    name: "campaign_choice",
-  })
-
-  useEffect(() => {
-    const formData = getValues()
-
-    if (watchCampaignChoice !== "existing") {
-      setValue("campaign_id", undefined)
-    }
-
-    if (watchCampaignChoice !== "new") {
-      setValue("campaign", undefined)
-    }
-
-    if (watchCampaignChoice === "new") {
-      if (!formData.campaign || !formData.campaign?.budget?.type) {
-        setValue("campaign", {
-          ...DEFAULT_CAMPAIGN_VALUES,
-          budget: {
-            ...DEFAULT_CAMPAIGN_VALUES.budget,
-            currency_code: formData.application_method.currency_code,
-          },
-        } as any)
-      }
-    }
-  }, [watchCampaignChoice, getValues, setValue])
-
   const watchRules = useWatch({
     control: form.control,
     name: "rules",
@@ -439,21 +355,13 @@ export const CreatePromotionForm = () => {
             </RouteFocusModal.Description>
             <div className="flex w-full items-center justify-between gap-x-4">
               <div className="-my-2 w-full max-w-[600px] border-l">
-                <ProgressTabs.List className="grid w-full grid-cols-2">
+                <ProgressTabs.List className="grid w-full grid-cols-1">
                   <ProgressTabs.Trigger
                     className="w-full"
                     value={Tab.PROMOTION}
                     status={tabState[Tab.PROMOTION]}
                   >
                     {t("promotions.tabs.details")}
-                  </ProgressTabs.Trigger>
-
-                  <ProgressTabs.Trigger
-                    className="w-full"
-                    value={Tab.CAMPAIGN}
-                    status={tabState[Tab.CAMPAIGN]}
-                  >
-                    {t("promotions.tabs.campaign")}
                   </ProgressTabs.Trigger>
                 </ProgressTabs.List>
               </div>
@@ -963,19 +871,6 @@ export const CreatePromotionForm = () => {
               </div>
             </ProgressTabs.Content>
 
-            <ProgressTabs.Content
-              value={Tab.CAMPAIGN}
-              className="size-full overflow-auto"
-            >
-              <div className="flex flex-col items-center">
-                <div className="flex w-full max-w-[720px] flex-col gap-y-8 py-16">
-                  <AddCampaignPromotionFields
-                    form={form}
-                    campaigns={campaigns || []}
-                  />
-                </div>
-              </div>
-            </ProgressTabs.Content>
           </RouteFocusModal.Body>
         </ProgressTabs>
         <RouteFocusModal.Footer>
@@ -986,25 +881,14 @@ export const CreatePromotionForm = () => {
               </Button>
             </RouteFocusModal.Close>
 
-            {tab === Tab.CAMPAIGN ? (
-              <Button
-                key="save-btn"
-                type="submit"
-                size="small"
-                isLoading={false}
-              >
-                {t("actions.save")}
-              </Button>
-            ) : (
-              <Button
-                key="continue-btn"
-                type="button"
-                onClick={handleContinue}
-                size="small"
-              >
-                {t("actions.continue")}
-              </Button>
-            )}
+            <Button
+              key="save-btn"
+              type="submit"
+              size="small"
+              isLoading={false}
+            >
+              {t("actions.save")}
+            </Button>
           </div>
         </RouteFocusModal.Footer>
       </KeyboundForm>

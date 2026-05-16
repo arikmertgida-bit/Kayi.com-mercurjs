@@ -71,6 +71,21 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
     })
   }
 
+  if (f.id) {
+    const ids = Array.isArray(f.id) ? f.id : [f.id]
+    if (ids.length > 0) {
+      baseQuery = baseQuery.whereIn("product.id", ids)
+    }
+  }
+
+  const rawExcludeIds = (req.query as any).exclude_ids
+  if (rawExcludeIds) {
+    const excludeIds: string[] = Array.isArray(rawExcludeIds) ? rawExcludeIds : [rawExcludeIds]
+    if (excludeIds.length > 0) {
+      baseQuery = baseQuery.whereNotIn("product.id", excludeIds)
+    }
+  }
+
   if (f.type_id) {
     const ids = Array.isArray(f.type_id) ? f.type_id : [f.type_id]
     baseQuery = baseQuery.whereIn("product.type_id", ids)

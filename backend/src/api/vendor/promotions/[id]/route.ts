@@ -9,7 +9,7 @@ import {
   buildMetaWithSeller,
   buildNamespacedCode,
   stripNamespaceFromCode,
-} from "../../shared/promotion-types.js"
+} from "../../../../lib/promotion-types.js"
 import { deletePromotionMessages } from "../../../../lib/messenger.js"
 
 export const GET = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) => {

@@ -2,7 +2,7 @@ import { MedusaRequest, MedusaResponse } from "@medusajs/framework"
 import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
 import { IPromotionModuleService } from "@medusajs/types"
 import sellerPromotion from "@mercurjs/b2c-core/links/seller-promotion"
-import { PromotionWithMeta } from "../../vendor/shared/promotion-types.js"
+import { PromotionWithMeta } from "../../../lib/promotion-types.js"
 
 /** Shape of a row returned from the seller_promotion link table. */
 type SellerPromotionLinkRow = { promotion_id: string }

@@ -22,7 +22,13 @@ export default async function UserPage({
 
   if (!user) return <LoginForm />
 
-  const orders = await listOrders()
+  let orders: Awaited<ReturnType<typeof listOrders>>
+  try {
+    orders = await listOrders()
+  } catch {
+    // Oturum süresi dolmuş veya yetkisiz — giriş formunu göster
+    return <LoginForm />
+  }
 
   const { page } = await searchParams
 

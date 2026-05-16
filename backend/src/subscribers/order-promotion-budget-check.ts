@@ -4,17 +4,44 @@ import {
   IEventBusModuleService,
   IPromotionModuleService,
 } from "@medusajs/types"
-import { PromotionWithMeta } from "../api/vendor/shared/promotion-types.js"
+import { PromotionWithMeta } from "../lib/promotion-types.js"
 
 /**
  * Minimal Redis client interface used for idempotency guard and per-campaign mutex.
  * Resolved from the DI container — if not available (test/dev without Redis),
- * all guards are skipped gracefully.
+ * the in-memory fallback below takes over automatically.
  */
 interface MinimalRedisClient {
   get(key: string): Promise<string | null>
   set(key: string, value: string, exMode: "EX", ttl: number): Promise<unknown>
   del(key: string): Promise<unknown>
+}
+
+/**
+ * Module-level in-memory lock map used when Redis is unavailable.
+ *
+ * Each entry is the Unix-ms timestamp at which the lock expires.
+ * Correctness guarantee: protects within a SINGLE Node.js process only.
+ * In workerMode:"worker" with multiple processes, Redis is still required
+ * for cross-process deduplication. This fallback prevents double-emission
+ * when running in workerMode:"shared" (default single-process setup) without Redis.
+ */
+const inMemoryLocks = new Map<string, number>()
+
+/** Acquire a lock. Returns true when the lock is now held, false if already held. */
+function acquireInMemoryLock(key: string, ttlMs: number): boolean {
+  const now = Date.now()
+  const expiry = inMemoryLocks.get(key)
+  if (expiry !== undefined && now < expiry) {
+    return false // lock already held
+  }
+  inMemoryLocks.set(key, now + ttlMs)
+  return true
+}
+
+/** Release a lock immediately (called after processing so the next worker can enter). */
+function releaseInMemoryLock(key: string): void {
+  inMemoryLocks.delete(key)
 }
 
 /**
@@ -24,15 +51,21 @@ interface MinimalRedisClient {
 type OrderPromotionRow = { id: string }
 
 /**
- * Full promotion shape with campaign and budget loaded.
+ * Promotion shape after the flat listPromotions call (no deep campaign load).
+ * campaign_id is a native column on the promotion entity.
  */
-type PromotionWithCampaignBudget = PromotionWithMeta & {
-  campaign?: {
-    id: string
-    budget?: {
-      limit?: number | null
-      used?: number | null
-    } | null
+type PromotionWithCampaignId = PromotionWithMeta & {
+  campaign_id?: string | null
+}
+
+/**
+ * Campaign shape returned by listCampaigns({ relations: ["budget"] }).
+ */
+type CampaignWithBudget = {
+  id: string
+  budget?: {
+    limit?: number | null
+    used?: number | null
   } | null
 }
 
@@ -91,19 +124,39 @@ export default async function orderPromotionBudgetCheckSubscriber({
   const promotionService = container.resolve<IPromotionModuleService>(Modules.PROMOTION)
   const eventBus = container.resolve<IEventBusModuleService>(Modules.EVENT_BUS)
 
-  // ── Batch-fetch all applied promotions in a single query (N+1 fix) ─────────
-  // Previously each promotion was fetched individually inside the loop.
-  // Now we resolve all IDs up front and build an O(1) lookup map.
+  // ── Batch-fetch all applied promotions (no deep campaign relation load) ─────
+  // Promotions are fetched flat; campaign budget is resolved via a separate
+  // listCampaigns call below. This keeps each query within a single domain.
   const allPromotionIds = order.promotions.map((p) => p.id)
 
   const allPromotions = (await promotionService.listPromotions(
     { id: allPromotionIds },
-    { relations: ["campaign", "campaign.budget"] }
-  )) as PromotionWithCampaignBudget[]
+    { relations: [] }
+  )) as PromotionWithCampaignId[]
 
-  const promotionMap = new Map<string, PromotionWithCampaignBudget>()
+  const promotionMap = new Map<string, PromotionWithCampaignId>()
   for (const p of allPromotions) {
     promotionMap.set(p.id, p)
+  }
+
+  // ── Fetch campaign budgets in a single separate query ─────────────────────
+  const uniqueCampaignIds = [
+    ...new Set(
+      allPromotions
+        .map((p) => p.campaign_id)
+        .filter((id): id is string => typeof id === "string")
+    ),
+  ]
+
+  const campaignBudgetMap = new Map<string, CampaignWithBudget["budget"]>()
+  if (uniqueCampaignIds.length > 0) {
+    const campaigns = (await promotionService.listCampaigns(
+      { id: uniqueCampaignIds },
+      { relations: ["budget"] }
+    )) as CampaignWithBudget[]
+    for (const c of campaigns) {
+      campaignBudgetMap.set(c.id, c.budget ?? null)
+    }
   }
 
   // ── Check each applied promotion independently ─────────────────────────────
@@ -112,10 +165,10 @@ export default async function orderPromotionBudgetCheckSubscriber({
       const promo = promotionMap.get(appliedPromo.id)
       if (!promo) continue
 
-      const campaign = promo.campaign
-      if (!campaign) continue // Promotion not attached to a campaign — skip
+      const campaignId = promo.campaign_id
+      if (!campaignId) continue // Promotion not attached to a campaign — skip
 
-      const budget = campaign.budget
+      const budget = campaignBudgetMap.get(campaignId)
       if (budget?.limit == null) continue // Limitless campaign — skip
 
       const used = budget.used ?? 0
@@ -134,19 +187,21 @@ export default async function orderPromotionBudgetCheckSubscriber({
             ? promo.metadata.seller_id
             : undefined
 
+        let redis: MinimalRedisClient | undefined
         let shouldEmit = true
-        let redis: MinimalRedisClient | null = null
+
+        const mutexKey = `budget_check:${campaignId}`
+        const lockKey = `budget_exhausted:${campaignId}`
 
         try {
           redis = container.resolve<MinimalRedisClient>("redisClient")
 
           // Per-campaign processing mutex (5s TTL — prevents concurrent budget checks
           // from racing each other during flash sale burst traffic).
-          const mutexKey = `budget_check:${campaign.id}`
           const mutexHeld = await redis.get(mutexKey)
           if (mutexHeld) {
             logger.info(
-              `[order-promotion-budget-check] Budget check mutex held for campaign ${campaign.id} — skipping (another worker is processing)`
+              `[order-promotion-budget-check] Budget check mutex held for campaign ${campaignId} — skipping (another worker is processing)`
             )
             continue
           }
@@ -154,28 +209,44 @@ export default async function orderPromotionBudgetCheckSubscriber({
 
           // Idempotency guard: prevents the same campaign_id from emitting
           // budget_exhausted more than once within 60 seconds.
-          const lockKey = `budget_exhausted:${campaign.id}`
           const alreadyFired = await redis.get(lockKey)
           if (alreadyFired) {
             logger.info(
-              `[order-promotion-budget-check] Duplicate event suppressed for campaign ${campaign.id}`
+              `[order-promotion-budget-check] Duplicate event suppressed for campaign ${campaignId}`
             )
             shouldEmit = false
           } else {
             await redis.set(lockKey, "1", "EX", 60)
           }
         } catch {
-          // Redis not available or "redisClient" not registered — emit without guard
+          // Redis not available or "redisClient" not registered.
+          // Fall back to module-level in-memory locks.
+          // Correctness: protects within a single Node.js process (workerMode:"shared").
+          // For multi-process deployments (workerMode:"worker"), configure Redis.
+          const mutexAcquired = acquireInMemoryLock(mutexKey, 5_000)
+          if (!mutexAcquired) {
+            logger.info(
+              `[order-promotion-budget-check] (in-memory) Budget check mutex held for campaign ${campaignId} — skipping`
+            )
+            continue
+          }
+          const idempotencyAcquired = acquireInMemoryLock(lockKey, 60_000)
+          if (!idempotencyAcquired) {
+            logger.info(
+              `[order-promotion-budget-check] (in-memory) Duplicate event suppressed for campaign ${campaignId}`
+            )
+            shouldEmit = false
+          }
         }
 
         if (shouldEmit) {
           await eventBus.emit({
             name: "promotion.budget_exhausted",
-            data: { campaign_id: campaign.id, seller_id: sellerId ?? "" },
+            data: { campaign_id: campaignId, seller_id: sellerId ?? "" },
           })
 
           logger.info(
-            `[order-promotion-budget-check] Budget hard-cap exceeded for campaign ${campaign.id} ` +
+            `[order-promotion-budget-check] Budget hard-cap exceeded for campaign ${campaignId} ` +
               `(used: ${used}, limit: ${limit}, threshold: ${hardCapThreshold}) ` +
               `(seller: ${sellerId ?? "unknown"}) — event emitted`
           )
@@ -185,15 +256,17 @@ export default async function orderPromotionBudgetCheckSubscriber({
         // after the deactivation subscriber has run.
         if (redis) {
           try {
-            await redis.del(`budget_check:${campaign.id}`)
+            await redis.del(mutexKey)
           } catch {
             // Non-fatal — TTL will expire the key automatically
           }
+        } else {
+          releaseInMemoryLock(mutexKey)
         }
       } else if (used >= limit) {
         // SOFT WARNING: within 5% overage margin — log only, do not deactivate yet
         logger.info(
-          `[order-promotion-budget-check] Campaign ${campaign.id} budget soft-limit reached ` +
+          `[order-promotion-budget-check] Campaign ${campaignId} budget soft-limit reached ` +
             `(used: ${used}, limit: ${limit}) — within 5% margin, monitoring`
         )
       }

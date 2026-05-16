@@ -3,7 +3,7 @@ import { ContainerRegistrationKeys, Modules, PromotionActions } from "@medusajs/
 import { IPromotionModuleService } from "@medusajs/types"
 import { updateCartPromotionsWorkflow } from "@medusajs/medusa/core-flows"
 import sellerProduct from "@mercurjs/b2c-core/links/seller-product"
-import { PromotionWithMeta } from "../../../../vendor/shared/promotion-types.js"
+import { PromotionWithMeta } from "../../../../../lib/promotion-types.js"
 
 /** Expected request body for POST /store/carts/:id/promotions */
 interface PostBody {
@@ -31,6 +31,23 @@ type CartItemRow = {
 type SellerProductLinkRow = {
   seller_id: string
   product_id: string
+}
+
+/**
+ * Subset of a promotion's application_method as returned when
+ * relations: ["application_method", "application_method.target_rules"] are loaded.
+ * PromotionDTO omits these nested types; we narrow through unknown.
+ */
+type PromotionTargetRule = {
+  attribute?: string | null
+  values?: Array<{ value: string }> | null
+}
+
+type PromotionWithTargetRules = {
+  id: string
+  application_method?: {
+    target_rules?: PromotionTargetRule[] | null
+  } | null
 }
 
 /**
@@ -150,20 +167,70 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
     return true
   })
 
-  // Cross-vendor contamination guard: vendor promotions (those with a seller_id in
-  // metadata) must only apply when that seller's products are actually in the cart.
-  // A vendor with target_rules=[] (applies to all) must NOT affect a different
-  // seller's products and drain their budget.
+  // Cross-vendor contamination guard — Phase 1:
+  // Vendor promotions (those with a seller_id in metadata) must only apply when
+  // that seller's products are actually in the cart.
   // Platform promotions (no seller_id) bypass this check.
+
+  // For vendor promotions that passed the approval gate, fetch target_rules so we
+  // can enforce Phase 2 (product-scope check). Platform promotions are left untouched.
+  const vendorPromotionIds = approved
+    .filter((p) => typeof p.metadata?.seller_id === "string")
+    .map((p) => p.id)
+
+  const targetRulesMap = new Map<string, PromotionTargetRule[]>()
+  if (vendorPromotionIds.length > 0) {
+    const promsWithRules = (await promotionService.listPromotions(
+      { id: vendorPromotionIds },
+      {
+        relations: [
+          "application_method",
+          "application_method.target_rules",
+          "application_method.target_rules.values",
+        ],
+      }
+    )) as unknown as PromotionWithTargetRules[]
+
+    for (const p of promsWithRules) {
+      targetRulesMap.set(p.id, p.application_method?.target_rules ?? [])
+    }
+  }
+
   const isolated = approved.filter((p) => {
     const promoSellerId =
       typeof p.metadata?.seller_id === "string" ? p.metadata.seller_id : null
     if (!promoSellerId) return true // platform promotion — always allow
-    if (sellerIds.has(promoSellerId)) return true // this seller's products are in cart
-    logger.warn(
-      `[store/carts/promotions] Rejected promotion ${p.id} — seller ${promoSellerId} has no products in cart ${cartId}`
+
+    // Phase 1: this seller's products must be in the cart.
+    if (!sellerIds.has(promoSellerId)) {
+      logger.warn(
+        `[store/carts/promotions] Rejected promotion ${p.id} — seller ${promoSellerId} has no products in cart ${cartId}`
+      )
+      return false
+    }
+
+    // Phase 2: vendor promotion must be product-scoped.
+    // A vendor coupon with no target_rules applies cart-wide and would discount
+    // every seller's items — this is a cross-seller budget leak.
+    // Only promotions that explicitly restrict to specific product IDs or variant IDs
+    // are permitted; all other vendor promotions (country-only rules, empty rules, etc.)
+    // are rejected at checkout to prevent unintended cross-seller subsidization.
+    const targetRules = targetRulesMap.get(p.id) ?? []
+    const hasProductScopedRule = targetRules.some(
+      (r) =>
+        r.attribute === "items.product.id" ||
+        r.attribute === "items.variant.id"
     )
-    return false
+    if (!hasProductScopedRule) {
+      logger.warn(
+        `[store/carts/promotions] Rejected vendor promotion ${p.id} (seller ${promoSellerId}) — ` +
+          `no product-scoped target rule. Cart-wide vendor promotions are disallowed ` +
+          `to prevent cross-seller discount leakage.`
+      )
+      return false
+    }
+
+    return true
   })
 
   if (isolated.length === 0) {

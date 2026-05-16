@@ -3,7 +3,7 @@ import { ContainerRegistrationKeys, Modules, PromotionStatus } from "@medusajs/f
 import { IEventBusModuleService, IPromotionModuleService } from "@medusajs/types"
 import sellerPromotion from "@mercurjs/b2c-core/links/seller-promotion"
 import { z } from "zod"
-import { PromotionWithMeta } from "../../../../vendor/shared/promotion-types.js"
+import { PromotionWithMeta } from "../../../../../lib/promotion-types.js"
 
 const RejectBodySchema = z.object({
   reason: z.string().min(5).max(500),

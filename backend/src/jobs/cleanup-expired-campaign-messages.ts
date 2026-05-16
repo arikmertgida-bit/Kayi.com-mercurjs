@@ -3,12 +3,14 @@ import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 import { deletePromotionMessages } from "../lib/messenger.js"
 
 interface CampaignRow { id: string }
-interface PromotionRow { id: string }
 
 type Logger = {
   info: (...a: unknown[]) => void
   warn: (...a: unknown[]) => void
 }
+
+/** Shape of a promotion row returned from query.graph */
+type PromotionGraphRow = { id: string }
 
 /**
  * Saatlik temizlik işi — süresi dolmuş kampanyaların promosyon mesajlarını
@@ -27,6 +29,7 @@ export default async function cleanupExpiredCampaignMessagesJob(
 ) {
   const logger = container.resolve<Logger>("logger")
   const knex = container.resolve(ContainerRegistrationKeys.PG_CONNECTION)
+  const query = container.resolve(ContainerRegistrationKeys.QUERY)
 
   logger.info("[cleanup-expired] Starting expired campaign message cleanup")
 
@@ -75,11 +78,16 @@ export default async function cleanupExpiredCampaignMessagesJob(
 
     const campaignIds = allTargetCampaigns.map((c) => c.id)
 
-    // ── 2. Bu kampanyalara ait tüm promosyonları tek sorguda al ───────────
-    const promotions: PromotionRow[] = await knex("promotion")
-      .select("id")
-      .whereIn("campaign_id", campaignIds)
-      .whereNull("deleted_at")
+    // ── 2. Bu kampanyalara ait tüm promosyonları query.graph ile al ──────────
+    // query.graph MedusaJS query abstraction'ı kullanır — raw SQL/knex
+    // yerine çerçevenin kendi katmanını kullanmak domain bağımsızlığını korur.
+    // campaign_id, promotion entity'sinin native bir sütunudur (FK).
+    const { data: promoRows } = await query.graph({
+      entity: "promotion",
+      fields: ["id"],
+      filters: { campaign_id: campaignIds },
+    })
+    const promotions = promoRows as PromotionGraphRow[]
 
     if (promotions.length === 0) {
       logger.info("[cleanup-expired] No promotions found for expired campaigns")

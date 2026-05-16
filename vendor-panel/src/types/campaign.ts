@@ -1,3 +1,12 @@
+export interface CampaignFormValues {
+  name: string
+  starts_at: Date | undefined
+  ends_at: Date | undefined
+  discount_value: number | undefined
+  product_ids: string[]
+}
+
+// Geriye dönük uyumluluk — promotion-add-campaign hâlâ referans alıyor olabilir
 export interface CampaignFormFields {
   name: string
   description?: string
@@ -10,6 +19,7 @@ export interface CampaignFormFields {
     currency_code?: string | null
   }
 }
+
 export interface WithNestedCampaign {
   campaign?: CampaignFormFields
   application_method?: {

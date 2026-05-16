@@ -15,6 +15,14 @@ import { promotionsQueryKeys } from "./promotions"
 const REGIONS_QUERY_KEY = "campaigns" as const
 export const campaignsQueryKeys = queryKeysFactory(REGIONS_QUERY_KEY)
 
+export type VendorCreateCampaignPayload = {
+  name: string
+  starts_at: Date | string | null
+  ends_at: Date | string | null
+  discount_value: number
+  product_ids: string[]
+}
+
 export const useCampaign = (
   id: string,
   query?: HttpTypes.AdminGetCampaignParams,
@@ -70,14 +78,14 @@ export const useCreateCampaign = (
   options?: UseMutationOptions<
     HttpTypes.AdminCampaignResponse,
     FetchError,
-    HttpTypes.AdminCreateCampaign
+    VendorCreateCampaignPayload
   >
 ) => {
   return useMutation({
-    mutationFn: (payload) =>
-      fetchQuery("/vendor/campaigns", {
+    mutationFn: (payload: VendorCreateCampaignPayload) =>
+      fetchQuery("/vendor/kayi-campaigns", {
         method: "POST",
-        body: payload,
+        body: payload as unknown as Record<string, unknown>,
       }),
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({

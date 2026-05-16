@@ -1,368 +1,266 @@
+﻿import { Checkbox, DatePicker, Heading, Input, toast } from "@medusajs/ui"
+import { createColumnHelper } from "@tanstack/react-table"
 import {
-  CurrencyInput,
-  DatePicker,
-  Heading,
-  Input,
-  RadioGroup,
-  Select,
-  Text,
-  Textarea,
-} from "@medusajs/ui"
-import { useEffect } from "react"
-import { Path, PathValue, UseFormReturn, useWatch } from "react-hook-form"
-import { useTranslation } from "react-i18next"
-
+  OnChangeFn,
+  RowSelectionState,
+} from "@tanstack/react-table"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { UseFormReturn } from "react-hook-form"
 import { Form } from "../../../../../components/common/form"
-import { useStore } from "../../../../../hooks/api/store"
-import {
-  currencies,
-  getCurrencySymbol,
-} from "../../../../../lib/data/currencies"
-import { CampaignFormFields, WithNestedCampaign } from "../../../../../types/campaign"
+import { _DataTable } from "../../../../../components/table/data-table"
+import { useProducts } from "../../../../../hooks/api/products"
+import { usePromotions } from "../../../../../hooks/api/promotions"
+import { useProductTableColumns } from "../../../../../hooks/table/columns/use-product-table-columns"
+import { useProductTableQuery } from "../../../../../hooks/table/query/use-product-table-query"
+import { useDataTable } from "../../../../../hooks/use-data-table"
+import { ExtendedAdminProduct } from "../../../../../types/products"
+import { CreateCampaignFormValues } from "../../../campaign-create/components/create-campaign-form/create-campaign-form"
 
+const PAGE_SIZE = 20
 
-type CreateCampaignFormFieldsProps<T extends CampaignFormFields | WithNestedCampaign> = {
-  form: UseFormReturn<T>
-  fieldScope?: string
+const columnHelper = createColumnHelper<ExtendedAdminProduct>()
+
+const useColumns = (conflictSelectedIds: ReadonlySet<string>) => {
+  const base = useProductTableColumns()
+  return useMemo(
+    () => [
+      columnHelper.display({
+        id: "select",
+        header: ({ table }) => (
+          <Checkbox
+            checked={
+              table.getIsSomePageRowsSelected()
+                ? "indeterminate"
+                : table.getIsAllPageRowsSelected()
+            }
+            onCheckedChange={(value) =>
+              table.toggleAllPageRowsSelected(!!value)
+            }
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            onClick={(e) => e.stopPropagation()}
+          />
+        ),
+      }),
+      ...base,
+      columnHelper.display({
+        id: "conflict_warning",
+        header: () => null,
+        cell: ({ row }) =>
+          conflictSelectedIds.has(row.id) ? (
+            <span className="text-ui-fg-error text-xs">
+              Bu ürün zaten bir promosyon kodunda kullanılıyor
+            </span>
+          ) : null,
+      }),
+    ],
+    [base, conflictSelectedIds]
+  )
 }
 
-export const CreateCampaignFormFields = <T extends CampaignFormFields | WithNestedCampaign>({ 
-  form, 
-  fieldScope = ""
-}: CreateCampaignFormFieldsProps<T>) => {
-  
-  const { t } = useTranslation()
-  const { store } = useStore()
+type Props = {
+  form: UseFormReturn<CreateCampaignFormValues>
+  onConflict?: (ids: string[]) => void
+}
 
-  const watchValueType = useWatch({
-    control: form.control,
-    name: `${fieldScope}budget.type` as Path<T>,
-  })
+export const CreateCampaignFormFields = ({ form, onConflict }: Props) => {
+  const selectedIds: string[] = form.watch("product_ids")
 
-  const isTypeSpend = watchValueType === "spend"
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>(
+    () =>
+      selectedIds.reduce<RowSelectionState>((acc, id) => {
+        acc[id] = true
+        return acc
+      }, {})
+  )
 
-  const currencyValue = useWatch({
-    control: form.control,
-    name: `${fieldScope}budget.currency_code` as Path<T>,
-  })
+  const { searchParams, raw } = useProductTableQuery({ pageSize: PAGE_SIZE })
 
-  const promotionCurrencyValue = useWatch({
-    control: form.control,
-    name: `application_method.currency_code` as Path<T>,
-  })
+  // Satıcıya ait manuel promosyon kodlarını çek (is_automatic: false)
+  const { promotions: allPromotions } = usePromotions({ limit: 100 })
 
-  const currency = currencyValue || promotionCurrencyValue
-
-  useEffect(() => {
-    form.resetField(`${fieldScope}budget.limit` as Path<T>)
-
-    if (fieldScope) {
-      const currencyPath = `campaign.budget.currency_code` as Path<T>
-      
-      if (isTypeSpend && promotionCurrencyValue) {
-        const currencyValue = promotionCurrencyValue as PathValue<T, typeof currencyPath>
-        form.setValue(currencyPath, currencyValue)
-      } else if (watchValueType === "usage") {
-        const nullValue = null as PathValue<T, typeof currencyPath>
-        form.setValue(currencyPath, nullValue)
+  // Ürün üzerinde aktif promosyon kodu olan ürünleri map olarak tut: productId → promo code
+  const promotionConflictMap = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const promo of allPromotions ?? []) {
+      if (promo.is_automatic !== false) continue
+      for (const rule of promo.application_method?.target_rules ?? []) {
+        if (rule.attribute === "items.product.id") {
+          for (const val of rule.values ?? []) {
+            if (val.value) map.set(val.value, promo.code ?? promo.id)
+          }
+        }
       }
     }
-  }, [watchValueType, fieldScope, form, isTypeSpend, promotionCurrencyValue])
+    return map
+  }, [allPromotions])
 
-  if (promotionCurrencyValue && fieldScope) {
-    const formValues = form.getValues()
-    const budget = (formValues as WithNestedCampaign)?.campaign?.budget
+  // Seçim değiştiğinde 500ms debounce ile güncellenen seçili ürün listesi
+  const [debouncedSelectedIds, setDebouncedSelectedIds] = useState<string[]>(selectedIds)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-    if (
-      budget?.type === "spend" &&
-      budget?.currency_code !== promotionCurrencyValue
-    ) {
-      const currencyPath = "campaign.budget.currency_code" as Path<T>
-      form.setValue(currencyPath, promotionCurrencyValue)
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSelectedIds(selectedIds)
+    }, 500)
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
     }
+  }, [selectedIds])
+
+  // Seçili ve aynı zamanda promosyon koduyla çakışan ürünler
+  const conflictSelectedIds = useMemo(
+    () => new Set(debouncedSelectedIds.filter((id) => promotionConflictMap.has(id))),
+    [debouncedSelectedIds, promotionConflictMap]
+  )
+
+  // Mevcut sayfadaki ürün adı haritası (toast mesajı için)
+  const { products, count, isPending: isLoading } = useProducts(searchParams)
+  const productTitleMap = useMemo(
+    () => new Map((products ?? []).map((p) => [p.id, p.title ?? p.id])),
+    [products]
+  )
+
+  // Önceki conflict setini takip et — toast sadece yeni çakışmalarda gösterilir
+  const prevConflictRef = useRef<Set<string>>(new Set())
+  useEffect(() => {
+    const newConflicts = [...conflictSelectedIds].filter((id) => !prevConflictRef.current.has(id))
+    if (newConflicts.length > 0) {
+      const firstId = newConflicts[0]
+      const productName = productTitleMap.get(firstId) ?? firstId
+      toast.error(`${productName} promosyon kodu içermektedir, kampanyaya eklenemez.`)
+    }
+    prevConflictRef.current = conflictSelectedIds
+    onConflict?.([...conflictSelectedIds])
+  }, [conflictSelectedIds, productTitleMap, onConflict])
+
+  const columns = useColumns(conflictSelectedIds)
+
+  const updater: OnChangeFn<RowSelectionState> = (next) => {
+    const value = typeof next === "function" ? next(rowSelection) : next
+    setRowSelection(value)
+    form.setValue("product_ids", Object.keys(value), {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    })
   }
 
+  const { table } = useDataTable({
+    data: products ?? [],
+    columns,
+    count,
+    pageSize: PAGE_SIZE,
+    enablePagination: true,
+    enableRowSelection: true,
+    getRowId: (row) => row.id,
+    rowSelection: {
+      state: rowSelection,
+      updater,
+    },
+  })
+
   return (
-    <div className="flex w-full max-w-[720px] flex-col gap-y-8">
-      <div>
-        <Heading>{t("campaigns.create.header")}</Heading>
+    <div className="flex flex-col gap-y-8">
+      <Form.Field
+        control={form.control}
+        name="name"
+        render={({ field }) => (
+          <Form.Item>
+            <Form.Label>Kampanya Adı</Form.Label>
+            <Form.Control>
+              <Input {...field} placeholder="Yaz İndirimi" autoComplete="off" />
+            </Form.Control>
+            <Form.ErrorMessage />
+          </Form.Item>
+        )}
+      />
 
-        <Text size="small" className="text-ui-fg-subtle">
-          {t("campaigns.create.hint")}
-        </Text>
-      </div>
-
-      <div className="flex flex-col gap-y-4">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Form.Field
-            control={form.control}
-            name={`${fieldScope}name` as Path<T>}
-            render={({ field }) => {
-              return (
-                <Form.Item>
-                  <Form.Label>{t("fields.name")}</Form.Label>
-
-                  <Form.Control>
-                    <Input {...field} value={(field.value as string) ?? ""} />
-                  </Form.Control>
-
-                  <Form.ErrorMessage />
-                </Form.Item>
-              )
-            }}
-          />
-
-          <Form.Field
-            control={form.control}
-            name={`${fieldScope}campaign_identifier` as Path<T>}
-            render={({ field }) => {
-              return (
-                <Form.Item>
-                  <Form.Label>{t("campaigns.fields.identifier")}</Form.Label>
-
-                  <Form.Control>
-                    <Input {...field} value={(field.value as string) ?? ""} />
-                  </Form.Control>
-
-                  <Form.ErrorMessage />
-                </Form.Item>
-              )
-            }}
-          />
-        </div>
-
+      <div className="grid grid-cols-2 gap-4">
         <Form.Field
           control={form.control}
-          name={`${fieldScope}description` as Path<T>}
-          render={({ field }) => {
-            return (
-              <Form.Item>
-                <Form.Label optional>{t("fields.description")}</Form.Label>
-
-                <Form.Control>
-                  <Textarea {...field} value={(field.value as string) ?? ""} />
-                </Form.Control>
-
-                <Form.ErrorMessage />
-              </Form.Item>
-            )
-          }}
+          name="starts_at"
+          render={({ field }) => (
+            <Form.Item>
+              <Form.Label>Başlangıç Tarihi</Form.Label>
+              <Form.Control>
+                <DatePicker
+                  granularity="day"
+                  shouldCloseOnSelect
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              </Form.Control>
+              <Form.ErrorMessage />
+            </Form.Item>
+          )}
         />
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Form.Field
           control={form.control}
-          name={`${fieldScope}starts_at` as Path<T>}
-          render={({ field }) => {
-            return (
-              <Form.Item>
-                <Form.Label optional>
-                  {t("campaigns.fields.start_date")}
-                </Form.Label>
-
-                <Form.Control>
-                  <DatePicker
-                    granularity="minute"
-                    shouldCloseOnSelect={false}
-                    {...field}
-                    value={field.value as Date | null | undefined}
-                  />
-                </Form.Control>
-
-                <Form.ErrorMessage />
-              </Form.Item>
-            )
-          }}
+          name="ends_at"
+          render={({ field }) => (
+            <Form.Item>
+              <Form.Label>Bitiş Tarihi</Form.Label>
+              <Form.Control>
+                <DatePicker
+                  granularity="day"
+                  shouldCloseOnSelect
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              </Form.Control>
+              <Form.ErrorMessage />
+            </Form.Item>
+          )}
         />
-
-        <Form.Field
-          control={form.control}
-          name={`${fieldScope}ends_at` as Path<T>}
-          render={({ field }) => {
-            return (
-              <Form.Item>
-                <Form.Label optional>
-                  {t("campaigns.fields.end_date")}
-                </Form.Label>
-
-                <Form.Control>
-                  <DatePicker
-                    granularity="minute"
-                    shouldCloseOnSelect={false}
-                    {...field}
-                    value={field.value as Date | null | undefined}
-                  />
-                </Form.Control>
-
-                <Form.ErrorMessage />
-              </Form.Item>
-            )
-          }}
-        />
-      </div>
-
-      <div>
-        <Heading>{t("campaigns.budget.create.header")}</Heading>
-        <Text size="small" className="text-ui-fg-subtle">
-          {t("campaigns.budget.create.hint")}
-        </Text>
       </div>
 
       <Form.Field
         control={form.control}
-        name={`${fieldScope}budget.type` as Path<T>}
-        render={({ field }) => {
-          return (
-            <Form.Item>
-              <Form.Label
-                tooltip={
-                  fieldScope?.length && !currency
-                    ? t("promotions.tooltips.campaignType")
-                    : undefined
-                }
-              >
-                {t("campaigns.budget.fields.type")}
-              </Form.Label>
-
-              <Form.Control>
-                <RadioGroup
-                  className="flex gap-y-3"
-                  {...field}
-                  value={field.value as string}
-                  onValueChange={field.onChange}
-                >
-                  <RadioGroup.ChoiceBox
-                    value={"usage"}
-                    label={t("campaigns.budget.type.usage.title")}
-                    description={t("campaigns.budget.type.usage.description")}
-                  />
-
-                  <RadioGroup.ChoiceBox
-                    value={"spend"}
-                    label={t("campaigns.budget.type.spend.title")}
-                    description={t("campaigns.budget.type.spend.description")}
-                    disabled={fieldScope?.length ? !currency : false}
-                  />
-                </RadioGroup>
-              </Form.Control>
-              <Form.ErrorMessage />
-            </Form.Item>
-          )
-        }}
+        name="discount_value"
+        render={({ field }) => (
+          <Form.Item>
+            <Form.Label>İndirim Oranı (%)</Form.Label>
+            <Form.Control>
+              <Input
+                type="number"
+                min={1}
+                max={100}
+                placeholder="20"
+                value={field.value ?? ""}
+                onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                onBlur={field.onBlur}
+                name={field.name}
+                ref={field.ref}
+              />
+            </Form.Control>
+            <Form.Hint>Seçilen tüm ürünlere bu oran uygulanır.</Form.Hint>
+            <Form.ErrorMessage />
+          </Form.Item>
+        )}
       />
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {isTypeSpend && (
-          <Form.Field
-            control={form.control}
-            name={`${fieldScope}budget.currency_code` as Path<T>}
-            render={({ field: { onChange, ref, ...field } }) => {
-              return (
-                <Form.Item>
-                  <Form.Label
-                    tooltip={
-                      fieldScope?.length && !currency
-                        ? t("promotions.campaign_currency.tooltip")
-                        : undefined
-                    }
-                  >
-                    {t("fields.currency")}
-                  </Form.Label>
-                  <Form.Control>
-                    <Select
-                      {...field}
-                      value={field.value as string}
-                      onValueChange={onChange}
-                      disabled={!!fieldScope?.length}
-                    >
-                      <Select.Trigger ref={ref}>
-                        <Select.Value />
-                      </Select.Trigger>
-
-                      <Select.Content>
-                        {Object.values(currencies)
-                          .filter(
-                            (currency) =>
-                              !!store?.supported_currencies?.find(
-                                (c) =>
-                                  c.currency_code ===
-                                  currency.code.toLocaleLowerCase()
-                              )
-                          )
-                          .map((currency) => (
-                            <Select.Item
-                              value={currency.code.toLowerCase()}
-                              key={currency.code}
-                            >
-                              {currency.name}
-                            </Select.Item>
-                          ))}
-                      </Select.Content>
-                    </Select>
-                  </Form.Control>
-                  <Form.ErrorMessage />
-                </Form.Item>
-              )
-            }}
-          />
+      <div className="flex flex-col gap-y-3">
+        <Heading level="h3">Kampanyaya Dahil Ürünler</Heading>
+        {form.formState.errors.product_ids?.message && (
+          <p className="text-ui-fg-error text-small-regular">
+            {form.formState.errors.product_ids.message}
+          </p>
         )}
-
-        <Form.Field
-          control={form.control}
-          name={`${fieldScope}budget.limit` as Path<T>}
-          render={({ field: { onChange, value, ...field } }) => {
-            return (
-              <Form.Item className="basis-1/2">
-                <Form.Label
-                  tooltip={
-                    !currency && isTypeSpend
-                      ? t("promotions.fields.amount.tooltip")
-                      : undefined
-                  }
-                >
-                  {t("campaigns.budget.fields.limit")}
-                </Form.Label>
-
-                <Form.Control>
-                  {isTypeSpend ? (
-                    <CurrencyInput
-                      min={0}
-                      onValueChange={(value) =>
-                        onChange(value ? parseInt(value) : "")
-                      }
-                      code={currencyValue as string}
-                      symbol={
-                        currencyValue ? getCurrencySymbol(currencyValue as string) : ""
-                      }
-                      {...field}
-                      value={value as string | number | undefined}
-                      disabled={!currency && isTypeSpend}
-                    />
-                  ) : (
-                    <Input
-                      type="number"
-                      key="usage"
-                      {...field}
-                      min={0}
-                      value={value as string | number | undefined ?? ""}
-                      onChange={(e) => {
-                        onChange(
-                          e.target.value === ""
-                            ? null
-                            : parseInt(e.target.value)
-                        )
-                      }}
-                    />
-                  )}
-                </Form.Control>
-                <Form.ErrorMessage />
-                <Text size="xsmall" className="text-ui-fg-muted mt-1">
-                  {t("campaigns.softCapWarning")}
-                </Text>
-              </Form.Item>
-            )
-          }}
+        <_DataTable
+          table={table}
+          columns={columns}
+          count={count ?? 0}
+          pageSize={PAGE_SIZE}
+          pagination
+          search
+          isLoading={isLoading}
+          queryObject={raw}
         />
       </div>
     </div>

@@ -2,7 +2,7 @@ import { MedusaRequest, MedusaResponse } from "@medusajs/framework"
 import { ContainerRegistrationKeys, Modules, PromotionStatus } from "@medusajs/framework/utils"
 import { IEventBusModuleService, IPromotionModuleService } from "@medusajs/types"
 import sellerPromotion from "@mercurjs/b2c-core/links/seller-promotion"
-import { PromotionWithMeta } from "../../../../vendor/shared/promotion-types.js"
+import { PromotionWithMeta } from "../../../../../lib/promotion-types.js"
 
 const SELLER_MODULE = "seller"
 

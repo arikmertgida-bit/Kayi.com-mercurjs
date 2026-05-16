@@ -8,7 +8,7 @@ import {
   buildMetaWithSeller,
   buildNamespacedCode,
   stripNamespaceFromCode,
-} from "../shared/promotion-types.js"
+} from "../../../lib/promotion-types.js"
 
 /** Shape of a row returned from the seller_promotion link table. */
 type SellerPromotionLinkRow = { promotion_id: string }
@@ -22,33 +22,50 @@ export const GET = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) 
   const limit = Math.min(parseInt(req.query.limit as string) || 20, 100)
   const offset = parseInt(req.query.offset as string) || 0
 
-  // Query the seller_promotion link table — only rows belonging to this seller.
-  // Pagination is applied here so we never scan the full promotions table.
-  // deleted_at: { $eq: null } excludes soft-deleted link records.
-  const { data, metadata } = await query.graph({
+  // Satıcıya ait tüm promotion ID'lerini link tablosundan al (sayfalama yok).
+  // is_automatic filtresi sonradan uygulandığı için önce tümünü çekiyoruz.
+  const { data: allLinks } = await query.graph({
     entity: sellerPromotion.entryPoint,
     fields: ["promotion_id"],
     filters: { seller_id: seller.id, deleted_at: { $eq: null } },
-    pagination: { skip: offset, take: limit },
   })
 
-  const count = typeof metadata?.count === "number" ? metadata.count : 0
-  const promotionIds = (data as SellerPromotionLinkRow[]).map((r) => r.promotion_id)
+  const allPromotionIds = (allLinks as SellerPromotionLinkRow[]).map((r) => r.promotion_id)
 
-  if (promotionIds.length === 0) {
+  if (allPromotionIds.length === 0) {
+    return res.json({ promotions: [], count: 0, limit, offset })
+  }
+
+  // is_automatic: false → kampanya tarafından oluşturulan otomatik promotionları gizle.
+  // Kampanya ve promosyon modülleri bu sayede tamamen bağımsız hale gelir.
+  //
+  // O(m) optimizasyonu: iki aşamalı sorgu — ilk aşamada sadece id seçilerek
+  // count alınır (relations yükü yok), ikinci aşamada yalnızca sayfa boyutundaki
+  // kayıtlar tam ilişkilerle çekilir.
+  const countOnlyPromotions = await promotionService.listPromotions(
+    { id: allPromotionIds, is_automatic: false },
+    { select: ["id"] }
+  )
+
+  const count = countOnlyPromotions.length
+  const pageIds = countOnlyPromotions
+    .slice(offset, offset + limit)
+    .map((p) => p.id)
+
+  if (pageIds.length === 0) {
     return res.json({ promotions: [], count, limit, offset })
   }
 
-  const promotions = await promotionService.listPromotions(
-    { id: promotionIds },
+  const pagePromotions = await promotionService.listPromotions(
+    { id: pageIds },
     { relations: ["application_method", "rules"] }
   )
 
   // Merge metadata from the raw jsonb column (ORM entity does not include it).
   const metaRows: { id: string; metadata: Record<string, unknown> | null }[] =
-    await knex("promotion").select("id", "metadata").whereIn("id", promotionIds)
+    await knex("promotion").select("id", "metadata").whereIn("id", pageIds)
   const metaMap = new Map(metaRows.map((r) => [r.id, r.metadata]))
-  const promotionsWithMeta = promotions.map((p) => ({
+  const promotionsWithMeta = pagePromotions.map((p) => ({
     ...p,
     metadata: metaMap.get(p.id) ?? null,
   }))
@@ -82,7 +99,119 @@ export const POST = async (req: AuthenticatedMedusaRequest, res: MedusaResponse)
     })
   }
 
-  // Adım 2: Kodu seller-namespaced formata çevir.
+  // Adım 2: Ters yön çakışma kontrolü — hedeflenen ürünler aktif kampanya promosyonunda var mı?
+  // Yalnızca is_automatic: false promosyonlar için (cart-wide kuponlar bu kontrolden muaf).
+  {
+    // values alanı iki farklı formatta gelebilir:
+    //   - İstek gövdesinden (frontend): string[]       → ["prod_01xxx"]
+    //   - DB'den okunan mevcut promosyon: { value: string }[]
+    type TargetRuleShape = { attribute?: string; values?: unknown[] }
+    type AppMethodShape = { target_rules?: TargetRuleShape[] }
+    type PromoShape = { application_method?: AppMethodShape }
+
+    const incomingTargetRules: TargetRuleShape[] =
+      ((body.application_method as AppMethodShape | undefined)?.target_rules) ?? []
+
+    const incomingProductIds = incomingTargetRules
+      .filter((r) => r.attribute === "items.product.id")
+      .flatMap((r) => {
+        const vals = r.values ?? []
+        return vals.map((v) =>
+          typeof v === "string" ? v : (v as { value?: string } | null)?.value
+        )
+      })
+      .filter((v): v is string => typeof v === "string" && v.length > 0)
+
+    if (incomingProductIds.length > 0) {
+      const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
+
+      const { data: promoLinks } = await query.graph({
+        entity: sellerPromotion.entryPoint,
+        fields: ["promotion_id"],
+        filters: { seller_id: seller.id, deleted_at: { $eq: null } },
+      })
+
+      const existingPromoIds = (promoLinks as SellerPromotionLinkRow[]).map((r) => r.promotion_id)
+
+      if (existingPromoIds.length > 0) {
+        const campaignPromos = await promotionService.listPromotions(
+          { id: existingPromoIds, is_automatic: true } as Parameters<typeof promotionService.listPromotions>[0],
+          {
+            relations: [
+              "application_method",
+              "application_method.target_rules",
+              "application_method.target_rules.values",
+            ],
+          }
+        )
+
+        for (const promo of campaignPromos) {
+          const targetRules = (promo as PromoShape).application_method?.target_rules ?? []
+          for (const rule of targetRules) {
+            if (rule.attribute === "items.product.id") {
+              const ruleProductIds = (rule.values ?? []).map((v) => (v as { value?: string })?.value)
+              const conflictId = incomingProductIds.find((pid) => ruleProductIds.includes(pid))
+              if (conflictId) {
+                const productService = req.scope.resolve<{
+                  listProducts: (filter: { id: string[] }) => Promise<Array<{ title?: string }>>
+                }>(Modules.PRODUCT)
+                let productName = conflictId
+                try {
+                  const [product] = await productService.listProducts({ id: [conflictId] })
+                  if (product?.title) productName = product.title
+                } catch {
+                  // product name unavailable — use id
+                }
+                return res.status(400).json({
+                  message: `${productName} adlı ürün bir kampanyaya dahil edilmiş olduğundan promosyon kodu oluşturulamaz.`,
+                })
+              }
+            }
+          }
+        }
+
+        // Adım 2b: Mükerrer manuel promosyon engeli — hedeflenen ürünler başka bir aktif/bekleyen
+        //           manuel promosyon kodunda (`is_automatic: false`) kullanılıyor mu?
+        const manualPromos = await promotionService.listPromotions(
+          { id: existingPromoIds, is_automatic: false } as Parameters<typeof promotionService.listPromotions>[0],
+          {
+            relations: [
+              "application_method",
+              "application_method.target_rules",
+              "application_method.target_rules.values",
+            ],
+          }
+        )
+
+        for (const promo of manualPromos) {
+          const targetRules = (promo as PromoShape).application_method?.target_rules ?? []
+          for (const rule of targetRules) {
+            if (rule.attribute === "items.product.id") {
+              const ruleProductIds = (rule.values ?? []).map((v) => (v as { value?: string })?.value)
+              const conflictId = incomingProductIds.find((pid) => ruleProductIds.includes(pid))
+              if (conflictId) {
+                const productService = req.scope.resolve<{
+                  listProducts: (filter: { id: string[] }) => Promise<Array<{ title?: string }>>
+                }>(Modules.PRODUCT)
+                let productName = conflictId
+                try {
+                  const [product] = await productService.listProducts({ id: [conflictId] })
+                  if (product?.title) productName = product.title
+                } catch {
+                  // product name unavailable — fallback to id
+                }
+                return res.status(400).json({
+                  message: `${productName} adlı ürüne promosyon kodu tanımlıdır. Aynı ürün için yeni bir promosyon kodu oluşturulamaz.`,
+                })
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Adım 3: Kodu seller-namespaced formata çevir.
   const namespacedCode = body.code ? buildNamespacedCode(body.code, seller.id) : body.code
 
   // Set the MedusaJS status field to mirror the approval decision.
@@ -90,37 +219,47 @@ export const POST = async (req: AuthenticatedMedusaRequest, res: MedusaResponse)
   // Trusted/auto-publish vendors → active immediately.
   const autoPublish = seller.metadata?.auto_publish_promotions === true
 
-  const promotion = (await promotionService.createPromotions(
-    Object.assign({} as CreatePromotionDTO, body, {
-      code: namespacedCode,
-      status: autoPublish ? PromotionStatus.ACTIVE : PromotionStatus.INACTIVE,
-    })
-  )) as unknown as PromotionDTO
+  // Cast the input (not the return) so the single-DTO overload resolves correctly:
+  // createPromotions(data: CreatePromotionDTO): Promise<PromotionDTO>
+  const promoInput = Object.assign({} as CreatePromotionDTO, body, {
+    code: namespacedCode,
+    status: autoPublish ? PromotionStatus.ACTIVE : PromotionStatus.INACTIVE,
+  }) as CreatePromotionDTO
+
+  const promotion = await promotionService.createPromotions(promoInput)
 
   // Raw knex: write seller ownership metadata to the promotion.metadata jsonb column.
   // MedusaJS promotion ORM entity does not support metadata; we added the column manually.
+  //
+  // ATOMICITY SCOPE: both the metadata write and the link creation are wrapped in a
+  // single try/catch that compensates by deleting the just-created promotion.
+  // This guarantees no orphan promotion (no metadata + no link = invisible to seller
+  // but treated as platform-scoped at checkout) can exist after a partial failure.
   const knex = req.scope.resolve(ContainerRegistrationKeys.PG_CONNECTION)
   const metaPayload = buildMetaWithSeller(body.metadata, seller.id, seller.metadata ?? null)
-  await knex("promotion")
-    .where({ id: promotion.id })
-    .update({
-      metadata: knex.raw(
-        `COALESCE(metadata, '{}'::jsonb) || ?::jsonb`,
-        [JSON.stringify(metaPayload)]
-      ),
-    })
 
-  // Adım 4: Atomicity — link başarısız olursa promotion'ı temizle (orphan önleme).
   try {
+    await knex("promotion")
+      .where({ id: promotion.id })
+      .update({
+        metadata: knex.raw(
+          `COALESCE(metadata, '{}'::jsonb) || ?::jsonb`,
+          [JSON.stringify(metaPayload)]
+        ),
+      })
+
     await remoteLink.create([
       {
         seller: { seller_id: seller.id },
         [Modules.PROMOTION]: { promotion_id: promotion.id },
       },
     ])
-  } catch (linkError) {
+  } catch (writeOrLinkError) {
+    // Compensate: delete the orphaned promotion so neither the vendor nor the
+    // checkout can encounter it in an inconsistent state.
+    // The cleanup error is intentionally silenced — the original error is what propagates.
     await promotionService.deletePromotions(promotion.id).catch(() => {})
-    throw linkError
+    throw writeOrLinkError
   }
 
   // Trusted vendor (autoPublish = true): the promotion is already ACTIVE, so

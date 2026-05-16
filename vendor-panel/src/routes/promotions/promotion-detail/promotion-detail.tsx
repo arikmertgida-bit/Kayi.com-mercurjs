@@ -2,7 +2,7 @@ import { useLoaderData, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
 import { TwoColumnPageSkeleton } from "../../../components/common/skeleton"
-import { TwoColumnPage } from "../../../components/layout/pages"
+import { SingleColumnPage } from "../../../components/layout/pages"
 import { useDashboardExtension } from "../../../extensions"
 import {
   usePromotion,
@@ -10,7 +10,6 @@ import {
   usePromotionRules,
 } from "../../../hooks/api/promotions"
 import { ExtendedPromotionRuleWithValues } from "../../../types/promotion"
-import { CampaignSection } from "./components/campaign-section"
 import { PromotionConditionsSection } from "./components/promotion-conditions-section"
 import { PromotionGeneralSection } from "./components/promotion-general-section"
 import { promotionLoader } from "./loader"
@@ -74,42 +73,35 @@ export const PromotionDetail = () => {
 
   if (isLoading || !promotion) {
     return (
-      <TwoColumnPageSkeleton mainSections={3} sidebarSections={1} showJSON />
+      <TwoColumnPageSkeleton mainSections={3} sidebarSections={0} showJSON />
     )
   }
 
   return (
-    <TwoColumnPage
+    <SingleColumnPage
       data={promotion}
       widgets={{
         after: getWidgets("promotion.details.after"),
         before: getWidgets("promotion.details.before"),
-        sideAfter: getWidgets("promotion.details.side.after"),
-        sideBefore: getWidgets("promotion.details.side.before"),
       }}
       hasOutlet
     >
-      <TwoColumnPage.Main>
-        <PromotionGeneralSection promotion={promotion} />
+      <PromotionGeneralSection promotion={promotion} />
+      <PromotionConditionsSection
+        rules={enrichRules(rules, rulesAttrs, tStr)}
+        ruleType="rules"
+      />
+      <PromotionConditionsSection
+        rules={enrichRules(targetRules, targetAttrs, tStr)}
+        ruleType="target_rules"
+      />
+      {promotion.type === "buyget" && (
         <PromotionConditionsSection
-          rules={enrichRules(rules, rulesAttrs, tStr)}
-          ruleType="rules"
+          rules={enrichRules(buyRules, buyAttrs, tStr)}
+          ruleType="buy_rules"
         />
-        <PromotionConditionsSection
-          rules={enrichRules(targetRules, targetAttrs, tStr)}
-          ruleType="target_rules"
-        />
-        {promotion.type === "buyget" && (
-          <PromotionConditionsSection
-            rules={enrichRules(buyRules, buyAttrs, tStr)}
-            ruleType="buy_rules"
-          />
-        )}
-      </TwoColumnPage.Main>
-      <TwoColumnPage.Sidebar>
-        <CampaignSection campaign={promotion.campaign!} />
-      </TwoColumnPage.Sidebar>
-    </TwoColumnPage>
+      )}
+    </SingleColumnPage>
   )
 }
 

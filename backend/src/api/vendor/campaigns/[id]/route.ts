@@ -1,8 +1,6 @@
 import { AuthenticatedMedusaRequest, MedusaResponse } from "@medusajs/framework"
 import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
 import {
-  CampaignBudgetTypeValues,
-  IEventBusModuleService,
   IPromotionModuleService,
   Logger,
   UpdateCampaignDTO,
@@ -14,7 +12,7 @@ import {
   SellerWithMeta,
   buildMetaWithSeller,
   buildNamespacedIdentifier,
-} from "../../shared/promotion-types.js"
+} from "../../../../lib/promotion-types.js"
 
 type UpdateCampaignBody = {
   name?: string
@@ -22,11 +20,6 @@ type UpdateCampaignBody = {
   campaign_identifier?: string
   starts_at?: string | null
   ends_at?: string | null
-  budget?: {
-    type?: CampaignBudgetTypeValues
-    limit?: number | null
-    currency_code?: string | null
-  }
   metadata?: unknown
 }
 
@@ -50,7 +43,12 @@ export const GET = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) 
   }
 
   const campaign = await promotionService.retrieveCampaign(id, {
-    relations: ["budget", "promotions"],
+    relations: [
+      "promotions",
+      "promotions.application_method",
+      "promotions.application_method.target_rules",
+      "promotions.application_method.target_rules.values",
+    ],
   })
 
   return res.json({ campaign })
@@ -94,34 +92,12 @@ export const PUT = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) 
   }
   if (body.starts_at !== undefined) baseDto.starts_at = body.starts_at != null ? new Date(body.starts_at) : null
   if (body.ends_at !== undefined) baseDto.ends_at = body.ends_at != null ? new Date(body.ends_at) : null
-  if (body.budget !== undefined) baseDto.budget = body.budget
 
   // Object.assign returns UpdateCampaignDTO & { metadata: ... }, which is a structural
   // subtype of UpdateCampaignDTO — no `as any` cast needed.
   const campaign = await promotionService.updateCampaigns(
     Object.assign(baseDto, { metadata: buildMetaWithSeller(body.metadata, seller.id, seller.metadata ?? null) })
   ) as CampaignWithMeta
-
-  // Check if the campaign budget has been exhausted after the update.
-  // Retrieve with budget relation to access current figures.
-  const campaignWithBudget = await promotionService.retrieveCampaign(id, {
-    relations: ["budget"],
-  }) as CampaignWithMeta & {
-    budget?: { limit?: number | null; used?: number | null } | null
-  }
-
-  const budget = campaignWithBudget.budget
-  if (
-    budget?.limit != null &&
-    budget?.used != null &&
-    budget.used >= budget.limit
-  ) {
-    const eventBus = req.scope.resolve<IEventBusModuleService>(Modules.EVENT_BUS)
-    await eventBus.emit({
-      name: "promotion.budget_exhausted",
-      data: { campaign_id: id, seller_id: seller.id },
-    })
-  }
 
   return res.json({ campaign })
 }

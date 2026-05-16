@@ -83,5 +83,10 @@ export default defineMiddlewares({
       matcher: "/vendor/campaigns",
       middlewares: [vendorPromoRateLimiter as any],
     },
+    {
+      method: ["POST"],
+      matcher: "/vendor/kayi-campaigns",
+      middlewares: [vendorPromoRateLimiter as any],
+    },
   ],
 })

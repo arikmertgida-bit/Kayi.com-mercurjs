@@ -3,7 +3,7 @@ import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
 import { IPromotionModuleService, FilterablePromotionProps, FilterableCampaignProps } from "@medusajs/types"
 import sellerPromotion from "@mercurjs/b2c-core/links/seller-promotion"
 import sellerCampaign from "@mercurjs/b2c-core/links/seller-campaign"
-import { PromotionWithMeta, CampaignWithMeta } from "../api/vendor/shared/promotion-types.js"
+import { PromotionWithMeta, CampaignWithMeta } from "../lib/promotion-types.js"
 
 /** Extends the MedusaJS filter type to include soft-delete filtering. */
 type PromotionFilter = FilterablePromotionProps & { deleted_at?: unknown }

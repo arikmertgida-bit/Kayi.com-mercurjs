@@ -16,7 +16,6 @@ type EditPromotionFormProps = {
 }
 
 const EditPromotionSchema = zod.object({
-  is_automatic: zod.string().toLowerCase(),
   code: zod.string().min(1),
   status: zod.enum(["active", "inactive", "draft"]),
   value_type: zod.enum(["fixed", "percentage"]),
@@ -35,7 +34,6 @@ export const EditPromotionDetailsForm = ({
 
   const form = useForm<zod.infer<typeof EditPromotionSchema>>({
     defaultValues: {
-      is_automatic: promotion.is_automatic!.toString(),
       code: promotion.code,
       status: promotion.status,
       value: promotion.application_method!.value,
@@ -54,7 +52,7 @@ export const EditPromotionDetailsForm = ({
 
     await mutateAsync(
       {
-        is_automatic: data.is_automatic === "true",
+        is_automatic: false,
         code: data.code,
         status: data.status,
         application_method: {
@@ -118,42 +116,6 @@ export const EditPromotionDetailsForm = ({
                           label={t("promotions.form.status.inactive.title")}
                           description={t(
                             "promotions.form.status.inactive.description"
-                          )}
-                        />
-                      </RadioGroup>
-                    </Form.Control>
-                    <Form.ErrorMessage />
-                  </Form.Item>
-                )
-              }}
-            />
-
-            <Form.Field
-              control={form.control}
-              name="is_automatic"
-              render={({ field }) => {
-                return (
-                  <Form.Item>
-                    <Form.Label>{t("promotions.form.method.label")}</Form.Label>
-                    <Form.Control>
-                      <RadioGroup
-                        className="flex-col gap-y-3"
-                        {...field}
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <RadioGroup.ChoiceBox
-                          value={"false"}
-                          label={t("promotions.form.method.code.title")}
-                          description={t(
-                            "promotions.form.method.code.description"
-                          )}
-                        />
-                        <RadioGroup.ChoiceBox
-                          value={"true"}
-                          label={t("promotions.form.method.automatic.title")}
-                          description={t(
-                            "promotions.form.method.automatic.description"
                           )}
                         />
                       </RadioGroup>

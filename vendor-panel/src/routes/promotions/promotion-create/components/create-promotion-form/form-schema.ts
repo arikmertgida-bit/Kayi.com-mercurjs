@@ -1,5 +1,4 @@
 import { z } from "zod"
-import { CreateCampaignSchema } from "../../../../campaigns/campaign-create/components/create-campaign-form"
 
 const RuleSchema = z.array(
   z.object({
@@ -21,7 +20,7 @@ export const CreatePromotionSchema = z
   .object({
     template_id: z.string().optional(),
     campaign_id: z.string().optional(),
-    campaign_choice: z.enum(["none", "existing", "new"]).optional(),
+    campaign_choice: z.enum(["none", "existing"]).optional(),
     is_automatic: z.string().toLowerCase(),
     code: z.string().min(1),
     type: z.enum(["buyget", "standard"]),
@@ -37,7 +36,6 @@ export const CreatePromotionSchema = z
       type: z.enum(["fixed", "percentage"]),
       target_type: z.enum(["order", "shipping_methods", "items"]),
     }),
-    campaign: CreateCampaignSchema.optional(),
   })
   .refine(
     (data) => {

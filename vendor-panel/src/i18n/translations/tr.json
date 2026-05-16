@@ -2208,6 +2208,13 @@
       "header": "Kampanya Oluştur",
       "successToast": "'{{name}}' kampanyası başarıyla oluşturuldu."
     },
+    "errors": {
+      "discountRange": "İndirim oranı 1 ile 100 arasında olmalıdır.",
+      "minProductRequired": "En az bir ürün seçmelisiniz.",
+      "startDatePast": "Başlangıç tarihi geçmişte olamaz.",
+      "productHasPromotion": "Bu ürün ({{productName}}) için promosyon kodu oluşturulmuş, kampanya listesine alınamaz.",
+      "maxQuantityRequired": "İndirim yöntemi yapılandırması geçersiz. Lütfen tekrar deneyin."
+    },
     "fields": {
       "name": "Ad",
       "identifier": "Tanımlayıcı",

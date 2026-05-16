@@ -1,48 +1,35 @@
-import { SubscriberArgs, type SubscriberConfig } from "@medusajs/framework"
-import { ContainerRegistrationKeys, Modules, PromotionStatus } from "@medusajs/framework/utils"
+﻿import { SubscriberArgs, type SubscriberConfig } from "@medusajs/framework"
+import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
 import {
   IEventBusModuleService,
-  IPromotionModuleService,
 } from "@medusajs/types"
 import sellerCampaign from "@mercurjs/b2c-core/links/seller-campaign"
-import { CampaignWithMeta } from "../api/vendor/shared/promotion-types.js"
-import { notifyMessengerUser, deletePromotionMessages } from "../lib/messenger.js"
+import { notifyMessengerUser } from "../lib/messenger.js"
 
-/**
- * Minimal Redis client interface for duplicate-notification guard.
- * Resolved from the DI container — if unavailable (dev/test without Redis),
- * the guard is skipped and the notification is sent anyway (graceful degrade).
- */
 interface MinimalRedisClient {
   get(key: string): Promise<string | null>
   set(key: string, value: string, exMode: "EX", ttl: number): Promise<unknown>
 }
 
-/** Payload shape emitted by campaigns/[id]/route.ts PUT handler and order-promotion-budget-check.ts */
 interface BudgetExhaustedPayload {
   campaign_id: string
   seller_id: string
 }
 
-/** Shape of a row returned from the seller_campaign link table */
 type SellerCampaignLinkRow = { seller_id: string }
 
-/** Campaign with promotions loaded via listCampaigns + relations */
-type CampaignWithPromotions = CampaignWithMeta & {
-  promotions?: Array<{ id: string; status?: string | null }> | null
-}
+type PromotionGraphRow = { id: string; status?: string | null }
 
 /**
  * Handles the "promotion.budget_exhausted" event.
  *
  * Steps:
  * 1. Resolve seller_id (from payload or via seller_campaign link table)
- * 2. List the campaign's promotions and deactivate all active ones
- * 3. Emit seller.promotion_budget_exhausted for downstream handlers (e.g. email)
- * 4. Notify the seller via kayi-messenger
- *
- * Each promotion is deactivated independently — a failure for one does NOT
- * prevent the others or the notification from being processed.
+ * 2. Fetch active promotion IDs for this campaign via query.graph (no cross-domain
+ *    mutation — promotion deactivation is delegated via event)
+ * 3. Emit campaign.promotions_deactivation_requested for the promotion domain subscriber
+ * 4. Emit seller.promotion_budget_exhausted for downstream handlers (e.g. email)
+ * 5. Notify the seller via kayi-messenger (mutex-guarded to prevent duplicates)
  */
 export default async function promotionBudgetExhaustedSubscriber({
   event: { data },
@@ -60,12 +47,13 @@ export default async function promotionBudgetExhaustedSubscriber({
     return
   }
 
+  const query = container.resolve(ContainerRegistrationKeys.QUERY)
+  const eventBus = container.resolve<IEventBusModuleService>(Modules.EVENT_BUS)
+
   // ── Resolve seller_id if not already provided ──────────────────────────────
   let targetSellerId = seller_id
 
   if (!targetSellerId) {
-    const query = container.resolve(ContainerRegistrationKeys.QUERY)
-
     const { data: links } = await query.graph({
       entity: sellerCampaign.entryPoint,
       fields: ["seller_id"],
@@ -82,55 +70,52 @@ export default async function promotionBudgetExhaustedSubscriber({
     targetSellerId = row.seller_id
   }
 
-  // ── Deactivate active promotions belonging to the exhausted campaign ────────
-  const promotionService = container.resolve<IPromotionModuleService>(Modules.PROMOTION)
-  const eventBus = container.resolve<IEventBusModuleService>(Modules.EVENT_BUS)
-
-  let deactivatedCount = 0
-
+  // ── Fetch active promotion IDs for this campaign via query.graph ───────────
+  // Uses MedusaJS query abstraction — no cross-domain ORM relation load.
+  // campaign_id is a native column on the promotion entity (FK), not a cross-
+  // domain value, so filtering by it here is intentional and safe.
+  let activePromotionIds: string[] = []
   try {
-    const campaigns = (await promotionService.listCampaigns(
-      { id: [campaign_id] },
-      { relations: ["promotions"] }
-    )) as CampaignWithPromotions[]
-
-    const campaign = campaigns[0]
-    const activePromotions = (campaign?.promotions ?? []).filter(
-      (p) => p.status === "active"
-    )
+    const { data: promoRows } = await query.graph({
+      entity: "promotion",
+      fields: ["id", "status"],
+      filters: { campaign_id },
+    })
+    activePromotionIds = (promoRows as PromotionGraphRow[])
+      .filter((p) => p.status === "active")
+      .map((p) => p.id)
 
     logger.info(
-      `[budget-exhausted] Campaign ${campaign_id} has ${activePromotions.length} active promotion(s) to deactivate`
+      `[budget-exhausted] Campaign ${campaign_id} has ${activePromotionIds.length} active promotion(s) scheduled for deactivation`
     )
-
-    for (const promo of activePromotions) {
-      try {
-        await promotionService.updatePromotions(
-          Object.assign({ id: promo.id }, { status: PromotionStatus.INACTIVE })
-        )
-        deactivatedCount++
-        logger.info(`[budget-exhausted] Deactivated promotion ${promo.id}`)
-
-        // Fire-and-forget: remove the promotion card from all customer inboxes.
-        // Non-blocking — a messenger failure must never roll back the deactivation.
-        deletePromotionMessages(promo.id).catch((err: unknown) =>
-          logger.warn(
-            `[budget-exhausted] Could not delete messenger messages for promotion ${promo.id}: ` +
-              (err instanceof Error ? err.message : String(err))
-          )
-        )
-      } catch (err: unknown) {
-        logger.warn(
-          `[budget-exhausted] Failed to deactivate promotion ${promo.id}: ` +
-            (err instanceof Error ? err.message : String(err))
-        )
-      }
-    }
   } catch (err: unknown) {
     logger.warn(
-      `[budget-exhausted] Failed to list/deactivate promotions for campaign ${campaign_id}: ` +
+      `[budget-exhausted] Failed to fetch promotions for campaign ${campaign_id}: ` +
         (err instanceof Error ? err.message : String(err))
     )
+  }
+
+  // ── Delegate promotion deactivation to the promotion domain via event ───────
+  // This keeps the campaign subscriber free of promotion-domain mutations.
+  if (activePromotionIds.length > 0) {
+    try {
+      await eventBus.emit({
+        name: "campaign.promotions_deactivation_requested",
+        data: {
+          campaign_id,
+          promotion_ids: activePromotionIds,
+          seller_id: targetSellerId,
+        },
+      })
+      logger.info(
+        `[budget-exhausted] Emitted campaign.promotions_deactivation_requested for ${activePromotionIds.length} promotion(s)`
+      )
+    } catch (err: unknown) {
+      logger.warn(
+        `[budget-exhausted] Failed to emit deactivation event for campaign ${campaign_id}: ` +
+          (err instanceof Error ? err.message : String(err))
+      )
+    }
   }
 
   // ── Emit seller notification event (for future email/resend integration) ───
@@ -140,12 +125,10 @@ export default async function promotionBudgetExhaustedSubscriber({
       data: {
         seller_id: targetSellerId,
         campaign_id,
-        deactivated_count: deactivatedCount,
       },
     })
     logger.info(
-      `[budget-exhausted] Emitted seller.promotion_budget_exhausted for seller ${targetSellerId} ` +
-        `(campaign: ${campaign_id}, deactivated: ${deactivatedCount})`
+      `[budget-exhausted] Emitted seller.promotion_budget_exhausted for seller ${targetSellerId} (campaign: ${campaign_id})`
     )
   } catch (err: unknown) {
     logger.warn(
@@ -155,9 +138,6 @@ export default async function promotionBudgetExhaustedSubscriber({
   }
 
   // ── Messenger notification — mutex-guarded to prevent duplicate messages ──────
-  // Under flash-sale conditions multiple "promotion.budget_exhausted" events may
-  // fire nearly simultaneously. Deactivation is idempotent, but notifyMessengerUser
-  // is not — Redis mutex ensures only one notification per campaign per minute.
   let shouldNotify = true
   try {
     const redis = container.resolve<MinimalRedisClient>("redisClient")
@@ -181,8 +161,8 @@ export default async function promotionBudgetExhaustedSubscriber({
         targetUserId: targetSellerId,
         targetUserType: "SELLER",
         notificationType: "budget_exhausted",
-        preview: "Kampanya bütçeniz tükendi. Kampanyanız otomatik olarak duraklatıldı.",
-        subject: "Kampanya Bütçe Uyardısı",
+        preview: "Kampanya butceniz tukendi. Kampanyaniz otomatik olarak duraklatildi.",
+        subject: "Kampanya Butce Uyarisi",
       })
 
       logger.info(
@@ -190,8 +170,8 @@ export default async function promotionBudgetExhaustedSubscriber({
       )
     } catch (err: unknown) {
       logger.warn(
-        "[budget-exhausted] Failed to dispatch budget exhausted notification:",
-        err instanceof Error ? err.message : err
+        "[budget-exhausted] Failed to dispatch budget exhausted notification: " +
+          (err instanceof Error ? err.message : String(err))
       )
     }
   }

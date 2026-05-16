@@ -15,8 +15,6 @@ type EditCampaignFormProps = {
 
 const EditCampaignSchema = zod.object({
   name: zod.string(),
-  description: zod.string().optional(),
-  campaign_identifier: zod.string().optional(),
   starts_at: zod.date().optional(),
   ends_at: zod.date().optional(),
 })
@@ -28,8 +26,6 @@ export const EditCampaignForm = ({ campaign }: EditCampaignFormProps) => {
   const form = useForm<zod.infer<typeof EditCampaignSchema>>({
     defaultValues: {
       name: campaign.name || "",
-      description: campaign.description || "",
-      campaign_identifier: campaign.campaign_identifier || "",
       starts_at: campaign.starts_at ? new Date(campaign.starts_at) : undefined,
       ends_at: campaign.ends_at ? new Date(campaign.ends_at) : undefined,
     },
@@ -42,8 +38,6 @@ export const EditCampaignForm = ({ campaign }: EditCampaignFormProps) => {
     await mutateAsync(
       {
         name: data.name,
-        description: data.description,
-        campaign_identifier: data.campaign_identifier,
         starts_at: data.starts_at,
         ends_at: data.ends_at,
       },
@@ -76,42 +70,6 @@ export const EditCampaignForm = ({ campaign }: EditCampaignFormProps) => {
                 return (
                   <Form.Item>
                     <Form.Label>{t("fields.name")}</Form.Label>
-
-                    <Form.Control>
-                      <Input {...field} />
-                    </Form.Control>
-
-                    <Form.ErrorMessage />
-                  </Form.Item>
-                )
-              }}
-            />
-
-            <Form.Field
-              control={form.control}
-              name="description"
-              render={({ field }) => {
-                return (
-                  <Form.Item>
-                    <Form.Label>{t("fields.description")}</Form.Label>
-
-                    <Form.Control>
-                      <Input {...field} />
-                    </Form.Control>
-
-                    <Form.ErrorMessage />
-                  </Form.Item>
-                )
-              }}
-            />
-
-            <Form.Field
-              control={form.control}
-              name="campaign_identifier"
-              render={({ field }) => {
-                return (
-                  <Form.Item>
-                    <Form.Label>{t("campaigns.fields.identifier")}</Form.Label>
 
                     <Form.Control>
                       <Input {...field} />

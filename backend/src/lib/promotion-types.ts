@@ -40,41 +40,6 @@ export type PromotionWithMeta = WithMetadata<PromotionDTO>
 export type CampaignWithMeta = WithMetadata<CampaignDTO>
 
 /**
- * Extracts `seller_id` from a metadata object with runtime validation.
- * Returns `undefined` if metadata is not a plain object or seller_id
- * is not a string — ensuring corrupted data fails the ownership check.
- */
-function extractSellerId(meta: Record<string, unknown> | undefined | null): string | undefined {
-  if (meta == null) return undefined
-  const raw = meta["seller_id"]
-  return typeof raw === "string" ? raw : undefined
-}
-
-/**
- * Returns true if the promotion belongs to the given seller, false otherwise.
- * Performs runtime validation: corrupted or missing metadata also returns false.
- * Routes should respond with res.status(403) when this returns false.
- */
-export function sellerOwnsPromotion(
-  promotion: PromotionWithMeta,
-  sellerId: string
-): boolean {
-  return extractSellerId(promotion.metadata) === sellerId
-}
-
-/**
- * Returns true if the campaign belongs to the given seller, false otherwise.
- * Performs runtime validation: corrupted or missing metadata also returns false.
- * Routes should respond with res.status(403) when this returns false.
- */
-export function sellerOwnsCampaign(
-  campaign: CampaignWithMeta,
-  sellerId: string
-): boolean {
-  return extractSellerId(campaign.metadata) === sellerId
-}
-
-/**
  * Satıcı kodunu platform namespace'iyle birleştirir.
  * DB'ye her zaman "KAYI-{sellerId}-{CODE}" formatında yazılır.
  * Görüntüleme için display_code ayrıca döndürülür.

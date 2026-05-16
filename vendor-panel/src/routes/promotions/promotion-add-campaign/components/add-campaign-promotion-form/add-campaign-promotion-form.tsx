@@ -9,7 +9,6 @@ import { Form } from "../../../../../components/common/form"
 import { RouteDrawer, useRouteModal } from "../../../../../components/modals"
 import { KeyboundForm } from "../../../../../components/utilities/keybound-form"
 import { useUpdatePromotion } from "../../../../../hooks/api/promotions"
-import { CreateCampaignFormFields } from "../../../../campaigns/common/components/create-campaign-form-fields"
 import { CampaignDetails } from "./campaign-details"
 
 type EditPromotionFormProps = {
@@ -25,11 +24,9 @@ const EditPromotionSchema = zod.object({
 export const AddCampaignPromotionFields = ({
   form,
   campaigns,
-  withNewCampaign = true,
 }: {
   form: any
   campaigns: AdminCampaign[]
-  withNewCampaign?: boolean
 }) => {
   const { t } = useTranslation()
   const watchCampaignId = useWatch({
@@ -74,16 +71,6 @@ export const AddCampaignPromotionFields = ({
                       "promotions.form.campaign.existing.description"
                     )}
                   />
-
-                  {withNewCampaign && (
-                    <RadioGroup.ChoiceBox
-                      value={"new"}
-                      label={t("promotions.form.campaign.new.title")}
-                      description={t(
-                        "promotions.form.campaign.new.description"
-                      )}
-                    />
-                  )}
                 </RadioGroup>
               </Form.Control>
 
@@ -152,10 +139,6 @@ export const AddCampaignPromotionFields = ({
         />
       )}
 
-      {watchCampaignChoice === "new" && (
-        <CreateCampaignFormFields form={form} fieldScope="campaign." />
-      )}
-
       <CampaignDetails campaign={selectedCampaign} />
     </div>
   )
@@ -222,7 +205,6 @@ export const AddCampaignPromotionForm = ({
           <AddCampaignPromotionFields
             form={form}
             campaigns={campaigns}
-            withNewCampaign={false}
           />
         </RouteDrawer.Body>
 
