@@ -16,6 +16,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 import { Button } from "@/components/atoms"
 import { useTranslations } from "next-intl"
+import { mapBackendErrorMessage } from "@/lib/backend-error-mapper"
 
 type StoreCardPaymentMethod = any & {
   service_zone?: {
@@ -108,7 +109,7 @@ const CartPaymentSection = ({
         )
       }
     } catch (err: any) {
-      setError(err.message)
+      setError(mapBackendErrorMessage(err?.message ?? '', (key, params) => tBackendErrors(key, params)) || null)
     } finally {
       setIsLoading(false)
     }
@@ -121,6 +122,7 @@ const CartPaymentSection = ({
   const isEditEnabled =
     !isOpen && !!cart?.payment_collection?.payment_sessions?.length
   const t = useTranslations('checkout')
+  const tBackendErrors = useTranslations('backendErrors')
 
   return (
     <div className="border p-4 rounded-sm bg-ui-bg-interactive">

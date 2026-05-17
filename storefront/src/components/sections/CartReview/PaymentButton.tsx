@@ -10,6 +10,7 @@ import { Button } from "@/components/atoms"
 import { orderErrorFormatter } from "@/lib/helpers/order-error-formatter"
 import { toast } from "@/lib/helpers/toast"
 import { useTranslations } from "next-intl"
+import { mapBackendErrorMessage } from "@/lib/backend-error-mapper"
 
 type PaymentButtonProps = {
   cart: HttpTypes.StoreCart
@@ -64,17 +65,25 @@ const StripePaymentButton = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [disabled, setDisabled] = useState(true)
   const t = useTranslations('checkout')
+  const tBackendErrors = useTranslations('backendErrors')
 
   const onPaymentCompleted = async () => {
     try {
       const res = await placeOrder()
       if (!res.ok) {
-        setErrorMessage(res.error?.message)
+        setErrorMessage(
+          res.error?.message
+            ? mapBackendErrorMessage(res.error.message, (key, params) => tBackendErrors(key, params))
+            : null
+        )
       }
     } catch (error: any) {
       if (error?.message !== "NEXT_REDIRECT") {
         setErrorMessage(
-          error?.message?.replace("Error setting up the request: ", "")
+          mapBackendErrorMessage(
+            (error?.message ?? '').replace("Error setting up the request: ", ""),
+            (key, params) => tBackendErrors(key, params)
+          ) || null
         )
       }
     } finally {
@@ -174,17 +183,25 @@ const ManualTestPaymentButton = ({ notReady, "data-testid": dataTestId }: { notR
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const t = useTranslations('checkout')
+  const tBackendErrors = useTranslations('backendErrors')
 
   const onPaymentCompleted = async () => {
     try {
       const res = await placeOrder()
       if (!res.ok) {
-        setErrorMessage(res.error?.message)
+        setErrorMessage(
+          res.error?.message
+            ? mapBackendErrorMessage(res.error.message, (key, params) => tBackendErrors(key, params))
+            : null
+        )
       }
     } catch (error: any) {
       if (error?.message !== "NEXT_REDIRECT") {
         setErrorMessage(
-          error?.message?.replace("Error setting up the request: ", "")
+          mapBackendErrorMessage(
+            (error?.message ?? '').replace("Error setting up the request: ", ""),
+            (key, params) => tBackendErrors(key, params)
+          ) || null
         )
       }
     } finally {

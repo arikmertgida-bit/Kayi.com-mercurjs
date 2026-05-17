@@ -7,6 +7,7 @@ import { Button, Textarea } from '@/components/atoms';
 import { SelectField } from '../SelectField/SelectField';
 import { cn } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
+import { mapUnknownBackendError } from '@/lib/backend-error-mapper';
 
 const VALID_REASONS = [
   'inaccurate_product_details',
@@ -32,6 +33,7 @@ export const ReportListingForm = ({
   productId: string;
 }) => {
   const t = useTranslations('reportForm');
+  const tBackendErrors = useTranslations('backendErrors');
   const [submitted, setSubmitted] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -91,8 +93,14 @@ export const ReportListingForm = ({
         return;
       }
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        setServerError((body as { message?: string }).message ?? t('failedSubmit'));
+        const body: unknown = await res.json().catch(() => ({}));
+        setServerError(
+          mapUnknownBackendError(
+            body,
+            (key, params) => tBackendErrors(key, params),
+            t('failedSubmit')
+          )
+        );
         return;
       }
 

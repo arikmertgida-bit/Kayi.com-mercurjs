@@ -1,5 +1,7 @@
 import type { Conversation, Message } from "./types"
 
+import { mapUnknownBackendError } from "../backend-error-mapper"
+
 const BASE_URL: string =
   import.meta.env.VITE_MESSENGER_URL ?? "http://localhost:4000"
 
@@ -20,8 +22,8 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     credentials: "include",
   })
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
-    throw new Error(body.error ?? `HTTP ${res.status}`)
+    const body: unknown = await res.json().catch(() => ({}))
+    throw new Error(mapUnknownBackendError(body, `HTTP ${res.status}`))
   }
   return res.json() as Promise<T>
 }
@@ -81,8 +83,8 @@ export async function uploadImage(
   })
 
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
-    throw new Error(body.error ?? `HTTP ${res.status}`)
+    const body: unknown = await res.json().catch(() => ({}))
+    throw new Error(mapUnknownBackendError(body, `HTTP ${res.status}`))
   }
 
   return res.json()

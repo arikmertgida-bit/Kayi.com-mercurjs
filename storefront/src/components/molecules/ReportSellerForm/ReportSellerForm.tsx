@@ -8,6 +8,7 @@ import { Button, Textarea } from '@/components/atoms';
 import { SelectField } from '../SelectField/SelectField';
 import { cn } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
+import { mapUnknownBackendError } from '@/lib/backend-error-mapper';
 
 type FormData = {
   reason: string;
@@ -22,6 +23,7 @@ export const ReportSellerForm = ({
   onClose: () => void;
 }) => {
   const t = useTranslations('reportForm');
+  const tBackendErrors = useTranslations('backendErrors');
   const [isSuccess, setIsSuccess] = useState(false)
 
   const reasonOptions = [
@@ -59,8 +61,14 @@ export const ReportSellerForm = ({
         body: JSON.stringify({ sellerId, ...data }),
       })
       if (!res.ok) {
-        const err = await res.json().catch(() => ({})) as { error?: string }
-        toast.error(err.error ?? t('failedSubmit'))
+        const err: unknown = await res.json().catch(() => ({}))
+        toast.error(
+          mapUnknownBackendError(
+            err,
+            (key, params) => tBackendErrors(key, params),
+            t('failedSubmit')
+          )
+        )
         return
       }
       setIsSuccess(true)

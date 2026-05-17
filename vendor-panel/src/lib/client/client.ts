@@ -1,6 +1,8 @@
 import Medusa, { FetchError } from "@medusajs/js-sdk"
 import qs from "qs"
 
+import { mapBackendErrorMessage, mapUnknownBackendError } from "../backend-error-mapper"
+
 export const backendUrl = __BACKEND_URL__ ?? "/"
 export const publishableApiKey = __PUBLISHABLE_API_KEY__ ?? ""
 
@@ -8,6 +10,51 @@ export const sdk = new Medusa({
   baseUrl: backendUrl,
   publishableKey: publishableApiKey,
 })
+
+type FetchClient = {
+  fetch: (...args: unknown[]) => Promise<unknown>
+}
+
+const isFetchClient = (value: unknown): value is FetchClient => {
+  if (typeof value !== "object" || value === null) {
+    return false
+  }
+
+  const candidate = value as { fetch?: unknown }
+  return typeof candidate.fetch === "function"
+}
+
+const normalizeFetchError = (error: unknown): never => {
+  const fallbackMessage = error instanceof Error ? error.message : mapBackendErrorMessage("An unknown error occurred")
+  const mappedMessage = mapUnknownBackendError(error, fallbackMessage)
+
+  if (error instanceof FetchError) {
+    throw new FetchError(mappedMessage, error.statusText, error.status)
+  }
+
+  if (error instanceof Error) {
+    throw new Error(mappedMessage)
+  }
+
+  throw error
+}
+
+if (isFetchClient(sdk.client)) {
+  const originalFetch = sdk.client.fetch.bind(sdk.client) as (
+    input: string | URL | Request,
+    init?: unknown
+  ) => Promise<unknown>
+
+  const wrappedFetch = (async <T>(input: string | URL | Request, init?: unknown): Promise<T> => {
+    try {
+      return (await originalFetch(input, init)) as T
+    } catch (error) {
+      return normalizeFetchError(error)
+    }
+  }) as typeof sdk.client.fetch
+
+  sdk.client.fetch = wrappedFetch
+}
 
 // useful when you want to call the BE from the console and try things out quickly
 declare global {
@@ -34,8 +81,8 @@ export const importProductsQuery = async (file: File) => {
       if (!res.ok) {
         let message = "An unexpected error occurred"
         try {
-          const errorData = await res.json()
-          message = errorData.message || errorData.error || message
+          const errorData: unknown = await res.json()
+          message = mapUnknownBackendError(errorData, message)
         } catch {
           // Response body was not JSON
         }
@@ -48,15 +95,18 @@ export const importProductsQuery = async (file: File) => {
     })
 }
 
-export const uploadFilesQuery = async (files: any[]) => {
+export const uploadFilesQuery = async (files: { file?: File | null }[]) => {
   const formData = new FormData()
   const token = window.localStorage.getItem("medusa_auth_token") || ""
 
-  for (const { file } of files) {
-    formData.append("files", file)
+  for (const item of files) {
+    if (!item.file) {
+      throw new Error("Yuklenecek dosya bulunamadi")
+    }
+    formData.append("files", item.file)
   }
 
-  return await fetch(`${backendUrl}/vendor/uploads`, {
+  const response = await fetch(`${backendUrl}/vendor/uploads`, {
     method: "POST",
     body: formData,
     headers: {
@@ -64,8 +114,19 @@ export const uploadFilesQuery = async (files: any[]) => {
       "x-publishable-api-key": publishableApiKey,
     },
   })
-    .then((res) => res.json())
-    .catch(() => null)
+
+  if (!response.ok) {
+    let message = "Dosya yukleme basarisiz oldu"
+    try {
+      const errorData: unknown = await response.json()
+      message = mapUnknownBackendError(errorData, message)
+    } catch {
+      // Response body was not JSON
+    }
+    throw new Error(message)
+  }
+
+  return response.json() as Promise<{ files: { id: string; url: string }[] }>
 }
 
 export const fetchQuery = async <T = any>(
@@ -104,8 +165,8 @@ export const fetchQuery = async <T = any>(
   if (!response.ok) {
     let message = "An unexpected error occurred"
     try {
-      const errorData = await response.json()
-      message = errorData.message || errorData.error || message
+      const errorData: unknown = await response.json()
+      message = mapUnknownBackendError(errorData, message)
     } catch {
       // Response body was not JSON (e.g. HTML error page from proxy)
     }

@@ -14,10 +14,10 @@ import { KeyboundForm } from "../../../../../components/utilities/keybound-form"
 import { ordersQueryKeys } from "../../../../../hooks/api/orders"
 import { useCreateReservationItem } from "../../../../../hooks/api/reservations"
 import { useStockLocations } from "../../../../../hooks/api/stock-locations"
+import { mapUnknownBackendError } from "../../../../../lib/backend-error-mapper"
 import { queryClient } from "../../../../../lib/query-client"
 import { AllocateItemsSchema } from "./constants"
 import { OrderAllocateItemsItem } from "./order-allocate-items-item"
-import { FetchError } from "@medusajs/js-sdk"
 import { ExtendedAdminOrder, ExtendedAdminOrderLineItemWithInventory, ExtendedAdminProductVariantInventory } from "../../../../../types/order"
 
 type OrderAllocateItemsFormProps = {
@@ -106,7 +106,7 @@ export function OrderAllocateItemsForm({ order }: OrderAllocateItemsFormProps) {
       })
     } catch (e) {
       toast.error(t("general.error"), {
-        description: e instanceof FetchError ? e.message : "An unknown error occurred",
+        description: mapUnknownBackendError(e, t("general.error")),
       })
     }
   })

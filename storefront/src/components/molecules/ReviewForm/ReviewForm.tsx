@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { createReview, uploadReviewImages, Order } from "@/lib/data/reviews"
 import { useTranslations } from "next-intl"
+import { mapBackendErrorMessage } from "@/lib/backend-error-mapper"
 
 type ImageSlotStatus = "empty" | "uploading" | "uploaded" | "error"
 
@@ -57,6 +58,7 @@ const Form: React.FC<Props> = ({ handleClose, seller, referenceType = "seller", 
   const router = useRouter()
   const [error, setError] = useState<string>()
   const t = useTranslations('form')
+  const tBackendErrors = useTranslations('backendErrors')
   const [imageSlots, setImageSlots] = useState<ImageSlot[]>([
     { status: "empty" },
     { status: "empty" },
@@ -156,7 +158,11 @@ const Form: React.FC<Props> = ({ handleClose, seller, referenceType = "seller", 
     const response = await createReview(body)
 
     if (response.error || response.message) {
-      setError(response.message || t('somethingWentWrong'))
+      setError(
+        response.message
+          ? mapBackendErrorMessage(response.message, (key, params) => tBackendErrors(key, params))
+          : t('somethingWentWrong')
+      )
       return
     }
 

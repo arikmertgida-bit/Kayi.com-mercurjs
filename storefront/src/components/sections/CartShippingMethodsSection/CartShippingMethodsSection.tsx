@@ -14,6 +14,7 @@ import { CartShippingMethodRow } from "./CartShippingMethodRow"
 import { Listbox, Transition } from "@headlessui/react"
 import clsx from "clsx"
 import { useTranslations } from "next-intl"
+import { mapBackendErrorMessage, mapUnknownBackendError } from "@/lib/backend-error-mapper"
 
 // Extended cart item product type to include seller
 type ExtendedStoreProduct = HttpTypes.StoreProduct & {
@@ -164,12 +165,15 @@ const CartShippingMethodsSection: React.FC<ShippingProps> = ({
         shippingMethodId: id,
       })
       if (!res.ok) {
-        return setError(res.error?.message)
+        return setError(
+          res.error?.message
+            ? mapBackendErrorMessage(res.error.message, (key, params) => tBackendErrors(key, params))
+            : null
+        )
       }
     } catch (error: any) {
       setError(
-        error?.message?.replace("Error setting up the request: ", "") ||
-          "Bir hata oluştu"
+        mapUnknownBackendError(error, (key, params) => tBackendErrors(key, params), 'Bir hata oluştu')
       )
     } finally {
       setIsLoadingPrices(false)
@@ -205,6 +209,7 @@ const CartShippingMethodsSection: React.FC<ShippingProps> = ({
     router.replace(pathname + "?step=delivery")
   }
   const t = useTranslations('checkout')
+  const tBackendErrors = useTranslations('backendErrors')
 
   const missingSellers = cart.items
     ?.filter((item) =>

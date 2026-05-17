@@ -12,6 +12,7 @@ import { StepProgressBar } from "@/components/cells/StepProgressBar/StepProgress
 import { createReturnRequest } from "@/lib/data/orders"
 import { useRouter } from "next/navigation"
 import { toast } from "@medusajs/ui"
+import { useTranslations } from "next-intl"
 
 export const OrderReturnSection = ({
   order,
@@ -27,6 +28,7 @@ export const OrderReturnSection = ({
   const [error, setError] = useState<boolean>(false)
   const [returnMethod, setReturnMethod] = useState<any>(null)
   const router = useRouter()
+  const t = useTranslations('returns')
 
   const handleTabChange = (tab: number) => {
     const noReason = selectedItems.filter((item) => !item.reason_id)
@@ -73,7 +75,7 @@ export const OrderReturnSection = ({
     const { order_return_request } = await createReturnRequest(data)
 
     if (!order_return_request.id) {
-      toast.error("Failed to create return request. Please try again.")
+      toast.error(t('requestFailed'))
       return
     }
 

@@ -3,6 +3,7 @@ import { Text } from "@medusajs/ui"
 import { useTranslation } from "react-i18next"
 import { Navigate, useLocation, useRouteError } from "react-router-dom"
 
+import { mapBackendErrorMessage } from "../../../lib/backend-error-mapper"
 import { isFetchError } from "../../../lib/is-fetch-error"
 
 export const ErrorBoundary = () => {
@@ -48,7 +49,9 @@ export const ErrorBoundary = () => {
       break
     default:
       title = t("errorBoundary.defaultTitle")
-      message = t("errorBoundary.defaultMessage")
+      message = isFetchError(error)
+        ? mapBackendErrorMessage(error.message)
+        : t("errorBoundary.defaultMessage")
       break
   }
 

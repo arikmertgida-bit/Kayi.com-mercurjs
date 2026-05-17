@@ -5,12 +5,11 @@ import translations from "./translations"
 export const defaultI18nOptions: InitOptions = {
   debug: process.env.NODE_ENV === "development",
   detection: {
-    caches: [],
+    caches: ["cookie", "localStorage"],
     lookupCookie: "lng",
     lookupLocalStorage: "lng",
-    order: [],
+    order: ["cookie", "localStorage"],
   },
-  lng: "tr",
   fallbackLng: "tr",
   interpolation: {
     escapeValue: false,

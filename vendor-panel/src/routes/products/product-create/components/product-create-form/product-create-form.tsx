@@ -192,8 +192,8 @@ export const ProductCreateForm = ({
         const fileReqs = []
         if (thumbnailReq?.length) {
           fileReqs.push(
-            uploadFilesQuery(thumbnailReq).then((r: any) =>
-              r.files.map((f: any) => ({
+            uploadFilesQuery(thumbnailReq).then((r) =>
+              r.files.map((f) => ({
                 ...f,
                 isThumbnail: true,
               }))
@@ -202,8 +202,8 @@ export const ProductCreateForm = ({
         }
         if (otherMediaReq?.length) {
           fileReqs.push(
-            uploadFilesQuery(otherMediaReq).then((r: any) =>
-              r.files.map((f: any) => ({
+            uploadFilesQuery(otherMediaReq).then((r) =>
+              r.files.map((f) => ({
                 ...f,
                 isThumbnail: false,
               }))
@@ -236,7 +236,7 @@ export const ProductCreateForm = ({
         await Promise.all(
           thumbUploads.map(async ({ i, file }) => {
             const r = await uploadFilesQuery([{ file }])
-            const url = (r as { files?: { url?: string }[] } | null)?.files?.[0]?.url
+            const url = r.files[0]?.url
             if (url) variantThumbnailUrls[i] = url
           })
         )

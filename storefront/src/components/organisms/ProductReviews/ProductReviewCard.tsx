@@ -8,6 +8,8 @@ import { likeReview } from "@/lib/data/review-likes"
 import { formatDistanceToNow } from "date-fns"
 import { tr } from "date-fns/locale"
 import { getVendorImage, resolveOwnerMember } from "@/lib/utils/get-vendor-image"
+import { useTranslations } from "next-intl"
+import { mapBackendErrorMessage } from "@/lib/backend-error-mapper"
 
 interface Props {
   review: Review
@@ -28,6 +30,7 @@ const ReportModal = ({
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const tBackendErrors = useTranslations('backendErrors')
 
   const handleSubmit = async () => {
     if (!reason.trim()) return
@@ -36,7 +39,7 @@ const ReportModal = ({
     const result = await reportReviewImage(imageId, reason.trim())
     setLoading(false)
     if (result.error) {
-      setError(result.error)
+      setError(mapBackendErrorMessage(result.error, (key, params) => tBackendErrors(key, params)))
       return
     }
     onReported(imageId)
