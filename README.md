@@ -907,7 +907,7 @@ ADMIN_CORS=http://localhost:5173
 VENDOR_CORS=http://localhost:7001
 AUTH_CORS=http://localhost:3000,http://localhost:5173,http://localhost:7001
 MEILISEARCH_HOST=http://meilisearch:7700
-MEILISEARCH_API_KEY=masterKey_kayicom
+MEILISEARCH_API_KEY=<your-meilisearch-master-key>
 MINIO_ENDPOINT=minio
 MINIO_PORT=9000
 MINIO_USE_SSL=false
@@ -924,7 +924,7 @@ NEXT_PUBLIC_DEFAULT_REGION=tr
 MEDUSA_BACKEND_URL=http://backend:9000
 NEXT_PUBLIC_MESSENGER_URL=http://localhost:4000
 NEXT_PUBLIC_MEILISEARCH_HOST=http://localhost:7700
-NEXT_PUBLIC_SEARCH_API_KEY=masterKey_kayicom
+NEXT_PUBLIC_SEARCH_API_KEY=<your-meilisearch-search-key>
 NEXT_PUBLIC_BASE_URL=http://localhost:3000
 ```
 
@@ -975,13 +975,13 @@ PORT=4000
 | PostgreSQL | localhost:5432 | user: postgres / pass: postgres |
 | Redis | localhost:6380 | |
 
-**Admin credentials:** `arikmertgida@gmail.com` / `19791979aa`
+**Admin credentials:** Medusa admin panelinden yönetilir. Prodüksiyon öncesi değiştirilmesi zorunludur.
 
-**Publishable key:** `pk_fb240b283e19519b1a6f3cb9b57f67442eaa1fcdb3ea77a24cad97e616727a84`
+**Publishable key:** Admin panel → Settings → API Keys bölümünden alınır. `docker-compose.yml` içindeki `MEDUSA_PUBLISHABLE_KEY` değişkenine set edilir.
 
-**Turkey region ID:** `reg_01KQBTE5Y6SFRQF29SDQWD6TQ5`
+**Turkey region ID:** Admin panel → Regions bölümünden alınır.
 
-**MeiliSearch API key:** `masterKey_kayicom`
+**MeiliSearch API key:** `docker-compose.yml` içindeki `MEILI_MASTER_KEY` değişkeniyle yapılandırılır.
 
 ---
 

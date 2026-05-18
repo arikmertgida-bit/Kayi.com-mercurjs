@@ -1,4 +1,5 @@
 import {
+  ArrowPath,
   Buildings,
   ChevronDownMini,
   CogSixTooth,
@@ -32,6 +33,7 @@ import { StripeIcon } from "../../../assets/icons/Stripe"
 import { ImageAvatar } from "../../common/image-avatar"
 import { useMessengerUnreads } from "../../../providers/messenger-provider/MessengerProvider"
 import { useReviews } from "../../../hooks/api/review"
+import { useOrderReturnRequests } from "../../../hooks/api/requests"
 
 export const MainLayout = () => {
   return (
@@ -105,10 +107,18 @@ const useCoreRoutes = (): Omit<INavItem, "pathname">[] => {
 
   const unreadMessages = useMessengerUnreads()
   const { reviews } = useReviews({ limit: 100, order: "-created_at" })
+  const { order_return_request: pendingReturns, isPending: returnsLoading } =
+    useOrderReturnRequests({ status: "pending" })
 
   const [lastViewedAt, setLastViewedAt] = useState<number>(() => {
     if (typeof window === "undefined") return Date.now()
     const stored = localStorage.getItem("reviews_last_viewed_at")
+    return stored ? parseInt(stored, 10) : Date.now()
+  })
+
+  const [returnsLastViewedAt, setReturnsLastViewedAt] = useState<number>(() => {
+    if (typeof window === "undefined") return Date.now()
+    const stored = localStorage.getItem("returns_last_viewed_at")
     return stored ? parseInt(stored, 10) : Date.now()
   })
 
@@ -118,12 +128,25 @@ const useCoreRoutes = (): Omit<INavItem, "pathname">[] => {
       localStorage.setItem("reviews_last_viewed_at", String(now))
       setLastViewedAt(now)
     }
+    if (location.pathname.startsWith("/requests/orders")) {
+      const now = Date.now()
+      localStorage.setItem("returns_last_viewed_at", String(now))
+      setReturnsLastViewedAt(now)
+    }
   }, [location.pathname])
 
   const reviewBadgeCount = (reviews ?? []).filter(
     (r: { created_at?: string }) =>
       r.created_at != null && new Date(r.created_at).getTime() > lastViewedAt
   ).length
+
+  const returnBadgeCount = returnsLoading
+    ? undefined
+    : (pendingReturns ?? []).filter(
+        (r: { created_at?: string }) =>
+          r.created_at != null &&
+          new Date(r.created_at).getTime() > returnsLastViewedAt
+      ).length
 
   return [
     {
@@ -211,6 +234,14 @@ const useCoreRoutes = (): Omit<INavItem, "pathname">[] => {
       badge: reviewBadgeCount > 0 ? reviewBadgeCount : undefined,
     },
     {
+      icon: <ArrowPath />,
+      label: t("returns.domain"),
+      to: "/requests/orders",
+      badge: returnBadgeCount != null && returnBadgeCount > 0
+        ? returnBadgeCount
+        : undefined,
+    },
+    {
       icon: <Users />,
       label: t("followers.domain"),
       to: "/followers",
@@ -238,10 +269,6 @@ const useCoreRoutes = (): Omit<INavItem, "pathname">[] => {
         {
           label: t("reviews.domain"),
           to: "/requests/reviews",
-        },
-        {
-          label: t("requests.tabs.orderReturns"),
-          to: "/requests/orders",
         },
       ],
     },

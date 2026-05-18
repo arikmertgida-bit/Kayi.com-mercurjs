@@ -97,6 +97,41 @@ export const getReturns = async () => {
     .catch((err) => medusaError(err))
 }
 
+export const getReturnDetail = async (id: string) => {
+  const headers = await getAuthHeaders()
+
+  return sdk.client
+    .fetch<{ order_return_request: any }>(`/store/return-request/${id}`, {
+      method: "GET",
+      headers,
+      cache: "no-cache",
+      query: { fields: "*line_items.*,*order.*,*order.items.*,vendor_reviewer_note" },
+    })
+    .then((res) => res.order_return_request)
+    .catch(() => null)
+}
+
+export const getReturnShipment = async (returnRequestId: string) => {
+  const headers = await getAuthHeaders()
+
+  return sdk.client
+    .fetch<{
+      return_shipment: {
+        phase: "awaiting_shipment" | "in_transit" | "received"
+        tracking_number: string | null
+        carrier: string | null
+        shipped_at: string | null
+        received_at: string | null
+      } | null
+    }>(`/store/return-request/${returnRequestId}/shipment`, {
+      method: "GET",
+      headers,
+      cache: "no-cache",
+    })
+    .then((res) => res.return_shipment)
+    .catch(() => null)
+}
+
 export const retriveReturnMethods = async (order_id: string) => {
   const headers = await getAuthHeaders()
 

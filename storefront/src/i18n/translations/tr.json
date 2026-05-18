@@ -157,7 +157,21 @@
     "returnMethods": "İade Yöntemleri",
     "shippingAddress": "İade Gönderim Adresi",
     "noShippingMethods": "Kullanılabilir kargo seçeneği yok",
-    "requestFailed": "İade talebi oluşturulamadı. Lütfen tekrar deneyin."
+    "requestFailed": "İade talebi oluşturulamadı. Lütfen tekrar deneyin.",
+    "viewDetail": "Detayları Gör",
+    "detail": {
+      "title": "İade Detayı",
+      "backToList": "İadelere Dön",
+      "vendorNote": "Satıcı Notu",
+      "timeline": "Süreç Takibi",
+      "stepPending": "Talep Alındı",
+      "stepAwaitingShipment": "Kargo Bekleniyor",
+      "stepInTransit": "Kargo Yolda",
+      "stepReceived": "Teslim Alındı",
+      "tracking": "Takip No",
+      "noShipment": "Kargo süreci henüz başlamadı.",
+      "notFound": "İade talebi bulunamadı."
+    }
   },
   "wishlist": {
     "title": "Favorilerim",

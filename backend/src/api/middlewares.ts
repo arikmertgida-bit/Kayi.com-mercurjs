@@ -3,6 +3,8 @@ import type { AuthenticatedMedusaRequest, MedusaResponse } from "@medusajs/frame
 import type { MedusaNextFunction } from "@medusajs/framework/http"
 import multer from "multer"
 import { reviewValidationMiddleware } from "./reviewValidationMiddleware"
+import { checkResourceOwnershipByResourceId, checkCustomerResourceOwnershipByResourceId } from "@mercurjs/framework"
+import sellerReturnRequest from "@mercurjs/requests/links/seller-return-request"
 
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"]
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
@@ -87,6 +89,55 @@ export default defineMiddlewares({
       method: ["POST"],
       matcher: "/vendor/kayi-campaigns",
       middlewares: [vendorPromoRateLimiter as any],
+    },
+    {
+      method: ["POST"],
+      matcher: "/vendor/return-request/:id/approve",
+      middlewares: [
+        checkResourceOwnershipByResourceId({
+          entryPoint: sellerReturnRequest.entryPoint,
+          filterField: "order_return_request_id",
+        }) as any,
+      ],
+    },
+    {
+      method: ["POST"],
+      matcher: "/vendor/return-request/:id/mark-shipped",
+      middlewares: [
+        checkResourceOwnershipByResourceId({
+          entryPoint: sellerReturnRequest.entryPoint,
+          filterField: "order_return_request_id",
+        }) as any,
+      ],
+    },
+    {
+      method: ["POST"],
+      matcher: "/vendor/return-request/:id/mark-received",
+      middlewares: [
+        checkResourceOwnershipByResourceId({
+          entryPoint: sellerReturnRequest.entryPoint,
+          filterField: "order_return_request_id",
+        }) as any,
+      ],
+    },
+    {
+      method: ["GET"],
+      matcher: "/vendor/return-request/:id/shipment",
+      middlewares: [
+        checkResourceOwnershipByResourceId({
+          entryPoint: sellerReturnRequest.entryPoint,
+          filterField: "order_return_request_id",
+        }) as any,
+      ],
+    },
+    {
+      method: ["GET"],
+      matcher: "/store/return-request/:id/shipment",
+      middlewares: [
+        checkCustomerResourceOwnershipByResourceId({
+          entryPoint: "order_return_request",
+        }) as any,
+      ],
     },
   ],
 })

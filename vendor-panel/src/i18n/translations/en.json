@@ -3361,6 +3361,36 @@
     },
     "countLabel": "review"
   },
+  "returns": {
+    "domain": "Return Management",
+    "shipment": {
+      "title": "Cargo Tracking",
+      "approveSection": "Approve Return Request",
+      "approve": "Approve",
+      "approveSuccess": "Return request approved.",
+      "carrier": "Carrier",
+      "carrierPlaceholder": "e.g. Yurtiçi Kargo",
+      "trackingNumber": "Tracking Number",
+      "trackingPlaceholder": "e.g. 1234567890",
+      "markShipped": "Mark as Shipped Back",
+      "shippedSuccess": "Shipment marked as in transit.",
+      "markReceived": "Mark as Received",
+      "receivedSuccess": "Return marked as received.",
+      "allDone": "Return has been received.",
+      "phases": {
+        "awaiting_shipment": "Awaiting Shipment",
+        "in_transit": "In Transit",
+        "received": "Received"
+      }
+    },
+    "selector": {
+      "title": "Select Items to Approve",
+      "productName": "Product",
+      "requestedQty": "Requested Qty",
+      "accept": "Accept",
+      "approvedQty": "Qty to Approve"
+    }
+  },
   "requests": {
     "domain": "Requests",
     "subtitle": "Check the status of your requests and add new ones",

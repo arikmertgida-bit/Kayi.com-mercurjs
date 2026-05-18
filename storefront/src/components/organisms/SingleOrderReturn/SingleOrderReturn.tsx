@@ -14,6 +14,7 @@ import { getVendorImage, resolveOwnerMember } from "@/lib/utils/get-vendor-image
 import { SellerAvatar } from "@/components/cells/SellerAvatar/SellerAvatar"
 import type { SellerProps } from "@/types/seller"
 import type { HttpTypes } from "@medusajs/types"
+import LocalizedClientLink from "@/components/molecules/LocalizedLink/LocalizedLink"
 
 interface ReturnLineItem {
   line_item_id: string
@@ -39,6 +40,7 @@ interface ReturnOrder {
 }
 
 interface ReturnItem {
+  id: string
   status: string
   line_items: ReturnLineItem[]
   order: ReturnOrder
@@ -222,6 +224,14 @@ export const SingleOrderReturn = ({
           </div>
         </div>
       </Card>
-    </>
+    <div className="mt-2 flex justify-end">
+      <LocalizedClientLink
+        href={`/user/returns/${item.id}`}
+        className="label-sm text-primary underline hover:opacity-70 transition-opacity"
+      >
+        Detayları Gör →
+      </LocalizedClientLink>
+    </div>
+  </>
   )
 }

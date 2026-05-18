@@ -58,6 +58,9 @@ module.exports = defineConfig({
   ],
   modules: [
     {
+      resolve: './src/modules/return-shipment',
+    },
+    {
       resolve: './src/modules/review-images',
     },
     {

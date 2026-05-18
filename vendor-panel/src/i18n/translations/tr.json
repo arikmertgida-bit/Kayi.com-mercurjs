@@ -3351,6 +3351,36 @@
     },
     "countLabel": "yorum"
   },
+  "returns": {
+    "domain": "İade Yönetimi",
+    "shipment": {
+      "title": "Kargo Takibi",
+      "approveSection": "İade Talebini Onayla",
+      "approve": "Onayla",
+      "approveSuccess": "İade talebi onaylandı.",
+      "carrier": "Kargo Firması",
+      "carrierPlaceholder": "ör. Yurtiçi Kargo",
+      "trackingNumber": "Takip Numarası",
+      "trackingPlaceholder": "ör. 1234567890",
+      "markShipped": "Geri Gönderildi Olarak İşaretle",
+      "shippedSuccess": "Kargo yolda olarak işaretlendi.",
+      "markReceived": "Teslim Alındı Olarak İşaretle",
+      "receivedSuccess": "İade teslim alındı olarak işaretlendi.",
+      "allDone": "İade teslim alındı.",
+      "phases": {
+        "awaiting_shipment": "Kargo Bekleniyor",
+        "in_transit": "Yolda",
+        "received": "Teslim Alındı"
+      }
+    },
+    "selector": {
+      "title": "Onaylanacak Ürünleri Seçin",
+      "productName": "Ürün",
+      "requestedQty": "Talep Edilen Adet",
+      "accept": "Kabul Et",
+      "approvedQty": "Onaylanacak Adet"
+    }
+  },
   "requests": {
     "domain": "Talepler",
     "subtitle": "Taleplerinizin durumunu kontrol edin ve yeni talepler ekleyin",
