@@ -181,6 +181,12 @@
         },
         "loading": {
           "type": "string"
+        },
+        "yes": {
+          "type": "string"
+        },
+        "no": {
+          "type": "string"
         }
       },
       "required": [
@@ -241,7 +247,9 @@
         "includesTaxTooltip",
         "excludesTaxTooltip",
         "noMoreData",
-        "loading"
+        "loading",
+        "yes",
+        "no"
       ],
       "additionalProperties": false
     },
@@ -4491,6 +4499,9 @@
             "damagedItemsReturned": {
               "type": "string"
             },
+            "refundAmount": {
+              "type": "string"
+            },
             "activeChangeError": {
               "type": "string"
             },
@@ -4665,6 +4676,7 @@
             "returnRequested",
             "damagedItemReceived",
             "damagedItemsReturned",
+            "refundAmount",
             "activeChangeError",
             "cancel",
             "placeholders",
@@ -6679,6 +6691,12 @@
             "errors": {
               "type": "object",
               "properties": {
+                "rateIsRequired": {
+                  "type": "string"
+                },
+                "nameIsRequired": {
+                  "type": "string"
+                },
                 "missingProvider": {
                   "type": "string"
                 },
@@ -6686,7 +6704,12 @@
                   "type": "string"
                 }
               },
-              "required": ["missingProvider", "missingCountry"],
+              "required": [
+                "rateIsRequired",
+                "nameIsRequired",
+                "missingProvider",
+                "missingCountry"
+              ],
               "additionalProperties": false
             },
             "successToast": {
@@ -7623,6 +7646,12 @@
                 "target_rules": {
                   "type": "object",
                   "properties": {
+                    "title": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
                     "order": {
                       "type": "object",
                       "properties": {
@@ -7663,7 +7692,13 @@
                       "additionalProperties": false
                     }
                   },
-                  "required": ["order", "shipping_methods", "items"],
+                  "required": [
+                    "title",
+                    "description",
+                    "order",
+                    "shipping_methods",
+                    "items"
+                  ],
                   "additionalProperties": false
                 },
                 "buy_rules": {
@@ -8282,6 +8317,152 @@
             "freeShipping"
           ],
           "additionalProperties": false
+        },
+        "pendingApproval": {
+          "type": "object",
+          "properties": {
+            "domain": {
+              "type": "string"
+            },
+            "columns": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "sellerId": {
+                  "type": "string"
+                },
+                "discount": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string"
+                },
+                "products": {
+                  "type": "string"
+                },
+                "actions": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "code",
+                "sellerId",
+                "discount",
+                "status",
+                "products",
+                "actions"
+              ],
+              "additionalProperties": false
+            },
+            "actions": {
+              "type": "object",
+              "properties": {
+                "approve": {
+                  "type": "string"
+                },
+                "reject": {
+                  "type": "string"
+                },
+                "confirmReject": {
+                  "type": "string"
+                },
+                "cancel": {
+                  "type": "string"
+                }
+              },
+              "required": ["approve", "reject", "confirmReject", "cancel"],
+              "additionalProperties": false
+            },
+            "toasts": {
+              "type": "object",
+              "properties": {
+                "approveSuccess": {
+                  "type": "string"
+                },
+                "approveFail": {
+                  "type": "string"
+                },
+                "rejectSuccess": {
+                  "type": "string"
+                },
+                "rejectFail": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "approveSuccess",
+                "approveFail",
+                "rejectSuccess",
+                "rejectFail"
+              ],
+              "additionalProperties": false
+            },
+            "rejectModal": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "reasonLabel": {
+                  "type": "string"
+                },
+                "reasonPlaceholder": {
+                  "type": "string"
+                },
+                "reasonMinLength": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "title",
+                "reasonLabel",
+                "reasonPlaceholder",
+                "reasonMinLength"
+              ],
+              "additionalProperties": false
+            },
+            "noRecords": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "domain",
+            "columns",
+            "actions",
+            "toasts",
+            "rejectModal",
+            "noRecords"
+          ],
+          "additionalProperties": false
+        },
+        "rule": {
+          "type": "object",
+          "properties": {
+            "attributeLabels": {
+              "type": "object",
+              "properties": {
+                "customer_groups_id": {
+                  "type": "string"
+                },
+                "shipping_address_country_code": {
+                  "type": "string"
+                },
+                "items_product_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "customer_groups_id",
+                "shipping_address_country_code",
+                "items_product_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": ["attributeLabels"],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -8301,7 +8482,9 @@
         "createPromotionTitle",
         "type",
         "conditions",
-        "templates"
+        "templates",
+        "pendingApproval",
+        "rule"
       ],
       "additionalProperties": false
     },
@@ -9647,6 +9830,9 @@
             "createTaxRateHint": {
               "type": "string"
             },
+            "editTaxRate": {
+              "type": "string"
+            },
             "deleteRateDescription": {
               "type": "string"
             },
@@ -9706,6 +9892,7 @@
             "sectionTitle",
             "createTaxRate",
             "createTaxRateHint",
+            "editTaxRate",
             "deleteRateDescription",
             "editRateAction",
             "editOverridesAction",
@@ -12156,6 +12343,24 @@
         "domain": {
           "type": "string"
         },
+        "additionalAttributes": {
+          "type": "string"
+        },
+        "possibleValueNotFound": {
+          "type": "string"
+        },
+        "possibleValueNotFoundDesc": {
+          "type": "string"
+        },
+        "editPossibleValue": {
+          "type": "string"
+        },
+        "fetchingPossibleValue": {
+          "type": "string"
+        },
+        "rank": {
+          "type": "string"
+        },
         "create": {
           "type": "object",
           "properties": {
@@ -12199,7 +12404,18 @@
           "additionalProperties": false
         }
       },
-      "required": ["domain", "create", "detail", "possibleValues"],
+      "required": [
+        "domain",
+        "additionalAttributes",
+        "possibleValueNotFound",
+        "possibleValueNotFoundDesc",
+        "editPossibleValue",
+        "fetchingPossibleValue",
+        "rank",
+        "create",
+        "detail",
+        "possibleValues"
+      ],
       "additionalProperties": false
     },
     "requests": {
@@ -12207,6 +12423,22 @@
       "properties": {
         "domain": {
           "type": "string"
+        },
+        "status": {
+          "type": "object",
+          "properties": {
+            "pending": {
+              "type": "string"
+            },
+            "accepted": {
+              "type": "string"
+            },
+            "rejected": {
+              "type": "string"
+            }
+          },
+          "required": ["pending", "accepted", "rejected"],
+          "additionalProperties": false
         },
         "seller": {
           "type": "string"
@@ -12235,6 +12467,77 @@
         "product-update": {
           "type": "string"
         },
+        "loading": {
+          "type": "string"
+        },
+        "columns": {
+          "type": "object",
+          "properties": {
+            "date": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "actions": {
+              "type": "string"
+            },
+            "submittedBy": {
+              "type": "string"
+            },
+            "reason": {
+              "type": "string"
+            },
+            "orderId": {
+              "type": "string"
+            },
+            "customer": {
+              "type": "string"
+            },
+            "seller": {
+              "type": "string"
+            },
+            "escalatedDate": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "product": {
+              "type": "string"
+            },
+            "variants": {
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            },
+            "handle": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "date",
+            "status",
+            "actions",
+            "submittedBy",
+            "reason",
+            "orderId",
+            "customer",
+            "seller",
+            "escalatedDate",
+            "title",
+            "name",
+            "product",
+            "variants",
+            "value",
+            "handle"
+          ],
+          "additionalProperties": false
+        },
         "detail": {
           "type": "object",
           "properties": {
@@ -12255,6 +12558,21 @@
             },
             "attributes": {
               "type": "string"
+            },
+            "requestInformation": {
+              "type": "string"
+            },
+            "submittedOn": {
+              "type": "string"
+            },
+            "reviewedOn": {
+              "type": "string"
+            },
+            "reviewerNote": {
+              "type": "string"
+            },
+            "submittedBy": {
+              "type": "string"
             }
           },
           "required": [
@@ -12263,13 +12581,248 @@
             "variants",
             "options",
             "organization",
-            "attributes"
+            "attributes",
+            "requestInformation",
+            "submittedOn",
+            "reviewedOn",
+            "reviewerNote",
+            "submittedBy"
           ],
+          "additionalProperties": false
+        },
+        "sellerList": {
+          "type": "object",
+          "properties": {
+            "heading": {
+              "type": "string"
+            },
+            "detail": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "sellerName": {
+                  "type": "string"
+                },
+                "member": {
+                  "type": "string"
+                }
+              },
+              "required": ["title", "sellerName", "member"],
+              "additionalProperties": false
+            }
+          },
+          "required": ["heading", "detail"],
+          "additionalProperties": false
+        },
+        "reviewRemoveList": {
+          "type": "object",
+          "properties": {
+            "heading": {
+              "type": "string"
+            },
+            "detail": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "reviewNote": {
+                  "type": "string"
+                },
+                "reviewRating": {
+                  "type": "string"
+                },
+                "sellerResponse": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "title",
+                "reviewNote",
+                "reviewRating",
+                "sellerResponse"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": ["heading", "detail"],
+          "additionalProperties": false
+        },
+        "returnList": {
+          "type": "object",
+          "properties": {
+            "heading": {
+              "type": "string"
+            },
+            "detail": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "returnReason": {
+                  "type": "string"
+                },
+                "vendorResponse": {
+                  "type": "string"
+                },
+                "items": {
+                  "type": "string"
+                },
+                "escalatedOn": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "title",
+                "returnReason",
+                "vendorResponse",
+                "items",
+                "escalatedOn"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": ["heading", "detail"],
+          "additionalProperties": false
+        },
+        "productUpdateList": {
+          "type": "object",
+          "properties": {
+            "heading": {
+              "type": "string"
+            }
+          },
+          "required": ["heading"],
+          "additionalProperties": false
+        },
+        "productTypeList": {
+          "type": "object",
+          "properties": {
+            "heading": {
+              "type": "string"
+            },
+            "detail": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "productTypeValue": {
+                  "type": "string"
+                }
+              },
+              "required": ["title", "productTypeValue"],
+              "additionalProperties": false
+            }
+          },
+          "required": ["heading", "detail"],
+          "additionalProperties": false
+        },
+        "productTagList": {
+          "type": "object",
+          "properties": {
+            "heading": {
+              "type": "string"
+            },
+            "detail": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "productTagValue": {
+                  "type": "string"
+                }
+              },
+              "required": ["title", "productTagValue"],
+              "additionalProperties": false
+            }
+          },
+          "required": ["heading", "detail"],
+          "additionalProperties": false
+        },
+        "productList": {
+          "type": "object",
+          "properties": {
+            "heading": {
+              "type": "string"
+            },
+            "variantCount": {
+              "type": "string"
+            },
+            "detail": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "productTitle": {
+                  "type": "string"
+                },
+                "seeFullProduct": {
+                  "type": "string"
+                }
+              },
+              "required": ["title", "productTitle", "seeFullProduct"],
+              "additionalProperties": false
+            }
+          },
+          "required": ["heading", "variantCount", "detail"],
+          "additionalProperties": false
+        },
+        "productCollectionList": {
+          "type": "object",
+          "properties": {
+            "heading": {
+              "type": "string"
+            },
+            "detail": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "collectionTitle": {
+                  "type": "string"
+                }
+              },
+              "required": ["title", "collectionTitle"],
+              "additionalProperties": false
+            }
+          },
+          "required": ["heading", "detail"],
+          "additionalProperties": false
+        },
+        "productCategoryList": {
+          "type": "object",
+          "properties": {
+            "heading": {
+              "type": "string"
+            },
+            "detail": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "categoryName": {
+                  "type": "string"
+                }
+              },
+              "required": ["title", "categoryName"],
+              "additionalProperties": false
+            }
+          },
+          "required": ["heading", "detail"],
           "additionalProperties": false
         }
       },
       "required": [
         "domain",
+        "status",
         "seller",
         "product",
         "review-remove",
@@ -12279,7 +12832,18 @@
         "product-tag",
         "product-type",
         "product-update",
-        "detail"
+        "loading",
+        "columns",
+        "detail",
+        "sellerList",
+        "reviewRemoveList",
+        "returnList",
+        "productUpdateList",
+        "productTypeList",
+        "productTagList",
+        "productList",
+        "productCollectionList",
+        "productCategoryList"
       ],
       "additionalProperties": false
     },
@@ -12287,6 +12851,9 @@
       "type": "object",
       "properties": {
         "domain": {
+          "type": "string"
+        },
+        "notFound": {
           "type": "string"
         },
         "fields": {
@@ -12321,6 +12888,12 @@
             },
             "tax_id": {
               "type": "string"
+            },
+            "handle": {
+              "type": "string"
+            },
+            "account_status": {
+              "type": "string"
             }
           },
           "required": [
@@ -12333,7 +12906,9 @@
             "postal_code",
             "city",
             "country_code",
-            "tax_id"
+            "tax_id",
+            "handle",
+            "account_status"
           ],
           "additionalProperties": false
         },
@@ -12451,10 +13026,14 @@
         },
         "suspendConfirm": {
           "type": "string"
+        },
+        "store": {
+          "type": "string"
         }
       },
       "required": [
         "domain",
+        "notFound",
         "fields",
         "edit",
         "stockLocations",
@@ -12463,7 +13042,8 @@
         "activate",
         "suspend",
         "activateConfirm",
-        "suspendConfirm"
+        "suspendConfirm",
+        "store"
       ],
       "additionalProperties": false
     },
@@ -12487,6 +13067,12 @@
         },
         "imageUploadFailed": {
           "type": "string"
+        },
+        "deleteConfirmTitle": {
+          "type": "string"
+        },
+        "deleteConfirmDesc": {
+          "type": "string"
         }
       },
       "required": [
@@ -12495,7 +13081,9 @@
         "deleteForEveryone",
         "close",
         "connectionLost",
-        "imageUploadFailed"
+        "imageUploadFailed",
+        "deleteConfirmTitle",
+        "deleteConfirmDesc"
       ],
       "additionalProperties": false
     },
@@ -12560,9 +13148,72 @@
       "properties": {
         "domain": {
           "type": "string"
+        },
+        "header": {
+          "type": "string"
+        },
+        "subtitle": {
+          "type": "string"
+        },
+        "createRulesTitle": {
+          "type": "string"
+        },
+        "ruleType": {
+          "type": "string"
+        },
+        "ruleTypeColumn": {
+          "type": "string"
+        },
+        "enabledColumn": {
+          "type": "string"
+        },
+        "isRuleEnabled": {
+          "type": "string"
+        },
+        "updated": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "tooltip": {
+          "type": "object",
+          "properties": {
+            "global_product_catalog": {
+              "type": "string"
+            },
+            "product_request_enabled": {
+              "type": "string"
+            },
+            "require_product_approval": {
+              "type": "string"
+            },
+            "product_import_enabled": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "global_product_catalog",
+            "product_request_enabled",
+            "require_product_approval",
+            "product_import_enabled"
+          ],
+          "additionalProperties": false
         }
       },
-      "required": ["domain"],
+      "required": [
+        "domain",
+        "header",
+        "subtitle",
+        "createRulesTitle",
+        "ruleType",
+        "ruleTypeColumn",
+        "enabledColumn",
+        "isRuleEnabled",
+        "updated",
+        "error",
+        "tooltip"
+      ],
       "additionalProperties": false
     },
     "meilisearch": {
@@ -12746,9 +13397,79 @@
       "properties": {
         "domain": {
           "type": "string"
+        },
+        "columns": {
+          "type": "object",
+          "properties": {
+            "order": {
+              "type": "string"
+            }
+          },
+          "required": ["order"],
+          "additionalProperties": false
+        },
+        "detail": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "sellerName": {
+              "type": "string"
+            },
+            "viewSeller": {
+              "type": "string"
+            },
+            "orderNumber": {
+              "type": "string"
+            },
+            "viewOrder": {
+              "type": "string"
+            },
+            "calculatedValue": {
+              "type": "string"
+            },
+            "rateDetails": {
+              "type": "string"
+            },
+            "ruleNameValue": {
+              "type": "string"
+            },
+            "referenceValue": {
+              "type": "string"
+            },
+            "typeValue": {
+              "type": "string"
+            },
+            "rateValuePct": {
+              "type": "string"
+            },
+            "includeTaxValue": {
+              "type": "string"
+            },
+            "ruleDeletedAt": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "title",
+            "sellerName",
+            "viewSeller",
+            "orderNumber",
+            "viewOrder",
+            "calculatedValue",
+            "rateDetails",
+            "ruleNameValue",
+            "referenceValue",
+            "typeValue",
+            "rateValuePct",
+            "includeTaxValue",
+            "ruleDeletedAt"
+          ],
+          "additionalProperties": false
         }
       },
-      "required": ["domain"],
+      "required": ["domain", "columns", "detail"],
       "additionalProperties": false
     },
     "reportedImages": {
@@ -13052,6 +13773,19 @@
       ],
       "additionalProperties": false
     },
+    "dashboard": {
+      "type": "object",
+      "properties": {
+        "analyticsTitle": {
+          "type": "string"
+        },
+        "analyticsSubtitle": {
+          "type": "string"
+        }
+      },
+      "required": ["analyticsTitle", "analyticsSubtitle"],
+      "additionalProperties": false
+    },
     "team": {
       "type": "object",
       "properties": {
@@ -13063,6 +13797,278 @@
         }
       },
       "required": ["domain", "subtitle"],
+      "additionalProperties": false
+    },
+    "backendErrors": {
+      "type": "object",
+      "properties": {
+        "unauthorized": {
+          "type": "string"
+        },
+        "forbidden": {
+          "type": "string"
+        },
+        "authenticationRequired": {
+          "type": "string"
+        },
+        "accessDenied": {
+          "type": "string"
+        },
+        "internalServerError": {
+          "type": "string"
+        },
+        "sellerNotFound": {
+          "type": "string"
+        },
+        "customerNotFound": {
+          "type": "string"
+        },
+        "reviewNotFound": {
+          "type": "string"
+        },
+        "replyNotFound": {
+          "type": "string"
+        },
+        "reportNotFound": {
+          "type": "string"
+        },
+        "imageNotFound": {
+          "type": "string"
+        },
+        "orderNotFound": {
+          "type": "string"
+        },
+        "jobNotFound": {
+          "type": "string"
+        },
+        "adminAccessRequired": {
+          "type": "string"
+        },
+        "reviewIdRequired": {
+          "type": "string"
+        },
+        "productIdRequired": {
+          "type": "string"
+        },
+        "noFileUploaded": {
+          "type": "string"
+        },
+        "noFilesUploaded": {
+          "type": "string"
+        },
+        "actionMustBeHideOrPublish": {
+          "type": "string"
+        },
+        "stockLocationAlreadyLinked": {
+          "type": "string"
+        },
+        "promotionShippingNotSupported": {
+          "type": "string"
+        },
+        "invalidIndexType": {
+          "type": "string"
+        },
+        "geliverCreateShipmentFailed": {
+          "type": "string"
+        },
+        "geliverCancelShipmentFailed": {
+          "type": "string"
+        },
+        "geliverCreateReturnShipmentFailed": {
+          "type": "string"
+        },
+        "imageFetchFailed": {
+          "type": "string"
+        },
+        "campaignNotOwned": {
+          "type": "string"
+        },
+        "promotionNotOwned": {
+          "type": "string"
+        },
+        "startDatePast": {
+          "type": "string"
+        },
+        "promotionIdsEmpty": {
+          "type": "string"
+        },
+        "promoCodesInvalid": {
+          "type": "string"
+        },
+        "duplicateSellerReport": {
+          "type": "string"
+        },
+        "duplicateProductReport": {
+          "type": "string"
+        },
+        "duplicateOrderReview": {
+          "type": "string"
+        },
+        "duplicateProductReview": {
+          "type": "string"
+        },
+        "orderSelectRequired": {
+          "type": "string"
+        },
+        "onlyOwnOrderReview": {
+          "type": "string"
+        },
+        "orderNotDelivered": {
+          "type": "string"
+        },
+        "concurrentCampaignLock": {
+          "type": "string"
+        },
+        "messageCannotBeEmpty": {
+          "type": "string"
+        },
+        "messageTooLong": {
+          "type": "string"
+        },
+        "invalidMessageContent": {
+          "type": "string"
+        },
+        "onlySenderDeleteAll": {
+          "type": "string"
+        },
+        "notParticipant": {
+          "type": "string"
+        },
+        "unknownErrorOccurred": {
+          "type": "string"
+        },
+        "invalidEmailOrPassword": {
+          "type": "string"
+        },
+        "invalidPromotionTypeForBudget": {
+          "type": "string"
+        },
+        "requiredField": {
+          "type": "string"
+        },
+        "tooManyUploads": {
+          "type": "string"
+        },
+        "applicationMethodPercentageRange": {
+          "type": "string"
+        },
+        "sellerShippingMethodNotFound": {
+          "type": "string"
+        },
+        "duplicateReview": {
+          "type": "string"
+        },
+        "duplicateCommissionRule": {
+          "type": "string"
+        },
+        "duplicatePaymentAccount": {
+          "type": "string"
+        },
+        "duplicateReturnRequest": {
+          "type": "string"
+        },
+        "payoutNotFound": {
+          "type": "string"
+        },
+        "duplicateHandle": {
+          "type": "string"
+        },
+        "duplicateEmail": {
+          "type": "string"
+        },
+        "duplicateSku": {
+          "type": "string"
+        },
+        "duplicateCode": {
+          "type": "string"
+        },
+        "duplicateValue": {
+          "type": "string"
+        },
+        "entityNotFoundById": {
+          "type": "string"
+        },
+        "nullValueInField": {
+          "type": "string"
+        },
+        "payoutAlreadyExistsForOrder": {
+          "type": "string"
+        },
+        "attributeValueAlreadyExists": {
+          "type": "string"
+        },
+        "entityWithFieldNotFound": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "unauthorized",
+        "forbidden",
+        "authenticationRequired",
+        "accessDenied",
+        "internalServerError",
+        "sellerNotFound",
+        "customerNotFound",
+        "reviewNotFound",
+        "replyNotFound",
+        "reportNotFound",
+        "imageNotFound",
+        "orderNotFound",
+        "jobNotFound",
+        "adminAccessRequired",
+        "reviewIdRequired",
+        "productIdRequired",
+        "noFileUploaded",
+        "noFilesUploaded",
+        "actionMustBeHideOrPublish",
+        "stockLocationAlreadyLinked",
+        "promotionShippingNotSupported",
+        "invalidIndexType",
+        "geliverCreateShipmentFailed",
+        "geliverCancelShipmentFailed",
+        "geliverCreateReturnShipmentFailed",
+        "imageFetchFailed",
+        "campaignNotOwned",
+        "promotionNotOwned",
+        "startDatePast",
+        "promotionIdsEmpty",
+        "promoCodesInvalid",
+        "duplicateSellerReport",
+        "duplicateProductReport",
+        "duplicateOrderReview",
+        "duplicateProductReview",
+        "orderSelectRequired",
+        "onlyOwnOrderReview",
+        "orderNotDelivered",
+        "concurrentCampaignLock",
+        "messageCannotBeEmpty",
+        "messageTooLong",
+        "invalidMessageContent",
+        "onlySenderDeleteAll",
+        "notParticipant",
+        "unknownErrorOccurred",
+        "invalidEmailOrPassword",
+        "invalidPromotionTypeForBudget",
+        "requiredField",
+        "tooManyUploads",
+        "applicationMethodPercentageRange",
+        "sellerShippingMethodNotFound",
+        "duplicateReview",
+        "duplicateCommissionRule",
+        "duplicatePaymentAccount",
+        "duplicateReturnRequest",
+        "payoutNotFound",
+        "duplicateHandle",
+        "duplicateEmail",
+        "duplicateSku",
+        "duplicateCode",
+        "duplicateValue",
+        "entityNotFoundById",
+        "nullValueInField",
+        "payoutAlreadyExistsForOrder",
+        "attributeValueAlreadyExists",
+        "entityWithFieldNotFound"
+      ],
       "additionalProperties": false
     }
   },
@@ -13133,7 +14139,9 @@
     "commissionLines",
     "reportedImages",
     "productReports",
-    "team"
+    "dashboard",
+    "team",
+    "backendErrors"
   ],
   "additionalProperties": false
 }

@@ -52,7 +52,7 @@ export const ReviewForm: React.FC<Props> = ({ ...props }) => {
   )
 }
 
-const MAX_IMAGES = 4
+const MAX_IMAGES = 6
 
 const Form: React.FC<Props> = ({ handleClose, seller, referenceType = "seller", referenceId }) => {
   const router = useRouter()
@@ -64,8 +64,12 @@ const Form: React.FC<Props> = ({ handleClose, seller, referenceType = "seller", 
     { status: "empty" },
     { status: "empty" },
     { status: "empty" },
+    { status: "empty" },
+    { status: "empty" },
   ])
   const fileInputRefs = [
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
     useRef<HTMLInputElement>(null),
     useRef<HTMLInputElement>(null),
     useRef<HTMLInputElement>(null),
@@ -230,7 +234,7 @@ const Form: React.FC<Props> = ({ handleClose, seller, referenceType = "seller", 
           {/* Photo upload section */}
           <div>
             <p className="label-sm mb-2 text-[#8a1d54]">Fotoğraflar (max {MAX_IMAGES})</p>
-            <div className="flex flex-wrap gap-3">
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-6 sm:gap-2">
               {imageSlots.map((slot, index) => (
                 <div key={index} className="relative">
                   <input
@@ -251,7 +255,7 @@ const Form: React.FC<Props> = ({ handleClose, seller, referenceType = "seller", 
                       }
                     }}
                     className={cn(
-                      "relative flex size-24 items-center justify-center overflow-hidden rounded-2xl border",
+                      "relative flex w-full aspect-square items-center justify-center overflow-hidden rounded-2xl border",
                       slot.status === "empty" &&
                         "cursor-pointer border-dashed border-[#efbdd1] bg-[linear-gradient(180deg,_#fff7fb,_#fff2e8)] hover:border-[#dd2a7b] transition-colors",
                       slot.status === "uploading" && "border-[#efbdd1] bg-[linear-gradient(180deg,_#fff7fb,_#fff2e8)]",

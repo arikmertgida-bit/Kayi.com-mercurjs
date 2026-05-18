@@ -100,7 +100,7 @@ export function ReviewRemoveRequestDetail({ request, open, close }: Props) {
                   handlePrompt(request.id!, true);
                 }}
               >
-                Accept
+                {t("requests.reviewRemove.accept")}
               </Button>
               <Button
                 onClick={() => {
@@ -108,10 +108,10 @@ export function ReviewRemoveRequestDetail({ request, open, close }: Props) {
                 }}
                 variant="danger"
               >
-                Reject
+                {t("requests.reviewRemove.reject")}
               </Button>
               <Button variant="secondary" onClick={close}>
-                Cancel
+                {t("requests.reviewRemove.cancel")}
               </Button>
             </>
           )}

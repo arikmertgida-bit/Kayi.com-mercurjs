@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next"
 import { RouteDrawer, useRouteModal } from "../../../../components/modals"
 import { Button, Heading, Textarea, toast } from "@medusajs/ui"
 import { useParams } from "react-router-dom"
-import { useReview, useUpdateReview, useReviewReplies, useCreateReviewReply, useUpdateVendorReviewReply, useDeleteVendorReviewReply } from "../../../../hooks/api/review"
+import { useReview, useReviewReplies, useCreateReviewReply, useUpdateVendorReviewReply, useDeleteVendorReviewReply } from "../../../../hooks/api/review"
 
 function formatDate(iso: string, locale: string) {
   try {
@@ -34,23 +34,6 @@ export const ReviewReplyForm = () => {
   const [replyError, setReplyError] = useState<string | null>(null)
   const replyTextareaRef = useRef<HTMLTextAreaElement>(null)
   const { mutateAsync: createReply, isPending: isReplying } = useCreateReviewReply(id!)
-
-  const { mutateAsync: updateReview, isPending: isDeleting } = useUpdateReview(id!)
-
-  const handleDeleteNote = async () => {
-    await updateReview(
-      { seller_note: "" },
-      {
-        onSuccess: () => {
-          toast.success(t("reviews.reply.deleteReply"))
-          handleSuccess(`/reviews/${id}`)
-        },
-        onError: (error) => {
-          toast.error(error.message)
-        },
-      }
-    )
-  }
 
   const handleSendReply = async () => {
     const content = replyText.trim()
@@ -258,22 +241,12 @@ export const ReviewReplyForm = () => {
           </div>
         </RouteDrawer.Body>
       <RouteDrawer.Footer>
-        {review?.seller_note && (
-          <Button
-            className="px-6"
-            variant="secondary"
-            onClick={handleDeleteNote}
-            isLoading={isDeleting}
-          >
-            {t("reviews.reply.deleteReply")}
-          </Button>
-        )}
         <Button
           variant="secondary"
           className="px-6"
           onClick={() => handleSuccess(`/reviews/${id}`)}
         >
-            {t("reviews.reply.close")}
+          {t("reviews.reply.close")}
         </Button>
       </RouteDrawer.Footer>
     </RouteDrawer>

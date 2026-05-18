@@ -19,11 +19,13 @@ export const useRequestsReviewsTableColumns = () => {
       columnHelper.accessor("data.reason", {
         header: t("requests.reviewColumns.reason"),
         cell: ({ row }) => {
-          const reason =
-            row.original?.data.reason?.split("comment: ")[0] ||
-            row.original.data.reason
+          const rawReason: string = row.original?.data.reason || ""
+          const reasonKey = rawReason.split(" comment: ")[0].trim()
+          const translatedReason = t(`reviews.report.reasons.${reasonKey}` as any, {
+            defaultValue: reasonKey,
+          })
 
-          return <p className="truncate max-w-[360px]">{reason}</p>
+          return <p className="truncate max-w-[360px]">{translatedReason}</p>
         },
       }),
       columnHelper.accessor("created_at", {

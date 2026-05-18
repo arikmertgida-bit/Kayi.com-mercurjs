@@ -3279,6 +3279,19 @@
         "sellerResponse": "Satıcı yanıtı"
       }
     },
+    "reviewRemove": {
+      "acceptTitle": "Talebi onayla?",
+      "rejectTitle": "Talebi reddet?",
+      "noteDescription": "Kararınız hakkında kısa bir not ekleyebilirsiniz",
+      "notePlaceholder": "Notunuzu buraya yazın...",
+      "toastAccepted": "Talep başarıyla onaylandı",
+      "toastRejected": "Talep başarıyla reddedildi",
+      "toastError": "Hata: {{message}}",
+      "submit": "Gönder",
+      "cancel": "İptal Et",
+      "accept": "Onayla",
+      "reject": "Reddet"
+    },
     "returnList": {
       "heading": "Sipariş iade talepleri",
       "detail": {

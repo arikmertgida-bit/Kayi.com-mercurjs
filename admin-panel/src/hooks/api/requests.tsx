@@ -6,6 +6,7 @@ import {
   type UseQueryOptions,
   useMutation,
   useQuery,
+  useQueryClient,
 } from "@tanstack/react-query";
 
 import type { AdminRequest, AdminReviewRequest } from "@custom-types/requests";
@@ -72,6 +73,24 @@ export const useReviewRequest = (
         method: "POST",
         body: payload,
       }),
+    ...options,
+  });
+};
+
+export const useDeleteRequest = (
+  options?: UseMutationOptions<unknown, Error, { id: string }>,
+) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id }: { id: string }) =>
+      sdk.client.fetch(`/admin/requests/${id}`, {
+        method: "DELETE",
+      }),
+
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: requestsQueryKeys.lists() });
+      options?.onSuccess?.(data, variables, context);
+    },
     ...options,
   });
 };

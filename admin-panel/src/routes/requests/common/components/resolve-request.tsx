@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
 
-import { Button, Input, Prompt, toast } from "@medusajs/ui";
+import { useState } from "react";
+import { Button, Prompt, Textarea, toast } from "@medusajs/ui";
+import { useTranslation } from "react-i18next";
 
-import { useReviewRequest } from "@hooks/api/requests";
+import { useReviewRequest, useDeleteRequest } from "@hooks/api/requests";
 
 type Props = {
   close: () => void;
@@ -19,30 +20,33 @@ export function ResolveRequestPrompt({
   close,
   onSuccess,
 }: Props) {
-  const [note, setNote] = useState("");
   const { mutateAsync: reviewRequest } = useReviewRequest({});
-
-  useEffect(() => {
-    setNote("");
-  }, [open, id, accept]);
+  const { mutateAsync: deleteRequest } = useDeleteRequest();
+  const { t } = useTranslation();
+  const [note, setNote] = useState("");
 
   const handleReview = async () => {
     try {
       const status = accept ? "accepted" : "rejected";
-      await reviewRequest({
-        id,
-        payload: {
-          reviewer_note: note,
-          status,
-        },
-      });
-      toast.success(`Successfuly ${status}!`);
+      await reviewRequest({ id, payload: { status, reviewer_note: note } });
+      await deleteRequest({ id });
+      toast.success(
+        accept
+          ? t("requests.reviewRemove.toastAccepted")
+          : t("requests.reviewRemove.toastRejected")
+      );
       onSuccess?.();
     } catch (e: unknown) {
-      toast.error(`Error: ${(e as Error).message}`);
+      toast.error(t("requests.reviewRemove.toastError", { message: (e as Error).message }));
     } finally {
+      setNote("");
       close();
     }
+  };
+
+  const handleClose = () => {
+    setNote("");
+    close();
   };
 
   return (
@@ -50,23 +54,27 @@ export function ResolveRequestPrompt({
       <Prompt.Content>
         <Prompt.Header>
           <Prompt.Title>
-            {accept ? "Accept request?" : "Reject request?"}
+            {accept
+              ? t("requests.reviewRemove.acceptTitle")
+              : t("requests.reviewRemove.rejectTitle")}
           </Prompt.Title>
           <Prompt.Description>
-            You can provide short note on your decision
+            {t("requests.reviewRemove.noteDescription")}
           </Prompt.Description>
-          <Input
-            name="note"
-            type="text"
+        </Prompt.Header>
+        <div className="px-6 pb-4">
+          <Textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
+            placeholder={t("requests.reviewRemove.notePlaceholder")}
+            rows={3}
           />
-        </Prompt.Header>
+        </div>
         <Prompt.Footer>
-          <Button variant="secondary" onClick={close}>
-            Cancel
+          <Button variant="secondary" onClick={handleClose}>
+            {t("requests.reviewRemove.cancel")}
           </Button>
-          <Button onClick={handleReview}>Submit</Button>
+          <Button onClick={handleReview}>{t("requests.reviewRemove.submit")}</Button>
         </Prompt.Footer>
       </Prompt.Content>
     </Prompt>

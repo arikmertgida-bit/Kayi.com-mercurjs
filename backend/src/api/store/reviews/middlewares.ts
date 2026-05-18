@@ -1,3 +1,12 @@
+/**
+ * NOTE: The `storeReviewMiddlewares` export in this file is NOT registered
+ * in our custom backend/src/api/middlewares.ts. The @mercurjs/reviews plugin
+ * automatically registers its own storeReviewMiddlewares (including
+ * validateAndTransformBody for POST /store/reviews) via its own middlewares.ts.
+ *
+ * The `ensureCustomerOwnsReview` middleware here remains available for
+ * future use on /store/reviews/:id routes if needed.
+ */
 import {
   validateAndTransformBody,
   validateAndTransformQuery,

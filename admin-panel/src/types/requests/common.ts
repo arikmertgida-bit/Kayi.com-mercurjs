@@ -69,7 +69,7 @@ export interface AdminOrderReturnRequest {
 }
 
 export interface AdminReviewRequest {
-  reviewer_note?: string;
+  reviewer_note: string;
   status?: "accepted" | "rejected";
 }
 

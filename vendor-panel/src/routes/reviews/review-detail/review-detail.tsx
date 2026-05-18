@@ -9,6 +9,8 @@ import { ReviewCustomerSection } from "./components/review-customer-section"
 import { ReviewProductSection } from "./components/review-product-section"
 import { useRequests } from "../../../hooks/api"
 
+const MAX_REPORT_ATTEMPTS = 3
+
 export const ReviewDetail = () => {
   const initialData = useLoaderData() as Awaited<
     ReturnType<typeof reviewLoader>
@@ -21,12 +23,35 @@ export const ReviewDetail = () => {
     { initialData }
   )
 
-  const { requests, isLoading: isRequestsLoading } = useRequests()
+  const { requests, isLoading: isRequestsLoading } = useRequests({
+    type: "review_remove",
+  })
 
-  const isRequested = requests?.some(
-    (request: any) =>
-      request.type === "review_remove" && request.data.review_id === id
+  // Collect all review_remove requests for this specific review
+  const reviewRequests: any[] = (
+    requests?.filter(
+      (request: any) => request.data?.review_id === id
+    ) ?? []
   )
+
+  const attemptCount = reviewRequests.length
+
+  // Find the most recent request (highest created_at)
+  const latestRequest = reviewRequests.reduce(
+    (latest: any, req: any) => {
+      if (!latest) return req
+      return new Date(req.created_at) > new Date(latest.created_at)
+        ? req
+        : latest
+    },
+    null
+  )
+
+  const isPending = latestRequest?.status === "pending"
+  const isRejected = latestRequest?.status === "rejected"
+  const isAccepted = latestRequest?.status === "accepted"
+  // Can report again if: no pending/accepted request AND attempt count below limit
+  const canReport = !isPending && !isAccepted && attemptCount < MAX_REPORT_ATTEMPTS
 
   const { getWidgets } = useDashboardExtension()
   if (isLoading || !review || isRequestsLoading) {
@@ -55,7 +80,14 @@ export const ReviewDetail = () => {
       data={review}
     >
       <TwoColumnPage.Main>
-        <ReviewGeneralSection review={review} isRequested={isRequested} />
+        <ReviewGeneralSection
+          review={review}
+          latestRequest={latestRequest}
+          isPending={isPending}
+          isRejected={isRejected}
+          isAccepted={isAccepted}
+          canReport={canReport}
+        />
       </TwoColumnPage.Main>
       <TwoColumnPage.Sidebar>
         <ReviewCustomerSection customer={review.customer} />

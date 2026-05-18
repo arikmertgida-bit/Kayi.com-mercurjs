@@ -1,5 +1,5 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
-import { ContainerRegistrationKeys, MedusaError, Modules } from "@medusajs/framework/utils"
+import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
 import { DEV_BYPASS_EMAIL, DEV_BYPASS_ORDER_ID } from "./constants"
 import { REVIEW_IMAGE_MODULE } from "../../../modules/review-images"
 import ReviewImageService from "../../../modules/review-images/service"
@@ -146,148 +146,177 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   const customerNote = body.customer_note ?? null
 
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
-  const logger = req.scope.resolve<{ warn: (...a: unknown[]) => void }>('logger')
-  const { data: customers } = await query.graph({
-    entity: "customer",
-    fields: ["id", "email"],
-    filters: { id: customerId },
-  })
+  const logger = req.scope.resolve<{ warn: (...a: unknown[]) => void; error: (...a: unknown[]) => void }>('logger')
 
-  const customer = customers?.[0] as { id: string; email?: string } | undefined
-  const isDevBypass = customer?.email === DEV_BYPASS_EMAIL
-
-  let validatedOrderId = orderId
-
-  if (!validatedOrderId && !isDevBypass) {
-    return res.status(400).json({ message: "Lütfen yorumlamak istediğiniz siparişi seçin." })
-  }
-
-  if (validatedOrderId) {
-    const { data: orders } = await query.graph({
-      entity: "order",
-      fields: ["id", "customer_id", "status"],
-      filters: { id: validatedOrderId },
+  let step = "init"
+  try {
+    step = "customer_query"
+    const { data: customers } = await query.graph({
+      entity: "customer",
+      fields: ["id", "email"],
+      filters: { id: customerId },
     })
 
-    const order = orders?.[0] as { id: string; customer_id: string; status: string } | undefined
+    const customer = customers?.[0] as { id: string; email?: string } | undefined
+    const isDevBypass = customer?.email === DEV_BYPASS_EMAIL
 
-    if (!order) {
-      return res.status(404).json({ message: "Sipariş bulunamadı." })
+    let validatedOrderId = orderId
+
+    if (!validatedOrderId && !isDevBypass) {
+      return res.status(400).json({ message: "Lütfen yorumlamak istediğiniz siparişi seçin." })
     }
 
-    if (order.customer_id !== customerId) {
-      return res.status(403).json({ message: "Yalnızca kendi siparişlerinizi yorumlayabilirsiniz." })
+    if (validatedOrderId) {
+      const { data: orders } = await query.graph({
+        entity: "order",
+        fields: ["id", "customer_id", "status"],
+        filters: { id: validatedOrderId },
+      })
+
+      const order = orders?.[0] as { id: string; customer_id: string; status: string } | undefined
+
+      if (!order) {
+        return res.status(404).json({ message: "Sipariş bulunamadı." })
+      }
+
+      if (order.customer_id !== customerId) {
+        return res.status(403).json({ message: "Yalnızca kendi siparişlerinizi yorumlayabilirsiniz." })
+      }
+
+      if (!isDevBypass && order.status !== "completed") {
+        return res.status(400).json({ message: "Yalnızca teslim alınan siparişler için yorum yapabilirsiniz." })
+      }
+
+      // Safely check for duplicate review on this order
+      let orderReviews: any[] = []
+      try {
+        const { data: relations } = await query.graph({
+          entity: "order_review",
+          fields: ["review.reference", "review.product.id", "review.seller.id"],
+          filters: { order_id: validatedOrderId },
+        })
+        orderReviews = relations.map((relation: any) => relation.review).filter(Boolean)
+      } catch (err: any) {
+        logger.warn("[review] order_review duplicate check failed (ignored):", err?.message)
+      }
+
+      const alreadyExists = orderReviews.some(
+        (review: any) => review.reference === reference && review[reference]?.id === referenceId
+      )
+
+      if (alreadyExists) {
+        return res.status(400).json({ message: "Bu sipariş için daha önce yorum yaptınız." })
+      }
+    } else if (isDevBypass) {
+      // Safely check for duplicate review for this dev customer
+      let existingReviews: any[] = []
+      try {
+        const { data: relations } = await query.graph({
+          entity: "customer_review",
+          fields: ["review.reference", "review.product.id", "review.seller.id"],
+          filters: { customer_id: customerId },
+        })
+        existingReviews = relations.map((relation: any) => relation.review).filter(Boolean)
+      } catch (err: any) {
+        logger.warn("[review] customer_review duplicate check failed (ignored):", err?.message)
+      }
+
+      const alreadyExists = existingReviews.some(
+        (review: any) => review.reference === reference && review[reference]?.id === referenceId
+      )
+
+      if (alreadyExists) {
+        return res.status(400).json({ message: "Bu ürün için daha önce yorum yaptınız." })
+      }
     }
 
-    if (!isDevBypass && order.status !== "completed") {
-      return res.status(400).json({ message: "Yalnızca teslim alınan siparişler için yorum yapabilirsiniz." })
+    let linkedSellerId: string | undefined
+
+    if (reference === "product") {
+      step = "product_query"
+      const { data: products } = await query.graph({
+        entity: "product",
+        fields: ["id", "seller.id"],
+        filters: { id: referenceId },
+      })
+
+      linkedSellerId = products?.[0]?.seller?.id
     }
 
-    const { data: relations } = await query.graph({
-      entity: "order_review",
-      fields: ["review.reference", "review.product.id", "review.seller.id"],
-      filters: { order_id: validatedOrderId },
+    const reviewService = req.scope.resolve(REVIEW_MODULE) as any
+    const link = req.scope.resolve(ContainerRegistrationKeys.LINK)
+
+    // NOTE: customer_id is NOT a column on the Review model — the customer link
+    // is created via link.create below. Only valid Review columns are passed here.
+    step = "createReviews"
+    const review = await reviewService.createReviews({
+      reference,
+      rating,
+      customer_note: customerNote,
+      seller_note: null,
     })
 
-    const orderReviews = relations.map((relation: any) => relation.review)
-    const alreadyExists = orderReviews.some(
-      (review: any) => review.reference === reference && review[reference]?.id === referenceId
-    )
+    const links: Record<string, any>[] = [
+      {
+        [Modules.CUSTOMER]: { customer_id: customerId },
+        [REVIEW_MODULE]: { review_id: review.id },
+      },
+      reference === "product"
+        ? {
+            [Modules.PRODUCT]: { product_id: referenceId },
+            [REVIEW_MODULE]: { review_id: review.id },
+          }
+        : {
+            [SELLER_MODULE]: { seller_id: referenceId },
+            [REVIEW_MODULE]: { review_id: review.id },
+          },
+    ]
 
-    if (alreadyExists) {
-      return res.status(400).json({ message: "Bu sipariş için daha önce yorum yaptınız." })
+    if (linkedSellerId) {
+      links.push({
+        [SELLER_MODULE]: { seller_id: linkedSellerId },
+        [REVIEW_MODULE]: { review_id: review.id },
+      })
     }
-  } else if (isDevBypass) {
-    const { data: relations } = await query.graph({
-      entity: "customer_review",
-      fields: ["review.reference", "review.product.id", "review.seller.id"],
-      filters: { customer_id: customerId },
-    })
 
-    const existingReviews = relations.map((relation: any) => relation.review)
-    const alreadyExists = existingReviews.some(
-      (review: any) => review.reference === reference && review[reference]?.id === referenceId
-    )
-
-    if (alreadyExists) {
-      return res.status(400).json({ message: "Bu ürün için daha önce yorum yaptınız." })
+    if (validatedOrderId) {
+      links.push({
+        [Modules.ORDER]: { order_id: validatedOrderId },
+        [REVIEW_MODULE]: { review_id: review.id },
+      })
     }
+
+    step = "link_create"
+    await link.create(links)
+
+    step = "final_query"
+    // Fetch review data for the response; fall back to the raw review if traversal fails
+    let reviewData: any = review
+    try {
+      const { data } = await query.graph({
+        entity: "review",
+        fields: DEFAULT_FIELDS,
+        filters: { id: review.id },
+      })
+      reviewData = data[0] ?? review
+    } catch (err: any) {
+      logger.warn("[review] final query.graph failed, returning raw review:", err?.message)
+    }
+
+    // Notify seller about the new review via event (fire-and-forget)
+    const sellerToNotify =
+      reference === "seller" ? referenceId : linkedSellerId
+    if (sellerToNotify) {
+      const customerName = "Müşteri"
+      const eventBus = req.scope.resolve(Modules.EVENT_BUS) as any
+      eventBus
+        .emit({ eventName: "review_notification.new_review", body: { data: { sellerToNotify, customerName } } })
+        .catch((err: Error) => logger.warn("[review] notification event emit failed:", err?.message))
+    }
+
+    return res.status(201).json({ review: reviewData })
+  } catch (err: any) {
+    logger.warn(`[review] POST failed at step="${step}": ${err?.message ?? String(err)} | name=${err?.name ?? "?"}`)
+    return res.status(500).json({ message: "Yorum gönderilirken beklenmedik bir hata oluştu." })
   }
-
-  let linkedSellerId: string | undefined
-
-  if (reference === "product") {
-    const { data: products } = await query.graph({
-      entity: "product",
-      fields: ["id", "seller.id"],
-      filters: { id: referenceId },
-    })
-
-    linkedSellerId = products?.[0]?.seller?.id
-  }
-
-  const reviewService = req.scope.resolve(REVIEW_MODULE) as any
-  const link = req.scope.resolve(ContainerRegistrationKeys.LINK)
-
-  const review = await reviewService.createReviews({
-    reference,
-    customer_id: customerId,
-    rating,
-    customer_note: customerNote,
-    seller_note: null,
-  })
-
-  const links: Record<string, any>[] = [
-    {
-      [Modules.CUSTOMER]: { customer_id: customerId },
-      [REVIEW_MODULE]: { review_id: review.id },
-    },
-    reference === "product"
-      ? {
-          [Modules.PRODUCT]: { product_id: referenceId },
-          [REVIEW_MODULE]: { review_id: review.id },
-        }
-      : {
-          [SELLER_MODULE]: { seller_id: referenceId },
-          [REVIEW_MODULE]: { review_id: review.id },
-        },
-  ]
-
-  if (linkedSellerId) {
-    links.push({
-      [SELLER_MODULE]: { seller_id: linkedSellerId },
-      [REVIEW_MODULE]: { review_id: review.id },
-    })
-  }
-
-  if (validatedOrderId) {
-    links.push({
-      [Modules.ORDER]: { order_id: validatedOrderId },
-      [REVIEW_MODULE]: { review_id: review.id },
-    })
-  }
-
-  await link.create(links)
-
-  const { data } = await query.graph({
-    entity: "review",
-    fields: DEFAULT_FIELDS,
-    filters: { id: review.id },
-  })
-
-  // Notify seller about the new review via event (fire-and-forget)
-  const sellerToNotify =
-    reference === "seller" ? referenceId : linkedSellerId
-  if (sellerToNotify) {
-    const customerName =
-      customer
-        ? `${(customer as any).first_name ?? ""} ${(customer as any).last_name ?? ""}`.trim() || "Müşteri"
-        : "Müşteri"
-    const eventBus = req.scope.resolve(Modules.EVENT_BUS) as any
-    eventBus
-      .emit({ eventName: "review_notification.new_review", body: { data: { sellerToNotify, customerName } } })
-      .catch((err: Error) => logger.warn("[review] notification event emit failed:", err?.message))
-  }
-
-  return res.status(201).json({ review: data[0] ?? review })
 }

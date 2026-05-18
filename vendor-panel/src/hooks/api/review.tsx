@@ -120,6 +120,10 @@ export const useCreateReviewReply = (
       queryClient.invalidateQueries({
         queryKey: [...reviewsQueryKeys.detail(reviewId), "replies"],
       })
+      // Backend syncs seller_note on reply creation — refresh list + detail caches
+      // so /reviews status column updates immediately without F5.
+      queryClient.invalidateQueries({ queryKey: reviewsQueryKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: reviewsQueryKeys.details() })
       options?.onSuccess?.(data, variables, context)
     },
     ...options,

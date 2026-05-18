@@ -3384,6 +3384,19 @@
         "sellerResponse": "Seller response"
       }
     },
+    "reviewRemove": {
+      "acceptTitle": "Approve request?",
+      "rejectTitle": "Reject request?",
+      "noteDescription": "You can add a short note about your decision",
+      "notePlaceholder": "Write your note here...",
+      "toastAccepted": "Request approved successfully",
+      "toastRejected": "Request rejected successfully",
+      "toastError": "Error: {{message}}",
+      "submit": "Submit",
+      "cancel": "Cancel",
+      "accept": "Approve",
+      "reject": "Reject"
+    },
     "returnList": {
       "heading": "Order return requests",
       "detail": {
