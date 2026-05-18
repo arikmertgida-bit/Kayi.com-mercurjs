@@ -911,8 +911,8 @@ MEILISEARCH_API_KEY=<your-meilisearch-master-key>
 MINIO_ENDPOINT=minio
 MINIO_PORT=9000
 MINIO_USE_SSL=false
-MINIO_ACCESS_KEY=minioadmin
-MINIO_SECRET_KEY=minioadmin123
+MINIO_ACCESS_KEY=<your-minio-access-key>
+MINIO_SECRET_KEY=<your-minio-secret-key>
 MINIO_BUCKET=medusa-media
 OPENAI_API_KEY=<optional — review moderation>
 ```
