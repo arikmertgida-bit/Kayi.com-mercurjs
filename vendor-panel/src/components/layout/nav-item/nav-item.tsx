@@ -27,6 +27,7 @@ export type INavItem = {
   type?: ItemType
   from?: string
   nested?: string
+  badge?: number
 }
 
 const BASE_NAV_LINK_CLASSES =
@@ -90,6 +91,7 @@ export const NavItem = ({
   items,
   type = "core",
   from,
+  badge,
 }: INavItem) => {
   const { pathname } = useLocation()
   const [open, setOpen] = useState(getIsOpen(to, items, pathname))
@@ -159,6 +161,11 @@ export const NavItem = ({
           <Text size="small" weight="plus" leading="compact">
             {label}
           </Text>
+          {badge != null && badge > 0 && (
+            <span className="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-ui-tag-red-bg px-1 text-[10px] font-semibold leading-none text-ui-tag-red-text">
+              {badge > 99 ? "99+" : badge}
+            </span>
+          )}
         </NavLink>
       </NavItemTooltip>
       {items && items.length > 0 && (
@@ -175,6 +182,11 @@ export const NavItem = ({
             <Text size="small" weight="plus" leading="compact">
               {label}
             </Text>
+            {badge != null && badge > 0 && (
+              <span className="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-ui-tag-red-bg px-1 text-[10px] font-semibold leading-none text-ui-tag-red-text">
+                {badge > 99 ? "99+" : badge}
+              </span>
+            )}
           </RadixCollapsible.Trigger>
           <RadixCollapsible.Content>
             <div className="flex flex-col gap-y-0.5 pb-2 pt-0.5">

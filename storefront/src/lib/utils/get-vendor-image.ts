@@ -1,7 +1,7 @@
 /**
  * Merkezi satıcı görsel yönetimi.
  *
- * Zincir: member.photo → seller.photo → default-seller-avatar.png
+ * Zincir: member.photo → default-seller-avatar.png
  *
  * Kural:
  * - Tüm satıcı avatar hesaplamalarında bu fonksiyonlar kullanılır.
@@ -19,17 +19,24 @@ export const DEFAULT_STORE_BANNER =
 
 export interface VendorImageSource {
   memberPhoto?: string | null
+  /** @deprecated sellerPhoto (seller.photo) artık yalnızca /sellers/[handle] sayfasında banner olarak kullanılır.
+   * Avatar hesaplamalarında bu alan dikkate alınmaz. */
   sellerPhoto?: string | null
 }
 
+// KESİNLİKLE DEĞİŞTİRME: Storefront genelinde avatar/profil görseli mantığı bu kalıba bağlıdır.
+// Satıcı banner görseli (seller.photo) sadece /seller/[handle] sayfasında kullanılır.
 /**
  * Satıcı avatar URL'sini çözümler.
- * Zincir: memberPhoto → sellerPhoto → DEFAULT_SELLER_AVATAR
+ * Zincir: memberPhoto → DEFAULT_SELLER_AVATAR
+ *
+ * seller.photo (banner görseli, 1920×400px) kasıtlı olarak bu zincirden çıkarılmıştır.
+ * Banner yalnızca SellerPageHeader'da fill+cover ile render edilir.
  *
  * @returns Her zaman decode edilmiş, geçerli bir string döner.
  */
 export function getVendorImage(src: VendorImageSource): string {
-  const raw = src.memberPhoto ?? src.sellerPhoto ?? null
+  const raw = src.memberPhoto ?? null
 
   if (!raw) return DEFAULT_SELLER_AVATAR
 

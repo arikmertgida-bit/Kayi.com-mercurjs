@@ -1,6 +1,6 @@
 "use client"
 
-import { Avatar, Badge, Card, Divider } from "@/components/atoms"
+import { Badge, Card, Divider } from "@/components/atoms"
 import { CollapseIcon } from "@/icons"
 import { cn } from "@/lib/utils"
 import { Heading } from "@medusajs/ui"
@@ -11,6 +11,43 @@ import Image from "next/image"
 import { convertToLocale } from "@/lib/helpers/money"
 import { StepProgressBar } from "@/components/cells/StepProgressBar/StepProgressBar"
 import { getVendorImage, resolveOwnerMember } from "@/lib/utils/get-vendor-image"
+import { SellerAvatar } from "@/components/cells/SellerAvatar/SellerAvatar"
+import type { SellerProps } from "@/types/seller"
+import type { HttpTypes } from "@medusajs/types"
+
+interface ReturnLineItem {
+  line_item_id: string
+  quantity: number
+  reason_id?: string
+  created_at: string
+}
+
+interface ReturnOrderItem {
+  id: string
+  thumbnail?: string | null
+  product_title?: string
+  title?: string
+  unit_price: number
+}
+
+interface ReturnOrder {
+  id: string
+  display_id: string | number
+  currency_code: string
+  items: ReturnOrderItem[]
+  seller: SellerProps
+}
+
+interface ReturnItem {
+  status: string
+  line_items: ReturnLineItem[]
+  order: ReturnOrder
+}
+
+interface ReturnReason {
+  id: string
+  label: string
+}
 
 const steps = ["pending", "processing", "sent"]
 
@@ -20,10 +57,10 @@ export const SingleOrderReturn = ({
   defaultOpen,
   returnReason,
 }: {
-  item: any
-  user: any
+  item: ReturnItem
+  user: HttpTypes.StoreCustomer | null
   defaultOpen: boolean
-  returnReason: any[]
+  returnReason: ReturnReason[]
 }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen)
   const [height, setHeight] = useState(0)
@@ -37,15 +74,15 @@ export const SingleOrderReturn = ({
     }, 100)
   }, [])
 
-  const filteredItems = item.order.items
-    .filter((orderItem: any) =>
+  const filteredItems: Array<ReturnOrderItem & { reason_id: string }> = item.order.items
+    .filter((orderItem: ReturnOrderItem) =>
       item.line_items.some(
-        (lineItem: any) => lineItem.line_item_id === orderItem.id
+        (lineItem: ReturnLineItem) => lineItem.line_item_id === orderItem.id
       )
     )
-    .map((orderItem: any) => {
+    .map((orderItem: ReturnOrderItem) => {
       const correspondingLineItem = item.line_items.find(
-        (lineItem: any) => lineItem.line_item_id === orderItem.id
+        (lineItem: ReturnLineItem) => lineItem.line_item_id === orderItem.id
       )
       return {
         ...orderItem,
@@ -57,8 +94,8 @@ export const SingleOrderReturn = ({
 
   const currency_code = item.order.currency_code || "try"
 
-  const total = filteredItems.reduce((acc: number, item: any) => {
-    return acc + item.unit_price
+  const total = filteredItems.reduce((acc: number, ri: ReturnOrderItem) => {
+    return acc + ri.unit_price
   }, 0)
 
   const currentStep = steps.indexOf(item.status)
@@ -109,9 +146,13 @@ export const SingleOrderReturn = ({
           <Divider />
           <div className="p-4 flex justify-between">
             <div className="flex items-center gap-2">
-              <Avatar
-                src={getVendorImage({ memberPhoto: resolveOwnerMember(item.order.seller?.members)?.photo, sellerPhoto: item.order.seller?.photo })}
-              />
+              <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                <SellerAvatar
+                  photo={getVendorImage({ memberPhoto: resolveOwnerMember(item.order.seller?.members)?.photo })}
+                  size={40}
+                  alt={item.order.seller.name}
+                />
+              </div>
               <p className="label-lg text-primary">{item.order.seller.name}</p>
             </div>
             <Chat
@@ -124,21 +165,21 @@ export const SingleOrderReturn = ({
           <Divider />
           <div className="p-4 flex justify-between w-full">
             <div className="flex flex-col gap-4 w-full">
-              {filteredItems.map((item: any) => (
-                <div key={item.id} className="flex items-center gap-2">
+              {filteredItems.map((returnItem: ReturnOrderItem & { reason_id?: string }) => (
+                <div key={returnItem.id} className="flex items-center gap-2">
                   <div className="flex items-center gap-4 w-1/2">
                     <div className="rounded-sm overflow-hidden border">
-                      {item.thumbnail ? (
+                      {returnItem.thumbnail ? (
                         <Image
-                          src={item.thumbnail}
-                          alt={item.product_title}
+                          src={returnItem.thumbnail}
+                          alt={returnItem.product_title ?? ""}
                           width={60}
                           height={60}
                         />
                       ) : (
                         <Image
                           src="/images/placeholder.svg"
-                          alt={item.product_title}
+                          alt={returnItem.product_title ?? ""}
                           width={60}
                           height={60}
                           className="scale-50 opacity-25"
@@ -147,20 +188,20 @@ export const SingleOrderReturn = ({
                     </div>
                     <div>
                       <p className="label-md !font-semibold text-primary">
-                        {item.product_title}
+                        {returnItem.product_title}
                       </p>
-                      <p className="label-md text-secondary">{item.title}</p>
+                      <p className="label-md text-secondary">{returnItem.title}</p>
                     </div>
                   </div>
                   <div className="flex justify-between w-1/2">
                     <p className="label-md !font-semibold text-primary">
                       <Badge className="bg-primary text-primary border rounded-sm">
-                        {item.reason_id || "No reason provided"}
+                        {returnItem.reason_id || "No reason provided"}
                       </Badge>
                     </p>
                     <p className="label-md !font-semibold text-primary">
                       {convertToLocale({
-                        amount: item.unit_price,
+                        amount: returnItem.unit_price,
                         currency_code,
                       })}
                     </p>

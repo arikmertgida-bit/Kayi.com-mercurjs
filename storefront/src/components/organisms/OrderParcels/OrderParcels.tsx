@@ -1,12 +1,19 @@
-import { Avatar } from "@/components/atoms"
 import { Chat } from "../Chat/Chat"
 import { retrieveCustomer } from "@/lib/data/customer"
 import { OrderParcelItems } from "@/components/molecules/OrderParcelItems/OrderParcelItems"
 import { OrderParcelStatus } from "@/components/molecules/OrderParcelStatus/OrderParcelStatus"
 import { OrderParcelActions } from "@/components/molecules/OrderParcelActions/OrderParcelActions"
 import { getVendorImage, resolveOwnerMember } from "@/lib/utils/get-vendor-image"
+import { SellerAvatar } from "@/components/cells/SellerAvatar/SellerAvatar"
+import { HttpTypes } from "@medusajs/types"
+import type { SellerProps } from "@/types/seller"
 
-export const OrderParcels = async ({ orders }: { orders: any[] }) => {
+type OrderWithSeller = HttpTypes.StoreOrder & {
+  seller: SellerProps
+  currency_code: string
+}
+
+export const OrderParcels = async ({ orders }: { orders: OrderWithSeller[] }) => {
   const user = await retrieveCustomer()
 
   return (
@@ -22,7 +29,13 @@ export const OrderParcels = async ({ orders }: { orders: any[] }) => {
             </div>
             <div className="p-4 border-b md:flex items-center justify-between">
               <div className="flex items-center gap-4 mb-4 md:mb-0">
-                <Avatar src={getVendorImage({ memberPhoto: resolveOwnerMember(order.seller.members)?.photo, sellerPhoto: order.seller.photo })} />
+                <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                  <SellerAvatar
+                    photo={getVendorImage({ memberPhoto: resolveOwnerMember(order.seller.members)?.photo })}
+                    size={40}
+                    alt={order.seller.name}
+                  />
+                </div>
                 <p className="text-primary">{order.seller.name}</p>
               </div>
               <Chat
@@ -34,7 +47,7 @@ export const OrderParcels = async ({ orders }: { orders: any[] }) => {
             </div>
             <div className="p-4 border-b">
               <OrderParcelItems
-                items={order.items}
+                items={order.items ?? []}
                 currency_code={order.currency_code || "try"}
               />
             </div>

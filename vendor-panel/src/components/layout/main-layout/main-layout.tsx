@@ -104,22 +104,26 @@ const useCoreRoutes = (): Omit<INavItem, "pathname">[] => {
   const location = useLocation()
 
   const unreadMessages = useMessengerUnreads()
-  const { count: totalReviewCount } = useReviews({ limit: 1 })
+  const { reviews } = useReviews({ limit: 100, order: "-created_at" })
 
-  const [lastSeenCount, setLastSeenCount] = useState<number>(() => {
-    if (typeof window === "undefined") return 0
-    return parseInt(localStorage.getItem("reviews_last_seen_count") ?? "0", 10) || 0
+  const [lastViewedAt, setLastViewedAt] = useState<number>(() => {
+    if (typeof window === "undefined") return Date.now()
+    const stored = localStorage.getItem("reviews_last_viewed_at")
+    return stored ? parseInt(stored, 10) : Date.now()
   })
 
   useEffect(() => {
-    if (location.pathname === "/reviews") {
-      const current = totalReviewCount ?? 0
-      localStorage.setItem("reviews_last_seen_count", String(current))
-      setLastSeenCount(current)
+    if (location.pathname.startsWith("/reviews")) {
+      const now = Date.now()
+      localStorage.setItem("reviews_last_viewed_at", String(now))
+      setLastViewedAt(now)
     }
-  }, [location.pathname, totalReviewCount])
+  }, [location.pathname])
 
-  const reviewBadgeCount = Math.max(0, (totalReviewCount ?? 0) - lastSeenCount)
+  const reviewBadgeCount = (reviews ?? []).filter(
+    (r: { created_at?: string }) =>
+      r.created_at != null && new Date(r.created_at).getTime() > lastViewedAt
+  ).length
 
   return [
     {
@@ -202,8 +206,9 @@ const useCoreRoutes = (): Omit<INavItem, "pathname">[] => {
     },
     {
       icon: <Star />,
-      label: reviewBadgeCount > 0 ? `${t("reviews.domain")} (${reviewBadgeCount})` : t("reviews.domain"),
+      label: t("reviews.domain"),
       to: "/reviews",
+      badge: reviewBadgeCount > 0 ? reviewBadgeCount : undefined,
     },
     {
       icon: <Users />,

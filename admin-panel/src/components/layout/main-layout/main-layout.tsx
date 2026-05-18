@@ -29,10 +29,13 @@ import { INavItem, NavItem } from "../../layout/nav-item";
 import { Shell } from "../../layout/shell";
 
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { useLogout } from "../../../hooks/api";
 import { useReviewImageReports } from "../../../hooks/api/review-image-reports";
 import { useProductReports } from "../../../hooks/api/product-reports";
 import { usePendingPromotions } from "../../../hooks/api/promotions";
+import { useVendorRequests } from "../../../hooks/api/requests";
+import { useReturnRequests } from "../../../hooks/api/return-requests";
 import { queryClient } from "../../../lib/query-client";
 import { useExtension } from "../../../providers/extension-provider";
 import { useSearch } from "../../../providers/search-provider";
@@ -185,6 +188,19 @@ const Header = () => {
   );
 };
 
+// Request type → route path (used for timestamp tracking)
+const REQUEST_TYPE_ROUTES: Record<string, string> = {
+  seller: "/requests/seller",
+  product: "/requests/product",
+  product_tag: "/requests/product-tag",
+  product_type: "/requests/product-type",
+  review_remove: "/requests/review-remove",
+  product_update: "/requests/product-update",
+  product_category: "/requests/product-category",
+  product_collection: "/requests/product-collection",
+};
+const ALL_REQUEST_TYPES = Object.keys(REQUEST_TYPE_ROUTES);
+
 const useCoreRoutes = (): Omit<INavItem, "pathname">[] => {
   const { t } = useTranslation();
   const location = useLocation();
@@ -193,7 +209,76 @@ const useCoreRoutes = (): Omit<INavItem, "pathname">[] => {
   const { count: pendingPromotionCount = 0 } = usePendingPromotions({ limit: 1 });
   const { unreadCount: messengerUnreadCount } = useMessengerAdmin();
 
-  // Badge sıfırlama: sayfaya girilince localStorage'a mevcut sayıyı kaydet
+  // --- Requests badge logic (timestamp-based) ---
+  const { requests: allPendingRequests = [] } = useVendorRequests(
+    { status: "pending", limit: 500 },
+    { refetchInterval: 60_000 }
+  );
+  const { order_return_request: escalatedReturns = [] } = useReturnRequests(
+    { status: "escalated", limit: 200 },
+    { refetchInterval: 60_000 }
+  );
+
+  const [requestViewedAts, setRequestViewedAts] = useState<Record<string, number>>(() => {
+    if (typeof window === "undefined") return {};
+    const init: Record<string, number> = {};
+    ALL_REQUEST_TYPES.forEach((type) => {
+      const stored = localStorage.getItem(`requests_${type}_viewed_at`);
+      init[type] = stored ? parseInt(stored, 10) : Date.now();
+    });
+    return init;
+  });
+
+  const [returnViewedAt, setReturnViewedAt] = useState<number>(() => {
+    if (typeof window === "undefined") return Date.now();
+    const stored = localStorage.getItem("requests_return_viewed_at");
+    return stored ? parseInt(stored, 10) : Date.now();
+  });
+
+  useEffect(() => {
+    const now = Date.now();
+    const matchedType = ALL_REQUEST_TYPES.find((type) => {
+      const routePath = REQUEST_TYPE_ROUTES[type];
+      return (
+        location.pathname === routePath ||
+        location.pathname.startsWith(routePath + "/")
+      );
+    });
+    if (matchedType) {
+      localStorage.setItem(`requests_${matchedType}_viewed_at`, String(now));
+      setRequestViewedAts((prev) => ({ ...prev, [matchedType]: now }));
+      return;
+    }
+    if (
+      location.pathname === "/requests/return" ||
+      location.pathname.startsWith("/requests/return/")
+    ) {
+      localStorage.setItem("requests_return_viewed_at", String(now));
+      setReturnViewedAt(now);
+    }
+  }, [location.pathname]);
+
+  const getRequestBadge = (type: string): number => {
+    const viewedAt = requestViewedAts[type] ?? Date.now();
+    return allPendingRequests.filter(
+      (r) =>
+        r.type === type &&
+        r.created_at != null &&
+        new Date(r.created_at).getTime() > viewedAt
+    ).length;
+  };
+
+  const returnBadgeCount = escalatedReturns.filter(
+    (r) =>
+      r.created_at != null &&
+      new Date(r.created_at).getTime() > returnViewedAt
+  ).length;
+
+  const totalRequestBadge =
+    ALL_REQUEST_TYPES.reduce((sum, type) => sum + getRequestBadge(type), 0) +
+    returnBadgeCount;
+
+  // --- Product reports badge (count-based, existing pattern) ---
   const SEEN_KEY = "product_reports_seen_count";
   const isOnProductReports = location.pathname.startsWith("/product-reports");
   if (isOnProductReports && typeof window !== "undefined") {
@@ -300,42 +385,52 @@ const useCoreRoutes = (): Omit<INavItem, "pathname">[] => {
       icon: <BottomToTop />,
       label: t("requests.domain"),
       to: "requests/seller",
+      badge: totalRequestBadge > 0 ? totalRequestBadge : undefined,
       items: [
         {
           label: t("requests.seller"),
           to: "/requests/seller",
+          badge: getRequestBadge("seller") > 0 ? getRequestBadge("seller") : undefined,
         },
         {
           label: t("requests.product"),
           to: "/requests/product/",
+          badge: getRequestBadge("product") > 0 ? getRequestBadge("product") : undefined,
         },
         {
           label: t("requests.product-tag"),
           to: "/requests/product-tag",
+          badge: getRequestBadge("product_tag") > 0 ? getRequestBadge("product_tag") : undefined,
         },
         {
           label: t("requests.product-type"),
           to: "/requests/product-type",
+          badge: getRequestBadge("product_type") > 0 ? getRequestBadge("product_type") : undefined,
         },
         {
           label: t("requests.review-remove"),
           to: "/requests/review-remove",
+          badge: getRequestBadge("review_remove") > 0 ? getRequestBadge("review_remove") : undefined,
         },
         {
           label: t("requests.product-update"),
           to: "/requests/product-update",
+          badge: getRequestBadge("product_update") > 0 ? getRequestBadge("product_update") : undefined,
         },
         {
           label: t("requests.return"),
           to: "/requests/return",
+          badge: returnBadgeCount > 0 ? returnBadgeCount : undefined,
         },
         {
           label: t("requests.product-category"),
           to: "/requests/product-category",
+          badge: getRequestBadge("product_category") > 0 ? getRequestBadge("product_category") : undefined,
         },
         {
           label: t("requests.product-collection"),
           to: "/requests/product-collection",
+          badge: getRequestBadge("product_collection") > 0 ? getRequestBadge("product_collection") : undefined,
         },
       ],
     },
