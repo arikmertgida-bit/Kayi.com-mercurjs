@@ -76,6 +76,45 @@ export const useUpdateMe = (
   })
 }
 
+const SELLER_REGIONS_QUERY_KEY = "seller-regions" as const
+
+export const useSellerRegionIds = (
+  options?: Omit<
+    UseQueryOptions<{ region_ids: string[] }, FetchError, { region_ids: string[] }, QueryKey>,
+    "queryFn" | "queryKey"
+  >
+) => {
+  const { data, ...rest } = useQuery({
+    queryFn: (): Promise<{ region_ids: string[] }> =>
+      fetchQuery("/vendor/sellers/me/regions", { method: "GET" }),
+    queryKey: [SELLER_REGIONS_QUERY_KEY],
+    ...options,
+  })
+  return { region_ids: data?.region_ids ?? [], ...rest }
+}
+
+export const useUpdateSellerRegions = (
+  options?: UseMutationOptions<
+    { region_ids: string[] },
+    FetchError,
+    { region_ids: string[] },
+    QueryKey
+  >
+) => {
+  return useMutation({
+    mutationFn: (body) =>
+      fetchQuery("/vendor/sellers/me/regions", {
+        method: "POST",
+        body,
+      }),
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: [SELLER_REGIONS_QUERY_KEY] })
+      options?.onSuccess?.(data, variables, context)
+    },
+    ...options,
+  })
+}
+
 export const useOnboarding = () => {
   const { data, ...rest } = useQuery({
     queryFn: () =>

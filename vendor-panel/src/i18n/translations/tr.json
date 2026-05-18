@@ -2460,6 +2460,8 @@
     },
     "toast": {
       "update": "Mağaza başarıyla güncellendi",
+      "updateError": "Mağaza bilgileri kaydedilemedi. Lütfen tekrar deneyin.",
+      "updateErrorMetadata": "Satış bölgesi seçimi şu an backend tarafından desteklenmiyor — yalnızca ad, e-posta ve telefon gibi standart alanlar güncellenebilir.",
       "currenciesUpdated": "Para birimleri başarıyla güncellendi",
       "currenciesRemoved": "Para birimleri mağazadan başarıyla kaldırıldı",
       "updatedTaxInclusivitySuccessfully": "Vergi dahil fiyatlandırma başarıyla güncellendi"

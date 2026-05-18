@@ -1,12 +1,12 @@
 import { useMemo } from "react"
-import { useMe } from "./users"
+import { useSellerRegionIds } from "./users"
 import { useRegions } from "./regions"
 
 /**
  * useSellerRegions
  *
- * Combines the authenticated seller's metadata.selected_region_ids with
- * the full region list fetched from /vendor/regions.
+ * Combines the authenticated seller's region IDs (from /vendor/sellers/me/regions)
+ * with the full region list fetched from /vendor/regions.
  *
  * - If the seller has selected regions → only those regions are returned.
  * - If no regions are selected (new account) → all regions are returned as
@@ -16,16 +16,10 @@ import { useRegions } from "./regions"
  * available in the product pricing UI.
  */
 export const useSellerRegions = () => {
-  const { seller, isPending: isSellerPending } = useMe()
+  const { region_ids: selectedIds, isPending: isRegionIdsPending } = useSellerRegionIds()
   const { regions: allRegions, isPending: isRegionsPending } = useRegions({
     limit: 9999,
   })
-
-  const selectedIds: string[] = useMemo(() => {
-    const meta = seller?.metadata as Record<string, unknown> | undefined
-    const ids = meta?.selected_region_ids
-    return Array.isArray(ids) ? (ids as string[]) : []
-  }, [seller?.metadata])
 
   const sellerRegions = useMemo(() => {
     const all = allRegions ?? []
@@ -53,6 +47,6 @@ export const useSellerRegions = () => {
     sellerCurrencies,
     selectedIds,
     allRegions: allRegions ?? [],
-    isPending: isSellerPending || isRegionsPending,
+    isPending: isRegionIdsPending || isRegionsPending,
   }
 }

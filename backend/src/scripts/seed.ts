@@ -119,9 +119,9 @@ export default async function seedDemoData({ container }: ExecArgs) {
         {
           name: "Main Warehouse",
           address: {
-            city: "New York",
-            country_code: "US",
-            address_1: "",
+            city: "İstanbul",
+            country_code: "tr",
+            address_1: "Levent",
           },
         },
       ],

@@ -149,8 +149,10 @@ module.exports = defineConfig({
             resolve: './src/modules/geliver-fulfillment',
             id: 'geliver',
             options: {
-              apiUrl: process.env.GELIVER_API_URL,
-              apiToken: process.env.GELIVER_API_TOKEN,
+              token: process.env.GELIVER_API_TOKEN,
+              senderAddressId: process.env.GELIVER_SENDER_ADDRESS_ID,
+              isTest: process.env.GELIVER_IS_TEST ?? "false",
+              sourceIdentifier: process.env.GELIVER_SOURCE_IDENTIFIER ?? "https://kayi.com",
             }
           }
         ]

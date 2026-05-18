@@ -1,139 +1,269 @@
+// Geliver Fulfillment Provider — Custom HTTP client
+// API docs: https://docs.geliver.io
+// SDK ref:  https://github.com/GeliverApp/geliver-js (ESM-only; used as reference, not installed)
+
+const BASE_URL = "https://api.geliver.io/api/v1"
+const TIMEOUT_MS = 30_000
+const MAX_RETRIES = 2
+/** Delay ms before retry attempt n (1-based). 1s → 2s */
+const retryDelayMs = (attempt: number) => attempt * 1_000
+
+// ─── Options ──────────────────────────────────────────────────────────────────
+
 export interface GéliverOptions {
-  apiUrl?: string
-  apiToken?: string
+  /** Geliver API token from https://app.geliver.io/apitokens */
+  token?: string
+  /** Pre-created sender address ID from Geliver panel */
+  senderAddressId?: string
+  /** Set to "true" to use test mode (Geliver Test carrier, 0 TL) */
+  isTest?: string
+  /** Your store URL sent as sourceIdentifier, e.g. "https://kayi.com" */
+  sourceIdentifier?: string
 }
 
-interface CreateShipmentParams {
+// ─── Internal types ───────────────────────────────────────────────────────────
+
+interface RecipientAddress {
+  name: string
+  phone: string
+  address1: string
+  countryCode: string
+  cityName: string
+  cityCode?: string
+  districtName?: string
+  zip?: string
+}
+
+interface CreateTransactionParams {
+  senderAddressId: string
+  recipientAddress: RecipientAddress
   orderNumber: string
-  recipientName: string
-  recipientPhone: string
-  recipientAddress: string
-  recipientCity: string
-  recipientDistrict: string
-  recipientCountryCode: string
-  weight?: string
+  totalAmount?: string
+  merchantCode?: string
+  isTest: boolean
+  sourceIdentifier: string
   length?: string
   width?: string
   height?: string
+  weight?: string
 }
 
-interface GéliverShipment {
+export interface GéliverShipmentData {
   id: string
   trackingNumber?: string
   trackingUrl?: string
+  labelURL?: string
+  barcode?: string
 }
 
-const BASE_URL = "https://api.geliver.io/api/v1"
+export interface GéliverTransactionResult {
+  id: string
+  shipment?: GéliverShipmentData
+}
+
+// ─── Client ───────────────────────────────────────────────────────────────────
 
 export class GéliverClient {
-  private readonly isMock: boolean
-  private readonly apiUrl: string
-  private readonly apiToken: string
+  readonly isMock: boolean
+  private readonly token: string
 
   constructor(options: GéliverOptions) {
-    this.apiToken = options.apiToken ?? ""
-    this.apiUrl = options.apiUrl ?? BASE_URL
-    this.isMock = !options.apiToken
+    this.token = options.token ?? ""
+    this.isMock = !options.token
   }
 
-  async createShipment(params: CreateShipmentParams): Promise<GéliverShipment> {
+  // ── HTTP helpers ────────────────────────────────────────────────────────────
+
+  private async fetchWithTimeout(
+    url: string,
+    init: RequestInit
+  ): Promise<Response> {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
+    try {
+      return await fetch(url, { ...init, signal: controller.signal })
+    } finally {
+      clearTimeout(timer)
+    }
+  }
+
+  private get authHeaders(): Record<string, string> {
+    return {
+      Authorization: `Bearer ${this.token}`,
+      "Content-Type": "application/json",
+    }
+  }
+
+  private async request<T>(
+    method: string,
+    path: string,
+    body?: unknown
+  ): Promise<T> {
+    let lastError: Error = new Error("Geliver request never attempted")
+
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      // Back-off before retry (not on first attempt)
+      if (attempt > 0) {
+        await new Promise((resolve) => setTimeout(resolve, retryDelayMs(attempt)))
+      }
+
+      let res: Response
+      try {
+        res = await this.fetchWithTimeout(`${BASE_URL}${path}`, {
+          method,
+          headers: this.authHeaders,
+          ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+        })
+      } catch (fetchErr) {
+        // Network error / timeout — retry
+        lastError = fetchErr instanceof Error ? fetchErr : new Error(String(fetchErr))
+        continue
+      }
+
+      // Retry on 429 (rate limit) and 5xx (server errors)
+      if (res.status === 429 || res.status >= 500) {
+        let detail = `${res.status} ${res.statusText}`
+        try {
+          const errJson = (await res.json()) as { message?: string }
+          if (errJson?.message) detail = `${detail} — ${errJson.message}`
+        } catch { /* ignore */ }
+        lastError = new Error(`[Geliver] ${method} ${path} failed: ${detail}`)
+        continue
+      }
+
+      // All other 4xx errors — do NOT retry, fail immediately
+      if (!res.ok) {
+        let detail = `${res.status} ${res.statusText}`
+        try {
+          const errJson = (await res.json()) as { message?: string; code?: string }
+          if (errJson?.message) detail = `${detail} — ${errJson.message}`
+        } catch { /* ignore */ }
+        throw new Error(`[Geliver] ${method} ${path} failed: ${detail}`)
+      }
+
+      // Parse success response
+      const json = (await res.json()) as { data?: T; result?: boolean; message?: string } | T
+
+      // Check Geliver's envelope: { result: false, message: "..." }
+      if (
+        json &&
+        typeof json === "object" &&
+        "result" in (json as object) &&
+        (json as { result?: boolean }).result === false
+      ) {
+        const msg = (json as { message?: string }).message ?? "Unknown error"
+        throw new Error(`[Geliver] ${method} ${path} returned result=false: ${msg}`)
+      }
+
+      if (json && typeof json === "object" && "data" in (json as object)) {
+        return (json as { data: T }).data
+      }
+      return json as T
+    }
+
+    throw lastError
+  }
+
+  // ── Public API ──────────────────────────────────────────────────────────────
+
+  /**
+   * One-step label purchase: POST /transactions with { shipment: {...} }
+   * Geliver creates the shipment, selects the cheapest offer and purchases
+   * the label in a single call. Returns the Transaction which contains the
+   * updated Shipment (barcode, labelURL, trackingNumber when available).
+   *
+   * SDK equivalent: client.transactions.create(params)
+   */
+  async createTransaction(
+    params: CreateTransactionParams
+  ): Promise<GéliverTransactionResult> {
     if (this.isMock) {
       return {
-        id: "mock-shipment-id",
-        trackingNumber: "MOCK123456",
-        trackingUrl: "https://geliver.io/track/MOCK123456",
+        id: "mock-tx-id",
+        shipment: {
+          id: "mock-shipment-id",
+          trackingNumber: "MOCK123456",
+          trackingUrl: "https://geliver.io/track/MOCK123456",
+          labelURL: "",
+          barcode: "",
+        },
       }
     }
 
     const body = {
       shipment: {
+        senderAddressID: params.senderAddressId,
+        test: params.isTest,
         recipientAddress: {
-          name: params.recipientName,
-          phone: params.recipientPhone,
-          address1: params.recipientAddress,
-          countryCode: params.recipientCountryCode,
-          cityName: params.recipientCity,
-          cityCode: "",
-          districtName: params.recipientDistrict,
+          name: params.recipientAddress.name,
+          phone: params.recipientAddress.phone,
+          address1: params.recipientAddress.address1,
+          countryCode: params.recipientAddress.countryCode.toUpperCase(),
+          cityName: params.recipientAddress.cityName,
+          cityCode: params.recipientAddress.cityCode ?? "",
+          districtName: params.recipientAddress.districtName ?? "",
+          ...(params.recipientAddress.zip
+            ? { zip: params.recipientAddress.zip }
+            : {}),
         },
-        length: params.length ?? "10",
-        width: params.width ?? "10",
-        height: params.height ?? "10",
+        length: params.length ?? "10.0",
+        width: params.width ?? "10.0",
+        height: params.height ?? "10.0",
         distanceUnit: "cm",
-        weight: params.weight ?? "1",
+        weight: params.weight ?? "1.0",
         massUnit: "kg",
         order: {
           orderNumber: params.orderNumber,
-          sourceCode: "KAYI",
+          sourceIdentifier: params.sourceIdentifier,
+          ...(params.totalAmount
+            ? {
+                totalAmount: params.totalAmount,
+                totalAmountCurrency: "TRY",
+              }
+            : {}),
+          ...(params.merchantCode
+            ? { merchantCode: params.merchantCode }
+            : {}),
         },
       },
     }
 
-    const res = await fetch(`${this.apiUrl}/transactions`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${this.apiToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    })
-
-    if (!res.ok) {
-      throw new Error(`Geliver createShipment failed: ${res.status} ${res.statusText}`)
-    }
-
-    const json = (await res.json()) as { data?: { shipment?: GéliverShipment } }
-    const shipment = json?.data?.shipment
-
-    return {
-      id: shipment?.id ?? "",
-      trackingNumber: shipment?.trackingNumber,
-      trackingUrl: shipment?.trackingUrl,
-    }
+    return this.request<GéliverTransactionResult>("POST", "/transactions", body)
   }
 
-  async cancelShipment(shipmentId: string): Promise<{ id: string }> {
-    if (this.isMock) {
-      return { id: shipmentId }
-    }
-
-    const res = await fetch(`${this.apiUrl}/shipments/${encodeURIComponent(shipmentId)}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${this.apiToken}`,
-      },
-    })
-
-    if (!res.ok) {
-      throw new Error(`Geliver cancelShipment failed: ${res.status} ${res.statusText}`)
-    }
-
-    return { id: shipmentId }
+  /**
+   * Cancel a shipment: DELETE /shipments/:id
+   *
+   * SDK equivalent: client.shipments.cancel(shipmentId)
+   */
+  async cancelShipment(shipmentId: string): Promise<void> {
+    if (this.isMock) return
+    await this.request<unknown>(
+      "DELETE",
+      `/shipments/${encodeURIComponent(shipmentId)}`
+    )
   }
 
-  async createReturnShipment(shipmentId: string): Promise<GéliverShipment> {
+  /**
+   * Create return shipment AND purchase label immediately:
+   * POST /shipments/:id  { isReturn: true, willAccept: true, count: 1 }
+   *
+   * SDK equivalent: client.transactions.createReturn(shipmentId, params)
+   */
+  async createReturnTransaction(
+    shipmentId: string
+  ): Promise<GéliverTransactionResult> {
     if (this.isMock) {
-      return { id: "mock-return-shipment-id" }
+      return {
+        id: "mock-return-tx-id",
+        shipment: { id: "mock-return-shipment-id" },
+      }
     }
 
-    const res = await fetch(`${this.apiUrl}/shipments/${encodeURIComponent(shipmentId)}`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${this.apiToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ isReturn: true, count: 1 }),
-    })
-
-    if (!res.ok) {
-      throw new Error(`Geliver createReturnShipment failed: ${res.status} ${res.statusText}`)
-    }
-
-    const json = (await res.json()) as { data?: GéliverShipment }
-    return {
-      id: json?.data?.id ?? "return-shipment-id",
-      trackingNumber: json?.data?.trackingNumber,
-      trackingUrl: json?.data?.trackingUrl,
-    }
+    return this.request<GéliverTransactionResult>(
+      "POST",
+      `/shipments/${encodeURIComponent(shipmentId)}`,
+      { isReturn: true, willAccept: true, count: 1 }
+    )
   }
 }

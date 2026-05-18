@@ -2463,6 +2463,8 @@
     },
     "toast": {
       "update": "Store successfully updated",
+      "updateError": "Store settings could not be saved. Please try again.",
+      "updateErrorMetadata": "Sales region selection is not yet supported by the backend — only standard fields such as name, email, and phone can be updated.",
       "currenciesUpdated": "Currencies updated successfully",
       "currenciesRemoved": "Removed currencies from the store successfully",
       "updatedTaxInclusivitySuccessfully": "Tax inclusive pricing updated successfully"

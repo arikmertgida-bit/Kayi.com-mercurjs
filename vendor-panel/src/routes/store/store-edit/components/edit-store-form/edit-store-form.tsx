@@ -9,7 +9,7 @@ import { Form } from "../../../../../components/common/form"
 import { RouteDrawer, useRouteModal } from "../../../../../components/modals"
 import { KeyboundForm } from "../../../../../components/utilities/keybound-form"
 import { StoreVendor } from "../../../../../types/user"
-import { useUpdateMe } from "../../../../../hooks/api"
+import { useUpdateMe, useSellerRegionIds, useUpdateSellerRegions } from "../../../../../hooks/api"
 import { useSellerRegions } from "../../../../../hooks/api/use-seller-regions"
 import { MediaSchema } from "../../../../products/product-create/constants"
 import {
@@ -51,9 +51,7 @@ export const EditStoreForm = ({ seller }: { seller: StoreVendor }) => {
   const { t } = useTranslation()
   const { handleSuccess } = useRouteModal()
   const { allRegions } = useSellerRegions()
-
-  const existingSelectedIds: string[] =
-    (seller.metadata?.selected_region_ids as string[] | undefined) ?? []
+  const { region_ids: existingSelectedIds } = useSellerRegionIds()
 
   const form = useForm<z.infer<typeof EditStoreSchema>>({
     defaultValues: {
@@ -74,6 +72,7 @@ export const EditStoreForm = ({ seller }: { seller: StoreVendor }) => {
   })
 
   const { mutateAsync, isPending } = useUpdateMe()
+  const { mutateAsync: updateRegions, isPending: isRegionsPending } = useUpdateSellerRegions()
 
   const hasInvalidFiles = useCallback(
     (fileList: FileType[]) => {
@@ -134,29 +133,23 @@ export const EditStoreForm = ({ seller }: { seller: StoreVendor }) => {
       }
     }
 
-    await mutateAsync(
-      {
+    await Promise.all([
+      mutateAsync({
         name: values.name,
         email: values.email,
         phone: values.phone,
         description: values.description,
         photo: uploadedMedia[0]?.url || seller.photo || "",
-        metadata: {
-          ...(seller.metadata ?? {}),
-          selected_region_ids: values.selected_region_ids ?? [],
-        },
-      },
-      {
-        onSuccess: () => {
-          toast.success(t("store.toast.update"))
-
-          handleSuccess()
-        },
-        onError: (error) => {
-          toast.error(error.message)
-        },
-      }
-    )
+      }),
+      updateRegions({
+        region_ids: values.selected_region_ids ?? [],
+      }),
+    ]).then(() => {
+      toast.success(t("store.toast.update"))
+      handleSuccess()
+    }).catch(() => {
+      toast.error(t("store.toast.updateError"))
+    })
   })
 
   return (
@@ -303,7 +296,7 @@ export const EditStoreForm = ({ seller }: { seller: StoreVendor }) => {
                 {t("actions.cancel")}
               </Button>
             </RouteDrawer.Close>
-            <Button size="small" isLoading={isPending} type="submit">
+            <Button size="small" isLoading={isPending || isRegionsPending} type="submit">
               {t("actions.save")}
             </Button>
           </div>

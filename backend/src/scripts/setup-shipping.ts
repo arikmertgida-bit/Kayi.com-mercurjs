@@ -186,11 +186,36 @@ export default async function setupShipping({ container }: ExecArgs) {
           },
         ],
       },
+      {
+        name: "İade Kargo",
+        price_type: "flat",
+        provider_id: "manual_manual",
+        service_zone_id: serviceZoneId,
+        shipping_profile_id: shippingProfileId,
+        type: {
+          label: "İade",
+          description: "Ürün iade kargo seçeneği.",
+          code: "return",
+        },
+        prices: [
+          {
+            currency_code: "try",
+            amount: 0,
+          },
+        ],
+        rules: [
+          {
+            attribute: "is_return",
+            value: "true",
+            operator: "eq",
+          },
+        ],
+      },
     ],
   });
 
   logger.info(
-    `setup-shipping: Created 'Standart Kargo' (ücretsiz) and 'Hızlı Kargo' (59 TRY) shipping options`
+    `setup-shipping: Created 'Standart Kargo', 'Hızlı Kargo', and 'İade Kargo' shipping options`
   );
   logger.info("setup-shipping: Done.");
 }
