@@ -1,6 +1,6 @@
 "use server"
 
-import { fetchQuery, sdk } from "../config"
+import { fetchQuery, sdk, PUBLISHABLE_API_KEY } from "../config"
 import medusaError from "@/lib/helpers/medusa-error"
 import { HttpTypes } from "@medusajs/types"
 import { revalidatePath, revalidateTag } from "next/cache"
@@ -318,8 +318,7 @@ export async function removeShippingMethod(shippingMethodId: string) {
   const headers = {
     ...(await getAuthHeaders()),
     "Content-Type": "application/json",
-    "x-publishable-api-key": process.env
-      .NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY as string,
+    "x-publishable-api-key": PUBLISHABLE_API_KEY,
   }
 
   return fetch(
@@ -346,8 +345,7 @@ export async function deletePromotionCode(promoId: string) {
   const headers = {
     ...(await getAuthHeaders()),
     "Content-Type": "application/json",
-    "x-publishable-api-key": process.env
-      .NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY as string,
+    "x-publishable-api-key": PUBLISHABLE_API_KEY,
   }
 
   return fetch(
@@ -516,9 +514,9 @@ export async function updateRegionWithValidation(
 
     try {
       await updateCart({ region_id: region.id })
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Check if error is about variants not having prices
-      if (!error?.message?.includes("do not have a price")) {
+      if (!(error instanceof Error) || !error.message.includes("do not have a price")) {
         // Re-throw if it's a different error
         throw error
       }

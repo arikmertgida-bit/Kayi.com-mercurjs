@@ -296,7 +296,9 @@
     "numberOrSymbol": "En az bir rakam veya sembol"
   },
   "categories": {
-    "allProducts": "Tüm Ürünler"
+    "allProducts": "TÜM ÜRÜNLER",
+    "upcoming": "ÇOK YAKINDA",
+    "onSale": "ŞİMDİ İNDİRİMDE"
   },
   "promotionCode": {
     "heading": "Promosyon Kodları",

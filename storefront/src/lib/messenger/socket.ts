@@ -1,6 +1,7 @@
 "use client"
 
 import { io, Socket } from "socket.io-client"
+import { logger } from "@/lib/logger"
 import type {
   Message,
   NotificationPayload,
@@ -14,6 +15,7 @@ const BASE_URL =
 let socketInstance: Socket | null = null
 
 function getToken(): string | null {
+  if (typeof window === "undefined") return null
   return (
     window.localStorage.getItem("_medusa_jwt") ||
     window.localStorage.getItem("medusa_auth_token")
@@ -47,7 +49,7 @@ export function connectSocket(tokenOverride?: string | null, displayName?: strin
   })
 
   socketInstance.on("connect_error", (err) => {
-    console.error("[messenger] Connection error:", err.message)
+    logger.error("[messenger] Connection error:", err.message)
   })
 
   return socketInstance

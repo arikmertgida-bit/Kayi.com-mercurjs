@@ -36,6 +36,7 @@ import type {
   ReadReceiptPayload,
   TypingUpdatePayload,
 } from "@/lib/messenger/types"
+import { logger } from "@/lib/logger"
 
 interface MessengerContextValue {
   // State
@@ -215,7 +216,7 @@ export function MessengerProvider({ children, userId, authToken, userName, notif
             setHasMoreConversations(r.conversations.length === PAGE_SIZE)
             conversationsOffsetRef.current = r.conversations.length
           })
-          .catch(console.error)
+          .catch((e: unknown) => logger.error("MessengerProvider: conversation refresh failed", e instanceof Error ? e.message : String(e)))
       }
     }
 
@@ -239,7 +240,7 @@ export function MessengerProvider({ children, userId, authToken, userName, notif
         conversationsOffsetRef.current = r.conversations.length
       }),
       getUnreadCount().then((r) => setUnreadCount(r.count)),
-    ]).catch(console.error)
+    ]).catch((e: unknown) => logger.error("MessengerProvider: initial data load failed", e instanceof Error ? e.message : String(e)))
 
     // Request notification permission only when notifications are enabled
     if (notifyEnabled && Notification.permission === "default") {
@@ -387,8 +388,8 @@ export function MessengerProvider({ children, userId, authToken, userName, notif
       setMessages((prev) => prev.filter((m) => m.id !== messageId))
     }
     // REST call — server handles DB write + socket broadcast (no double-fire)
-    await apiDeleteMessage(convId, messageId, deleteForAll).catch((err) => {
-      console.error("[deleteMessage] error", err)
+    await apiDeleteMessage(convId, messageId, deleteForAll).catch((err: unknown) => {
+      logger.error("[deleteMessage] error", err instanceof Error ? err.message : String(err))
     })
   }, [])
 
@@ -400,8 +401,8 @@ export function MessengerProvider({ children, userId, authToken, userName, notif
       activeConvRef.current = null
       setMessages([])
     }
-    await apiDeleteConversation(conversationId, deleteForAll).catch((err) => {
-      console.error("[deleteConversation] error", err)
+    await apiDeleteConversation(conversationId, deleteForAll).catch((err: unknown) => {
+      logger.error("[deleteConversation] error", err instanceof Error ? err.message : String(err))
     })
   }, [])
 

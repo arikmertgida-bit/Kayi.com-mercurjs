@@ -8,6 +8,7 @@ import { useCartContext } from "@/components/providers"
 import { addToCart } from "@/lib/data/cart"
 import { toast } from "@/lib/helpers/toast"
 import { useTranslations } from "next-intl"
+import { StoreCartLineItemOptimisticUpdate } from "@/types/cart"
 
 export const StickyAddToCart = ({
   locale,
@@ -56,7 +57,7 @@ export const StickyAddToCart = ({
 
     try {
       if (!isVariantStockMaxLimitReached) {
-        onAddToCart(storeCartLineItem as any, variantPrice?.currency_code || "try")
+        onAddToCart(storeCartLineItem as StoreCartLineItemOptimisticUpdate, variantPrice?.currency_code || "try")
       }
       await addToCart({
         variantId: selectedVariant.id,

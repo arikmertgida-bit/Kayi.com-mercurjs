@@ -1,5 +1,6 @@
 "use client"
 
+import { HttpTypes } from "@medusajs/types"
 import { Card } from "@/components/atoms"
 import { OrderProductListItem } from "@/components/cells"
 import { CollapseIcon } from "@/icons"
@@ -13,7 +14,7 @@ export const ParcelAccordionItems = ({
   index,
   currency_code,
 }: {
-  order: any
+  order: HttpTypes.StoreOrder & { seller?: { id: string; name: string } }
   index: number
   currency_code: string
 }) => {
@@ -36,8 +37,8 @@ export const ParcelAccordionItems = ({
 
   const status = parcelStatuses(order.fulfillment_status)
 
-  const totalItems = order.items.reduce(
-    (acc: number, item: any) => acc + item.quantity,
+  const totalItems = (order.items ?? []).reduce<number>(
+    (acc, item) => acc + (item.quantity ?? 0),
     0
   )
 
@@ -56,7 +57,7 @@ export const ParcelAccordionItems = ({
         <p className="label-md col-span-2 px-2">
           Satıcı:{" "}
           <span className="text-primary font-semibold">
-            {order.seller.name}
+            {order.seller?.name}
           </span>
         </p>
         <p className="label-md col-span-2 text-center px-2">
@@ -89,7 +90,7 @@ export const ParcelAccordionItems = ({
         }}
       >
         <div className="p-4">
-          {order.items.map((item: any) => (
+          {(order.items ?? []).map((item: HttpTypes.StoreOrderLineItem) => (
             <OrderProductListItem
               key={item.id + item.variant_id}
               item={item}

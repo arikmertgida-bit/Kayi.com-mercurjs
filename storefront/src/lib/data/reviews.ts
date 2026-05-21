@@ -1,6 +1,6 @@
 "use server"
 import { revalidatePath } from "next/cache"
-import { fetchQuery } from "../config"
+import { fetchQuery, PUBLISHABLE_API_KEY } from "../config"
 import { getAuthHeaders } from "./cookies"
 import { HttpTypes } from "@medusajs/types"
 
@@ -48,14 +48,15 @@ export type Review = {
   seller_note?: string | null
   rating: number
   updated_at: string
+  created_at?: string
   images?: ReviewImage[]
   likes_count?: number
   is_liked_by_me?: boolean
 }
 
 export type Order = HttpTypes.StoreOrder & {
-  seller: { id: string; name: string; reviews?: any[] }
-  reviews: any[]
+  seller: { id: string; name: string; reviews?: Review[] }
+  reviews: Review[]
 }
 
 const getReviews = async () => {
@@ -70,7 +71,7 @@ const getReviews = async () => {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY as string,
+          "x-publishable-api-key": PUBLISHABLE_API_KEY,
           ...(authHeaders as Record<string, string>),
         },
         cache: "no-store",
@@ -110,7 +111,7 @@ const uploadReviewImages = async (reviewId: string, urls: string[]) => {
   const headers = {
     ...(await getAuthHeaders()),
     "Content-Type": "application/json",
-    "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY as string,
+    "x-publishable-api-key": PUBLISHABLE_API_KEY,
   }
 
   const response = await fetch(`${process.env.MEDUSA_BACKEND_URL}/store/review-images`, {
@@ -127,7 +128,7 @@ const reportReviewImage = async (imageId: string, reason: string): Promise<{ suc
     const authHeaders = await getAuthHeaders()
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY as string,
+      "x-publishable-api-key": PUBLISHABLE_API_KEY,
       ...(authHeaders as Record<string, string>),
     }
 
@@ -151,12 +152,19 @@ const reportReviewImage = async (imageId: string, reason: string): Promise<{ suc
   }
 }
 
-const createReview = async (review: any) => {
+type CreateReviewPayload = {
+  order_id: string
+  rating: number
+  reference: string
+  reference_id?: string
+  customer_note: string
+}
+
+const createReview = async (review: CreateReviewPayload) => {
   const headers = {
     ...(await getAuthHeaders()),
     "Content-Type": "application/json",
-    "x-publishable-api-key": process.env
-      .NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY as string,
+    "x-publishable-api-key": PUBLISHABLE_API_KEY,
   }
 
   const response = await fetch(
@@ -184,7 +192,7 @@ const getReviewReplies = async (reviewId: string): Promise<ReviewReply[]> => {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY as string,
+          "x-publishable-api-key": PUBLISHABLE_API_KEY,
           ...(authHeaders as Record<string, string>),
         },
         cache: "no-store",
@@ -207,7 +215,7 @@ const createReviewReply = async (reviewId: string, content: string): Promise<{ r
   const headers = {
     ...authHeaders,
     "Content-Type": "application/json",
-    "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY as string,
+    "x-publishable-api-key": PUBLISHABLE_API_KEY,
   }
 
   try {
@@ -237,7 +245,7 @@ const likeReviewReply = async (replyId: string): Promise<{ liked: boolean; likes
   const headers = {
     ...(await getAuthHeaders()),
     "Content-Type": "application/json",
-    "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY as string,
+    "x-publishable-api-key": PUBLISHABLE_API_KEY,
   }
 
   const res = await fetch(
@@ -259,7 +267,7 @@ const updateReviewReply = async (replyId: string, content: string): Promise<{ re
   const headers = {
     ...authHeaders,
     "Content-Type": "application/json",
-    "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY as string,
+    "x-publishable-api-key": PUBLISHABLE_API_KEY,
   }
 
   try {
@@ -294,7 +302,7 @@ const deleteReviewReply = async (replyId: string): Promise<{ success?: boolean; 
   const headers = {
     ...authHeaders,
     "Content-Type": "application/json",
-    "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY as string,
+    "x-publishable-api-key": PUBLISHABLE_API_KEY,
   }
 
   try {

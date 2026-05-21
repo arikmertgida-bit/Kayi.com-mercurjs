@@ -20,12 +20,20 @@ function validatePassword(password: string) {
   }
 }
 
+type PasswordValidationState = {
+  isValid: boolean
+  lower: boolean
+  upper: boolean
+  "8chars": boolean
+  symbolOrDigit: boolean
+}
+
 export const PasswordValidator = ({
   password,
   setError,
 }: {
   password: string
-  setError: (error: any) => void
+  setError: (error: PasswordValidationState) => void
 }) => {
   const t = useTranslations('passwordValidator')
   const [newPasswordError, setNewPasswordError] = useState({

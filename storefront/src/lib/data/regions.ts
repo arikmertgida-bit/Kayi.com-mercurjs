@@ -3,6 +3,7 @@
 import { sdk } from "../config"
 import medusaError from "@/lib/helpers/medusa-error"
 import { HttpTypes } from "@medusajs/types"
+import { logger } from "@/lib/logger"
 import { unstable_cache } from "next/cache"
 import { getCacheOptions } from "./cookies"
 
@@ -65,8 +66,8 @@ export const getRegion = async (countryCode: string) => {
     // This prevents hardcoded country strings from leaking into the codebase.
     const firstRegion = Object.values(regionMap)[0] ?? null
     return firstRegion
-  } catch (e: any) {
-    console.error("[getRegion] error for countryCode:", countryCode, e)
+  } catch (e: unknown) {
+    logger.error("[getRegion] error for countryCode:", countryCode, e instanceof Error ? e.message : String(e))
     return null
   }
 }

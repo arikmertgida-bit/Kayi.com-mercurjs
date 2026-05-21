@@ -11,12 +11,13 @@ import { PropsWithChildren } from "react"
 interface ProvidersProps extends PropsWithChildren {
   cart: Cart | null
   meiliConfig: { host: string; key: string }
+  ageVerified?: boolean
 }
 
-export function Providers({ children, cart, meiliConfig }: ProvidersProps) {
+export function Providers({ children, cart, meiliConfig, ageVerified = false }: ProvidersProps) {
   return (
     <MeiliSearchProvider host={meiliConfig.host} apiKey={meiliConfig.key}>
-      <AgeVerificationProvider>
+      <AgeVerificationProvider initialVerified={ageVerified}>
         <CartProvider cart={cart}>{children}</CartProvider>
       </AgeVerificationProvider>
     </MeiliSearchProvider>

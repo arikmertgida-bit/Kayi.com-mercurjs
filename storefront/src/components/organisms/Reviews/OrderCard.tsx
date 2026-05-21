@@ -56,11 +56,11 @@ export const OrderCard = async ({
         ) : (
           <div className="h-full -mt-2 max-w-full">
             <p className="text-sm text-secondary">
-              {format(order.reviews[0].created_at, "MMM dd, yyyy")}
+              {order.reviews?.[0]?.created_at ? format(order.reviews[0].created_at, "MMM dd, yyyy") : null}
             </p>
-            <StarRating rate={order.reviews[0].rating} starSize={12} />
+            <StarRating rate={order.reviews?.[0]?.rating ?? 0} starSize={12} />
             <p className="label-md mt-2 whitespace-pre-line break-words">
-              {order.reviews[0].customer_note}
+              {order.reviews?.[0]?.customer_note}
             </p>
           </div>
         )}

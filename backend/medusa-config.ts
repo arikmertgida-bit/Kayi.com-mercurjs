@@ -75,6 +75,9 @@ module.exports = defineConfig({
     {
       resolve: './src/modules/review-replies',
     },
+    {
+      resolve: './src/modules/performance-indexes',
+    },
     ...(process.env.MEILISEARCH_HOST && process.env.MEILISEARCH_API_KEY ? [{
       resolve: './src/modules/meilisearch',
       options: {

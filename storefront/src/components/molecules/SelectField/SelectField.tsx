@@ -26,14 +26,14 @@ export const SelectField = ({
   )
   const [open, setOpen] = useState(false)
 
-  const selectRef = useRef(null)
+  const selectRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    window.addEventListener("click", (e) => {
+    const handleClick = (e: MouseEvent) => {
       if (selectRef.current && selectRef.current !== e.target) setOpen(false)
-    })
-
-    return window.removeEventListener("click", () => null)
+    }
+    window.addEventListener("click", handleClick)
+    return () => window.removeEventListener("click", handleClick)
   }, [])
 
   const selectOptionHandler = (label?: string, value?: string) => {

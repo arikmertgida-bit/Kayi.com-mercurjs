@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState, useCallback } from "react"
+import { logger } from "@/lib/logger"
 import Image from "next/image"
 import { useMessenger } from "@/providers/MessengerProvider"
 import type { Message } from "@/lib/messenger/types"
@@ -391,8 +392,8 @@ export function MessengerChatBox({
   const handleDeleteMessage = useCallback(async (messageId: string, deleteForAll: boolean) => {
     try {
       await deleteMessage(messageId, deleteForAll)
-    } catch (err) {
-      console.error("[MessengerChatBox] delete error:", err)
+    } catch (err: unknown) {
+      logger.error("[MessengerChatBox] delete error:", err instanceof Error ? err.message : String(err))
     }
   }, [deleteMessage])
 

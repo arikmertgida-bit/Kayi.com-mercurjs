@@ -3,6 +3,8 @@ import { SingleOrderReturn } from "@/components/organisms/SingleOrderReturn/Sing
 import { Heading } from "@medusajs/ui"
 import { isEmpty } from "lodash"
 import { getTranslations } from "next-intl/server"
+import type { ReturnRequest, ReturnReasonItem } from "@/lib/data/orders"
+import type { HttpTypes } from "@medusajs/types"
 
 const LIMIT = 10
 
@@ -13,11 +15,11 @@ export const OrderReturnRequests = async ({
   currentReturn,
   returnReasons,
 }: {
-  returns: any[]
-  user: any
+  returns: ReturnRequest[]
+  user: HttpTypes.StoreCustomer | null
   page: string
   currentReturn: string
-  returnReasons: any[]
+  returnReasons: ReturnReasonItem[]
 }) => {
   const t = await getTranslations('returns')
   const pages = Math.ceil(returns.length / LIMIT)

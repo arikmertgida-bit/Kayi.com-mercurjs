@@ -39,30 +39,20 @@ export type StoreCardShippingMethod = HttpTypes.StoreCartShippingOption & {
   }
 }
 
-type ShippingProps = {
-  cart: Omit<HttpTypes.StoreCart, "items"> & {
-    items?: CartItem[]
-  }
-  availableShippingMethods:
-    | (StoreCardShippingMethod &
-        {
-          rules: any
-          seller_id: string
-          seller_name?: string
-          price_type: string
-          id: string
-          amount?: number
-        })[]
-    | null
-}
-
-type ShippingMethodItem = StoreCardShippingMethod & {
-  rules: any
+export type AvailableShippingMethod = StoreCardShippingMethod & {
+  rules: { attribute: string; value: string }[] | null
   seller_id: string
   seller_name?: string
   price_type: string
   id: string
   amount?: number
+}
+
+type ShippingProps = {
+  cart: Omit<HttpTypes.StoreCart, "items"> & {
+    items?: CartItem[]
+  }
+  availableShippingMethods: AvailableShippingMethod[] | null
 }
 
 const CartShippingMethodsSection: React.FC<ShippingProps> = ({
@@ -90,7 +80,7 @@ const CartShippingMethodsSection: React.FC<ShippingProps> = ({
 
   const _shippingMethods = availableShippingMethods?.filter(
     (sm) =>
-      sm.rules?.find((rule: any) => rule.attribute === "is_return")?.value !==
+      sm.rules?.find((rule) => rule.attribute === "is_return")?.value !==
       "true"
   )
 
@@ -134,9 +124,11 @@ const CartShippingMethodsSection: React.FC<ShippingProps> = ({
         if (controller.signal.aborted) return
 
         const pricesMap: Record<string, number> = {}
-        res
-          .filter((r) => r.status === "fulfilled")
-          .forEach((p) => (pricesMap[p.value?.id || ""] = p.value?.amount!))
+        res.forEach((r) => {
+          if (r.status === "fulfilled" && r.value?.id != null && r.value?.amount != null) {
+            pricesMap[r.value.id] = r.value.amount
+          }
+        })
 
         setCalculatedPricesMap(pricesMap)
         setIsLoadingPrices(false)
@@ -171,7 +163,7 @@ const CartShippingMethodsSection: React.FC<ShippingProps> = ({
             : null
         )
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setError(
         mapUnknownBackendError(error, (key, params) => tBackendErrors(key, params), 'Bir hata oluştu')
       )
@@ -184,8 +176,8 @@ const CartShippingMethodsSection: React.FC<ShippingProps> = ({
     setError(null)
   }, [isOpen])
 
-  const groupedBySellerId = ((_shippingMethods ?? []) as ShippingMethodItem[]).reduce(
-    (acc: Record<string, ShippingMethodItem[]>, method) => {
+  const groupedBySellerId = ((_shippingMethods ?? []) as AvailableShippingMethod[]).reduce(
+    (acc: Record<string, AvailableShippingMethod[]>, method) => {
     const sellerId = method.seller_id!
 
     if (!acc[sellerId]) {
@@ -203,7 +195,7 @@ const CartShippingMethodsSection: React.FC<ShippingProps> = ({
     }
 
     return acc
-  }, {} as Record<string, ShippingMethodItem[]>)
+  }, {} as Record<string, AvailableShippingMethod[]>)
 
   const handleEdit = () => {
     router.replace(pathname + "?step=delivery")
@@ -213,7 +205,8 @@ const CartShippingMethodsSection: React.FC<ShippingProps> = ({
 
   const missingSellers = cart.items
     ?.filter((item) =>
-      missingShippingSellers.includes(item.product?.seller?.id!)
+      item.product?.seller?.id != null &&
+      missingShippingSellers.includes(item.product.seller.id)
     )
     .map((item) => item.product?.seller?.name)
 
@@ -221,33 +214,6 @@ const CartShippingMethodsSection: React.FC<ShippingProps> = ({
 
   return (
     <div className="border p-4 rounded-sm bg-ui-bg-interactive">
-      {/* {missingModal && (
-        <Modal
-          heading="Missing seller shipping option"
-          onClose={() => router.push(`/${pathname.split("/")[1]}/cart`)}
-        >
-          <div className="p-4">
-            <h2 className="heading-sm">
-              Some of the sellers in your cart do not have shipping options.
-            </h2>
-
-            <p className="text-md mt-3">
-              Please remove the{" "}
-              <span className="font-bold">
-                {missingSellers?.map(
-                  (seller, index) =>
-                    `${seller}${
-                      index === missingSellers.length - 1 ? " " : ", "
-                    }`
-                )}
-              </span>{" "}
-              items or contact{" "}
-              {missingSellers && missingSellers?.length > 1 ? "them" : "him"} to
-              get the shipping options.
-            </p>
-          </div>
-        </Modal>
-      )} */}
       <div className="flex flex-row items-center justify-between mb-6">
         <Heading
           level="h2"
@@ -391,8 +357,8 @@ const CartShippingMethodsSection: React.FC<ShippingProps> = ({
                     </Text>
                     <Text className="txt-medium text-ui-fg-subtle">
                       {method.name}{" "}
-                      {convertToLocale({
-                        amount: method.amount!,
+                      {method.amount != null && convertToLocale({
+                        amount: method.amount,
                         currency_code: cart?.currency_code,
                       })}
                     </Text>

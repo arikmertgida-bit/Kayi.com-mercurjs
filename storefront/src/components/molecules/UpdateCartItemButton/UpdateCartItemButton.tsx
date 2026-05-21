@@ -47,9 +47,9 @@ export const UpdateCartItemButton = ({
           setPendingQuantity(quantity)
           return handleError(res.error?.message)
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         setPendingQuantity(quantity)
-        handleError(error.message.replace("Error setting up the request: ", ""))
+        handleError((error instanceof Error ? error.message : String(error)).replace("Error setting up the request: ", ""))
       } finally {
         setIsUpdating(false)
       }

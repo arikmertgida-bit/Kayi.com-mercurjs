@@ -35,7 +35,7 @@ export const ProductCard = ({
   }
 
   const { cheapestPrice } = getProductPrice({
-    product: api_product! as HttpTypes.StoreProduct,
+    product: api_product,
   })
 
   const productName = String(product.title || "Product")
@@ -84,14 +84,14 @@ export const ProductCard = ({
                 loading={isEager ? "eager" : "lazy"}
                 src={decodeURIComponent(product.thumbnail)}
                 alt={`${productName} image`}
-                width={100}
-                height={100}
+                width={600}
+                height={600}
                 sizes="(min-width: 1536px) 16vw, (min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
                 className={clsx(
-                  "object-cover aspect-square w-full object-center h-full lg:group-hover:-mt-14 transition-all duration-300 rounded-xs",
+                  "object-cover aspect-square w-full object-center h-full lg:group-hover:-translate-y-14 transition-all duration-300 rounded-xs",
                   showBlur && "blur-[12px] grayscale opacity-70"
                 )}
-                style={{ transition: "filter 0.3s ease, opacity 0.3s ease, margin-top 0.3s" }}
+                style={{ transition: "filter 0.3s ease, opacity 0.3s ease, transform 0.3s ease" }}
               />
             ) : (
               <Image
@@ -100,8 +100,8 @@ export const ProductCard = ({
                 loading={isEager ? "eager" : "lazy"}
                 src="/images/placeholder.svg"
                 alt={`${productName} image placeholder`}
-                width={100}
-                height={100}
+                width={600}
+                height={600}
                 sizes="(min-width: 1536px) 16vw, (min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
                 className={clsx(showBlur && "blur-[12px] grayscale opacity-70")}
                 style={{ transition: "filter 0.3s ease, opacity 0.3s ease" }}

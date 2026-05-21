@@ -5,11 +5,14 @@ import { isEmpty } from "lodash"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
 import { Order } from "@/lib/data/reviews"
+import type { Review } from "@/lib/data/reviews"
 import { OrderCard } from "./OrderCard"
 import { HttpTypes } from "@medusajs/types"
 import { useTranslations } from "next-intl"
 
-const REVIEW_NAVIGATION = [
+type ReviewNavigationKey = "toWrite" | "written"
+
+const REVIEW_NAVIGATION: readonly { key: ReviewNavigationKey; href: string }[] = [
   { key: "toWrite", href: "/user/reviews" },
   { key: "written", href: "/user/reviews/written" },
 ]
@@ -17,8 +20,8 @@ const REVIEW_NAVIGATION = [
 export const ReviewsToWrite = ({ orders }: { orders: Array<Order> }) => {
   const [showForm, setShowForm] = useState<
     | (HttpTypes.StoreOrder & {
-        seller: { id: string; name: string; reviews?: any[] }
-        reviews: any[]
+        seller: { id: string; name: string; reviews?: Review[] }
+        reviews: Review[]
       })
     | null
   >(null)
@@ -37,7 +40,7 @@ export const ReviewsToWrite = ({ orders }: { orders: Array<Order> }) => {
               active={pathname === item.href}
               className="px-0"
             >
-              {t(item.key as any)}
+              {t(item.key)}
             </NavigationItem>
           ))}
         </div>

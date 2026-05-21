@@ -4,7 +4,6 @@ import React, {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useState,
 } from "react"
 
@@ -23,20 +22,12 @@ const AgeVerificationContext = createContext<AgeVerificationContextValue>({
 
 export function AgeVerificationProvider({
   children,
+  initialVerified = false,
 }: {
   children: React.ReactNode
+  initialVerified?: boolean
 }) {
-  const [isVerified, setIsVerified] = useState(false)
-
-  // Mount'ta cookie kontrol et — sadece client-side
-  useEffect(() => {
-    const match = document.cookie
-      .split("; ")
-      .find((row) => row.startsWith(`${COOKIE_NAME}=`))
-    if (match?.split("=")[1] === "1") {
-      setIsVerified(true)
-    }
-  }, [])
+  const [isVerified, setIsVerified] = useState(initialVerified)
 
   const verify = useCallback(() => {
     const secure = window.location.protocol === "https:" ? "; Secure" : ""

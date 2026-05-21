@@ -77,11 +77,11 @@ const StripePaymentButton = ({
             : null
         )
       }
-    } catch (error: any) {
-      if (error?.message !== "NEXT_REDIRECT") {
+    } catch (error: unknown) {
+      if ((error instanceof Error ? error.message : '') !== "NEXT_REDIRECT") {
         setErrorMessage(
           mapBackendErrorMessage(
-            (error?.message ?? '').replace("Error setting up the request: ", ""),
+            (error instanceof Error ? error.message : '').replace("Error setting up the request: ", ""),
             (key, params) => tBackendErrors(key, params)
           ) || null
         )
@@ -195,11 +195,11 @@ const ManualTestPaymentButton = ({ notReady, "data-testid": dataTestId }: { notR
             : null
         )
       }
-    } catch (error: any) {
-      if (error?.message !== "NEXT_REDIRECT") {
+    } catch (error: unknown) {
+      if ((error instanceof Error ? error.message : '') !== "NEXT_REDIRECT") {
         setErrorMessage(
           mapBackendErrorMessage(
-            (error?.message ?? '').replace("Error setting up the request: ", ""),
+            (error instanceof Error ? error.message : '').replace("Error setting up the request: ", ""),
             (key, params) => tBackendErrors(key, params)
           ) || null
         )

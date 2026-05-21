@@ -8,6 +8,9 @@ import {
 } from "@headlessui/react"
 import { clx } from "@medusajs/ui"
 import { ChevronUpDown } from "@medusajs/icons"
+import { HttpTypes } from "@medusajs/types"
+import { SellerProps } from "@/types/seller"
+import { ReturnSelectedItem } from "./OrderReturnSection"
 
 import Image from "next/image"
 import { cn } from "@/lib/utils"
@@ -19,10 +22,12 @@ export const ReturnItemsTab = ({
   returnReasons,
   error,
 }: {
-  order: any
-  selectedItems: any[]
-  handleSelectItem: (item: any, reason_id: string) => void
-  returnReasons: any[]
+  order: HttpTypes.StoreOrder & {
+    seller?: Pick<SellerProps, "name" | "address_line" | "city" | "postal_code" | "country_code" | "email">
+  }
+  selectedItems: ReturnSelectedItem[]
+  handleSelectItem: (item: HttpTypes.StoreOrderLineItem, reason_id: string) => void
+  returnReasons: HttpTypes.StoreReturnReason[]
   error: boolean
 }) => {
   return (
@@ -34,7 +39,7 @@ export const ReturnItemsTab = ({
       </Card>
       <Card className="flex items-center justify-between p-4">
         <ul className="w-full">
-          {order.items.map((item: any) => (
+          {order.items?.map((item: HttpTypes.StoreOrderLineItem) => (
             <li key={item.id} className="md:flex justify-between gap-2 w-full">
               <div className="flex items-center gap-2 md:w-2/3 mb-4 md:mb-0">
                 <Checkbox
@@ -48,7 +53,7 @@ export const ReturnItemsTab = ({
                     {item.thumbnail ? (
                       <Image
                         src={item.thumbnail}
-                        alt={item.subtitle}
+                        alt={item.subtitle ?? ""}
                         width={64}
                         height={64}
                         className="rounded-sm"
@@ -56,7 +61,7 @@ export const ReturnItemsTab = ({
                     ) : (
                       <Image
                         src={"/images/placeholder.svg"}
-                        alt={item.subtitle}
+                        alt={item.subtitle ?? ""}
                         width={64}
                         height={64}
                         className="opacity-25 scale-75"
@@ -70,7 +75,7 @@ export const ReturnItemsTab = ({
                     <p className="label-md truncate w-full">{item.title}</p>
                     <p className="label-lg mt-2">
                       {convertToLocale({
-                        amount: item.subtotal,
+                        amount: item.subtotal ?? 0,
                         currency_code: order.currency_code,
                       })}
                     </p>

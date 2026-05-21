@@ -2,7 +2,7 @@ import { sdk } from "@/lib/config"
 import { HttpTypes } from "@medusajs/types"
 
 interface CategoriesProps {
-  query?: Record<string, any>
+  query?: Record<string, string | number>
   headingCategories?: string[]
 }
 

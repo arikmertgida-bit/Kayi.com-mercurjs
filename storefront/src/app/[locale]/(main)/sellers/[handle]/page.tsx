@@ -87,6 +87,7 @@ export default async function SellerPage({
       </main>
       <SellerMessengerWidget
         seller={seller}
+        productCount={productCount}
         currentUserId={user?.id ?? null}
         currentUser={user ? {
           id: user.id,

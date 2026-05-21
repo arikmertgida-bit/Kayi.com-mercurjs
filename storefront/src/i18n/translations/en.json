@@ -296,7 +296,9 @@
     "numberOrSymbol": "One number or symbol"
   },
   "categories": {
-    "allProducts": "All Products"
+    "allProducts": "ALL PRODUCTS",
+    "upcoming": "COMING SOON",
+    "onSale": "ON SALE NOW"
   },
   "promotionCode": {
     "heading": "Promotion codes",

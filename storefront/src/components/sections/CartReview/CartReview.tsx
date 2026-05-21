@@ -3,14 +3,19 @@
 import PaymentButton from "./PaymentButton"
 import { CartItems } from "./CartItems"
 import { CartSummary } from "@/components/organisms"
+import { HttpTypes } from "@medusajs/types"
 
-const Review = ({ cart }: { cart: any }) => {
+type CartWithGiftCards = HttpTypes.StoreCart & {
+  gift_cards?: Array<{ id: string }>
+}
+
+const Review = ({ cart }: { cart: CartWithGiftCards }) => {
   const paidByGiftcard =
     cart?.gift_cards && cart?.gift_cards?.length > 0 && cart?.total === 0
 
   const previousStepsCompleted =
     cart.shipping_address &&
-    cart.shipping_methods.length > 0 &&
+    (cart.shipping_methods?.length ?? 0) > 0 &&
     (cart.payment_collection || paidByGiftcard)
 
   return (

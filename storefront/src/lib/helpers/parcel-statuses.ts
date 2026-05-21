@@ -1,8 +1,6 @@
 export const steps = ["Sipariş Alındı", "Hazırlanıyor", "Kargoya Verildi", "Teslim Edildi"]
 
-export const parcelStatuses = (
-  order: "not_fulfilled" | "fulfilled" | "delivered" | "shipped"
-) => {
+export const parcelStatuses = (order: string) => {
   switch (order) {
     case "not_fulfilled":
       return 0

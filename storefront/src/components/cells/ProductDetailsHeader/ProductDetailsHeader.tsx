@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/atoms"
+import { logger } from "@/lib/logger"
 import { HttpTypes } from "@medusajs/types"
 import { ProductVariants } from "@/components/molecules"
 import { useProductVariants } from "@/hooks/useProductVariants"
@@ -86,7 +87,7 @@ export const ProductDetailsHeader = ({
         quantity: 1,
         countryCode: locale,
       })
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error({
         title: t('addToCartError'),
         description: t('addToCartErrorDesc'),

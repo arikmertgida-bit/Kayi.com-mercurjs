@@ -1,6 +1,7 @@
 "use client"
 
 import { getUserWishlists, addWishlistItem, removeWishlistItem } from "@/lib/data/wishlist"
+import { logger } from "@/lib/logger"
 import { Wishlist } from "@/types/wishlist"
 import { HttpTypes } from "@medusajs/types"
 import { createContext, useContext, useEffect, useState } from "react"
@@ -60,7 +61,7 @@ export const WishlistProvider = ({
       // Refresh to get full product data
       const res = await getUserWishlists()
       setWishlist(res.wishlists ?? [])
-    } catch (error) {
+    } catch (error: unknown) {
       // Rollback on error
       setWishlist((prev) => {
         if (!prev.length) return prev
@@ -72,7 +73,7 @@ export const WishlistProvider = ({
           ...prev.slice(1),
         ]
       })
-      console.error("addToWishlist error:", error)
+      logger.error("addToWishlist error:", error instanceof Error ? error.message : String(error))
     }
   }
 
@@ -94,11 +95,11 @@ export const WishlistProvider = ({
 
     try {
       await removeWishlistItem({ wishlist_id: wishlistId, product_id: productId })
-    } catch (error) {
+    } catch (error: unknown) {
       // Rollback on error — re-fetch
       const res = await getUserWishlists().catch(() => ({ wishlists: wishlist }))
       setWishlist(res.wishlists ?? [])
-      console.error("removeFromWishlist error:", error)
+      logger.error("removeFromWishlist error:", error instanceof Error ? error.message : String(error))
     }
   }
 

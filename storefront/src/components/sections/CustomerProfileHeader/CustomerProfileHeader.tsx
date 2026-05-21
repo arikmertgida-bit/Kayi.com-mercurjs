@@ -86,7 +86,7 @@ export const CustomerProfileHeader = ({
 }: {
   user: HttpTypes.StoreCustomer
 }) => {
-  const meta = (user.metadata as Record<string, any>) || {}
+  const meta = (user.metadata as Record<string, string | undefined>) || {}
   const router = useRouter()
 
   const [avatarUrl, setAvatarUrl] = useState<string>(

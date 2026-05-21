@@ -59,8 +59,8 @@ const Form: React.FC<Props> = ({ handleClose, notificationToggle }) => {
     }
     try {
       await updateCustomer(body as HttpTypes.StoreUpdateCustomer)
-    } catch (err) {
-      setError((err as Error).message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err))
       return
     }
 

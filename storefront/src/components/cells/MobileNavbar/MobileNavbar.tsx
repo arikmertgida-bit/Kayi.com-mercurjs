@@ -124,12 +124,36 @@ export const MobileNavbar = ({
               href='/categories'
               onClick={closeMenuHandler}
               className={cn(
-                'flex items-center gap-2 px-4 py-[6px] text-sm font-bold uppercase tracking-wide transition-colors hover:bg-gray-50',
+                'flex items-center gap-2 px-4 py-[6px] text-sm font-bold tracking-wide transition-colors hover:bg-gray-50',
                 isActive('/categories') ? 'text-[#e30a17]' : 'text-gray-800'
               )}
             >
               <span className='w-2 h-2 rounded-full bg-[#e30a17] flex-shrink-0' />
               {t('allProducts')}
+            </LocalizedClientLink>
+
+            <LocalizedClientLink
+              href='/campaigns/upcoming'
+              onClick={closeMenuHandler}
+              className={cn(
+                'flex items-center gap-2 px-4 py-[6px] text-sm font-bold tracking-wide transition-colors hover:bg-gray-50',
+                isActive('/campaigns/upcoming') ? 'text-[#e30a17]' : 'text-gray-800'
+              )}
+            >
+              <span className='w-2 h-2 rounded-full bg-[#e30a17] flex-shrink-0' />
+              {t('upcoming')}
+            </LocalizedClientLink>
+
+            <LocalizedClientLink
+              href='/campaigns/active'
+              onClick={closeMenuHandler}
+              className={cn(
+                'flex items-center gap-2 px-4 py-[6px] text-sm font-bold tracking-wide transition-colors hover:bg-gray-50',
+                isActive('/campaigns/active') ? 'text-[#e30a17]' : 'text-gray-800'
+              )}
+            >
+              <span className='w-2 h-2 rounded-full bg-[#e30a17] flex-shrink-0' />
+              {t('onSale')}
             </LocalizedClientLink>
 
           </div>

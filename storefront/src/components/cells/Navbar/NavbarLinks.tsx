@@ -26,7 +26,7 @@ export default function NavbarLinks() {
   }
 
   const baseClass =
-    "flex items-center gap-1.5 font-semibold text-gray-800 uppercase text-[13px] tracking-wide px-3 py-1 rounded-sm transition-colors duration-150 hover:text-[#e30a17]"
+    "flex items-center gap-1.5 font-semibold text-gray-800 text-[13px] tracking-wide px-3 py-1 rounded-sm transition-colors duration-150 hover:text-[#e30a17]"
   const activeClass = "text-[#e30a17]"
 
   return (
@@ -38,6 +38,24 @@ export default function NavbarLinks() {
       >
         <RedDot />
         {t('allProducts')}
+      </LocalizedClientLink>
+
+      {/* Çok Yakında */}
+      <LocalizedClientLink
+        href="/campaigns/upcoming"
+        className={cn(baseClass, isActive("/campaigns/upcoming") && activeClass)}
+      >
+        <RedDot />
+        {t('upcoming')}
+      </LocalizedClientLink>
+
+      {/* Şimdi İndirimde */}
+      <LocalizedClientLink
+        href="/campaigns/active"
+        className={cn(baseClass, isActive("/campaigns/active") && activeClass)}
+      >
+        <RedDot />
+        {t('onSale')}
       </LocalizedClientLink>
 
     </>

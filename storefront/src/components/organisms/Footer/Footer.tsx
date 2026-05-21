@@ -7,7 +7,7 @@ export async function Footer() {
     <footer className="bg-primary container">
       <div className="grid grid-cols-1 lg:grid-cols-3">
         {/* Customer Services Column */}
-        <div className="p-6 border rounded-sm">
+        <div className="p-6 border rounded-sm min-h-[120px]">
           <h2 className="heading-sm text-primary mb-3 uppercase">
             {t('customerServices')}
           </h2>
@@ -19,7 +19,7 @@ export async function Footer() {
         </div>
 
         {/* About Column */}
-        <div className="p-6 border rounded-sm">
+        <div className="p-6 border rounded-sm min-h-[120px]">
           <h2 className="heading-sm text-primary mb-3 uppercase">{t('about')}</h2>
           <nav className="space-y-3" aria-label="About navigation">
             <LocalizedClientLink href="/about-us" className="block label-md">{t('aboutUs')}</LocalizedClientLink>
@@ -29,7 +29,7 @@ export async function Footer() {
         </div>
 
         {/* Connect Column */}
-        <div className="p-6 border rounded-sm">
+        <div className="p-6 border rounded-sm min-h-[120px]">
           <h2 className="heading-sm text-primary mb-3 uppercase">{t('connect')}</h2>
           <nav className="space-y-3" aria-label="Social media navigation">
             <a aria-label="Go to Facebook page" title="Go to Facebook page" href="https://www.facebook.com/ahmet.arikmert2" className="block label-md" target="_blank" rel="noopener noreferrer">{t('facebook')}</a>

@@ -49,7 +49,7 @@ export function SellerSidebar({ seller, categories, productCount }: SellerSideba
     reviewCount > 0
       ? seller.reviews!
           .filter((r) => r !== null)
-          .reduce((sum: number, r: any) => sum + (r?.rating || 0), 0) /
+          .reduce((sum: number, r) => sum + (r?.rating || 0), 0) /
         reviewCount
       : 0
 

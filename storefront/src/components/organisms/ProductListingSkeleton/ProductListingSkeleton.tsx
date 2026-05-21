@@ -10,14 +10,23 @@ export const ProductListingSkeleton = () => {
         </div>
       </div>
       <div className='md:flex gap-4 mt-6'>
-        {/* Sidebar skeleton - matches actual w-[280px] sidebar */}
-        <div className='w-[280px] flex-shrink-0 hidden md:block'>
-          <div className='rounded-sm bg-secondary h-80 border border-white animate-pulse' />
+        {/* Sidebar skeleton - matches actual w-[280px] sidebar with filter sections */}
+        <div className='w-[280px] flex-shrink-0 hidden md:block space-y-3'>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className='rounded-sm bg-secondary border border-white animate-pulse'>
+              <div className='h-10 w-full' />
+              <div className='px-3 pb-3 space-y-2'>
+                {Array.from({ length: 4 }).map((_, j) => (
+                  <div key={j} className='h-5 bg-white/30 rounded-sm w-3/4' />
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
         {/* Product grid skeleton - matches actual grid layout and card aspect ratio */}
         <div className='w-full'>
           <div className='grid grid-cols-1 min-[425px]:grid-cols-2 lg:grid-cols-3 min-[1440px]:grid-cols-4 gap-4'>
-            {Array.from({ length: 9 }).map((_, i) => (
+            {Array.from({ length: 24 }).map((_, i) => (
               <div key={i} className='rounded-sm border overflow-hidden animate-pulse'>
                 <div className='aspect-square bg-secondary w-full' />
                 <div className='p-4 space-y-2'>

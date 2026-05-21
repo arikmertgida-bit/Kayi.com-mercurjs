@@ -68,10 +68,10 @@ const CountrySelect = ({ regions }: CountrySelectProps) => {
       // Navigate to new region
       router.push(result.newPath)
       router.refresh()
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error({
         title: "Bölge değiştirilemedi",
-        description: error?.message || "Bölge güncellenemedi. Lütfen tekrar deneyin.",
+        description: error instanceof Error ? error.message : "Bölge güncellenemedi. Lütfen tekrar deneyin.",
       })
     }
   }

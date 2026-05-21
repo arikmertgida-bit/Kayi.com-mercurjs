@@ -20,6 +20,7 @@ export function Indicator({
   const [wrapperWidth, setWrapperWidth] = useState(0);
 
   const wrapperRef = useRef<HTMLInputElement | null>(null);
+  const resizeHandlerRef = useRef<() => void>(() => undefined);
 
   const baseClasses = {
     light: 'rounded-md bg-tertiary/10 relative',
@@ -32,16 +33,17 @@ export function Indicator({
   };
 
   useEffect(() => {
-    window.addEventListener('resize', () => {
+    resizeHandlerRef.current = () => {
       setWrapperWidth(
         wrapperRef.current
           ? wrapperRef.current.offsetWidth
           : 0
       );
-    });
+    };
+    window.addEventListener('resize', resizeHandlerRef.current);
 
     return () =>
-      window.removeEventListener('resize', () => null);
+      window.removeEventListener('resize', resizeHandlerRef.current);
   }, []);
 
   useEffect(() => {

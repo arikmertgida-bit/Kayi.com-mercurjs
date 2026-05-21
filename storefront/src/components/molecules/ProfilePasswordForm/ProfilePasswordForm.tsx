@@ -1,6 +1,7 @@
 "use client"
 
 import { Button, Card } from "@/components/atoms"
+import { logger } from "@/lib/logger"
 import { LabeledInput } from "@/components/cells"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CheckCircle } from "@medusajs/icons"
@@ -83,8 +84,8 @@ const Form = ({
         } else {
           toast.error(res.error || t('somethingWentWrong'))
         }
-      } catch (err) {
-        console.error("[ProfilePasswordForm] Failed to update password:", err)
+      } catch (err: unknown) {
+        logger.error("[ProfilePasswordForm] Failed to update password:", err instanceof Error ? err.message : String(err))
         return
       }
     }

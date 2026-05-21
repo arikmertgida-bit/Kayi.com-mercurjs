@@ -4,6 +4,7 @@ import CartPaymentSection from "@/components/sections/CartPaymentSection/CartPay
 import CartReview from "@/components/sections/CartReview/CartReview"
 
 import CartShippingMethodsSection from "@/components/sections/CartShippingMethodsSection/CartShippingMethodsSection"
+import type { AvailableShippingMethod } from "@/components/sections/CartShippingMethodsSection/CartShippingMethodsSection"
 import { retrieveCart } from "@/lib/data/cart"
 import { retrieveCustomer } from "@/lib/data/customer"
 import { listCartShippingMethods } from "@/lib/data/fulfillment"
@@ -50,7 +51,7 @@ async function CheckoutPageContent({}) {
             <CartAddressSection cart={cart} customer={customer} />
             <CartShippingMethodsSection
               cart={cart}
-              availableShippingMethods={shippingMethods as any}
+              availableShippingMethods={shippingMethods as AvailableShippingMethod[] | null}
             />
             <CartPaymentSection
               cart={cart}

@@ -18,6 +18,7 @@ export default async function UserPage({
   const orderSet = await retrieveOrderSet(id)
 
   if (!user) return redirect("/user")
+  if (!orderSet) return redirect("/user/orders")
 
   return (
     <main className="container">

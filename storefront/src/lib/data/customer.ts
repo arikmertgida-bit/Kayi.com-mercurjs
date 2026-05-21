@@ -50,8 +50,8 @@ export const updateCustomer = async (body: HttpTypes.StoreUpdateCustomer) => {
   const updateRes = await sdk.store.customer
     .update(body, {}, headers)
     .then(({ customer }) => customer)
-    .catch((err) => {
-      throw new Error(err.message)
+    .catch((err: unknown) => {
+      throw new Error(err instanceof Error ? err.message : String(err))
     })
 
   const cacheTag = await getCacheTag("customers")
@@ -61,12 +61,12 @@ export const updateCustomer = async (body: HttpTypes.StoreUpdateCustomer) => {
 }
 
 export async function signup(formData: FormData) {
-  const password = formData.get("password") as string
+  const password = (formData.get("password") as string | null) ?? ""
   const customerForm = {
-    email: formData.get("email") as string,
-    first_name: formData.get("first_name") as string,
-    last_name: formData.get("last_name") as string,
-    phone: formData.get("phone") as string,
+    email: (formData.get("email") as string | null) ?? "",
+    first_name: (formData.get("first_name") as string | null) ?? "",
+    last_name: (formData.get("last_name") as string | null) ?? "",
+    phone: (formData.get("phone") as string | null) ?? "",
   }
 
   try {
@@ -100,8 +100,8 @@ export async function signup(formData: FormData) {
     await transferCart()
 
     return createdCustomer
-  } catch (error: any) {
-    const msg: string = (error?.message ?? error?.toString() ?? "").toLowerCase()
+  } catch (error: unknown) {
+    const msg: string = (error instanceof Error ? error.message : String(error)).toLowerCase()
     if (msg.includes("already") || msg.includes("exists")) {
       return "Bu e-posta adresi zaten kayıtlı. Lütfen giriş yapın."
     }
@@ -110,8 +110,8 @@ export async function signup(formData: FormData) {
 }
 
 export async function login(formData: FormData) {
-  const email = formData.get("email") as string
-  const password = formData.get("password") as string
+  const email = (formData.get("email") as string | null) ?? ""
+  const password = (formData.get("password") as string | null) ?? ""
 
   try {
     await sdk.auth
@@ -121,13 +121,13 @@ export async function login(formData: FormData) {
         const customerCacheTag = await getCacheTag("customers")
         revalidateTag(customerCacheTag)
       })
-  } catch (error: any) {
+  } catch (error: unknown) {
     return "Geçersiz e-posta veya şifre. Lütfen tekrar deneyin."
   }
 
   try {
     await transferCart()
-  } catch (error: any) {
+  } catch (error: unknown) {
     return "Giriş yapıldı ancak sepet aktarılamadı. Lütfen tekrar deneyin."
   }
 }
@@ -162,18 +162,18 @@ export async function transferCart() {
   revalidateTag(cartCacheTag)
 }
 
-export const addCustomerAddress = async (formData: FormData): Promise<any> => {
+export const addCustomerAddress = async (formData: FormData): Promise<{ success: boolean; error: string | null }> => {
   const address = {
-    address_name: formData.get("address_name") as string,
-    first_name: formData.get("first_name") as string,
-    last_name: formData.get("last_name") as string,
-    company: formData.get("company") as string,
-    address_1: formData.get("address_1") as string,
-    city: formData.get("city") as string,
-    postal_code: formData.get("postal_code") as string,
-    country_code: formData.get("country_code") as string,
-    phone: formData.get("phone") as string,
-    province: formData.get("province") as string,
+    address_name: (formData.get("address_name") as string | null) ?? "",
+    first_name: (formData.get("first_name") as string | null) ?? "",
+    last_name: (formData.get("last_name") as string | null) ?? "",
+    company: (formData.get("company") as string | null) ?? "",
+    address_1: (formData.get("address_1") as string | null) ?? "",
+    city: (formData.get("city") as string | null) ?? "",
+    postal_code: (formData.get("postal_code") as string | null) ?? "",
+    country_code: (formData.get("country_code") as string | null) ?? "",
+    phone: (formData.get("phone") as string | null) ?? "",
+    province: (formData.get("province") as string | null) ?? "",
     is_default_billing: Boolean(formData.get("isDefaultBilling")),
     is_default_shipping: Boolean(formData.get("isDefaultShipping")),
   }
@@ -215,27 +215,27 @@ export const deleteCustomerAddress = async (
 
 export const updateCustomerAddress = async (
   formData: FormData
-): Promise<any> => {
-  const addressId = formData.get("addressId") as string
+): Promise<{ success: boolean; error: string | null }> => {
+  const addressId = (formData.get("addressId") as string | null) ?? ""
 
   if (!addressId) {
     return { success: false, error: "Address ID is required" }
   }
 
   const address = {
-    address_name: formData.get("address_name") as string,
-    first_name: formData.get("first_name") as string,
-    last_name: formData.get("last_name") as string,
-    company: formData.get("company") as string,
-    address_1: formData.get("address_1") as string,
-    address_2: formData.get("address_2") as string,
-    city: formData.get("city") as string,
-    postal_code: formData.get("postal_code") as string,
-    province: formData.get("province") as string,
-    country_code: formData.get("country_code") as string,
+    address_name: (formData.get("address_name") as string | null) ?? "",
+    first_name: (formData.get("first_name") as string | null) ?? "",
+    last_name: (formData.get("last_name") as string | null) ?? "",
+    company: (formData.get("company") as string | null) ?? "",
+    address_1: (formData.get("address_1") as string | null) ?? "",
+    address_2: (formData.get("address_2") as string | null) ?? "",
+    city: (formData.get("city") as string | null) ?? "",
+    postal_code: (formData.get("postal_code") as string | null) ?? "",
+    province: (formData.get("province") as string | null) ?? "",
+    country_code: (formData.get("country_code") as string | null) ?? "",
   } as HttpTypes.StoreUpdateCustomerAddress
 
-  const phone = formData.get("phone") as string
+  const phone = (formData.get("phone") as string | null) ?? ""
 
   if (phone) {
     address.phone = phone
@@ -260,7 +260,7 @@ export const updateCustomerAddress = async (
 export const updateCustomerPassword = async (
   password: string,
   token: string
-): Promise<any> => {
+): Promise<{ success: boolean; error: string | null }> => {
   const res = await fetch(
     `${process.env.MEDUSA_BACKEND_URL}/auth/customer/emailpass/update`,
     {
@@ -278,8 +278,8 @@ export const updateCustomerPassword = async (
       revalidateTag(customerCacheTag)
       return { success: true, error: null }
     })
-    .catch((err: any) => {
-      return { success: false, error: err.toString() }
+    .catch((err: unknown) => {
+      return { success: false, error: err instanceof Error ? err.message : String(err) }
     })
 
   return res
@@ -293,8 +293,8 @@ export const sendResetPasswordEmail = async (email: string) => {
     .then(() => {
       return { success: true, error: null }
     })
-    .catch((err: any) => {
-      return { success: false, error: err.toString() }
+    .catch((err: unknown) => {
+      return { success: false, error: err instanceof Error ? err.message : String(err) }
     })
 
   return res
@@ -332,41 +332,41 @@ export const updateCustomerPhoto = async (
   url: string
 ) => {
   const existing = await retrieveCustomer()
-  const meta = ((existing?.metadata as Record<string, any>) || {})
+  const meta: Record<string, unknown> = (existing?.metadata as Record<string, unknown>) ?? {}
 
   return updateCustomer({
     metadata: {
       ...meta,
       ...(type === "avatar" ? { avatar_url: url } : { cover_url: url }),
     },
-  } as any)
+  })
 }
 
 export const updateNotificationPreference = async (
   enabled: boolean
 ): Promise<void> => {
   const existing = await retrieveCustomer()
-  const meta = ((existing?.metadata as Record<string, any>) || {})
+  const meta: Record<string, unknown> = (existing?.metadata as Record<string, unknown>) ?? {}
 
   await updateCustomer({
     metadata: {
       ...meta,
       notify_on_review_reply: enabled,
     },
-  } as any)
+  })
 }
 
 export const updateGlobalNotificationPreference = async (
   enabled: boolean
 ): Promise<void> => {
   const existing = await retrieveCustomer()
-  const meta = ((existing?.metadata as Record<string, any>) || {})
+  const meta: Record<string, unknown> = (existing?.metadata as Record<string, unknown>) ?? {}
 
   await updateCustomer({
     metadata: {
       ...meta,
       notify_enabled: enabled,
     },
-  } as any)
+  })
 }
 

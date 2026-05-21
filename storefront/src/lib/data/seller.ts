@@ -28,7 +28,7 @@ export const getSellerByHandle = async (handle: string) => {
         reviews:
           seller.reviews
             ?.filter((item) => item !== null)
-            .sort((a, b) => b.created_at.localeCompare(a.created_at)) ?? [],
+            .sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? "")) ?? [],
       }
 
       return response as SellerProps
@@ -211,7 +211,7 @@ export const getSellerProducts = async (
           "*variants.calculated_price,+variants.inventory_quantity,*seller," +
           "*variants,*variants.options,*options," +
           "+categories,+categories.id,+categories.metadata",
-      } as any,
+      } as HttpTypes.FindParams & HttpTypes.StoreProductParams & { handle?: string[]; id?: string[] },
     })
 
     return { products: response.products, count: data.count }

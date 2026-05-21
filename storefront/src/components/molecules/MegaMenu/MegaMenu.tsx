@@ -7,7 +7,7 @@ import { HamburgerMenuIcon, ArrowRightIcon } from "@/icons"
 import LocalizedClientLink from "@/components/molecules/LocalizedLink/LocalizedLink"
 import { cn } from "@/lib/utils"
 
-type Category = HttpTypes.StoreProductCategory & {
+export type Category = HttpTypes.StoreProductCategory & {
   category_children?: HttpTypes.StoreProductCategory[]
   thumbnail?: string | null
   metadata?: Record<string, unknown>

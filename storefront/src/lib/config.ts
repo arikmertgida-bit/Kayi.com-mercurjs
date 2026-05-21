@@ -4,6 +4,9 @@ import Medusa from "@medusajs/js-sdk"
 const MEDUSA_BACKEND_URL =
   process.env.MEDUSA_BACKEND_URL || "http://localhost:9000"
 
+export const PUBLISHABLE_API_KEY =
+  process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? ""
+
 export const sdk = new Medusa({
   baseUrl: MEDUSA_BACKEND_URL,
   debug: process.env.NODE_ENV === "development",
@@ -13,7 +16,7 @@ export const sdk = new Medusa({
 type FetchQueryOptions = Omit<RequestInit, "headers" | "body"> & {
   headers?: Record<string, string | null | { tags: string[] }>
   query?: Record<string, string | number>
-  body?: Record<string, any>
+  body?: Record<string, unknown>
 }
 
 export async function fetchQuery(
@@ -37,8 +40,7 @@ export async function fetchQuery(
       method,
       headers: {
         "Content-Type": "application/json",
-        "x-publishable-api-key": process.env
-          .NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY as string,
+        "x-publishable-api-key": PUBLISHABLE_API_KEY,
         ...headers,
       },
       body: body ? JSON.stringify(body) : null,

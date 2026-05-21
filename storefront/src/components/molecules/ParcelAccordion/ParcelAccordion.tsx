@@ -3,6 +3,9 @@ import LocalizedClientLink from "@/components/molecules/LocalizedLink/LocalizedL
 import { format } from "date-fns"
 import { convertToLocale } from "@/lib/helpers/money"
 import { ParcelAccordionItems } from "./ParcelAccordionItems"
+import { HttpTypes } from "@medusajs/types"
+
+type ParcelOrder = HttpTypes.StoreOrder & { seller?: { id: string; name: string } }
 
 export const ParcelAccordion = ({
   orderId,
@@ -17,7 +20,7 @@ export const ParcelAccordion = ({
   createdAt: string | Date
   total: number
   currency_code?: string
-  orders: any[]
+  orders: ParcelOrder[]
   defaultOpen?: boolean
 }) => {
   return (

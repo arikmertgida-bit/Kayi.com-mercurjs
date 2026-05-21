@@ -1,15 +1,16 @@
 "use client"
 import { useState } from "react"
 import { HttpTypes } from "@medusajs/types"
+import type { Order } from "@/lib/data/reviews"
 import { Modal, ReviewForm } from "@/components/molecules"
 import { Button } from "@/components/atoms"
 import { useTranslations } from "next-intl"
 
 interface Props {
-  product: HttpTypes.StoreProduct & { seller?: any }
+  product: HttpTypes.StoreProduct & { seller?: { id: string; name: string } }
   customer: HttpTypes.StoreCustomer | null
   canReview: boolean
-  matchedOrder: any | null
+  matchedOrder: Order | null
   locale: string
 }
 

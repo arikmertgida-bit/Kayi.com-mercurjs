@@ -10,15 +10,14 @@ export function BlogCard({ post }: BlogCardProps) {
     <div
       className="group block border border-secondary p-1 rounded-sm relative"
     >
-      <div className="relative overflow-hidden rounded-xs h-full">
+      <div className="relative overflow-hidden rounded-xs aspect-[467/472]">
         <Image
           loading="lazy"
           sizes="(min-width: 1024px) 33vw, 100vw"
           src={decodeURIComponent(post.image)}
           alt={post.title}
-          width={467}
-          height={472}
-          className="object-cover max-h-[472px] h-full w-full"
+          fill
+          className="object-cover"
         />
       </div>
       <div className="p-4 bg-tertiary text-tertiary absolute bottom-0 left-1 lg:opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-b-xs w-[calc(100%-8px)]">

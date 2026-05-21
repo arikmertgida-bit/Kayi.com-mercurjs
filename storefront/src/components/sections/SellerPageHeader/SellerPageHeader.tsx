@@ -59,8 +59,7 @@ export const SellerPageHeader = ({
                 alt={profileName || seller.name}
                 width={AVATAR}
                 height={AVATAR}
-                loading="lazy"
-                decoding="async"
+                loading="eager"
                 className="object-cover w-full h-full"
               />
           </div>

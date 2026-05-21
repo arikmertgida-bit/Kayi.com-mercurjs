@@ -62,12 +62,12 @@ function useThreadContext(conv: Conversation): MessageContext | null {
     }
     // Legacy — try cache
     if (isProduct && conv.productId && productCache.has(conv.productId)) {
-      return { type: "PRODUCT", data: productCache.get(conv.productId)! }
+      return { type: "PRODUCT", data: productCache.get(conv.productId) as ProductContextData }
     }
     const sellerParticipant = conv.participants.find((p) => p.userType === "SELLER")
     const memberId = sellerParticipant?.userId
     if (!isProduct && memberId && vendorCache.has(memberId)) {
-      return { type: "VENDOR", data: vendorCache.get(memberId)! }
+      return { type: "VENDOR", data: vendorCache.get(memberId) as VendorContextData }
     }
     return null
   })()
@@ -83,7 +83,7 @@ function useThreadContext(conv: Conversation): MessageContext | null {
     if (isProduct && conv.productId) {
       const pid = conv.productId
       if (productCache.has(pid)) {
-        setCtx({ type: "PRODUCT", data: productCache.get(pid)! })
+        setCtx({ type: "PRODUCT", data: productCache.get(pid) as ProductContextData })
         return
       }
       if (fetchedRef.current.has(pid)) return
@@ -109,7 +109,7 @@ function useThreadContext(conv: Conversation): MessageContext | null {
       const memberId = sellerParticipant?.userId
       if (!memberId) return
       if (vendorCache.has(memberId)) {
-        setCtx({ type: "VENDOR", data: vendorCache.get(memberId)! })
+        setCtx({ type: "VENDOR", data: vendorCache.get(memberId) as VendorContextData })
         return
       }
       if (fetchedRef.current.has(memberId)) return

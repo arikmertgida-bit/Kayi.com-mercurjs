@@ -15,6 +15,7 @@ import { useMessenger } from "@/providers/MessengerProvider"
 import type { Message } from "@/lib/messenger/types"
 import type { SellerProps } from "@/types/seller"
 import { getVendorImage, resolveOwnerMember } from "@/lib/utils/get-vendor-image"
+import { logger } from "@/lib/logger"
 
 // ────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -305,12 +306,15 @@ interface SellerMessengerWidgetProps {
   currentUserId: string | null
   /** Authenticated customer display info */
   currentUser?: { id: string; name: string; avatarUrl?: string | null } | null
+  /** Total product count (from getSellerProductCount) */
+  productCount?: number
 }
 
 export function SellerMessengerWidget({
   seller,
   currentUserId,
   currentUser = null,
+  productCount,
 }: SellerMessengerWidgetProps) {
   const {
     conversations,
@@ -475,8 +479,8 @@ export function SellerMessengerWidget({
         setConversationId(newConvId)
         await openConversation(newConvId)
         activeConvId = newConvId
-      } catch (err) {
-        console.error("[SellerMessengerWidget] startConversation error:", err)
+      } catch (err: unknown) {
+        logger.error("[SellerMessengerWidget] startConversation error:", err instanceof Error ? err.message : String(err))
         setSendError("Sohbet başlatılamadı. Tekrar deneyin.")
         setIsSending(false)
         setIsStarting(false)
@@ -496,8 +500,8 @@ export function SellerMessengerWidget({
       }
       try {
         await uploadImage(file)
-      } catch (err) {
-        console.error("[SellerMessengerWidget] image upload error:", err)
+      } catch (err: unknown) {
+        logger.error("[SellerMessengerWidget] image upload error:", err instanceof Error ? err.message : String(err))
         setSendError("Görsel gönderilemedi. Lütfen tekrar deneyin.")
         setIsSending(false)
         return
@@ -510,8 +514,8 @@ export function SellerMessengerWidget({
       stopTyping()
       try {
         await sendMessage(content)
-      } catch (err) {
-        console.error("[SellerMessengerWidget] send error:", err)
+      } catch (err: unknown) {
+        logger.error("[SellerMessengerWidget] send error:", err instanceof Error ? err.message : String(err))
         setText(content)
         setSendError("Mesaj gönderilemedi. Tekrar deneyin.")
       }
@@ -694,8 +698,9 @@ export function SellerMessengerWidget({
               </button>
             </div>
 
-            {/* ── Body ───────────────────────────────────────────────── */}
-            {!currentUserId ? (
+            {/* ── Seller Tab Body ───────────────────────────────────── */}
+            {
+            !currentUserId ? (
               <GuestScreen seller={seller} />
             ) : (
               <>
@@ -879,7 +884,8 @@ export function SellerMessengerWidget({
                   </div>
                 </div>
               </>
-            )}
+            )
+            }
           </motion.div>
         )}
       </AnimatePresence>

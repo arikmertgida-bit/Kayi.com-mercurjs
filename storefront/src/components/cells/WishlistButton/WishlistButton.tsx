@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/atoms"
+import { logger } from "@/lib/logger"
 import { HeartFilledIcon, HeartIcon } from "@/icons"
 import { Modal } from "@/components/molecules/Modal/Modal"
 import LocalizedClientLink from "@/components/molecules/LocalizedLink/LocalizedLink"
@@ -48,10 +49,10 @@ export const WishlistButton = ({
         setIsWishlisted(true)
         await addToWishlist(productId)
       }
-    } catch (error) {
+    } catch (error: unknown) {
       // Revert optimistic update on error
       setIsWishlisted((prev) => !prev)
-      console.error(error)
+      logger.error("WishlistButton error:", error instanceof Error ? error.message : String(error))
     } finally {
       setIsWishlistAdding(false)
     }

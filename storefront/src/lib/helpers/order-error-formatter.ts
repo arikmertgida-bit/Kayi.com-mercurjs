@@ -1,4 +1,6 @@
-export const orderErrorFormatter = (error: any) => {
+export const orderErrorFormatter = (error: unknown) => {
+  if (!(error instanceof Error)) return null
+
   if (error.message === "NEXT_REDIRECT") {
     return null
   }

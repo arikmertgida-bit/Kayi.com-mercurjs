@@ -2,7 +2,7 @@ import { LoginForm } from "@/components/molecules"
 import { ReviewsWritten } from "@/components/organisms"
 import { retrieveCustomer } from "@/lib/data/customer"
 import { listOrders } from "@/lib/data/orders"
-import { getReviews } from "@/lib/data/reviews"
+import { getReviews, type Order } from "@/lib/data/reviews"
 
 export default async function Page() {
   const user = await retrieveCustomer()
@@ -15,7 +15,7 @@ export default async function Page() {
   return (
     <main className="container">
       <ReviewsWritten
-        orders={orders.filter((order) => order.reviews.length)}
+        orders={(Array.isArray(orders) ? (orders as Order[]) : []).filter((order) => order.reviews.length)}
         reviews={reviewsRes.data?.reviews.filter(Boolean) ?? []}
         isError={!reviewsRes.ok}
       />

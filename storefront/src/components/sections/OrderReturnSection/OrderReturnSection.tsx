@@ -13,20 +13,31 @@ import { createReturnRequest } from "@/lib/data/orders"
 import { useRouter } from "next/navigation"
 import { toast } from "@medusajs/ui"
 import { useTranslations } from "next-intl"
+import { HttpTypes } from "@medusajs/types"
+import { SellerProps } from "@/types/seller"
+
+export type ReturnSelectedItem = {
+  line_item_id: string
+  quantity: number
+  reason_id: string
+}
 
 export const OrderReturnSection = ({
   order,
   returnReasons,
   shippingMethods,
 }: {
-  order: any
-  returnReasons: any[]
-  shippingMethods: any[]
+  order: HttpTypes.StoreOrder & {
+    seller?: Pick<SellerProps, "id" | "name" | "address_line" | "city" | "postal_code" | "country_code" | "email">
+    order_set?: { id: string }
+  }
+  returnReasons: HttpTypes.StoreReturnReason[]
+  shippingMethods: HttpTypes.StoreShippingOption[]
 }) => {
   const [tab, setTab] = useState(0)
-  const [selectedItems, setSelectedItems] = useState<any[]>([])
+  const [selectedItems, setSelectedItems] = useState<ReturnSelectedItem[]>([])
   const [error, setError] = useState<boolean>(false)
-  const [returnMethod, setReturnMethod] = useState<any>(null)
+  const [returnMethod, setReturnMethod] = useState<string | null>(null)
   const router = useRouter()
   const t = useTranslations('returns')
 
@@ -39,11 +50,11 @@ export const OrderReturnSection = ({
     }
   }
 
-  const handleSetReturnMethod = (method: any) => {
+  const handleSetReturnMethod = (method: string) => {
     setReturnMethod(method)
   }
 
-  const handleSelectItem = (item: any, reason_id: string = "") => {
+  const handleSelectItem = (item: HttpTypes.StoreOrderLineItem, reason_id: string = "") => {
     setError(false)
     if (!reason_id && selectedItems.some((i) => i.line_item_id === item.id)) {
       setSelectedItems(selectedItems.filter((i) => i.line_item_id !== item.id))
@@ -87,7 +98,7 @@ export const OrderReturnSection = ({
       <UserNavigation />
       <div className="md:col-span-3 mb-8 md:mb-0">
         {tab === 0 ? (
-          <LocalizedClientLink href={`/user/orders/${order.order_set.id}`}>
+          <LocalizedClientLink href={`/user/orders/${order.order_set?.id}`}>
             <Button
               variant="tonal"
               className="label-md text-action-on-secondary uppercase flex items-center gap-2"
@@ -137,7 +148,7 @@ export const OrderReturnSection = ({
             <ReturnSummaryTab
               currency_code={order.currency_code}
               selectedItems={selectedItems}
-              items={order.items}
+              items={order.items ?? []}
               handleTabChange={handleTabChange}
               tab={tab}
               returnMethod={returnMethod}

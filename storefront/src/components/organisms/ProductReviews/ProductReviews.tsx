@@ -1,6 +1,7 @@
 import { retrieveCustomer } from "@/lib/data/customer"
 import { listOrders } from "@/lib/data/orders"
 import { getProductReviews } from "@/lib/data/reviews"
+import type { Order } from "@/lib/data/reviews"
 import { StarRating } from "@/components/atoms"
 import { HttpTypes } from "@medusajs/types"
 import { ProductReviewCard } from "./ProductReviewCard"
@@ -8,8 +9,10 @@ import { ProductReviewFormSection } from "./ProductReviewFormSection"
 import { ReviewsShareButton } from "./ReviewsShareButton"
 import { getTranslations } from "next-intl/server"
 
+type MatchedOrder = Order
+
 interface Props {
-  product: HttpTypes.StoreProduct & { seller?: any }
+  product: HttpTypes.StoreProduct & { seller?: { id: string; name: string } }
   locale: string
 }
 
@@ -22,20 +25,20 @@ export const ProductReviews = async ({ product, locale }: Props) => {
 
   const DEV_EXCEPTION_EMAIL = "cyclo@gmail.com"
   let canReview = false
-  let matchedOrder: any | null = null
+  let matchedOrder: MatchedOrder | null = null
 
   if (customer) {
     try {
       const isDev = customer.email === DEV_EXCEPTION_EMAIL
       const orders = await listOrders(50, 0)
-      matchedOrder = (orders || []).find((order) => {
+      matchedOrder = ((orders || []).find((order) => {
         const containsProduct = order.items?.some((item) => item.product_id === product.id)
         if (!containsProduct) {
           return false
         }
 
         return isDev ? true : order.status === "completed"
-      })
+      }) as MatchedOrder | undefined) ?? null
       canReview = isDev ? true : Boolean(matchedOrder)
     } catch {
       canReview = customer.email === DEV_EXCEPTION_EMAIL

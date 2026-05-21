@@ -7,7 +7,9 @@ import { OrderCard } from "./OrderCard"
 import { RefreshButton } from "@/components/cells/RefreshButton/RefreshButton"
 import { useTranslations } from "next-intl"
 
-const REVIEW_NAVIGATION = [
+type ReviewNavigationKey = "toWrite" | "written"
+
+const REVIEW_NAVIGATION: readonly { key: ReviewNavigationKey; href: string }[] = [
   { key: "toWrite", href: "/user/reviews" },
   { key: "written", href: "/user/reviews/written" },
 ]
@@ -71,7 +73,7 @@ export const ReviewsWritten = ({
             active={pathname === item.href}
             className="px-0"
           >
-            {t(item.key as any)}
+            {t(item.key)}
           </NavigationItem>
         ))}
       </div>

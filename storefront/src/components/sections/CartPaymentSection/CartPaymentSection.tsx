@@ -17,8 +17,9 @@ import { useCallback, useEffect, useState } from "react"
 import { Button } from "@/components/atoms"
 import { useTranslations } from "next-intl"
 import { mapBackendErrorMessage } from "@/lib/backend-error-mapper"
+import { HttpTypes } from "@medusajs/types"
 
-type StoreCardPaymentMethod = any & {
+type StoreCardPaymentMethod = HttpTypes.StorePaymentProvider & {
   service_zone?: {
     fulfillment_set: {
       type: string
@@ -26,15 +27,19 @@ type StoreCardPaymentMethod = any & {
   }
 }
 
+type CartWithGiftCards = HttpTypes.StoreCart & {
+  gift_cards?: Array<{ id: string }>
+}
+
 const CartPaymentSection = ({
   cart,
   availablePaymentMethods,
 }: {
-  cart: any
+  cart: CartWithGiftCards
   availablePaymentMethods: StoreCardPaymentMethod[] | null
 }) => {
   const activeSession = cart.payment_collection?.payment_sessions?.find(
-    (paymentSession: any) => paymentSession.status === "pending"
+    (paymentSession: HttpTypes.StorePaymentSession) => paymentSession.status === "pending"
   )
 
   const [isLoading, setIsLoading] = useState(false)
@@ -67,7 +72,7 @@ const CartPaymentSection = ({
     cart?.gift_cards && cart?.gift_cards?.length > 0 && cart?.total === 0
 
   const paymentReady =
-    (activeSession && cart?.shipping_methods.length !== 0) || paidByGiftcard
+    (activeSession && (cart?.shipping_methods?.length ?? 0) !== 0) || paidByGiftcard
 
   const createQueryString = useCallback(
     (name: string, value: string) => {
@@ -108,8 +113,8 @@ const CartPaymentSection = ({
           }
         )
       }
-    } catch (err: any) {
-      setError(mapBackendErrorMessage(err?.message ?? '', (key, params) => tBackendErrors(key, params)) || null)
+    } catch (err: unknown) {
+      setError(mapBackendErrorMessage(err instanceof Error ? err.message : String(err), (key, params) => tBackendErrors(key, params)) || null)
     } finally {
       setIsLoading(false)
     }

@@ -15,41 +15,7 @@ import { SellerAvatar } from "@/components/cells/SellerAvatar/SellerAvatar"
 import type { SellerProps } from "@/types/seller"
 import type { HttpTypes } from "@medusajs/types"
 import LocalizedClientLink from "@/components/molecules/LocalizedLink/LocalizedLink"
-
-interface ReturnLineItem {
-  line_item_id: string
-  quantity: number
-  reason_id?: string
-  created_at: string
-}
-
-interface ReturnOrderItem {
-  id: string
-  thumbnail?: string | null
-  product_title?: string
-  title?: string
-  unit_price: number
-}
-
-interface ReturnOrder {
-  id: string
-  display_id: string | number
-  currency_code: string
-  items: ReturnOrderItem[]
-  seller: SellerProps
-}
-
-interface ReturnItem {
-  id: string
-  status: string
-  line_items: ReturnLineItem[]
-  order: ReturnOrder
-}
-
-interface ReturnReason {
-  id: string
-  label: string
-}
+import type { ReturnRequest, ReturnReasonItem, ReturnRequestLineItem, ReturnRequestOrderItem } from "@/lib/data/orders"
 
 const steps = ["pending", "processing", "sent"]
 
@@ -59,10 +25,10 @@ export const SingleOrderReturn = ({
   defaultOpen,
   returnReason,
 }: {
-  item: ReturnItem
+  item: ReturnRequest
   user: HttpTypes.StoreCustomer | null
   defaultOpen: boolean
-  returnReason: ReturnReason[]
+  returnReason: ReturnReasonItem[]
 }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen)
   const [height, setHeight] = useState(0)
@@ -76,15 +42,15 @@ export const SingleOrderReturn = ({
     }, 100)
   }, [])
 
-  const filteredItems: Array<ReturnOrderItem & { reason_id: string }> = item.order.items
-    .filter((orderItem: ReturnOrderItem) =>
+  const filteredItems: Array<ReturnRequestOrderItem & { reason_id: string }> = item.order.items
+    .filter((orderItem: ReturnRequestOrderItem) =>
       item.line_items.some(
-        (lineItem: ReturnLineItem) => lineItem.line_item_id === orderItem.id
+        (lineItem: ReturnRequestLineItem) => lineItem.line_item_id === orderItem.id
       )
     )
-    .map((orderItem: ReturnOrderItem) => {
+    .map((orderItem: ReturnRequestOrderItem) => {
       const correspondingLineItem = item.line_items.find(
-        (lineItem: ReturnLineItem) => lineItem.line_item_id === orderItem.id
+        (lineItem: ReturnRequestLineItem) => lineItem.line_item_id === orderItem.id
       )
       return {
         ...orderItem,
@@ -96,7 +62,7 @@ export const SingleOrderReturn = ({
 
   const currency_code = item.order.currency_code || "try"
 
-  const total = filteredItems.reduce((acc: number, ri: ReturnOrderItem) => {
+  const total = filteredItems.reduce((acc: number, ri: ReturnRequestOrderItem) => {
     return acc + ri.unit_price
   }, 0)
 
@@ -167,7 +133,7 @@ export const SingleOrderReturn = ({
           <Divider />
           <div className="p-4 flex justify-between w-full">
             <div className="flex flex-col gap-4 w-full">
-              {filteredItems.map((returnItem: ReturnOrderItem & { reason_id?: string }) => (
+              {filteredItems.map((returnItem: ReturnRequestOrderItem & { reason_id?: string }) => (
                 <div key={returnItem.id} className="flex items-center gap-2">
                   <div className="flex items-center gap-4 w-1/2">
                     <div className="rounded-sm overflow-hidden border">

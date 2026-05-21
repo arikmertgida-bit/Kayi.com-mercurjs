@@ -19,10 +19,10 @@ export const DeleteCartItemButton = ({ id }: { id: string }) => {
           description: res.error?.message ?? "Ürün sepetten kaldırılamadı.",
         })
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error({
         title: "Ürün kaldırılamadı",
-        description: error.message ?? "Ürün sepetten kaldırılamadı.",
+        description: error instanceof Error ? error.message : "Ürün sepetten kaldırılamadı.",
       })
     } finally {
       setIsDeleting(false)

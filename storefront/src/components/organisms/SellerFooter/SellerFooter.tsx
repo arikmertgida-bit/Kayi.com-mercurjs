@@ -12,16 +12,8 @@ export const SellerFooter = ({ seller }: { seller: SellerProps }) => {
   return (
     <div className="flex justify-between items-center flex-col lg:flex-row">
       <div className="flex gap-2 lg:gap-4 items-center label-sm lg:label-md text-secondary mb-4 lg:mb-0 justify-between w-full lg:justify-start lg:w-auto">
-        {/* {seller.verified && (
-          <div className="flex items-center gap-2">
-            <DoneIcon size={20} />
-            Verified seller
-          </div>
-        )} */}
         <Divider square />
         <p>Katılım: {format(seller.created_at, "dd.MM.yyyy")}</p>
-        {/* <Divider square /> */}
-        {/* <p>sold {seller.sold}</p> */}
       </div>
       <Button
         variant="text"

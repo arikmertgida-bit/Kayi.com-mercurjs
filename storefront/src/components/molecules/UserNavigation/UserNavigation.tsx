@@ -6,7 +6,9 @@ import { useMessengerUnreadCount } from "@/providers/MessengerProvider"
 import { useParams, usePathname } from "next/navigation"
 import { useTranslations } from "next-intl"
 
-const navigationItems = [
+type NavigationKey = "orders" | "messages" | "returns" | "addresses" | "reviews" | "wishlist" | "following" | "settings"
+
+const navigationItems: readonly { key: NavigationKey; href: string }[] = [
   { key: "orders", href: "/user/orders" },
   { key: "messages", href: "/user/messages" },
   { key: "returns", href: "/user/returns" },
@@ -42,7 +44,7 @@ export const UserNavigation = () => {
                   isActive ? "bg-[#e30a17]" : "bg-[#000000]"
                 )}
               >
-                {t(item.key as any)}
+                {t(item.key)}
                 {item.key === "messages" && count > 0 && (
                   <span className="inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold bg-white text-black rounded-full">
                     {count}

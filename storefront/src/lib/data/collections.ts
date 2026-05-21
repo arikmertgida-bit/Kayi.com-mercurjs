@@ -1,5 +1,7 @@
 "use server"
 
+import { logger } from "@/lib/logger"
+
 import { HttpTypes } from "@medusajs/types"
 import { getCacheOptions } from "./cookies"
 import { sdk } from "../config"
@@ -57,7 +59,7 @@ export const getCollectionByHandle = async (
     })
     .then(({ collections }) => collections[0] as HttpTypes.StoreCollection)
     .catch((err: unknown) => {
-      console.error("[getCollectionByHandle] fetch error for handle:", handle, err)
+      logger.error("[getCollectionByHandle] fetch error for handle:", handle, err instanceof Error ? err.message : String(err))
       return undefined
     })
 }

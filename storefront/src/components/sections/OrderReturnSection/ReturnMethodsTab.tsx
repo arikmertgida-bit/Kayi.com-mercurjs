@@ -1,5 +1,7 @@
 import { Card, Checkbox } from "@/components/atoms"
 import { useTranslations } from "next-intl"
+import { HttpTypes } from "@medusajs/types"
+import { SellerProps } from "@/types/seller"
 
 export const ReturnMethodsTab = ({
   shippingMethods,
@@ -7,10 +9,10 @@ export const ReturnMethodsTab = ({
   returnMethod,
   seller,
 }: {
-  shippingMethods: any
-  handleSetReturnMethod: (method: any) => void
-  returnMethod: string
-  seller: any
+  shippingMethods: HttpTypes.StoreShippingOption[]
+  handleSetReturnMethod: (method: string) => void
+  returnMethod: string | null
+  seller: Pick<SellerProps, "name" | "address_line" | "city" | "postal_code" | "country_code" | "email"> | undefined
 }) => {
   const noShippingMethods = !shippingMethods?.length || false
   const t = useTranslations('returns')
@@ -28,7 +30,7 @@ export const ReturnMethodsTab = ({
             </div>
           ) : (
             <ul>
-              {shippingMethods.map((method: any) => (
+              {shippingMethods.map((method: HttpTypes.StoreShippingOption) => (
                 <li
                   key={method.id}
                   onClick={() => handleSetReturnMethod(method.id)}
@@ -47,16 +49,16 @@ export const ReturnMethodsTab = ({
           <p className="label-lg uppercase">{t('shippingAddress')}</p>
         </Card>
         <Card className="p-4">
-          <p className="label-lg">{seller.name}</p>
-          <p className="label-md">{seller.address_line}</p>
+          <p className="label-lg">{seller?.name}</p>
+          <p className="label-md">{seller?.address_line}</p>
           <p className="label-md">
-            {seller.city}, {seller.state}
+            {seller?.city}
           </p>
           <p className="label-md">
-            {seller.postal_code}, {seller.country_code}
+            {seller?.postal_code}, {seller?.country_code}
           </p>
           <p className="label-md">
-            {seller.email}, {seller.phone}
+            {seller?.email}
           </p>
         </Card>
       </div>

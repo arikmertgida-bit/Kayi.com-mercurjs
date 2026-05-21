@@ -8,7 +8,7 @@ type ShippingDetailsProps = {
 }
 
 const OrderShipping = ({ order }: ShippingDetailsProps) => {
-  const payment = order.payment_collections?.[0].payments?.[0]
+  const payment = order.payment_collections?.[0]?.payments?.[0]
 
   return (
     <div className="border rounded-sm p-4">
@@ -69,7 +69,7 @@ const OrderShipping = ({ order }: ShippingDetailsProps) => {
                   className="txt-medium text-ui-fg-subtle"
                   data-testid="payment-method"
                 >
-                  {paymentInfoMap[payment.provider_id].title}
+                  {paymentInfoMap[payment.provider_id]?.title}
                 </Text>
               </div>
             </div>

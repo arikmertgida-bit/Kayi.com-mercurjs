@@ -48,7 +48,7 @@ export default async function UserPage({
   const orderSets = Object.entries(orderSetsGrouped).map(
     ([orderSetId, orders]) => {
       const firstOrder = orders[0]
-      const orderSet = (orders[0] as any).order_set
+      const orderSet = (orders[0] as OrderWithSet).order_set
 
       return {
         id: orderSetId,
@@ -56,7 +56,7 @@ export default async function UserPage({
         created_at: orderSet.created_at,
         display_id: orderSet.display_id,
         total: orders.reduce((sum, order) => sum + order.total, 0),
-        currency_code: (orders[0] as any).currency_code || process.env.NEXT_PUBLIC_DEFAULT_CURRENCY || "try",
+        currency_code: (orders[0] as OrderWithSet).currency_code || process.env.NEXT_PUBLIC_DEFAULT_CURRENCY || "try",
       }
     }
   )

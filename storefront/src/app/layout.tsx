@@ -10,6 +10,7 @@ import { CartInitializer } from "./cart-initializer"
 import { Providers } from "./providers"
 import { NextIntlClientProvider } from "next-intl"
 import { getMessages } from "next-intl/server"
+import { cookies } from "next/headers"
 
 const funnelDisplay = Funnel_Display({
   variable: "--font-funnel-sans",
@@ -76,6 +77,8 @@ export default async function RootLayout({
     .catch(() => ({ host: "", key: "" }))
 
   const messages = await getMessages()
+  const cookieStore = await cookies()
+  const ageVerified = cookieStore.get("kayi_age_verified")?.value === "1"
 
   return (
     <html lang={htmlLang} className="">
@@ -143,7 +146,7 @@ export default async function RootLayout({
       <body
         className={`${funnelDisplay.className} antialiased bg-primary text-secondary relative`}
       >
-        <Providers cart={null} meiliConfig={meiliConfig}>
+        <Providers cart={null} meiliConfig={meiliConfig} ageVerified={ageVerified}>
           <NextIntlClientProvider messages={messages}>
             {/*
               CartInitializer fetches cart data server-side and injects it via

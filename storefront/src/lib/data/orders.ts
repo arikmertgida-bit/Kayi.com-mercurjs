@@ -1,18 +1,57 @@
 "use server"
 
 import { SellerProps } from "@/types/seller"
-import { sdk } from "../config"
+import { sdk, PUBLISHABLE_API_KEY } from "../config"
 import medusaError from "../helpers/medusa-error"
 import { getAuthHeaders, getCacheOptions } from "./cookies"
 import { HttpTypes } from "@medusajs/types"
+import { OrderSetData } from "@/types/order-set"
 
-export const retrieveOrderSet = async (id: string) => {
+// ─── Return Request Types ────────────────────────────────────────────────────
+export type ReturnRequestLineItem = {
+  line_item_id: string
+  quantity: number
+  reason_id?: string
+  created_at: string
+}
+
+export type ReturnRequestOrderItem = {
+  id: string
+  thumbnail?: string | null
+  product_title?: string
+  title?: string
+  unit_price: number
+}
+
+export type ReturnRequestOrder = {
+  id: string
+  display_id: string | number
+  currency_code: string
+  items: ReturnRequestOrderItem[]
+  seller: SellerProps
+}
+
+export type ReturnRequest = {
+  id: string
+  status: string
+  vendor_reviewer_note?: string
+  line_items: ReturnRequestLineItem[]
+  order: ReturnRequestOrder
+}
+
+export type ReturnReasonItem = {
+  id: string
+  label: string
+}
+// ────────────────────────────────────────────────────────────────────────────
+
+export const retrieveOrderSet = async (id: string): Promise<OrderSetData | void> => {
   const headers = {
     ...(await getAuthHeaders()),
   }
 
   return sdk.client
-    .fetch<any>(`/store/order-set/${id}`, {
+    .fetch<{ order_set: OrderSetData }>(`/store/order-set/${id}`, {
       method: "GET",
       headers,
       cache: "no-cache",
@@ -63,8 +102,7 @@ export const createReturnRequest = async (data: CreateReturnRequestInput) => {
   const headers = {
     ...(await getAuthHeaders()),
     "Content-Type": "application/json",
-    "x-publishable-api-key": process.env
-      .NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY as string,
+    "x-publishable-api-key": PUBLISHABLE_API_KEY,
   }
 
   const response = await fetch(
@@ -86,7 +124,7 @@ export const getReturns = async () => {
 
   return sdk.client
     .fetch<{
-      order_return_requests: Array<any>
+      order_return_requests: Array<ReturnRequest>
     }>(`/store/return-request`, {
       method: "GET",
       headers,
@@ -101,7 +139,7 @@ export const getReturnDetail = async (id: string) => {
   const headers = await getAuthHeaders()
 
   return sdk.client
-    .fetch<{ order_return_request: any }>(`/store/return-request/${id}`, {
+    .fetch<{ order_return_request: ReturnRequest }>(`/store/return-request/${id}`, {
       method: "GET",
       headers,
       cache: "no-cache",
@@ -137,7 +175,7 @@ export const retriveReturnMethods = async (order_id: string) => {
 
   return sdk.client
     .fetch<{
-      shipping_options: Array<any>
+      shipping_options: Array<HttpTypes.StoreShippingOption>
     }>(`/store/shipping-options/return?order_id=${order_id}`, {
       method: "GET",
       headers,
@@ -150,7 +188,7 @@ export const retriveReturnMethods = async (order_id: string) => {
 export const listOrders = async (
   limit: number = 10,
   offset: number = 0,
-  filters?: Record<string, any>
+  filters?: Record<string, string | number>
 ) => {
   const headers = {
     ...(await getAuthHeaders()),
@@ -164,8 +202,8 @@ export const listOrders = async (
     .fetch<{
       orders: Array<
         HttpTypes.StoreOrder & {
-          seller: { id: string; name: string; reviews?: any[] }
-          reviews: any[]
+          seller: { id: string; name: string }
+          reviews: { id: string; reference_id: string; rating?: number }[]
         }
       >
     }>(`/store/orders`, {
@@ -216,7 +254,7 @@ export const createTransferRequest = async (
       headers
     )
     .then(({ order }) => ({ success: true, error: null, order }))
-    .catch((err) => ({ success: false, error: err.message, order: null }))
+    .catch((err: unknown) => ({ success: false, error: err instanceof Error ? err.message : String(err), order: null }))
 }
 
 export const acceptTransferRequest = async (id: string, token: string) => {
@@ -225,7 +263,7 @@ export const acceptTransferRequest = async (id: string, token: string) => {
   return await sdk.store.order
     .acceptTransfer(id, { token }, {}, headers)
     .then(({ order }) => ({ success: true, error: null, order }))
-    .catch((err) => ({ success: false, error: err.message, order: null }))
+    .catch((err: unknown) => ({ success: false, error: err instanceof Error ? err.message : String(err), order: null }))
 }
 
 export const declineTransferRequest = async (id: string, token: string) => {
@@ -234,7 +272,7 @@ export const declineTransferRequest = async (id: string, token: string) => {
   return await sdk.store.order
     .declineTransfer(id, { token }, {}, headers)
     .then(({ order }) => ({ success: true, error: null, order }))
-    .catch((err) => ({ success: false, error: err.message, order: null }))
+    .catch((err: unknown) => ({ success: false, error: err instanceof Error ? err.message : String(err), order: null }))
 }
 
 export const retrieveReturnReasons = async () => {

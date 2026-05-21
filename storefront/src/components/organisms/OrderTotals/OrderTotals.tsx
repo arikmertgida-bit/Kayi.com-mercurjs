@@ -1,7 +1,8 @@
 import { Card, Divider } from "@/components/atoms"
 import { convertToLocale } from "@/lib/helpers/money"
+import { OrderSetData } from "@/types/order-set"
 
-export const OrderTotals = ({ orderSet }: { orderSet: any }) => {
+export const OrderTotals = ({ orderSet }: { orderSet: OrderSetData }) => {
   const delivery = orderSet.shipping_total
   const subtotal = orderSet.total - delivery
   const total = orderSet.total

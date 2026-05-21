@@ -1,5 +1,7 @@
 "use server"
 
+import { logger } from "@/lib/logger"
+
 import { sdk } from "../config"
 import { sortProducts } from "@/lib/helpers/sort-products"
 import { HttpTypes } from "@medusajs/types"
@@ -121,7 +123,7 @@ export const listProducts = async ({
       }
     })
     .catch((err: unknown) => {
-      console.error("[listProducts] fetch error:", err)
+      logger.error("[listProducts] fetch error:", err instanceof Error ? err.message : String(err))
       return {
         response: {
           products: [],

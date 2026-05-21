@@ -8,6 +8,7 @@ import {
 } from "@/components/organisms"
 import { useMeiliSearchClient } from "@/providers/MeiliSearchProvider"
 import { Configure, InstantSearch, useHits, useInstantSearch } from "react-instantsearch"
+import type { Hit } from "instantsearch.js"
 import { useSearchParams } from "next/navigation"
 import { PRODUCT_LIMIT } from "@/const"
 import { ProductListingSkeleton } from "@/components/organisms/ProductListingSkeleton/ProductListingSkeleton"
@@ -176,14 +177,14 @@ const ProductsListing = ({
 }) => {
   const { paramMap } = useFiltersContext()
   const [apiProducts, setApiProducts] = useState<HttpTypes.StoreProduct[] | null>(null)
-  const { items, results } = useHits()
+  const { items, results } = useHits<{ id?: string }>()
   const { status } = useInstantSearch()
   const t = useTranslations('listing')
 
   // Use a stable string of IDs as the effect dependency to prevent re-firing when
   // react-instantsearch returns a new array reference with the same content.
   // instant-meilisearch returns the document primary key as `id`, not `objectID`.
-  const itemIdsKey = items.map((item: any) => (item.objectID ?? item.id) as string).join(",")
+  const itemIdsKey = items.map((item) => item.objectID ?? item.id ?? "").join(",")
 
   useEffect(() => {
     // Reset immediately so stale products from previous filter don't flash
@@ -203,9 +204,9 @@ const ProductsListing = ({
       queryParams: {
         fields:
           "*variants.calculated_price,*seller.reviews,-thumbnail,-images,-type,-tags,-variants.options,-options,-collection,-collection_id,+categories,+categories.id,+categories.metadata",
-        id: ids as any,
+        id: ids,
         limit: ids.length,
-      } as any,
+      } as HttpTypes.FindParams & HttpTypes.StoreProductParams & { handle?: string[]; id?: string[] },
     })
       .then(({ response }) => {
         if (!cancelled) setApiProducts(response.products)
@@ -239,11 +240,11 @@ const ProductsListing = ({
   const sortedItems = useMemo(() => {
     // Collect API products in the same order as items, then sort
     const paired = items
-      .map((hit: any) => ({ hit, api: apiProductsMap.get(hit.objectID ?? hit.id) }))
-      .filter((x): x is { hit: any; api: HttpTypes.StoreProduct } => Boolean(x.api))
+      .map((hit) => ({ hit, api: apiProductsMap.get(hit.objectID ?? hit.id) }))
+      .filter((x): x is { hit: Hit<{ id?: string }>; api: HttpTypes.StoreProduct } => Boolean(x.api))
     if (paired.length < items.length) return items // not all loaded yet, keep MeiliSearch order
     const sorted = sortProducts(paired.map((x) => x.api), sortBy)
-    return sorted.map((api) => items.find((h: any) => (h.objectID ?? h.id) === api.id)).filter(Boolean) as typeof items
+    return sorted.map((api) => items.find((h) => (h.objectID ?? h.id) === api.id)).filter(Boolean) as typeof items
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items, apiProductsMap, sortBy])
 
@@ -255,9 +256,6 @@ const ProductsListing = ({
 
   return (
     <div className="min-h-[70vh]">
-      <div className="flex justify-between w-full items-center">
-        <div className="my-4 label-md">{isLoading ? "" : t('listingsCount', { total: count })}</div>
-      </div>
       <div className="md:flex gap-4">
         <div className="w-[280px] flex-shrink-0 hidden md:block" style={{ backgroundColor: 'rgb(240, 225, 243)', borderRadius: '8px', padding: '8px' }}>
           {sidebarContent ?? <MeiliProductSidebar initialCategories={initialCategories} />}
@@ -265,7 +263,7 @@ const ProductsListing = ({
         <div className="w-full">
           {isLoading ? (
             <ul className="grid grid-cols-1 min-[425px]:grid-cols-2 lg:grid-cols-3 min-[1440px]:grid-cols-4 gap-4">
-              {Array.from({ length: 6 }).map((_, i) => (
+              {Array.from({ length: PRODUCT_LIMIT }).map((_, i) => (
                 <li key={i} className="relative group border rounded-sm flex flex-col justify-between p-1 animate-pulse">
                   <div className="relative w-full bg-gray-200 aspect-square rounded-sm" />
                   <div className="flex justify-between p-4">
@@ -289,8 +287,8 @@ const ProductsListing = ({
           ) : (
             <div className="w-full">
               <ul className="grid grid-cols-1 min-[425px]:grid-cols-2 lg:grid-cols-3 min-[1440px]:grid-cols-4 gap-4">
-                {pagedItems.map((hit: any, i: number) => {
-                  const apiProduct = apiProductsMap.get(hit.objectID ?? (hit as Record<string, unknown>).id as string)
+                {pagedItems.map((hit, i) => {
+                  const apiProduct = apiProductsMap.get(hit.objectID ?? hit.id ?? "")
                   if (!apiProduct) {
                     // API data not yet loaded — skeleton dimensions must match ProductCard exactly:
                     //   outer p-1, image aspect-square, text area p-4 + title h-5 + price h-4

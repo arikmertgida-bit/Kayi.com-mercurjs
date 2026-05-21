@@ -112,7 +112,7 @@ Multi-vendor marketplace (B2C) built on MedusaJS v2 + MercurJS plugin ecosystem.
 
 - **Market:** Turkey — Turkish language UI, TRY currency, `tr` region as default
 - **Root directory:** `c:\Kayı.com\`
-- **Orchestration:** Docker Compose (9 containers, all with healthchecks)
+- **Orchestration:** Docker Compose (13 containers, all with healthchecks)
 - **Messaging:** Custom `kayi-messenger` service (Express + Socket.io + Prisma) — TalkJS was completely removed and must never be referenced again
 - **Search:** MeiliSearch with periodic backend sync job
 - **Storage:** MinIO (S3-compatible object storage)
@@ -593,7 +593,7 @@ PostgreSQL + Redis + MinIO + MeiliSearch  (infrastructure layer)
              Backend (waits for all infra healthy)
                     ↓
    Storefront + Vendor Panel + Admin Panel + Kayi-Messenger
-   (wait for backend healthy)
+   (wait for backend healthy + redis healthy)
 ```
 
 **CRITICAL: `Running` status does NOT mean `Ready`**

@@ -1,4 +1,5 @@
 import { retrieveCart } from "@/lib/data/cart"
+import type { Cart } from "@/types/cart"
 import { CartSynchronizer } from "./cart-synchronizer"
 
 /**
@@ -8,6 +9,6 @@ import { CartSynchronizer } from "./cart-synchronizer"
  * children tree (already mounted outside Suspense) is never touched.
  */
 export async function CartInitializer() {
-  const cart = await retrieveCart()
-  return <CartSynchronizer cart={cart as unknown as import("@/types/cart").Cart | null} />
+  const cart = await retrieveCart().catch(() => null)
+  return <CartSynchronizer cart={cart as Cart | null} />
 }

@@ -1,6 +1,6 @@
 "use server"
 import { Wishlist } from "@/types/wishlist"
-import { sdk } from "../config"
+import { sdk, PUBLISHABLE_API_KEY } from "../config"
 import { getAuthHeaders } from "./cookies"
 import { revalidatePath } from "next/cache"
 
@@ -8,8 +8,7 @@ export const getUserWishlists = async () => {
   const headers = {
     ...(await getAuthHeaders()),
     "Content-Type": "application/json",
-    "x-publishable-api-key": process.env
-      .NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY as string,
+    "x-publishable-api-key": PUBLISHABLE_API_KEY,
   }
 
   return sdk.client
@@ -34,8 +33,7 @@ export const addWishlistItem = async ({
   const headers = {
     ...(await getAuthHeaders()),
     "Content-Type": "application/json",
-    "x-publishable-api-key": process.env
-      .NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY as string,
+    "x-publishable-api-key": PUBLISHABLE_API_KEY,
   }
 
   const response = await fetch(
@@ -68,8 +66,7 @@ export const removeWishlistItem = async ({
   const headers = {
     ...(await getAuthHeaders()),
     "Content-Type": "application/json",
-    "x-publishable-api-key": process.env
-      .NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY as string,
+    "x-publishable-api-key": PUBLISHABLE_API_KEY,
   }
 
   // b2c-core v1.5.3: DELETE /store/wishlist/product/{product_id}

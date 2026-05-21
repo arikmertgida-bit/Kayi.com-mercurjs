@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
+import { logger } from "@/lib/logger"
 import Image from "next/image"
 import { useParams } from "next/navigation"
 import { useMessenger } from "@/providers/MessengerProvider"
@@ -243,8 +244,8 @@ export function MessengerInbox({
       }
       try {
         await uploadImage(file)
-      } catch (err) {
-        console.error("[MessengerInbox] image upload error:", err)
+      } catch (err: unknown) {
+        logger.error("[MessengerInbox] image upload error:", err instanceof Error ? err.message : String(err))
         setSendError("Görsel gönderilemedi. Lütfen tekrar deneyin.")
         setIsSending(false)
         return
@@ -257,8 +258,8 @@ export function MessengerInbox({
       stopTyping()
       try {
         await sendMessage(content)
-      } catch (err) {
-        console.error("[MessengerInbox] send error:", err)
+      } catch (err: unknown) {
+        logger.error("[MessengerInbox] send error:", err instanceof Error ? err.message : String(err))
         setText(content)
         setSendError("Mesaj gönderilemedi. Tekrar deneyin.")
       }
@@ -305,8 +306,8 @@ export function MessengerInbox({
     setDeleteMenuPos(null)
     try {
       await deleteMessage(messageId, deleteForAll)
-    } catch (err) {
-      console.error("[MessengerInbox] delete error:", err)
+    } catch (err: unknown) {
+      logger.error("[MessengerInbox] delete error:", err instanceof Error ? err.message : String(err))
     }
   }, [deleteMessage])
 

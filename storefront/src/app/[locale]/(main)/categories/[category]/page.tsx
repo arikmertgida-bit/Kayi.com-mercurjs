@@ -80,10 +80,12 @@ export async function generateMetadata({
 
 const MEILISEARCH_HOST = process.env.NEXT_PUBLIC_MEILISEARCH_HOST
 
-function getAllCategoryIds(cat: {
+type CategoryNode = {
   id: string
-  category_children?: { id: string; category_children?: any[] }[] | null
-}): string[] {
+  category_children?: CategoryNode[] | null
+}
+
+function getAllCategoryIds(cat: CategoryNode): string[] {
   return [
     cat.id,
     ...(cat.category_children ?? []).flatMap(getAllCategoryIds),
