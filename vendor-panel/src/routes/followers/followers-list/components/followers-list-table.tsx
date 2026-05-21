@@ -12,7 +12,7 @@ export const FollowersListTable = () => {
 
   const { followers, count, isLoading, isError, error } = useFollowers(
     { offset: page * PAGE_SIZE, limit: PAGE_SIZE },
-    { placeholderData: keepPreviousData } as any
+    { placeholderData: keepPreviousData }
   )
 
   if (isError) {

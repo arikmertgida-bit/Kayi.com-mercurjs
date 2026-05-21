@@ -223,7 +223,7 @@ export const usePriceListLinkProducts = (
   options?: UseMutationOptions<
     HttpTypes.AdminPriceListResponse,
     FetchError,
-    HttpTypes.AdminLinkPriceListProducts & { create?: any[]; update?: any[] }
+    HttpTypes.AdminLinkPriceListProducts & { create?: HttpTypes.AdminCreatePriceListPrice[]; update?: HttpTypes.AdminUpdatePriceListPrice[] }
   >
 ) => {
   return useMutation({

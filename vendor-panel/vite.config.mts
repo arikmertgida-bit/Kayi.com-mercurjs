@@ -17,7 +17,6 @@ export default defineConfig(({ mode }) => {
     env.VITE_MEDUSA_PUBLISHABLE_KEY ||
     process.env.VITE_MEDUSA_PUBLISHABLE_KEY ||
     ""
-  const TALK_JS_APP_ID = env.VITE_TALK_JS_APP_ID || ""
   const DISABLE_SELLERS_REGISTRATION =
     env.VITE_DISABLE_SELLERS_REGISTRATION || "false"
   const PUBLIC_BASE_URL = env.VITE_PUBLIC_BASE_URL || ""
@@ -39,7 +38,6 @@ export default defineConfig(({ mode }) => {
       __BACKEND_URL__: JSON.stringify(BACKEND_URL),
       __STOREFRONT_URL__: JSON.stringify(STOREFRONT_URL),
       __PUBLISHABLE_API_KEY__: JSON.stringify(PUBLISHABLE_API_KEY),
-      __TALK_JS_APP_ID__: JSON.stringify(TALK_JS_APP_ID),
       __DISABLE_SELLERS_REGISTRATION__: JSON.stringify(DISABLE_SELLERS_REGISTRATION),
     },
     server: {

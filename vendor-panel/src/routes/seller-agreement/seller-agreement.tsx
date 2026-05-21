@@ -2,6 +2,22 @@
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 
+type CommissionCategoryKey =
+  | "womenFashion"
+  | "menFashion"
+  | "electronics"
+  | "motherChild"
+  | "homeLife"
+  | "supermarket"
+  | "cosmetics"
+  | "shoesBags"
+  | "sportsOutdoor"
+  | "booksHobbies"
+  | "autoMoto"
+  | "privateLife"
+
+type CommissionRow = { categoryKey: CommissionCategoryKey; net: number; kdv: number; total: number }
+
 export const SellerAgreement = () => {
   const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState(0)
@@ -122,7 +138,7 @@ export const SellerAgreement = () => {
             </tr>
           </thead>
           <tbody>
-            {[
+            {([
               { categoryKey: "womenFashion", net: 10, kdv: 20, total: 12 },
               { categoryKey: "menFashion", net: 10, kdv: 20, total: 12 },
               { categoryKey: "electronics", net: 10, kdv: 20, total: 12 },
@@ -135,12 +151,12 @@ export const SellerAgreement = () => {
               { categoryKey: "booksHobbies", net: 4, kdv: 20, total: 4.8 },
               { categoryKey: "autoMoto", net: 10, kdv: 20, total: 12 },
               { categoryKey: "privateLife", net: 20, kdv: 20, total: 24 },
-            ].map((row, i) => (
+            ] as CommissionRow[]).map((row, i) => (
               <tr
                 key={row.categoryKey}
                 className={i % 2 === 0 ? "bg-ui-bg-subtle" : "bg-ui-bg-base"}
               >
-                <td className="px-4 py-3 font-medium text-ui-fg-base">{t(`sellerAgreement.sections.commissionTable.categories.${row.categoryKey}` as any)}</td>
+                <td className="px-4 py-3 font-medium text-ui-fg-base">{t(`sellerAgreement.sections.commissionTable.categories.${row.categoryKey}`)}</td>
                 <td className="px-4 py-3 text-center text-ui-fg-subtle">%{row.net}</td>
                 <td className="px-4 py-3 text-center text-ui-fg-subtle">%{row.kdv}</td>
                 <td className="px-4 py-3 text-center font-semibold text-ui-fg-base">%{row.total}</td>

@@ -27,10 +27,16 @@ export const ReviewDetail = () => {
     type: "review_remove",
   })
 
+  type ReviewRemoveRequest = {
+    data?: { review_id?: string }
+    status: string
+    created_at: string
+  }
+
   // Collect all review_remove requests for this specific review
-  const reviewRequests: any[] = (
-    requests?.filter(
-      (request: any) => request.data?.review_id === id
+  const reviewRequests = (
+    (requests as ReviewRemoveRequest[] | undefined)?.filter(
+      (request) => request.data?.review_id === id
     ) ?? []
   )
 
@@ -38,7 +44,7 @@ export const ReviewDetail = () => {
 
   // Find the most recent request (highest created_at)
   const latestRequest = reviewRequests.reduce(
-    (latest: any, req: any) => {
+    (latest: ReviewRemoveRequest | null, req) => {
       if (!latest) return req
       return new Date(req.created_at) > new Date(latest.created_at)
         ? req

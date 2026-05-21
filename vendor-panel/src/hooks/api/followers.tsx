@@ -26,7 +26,7 @@ export type FollowersResponse = {
 
 export const useFollowers = (
   query?: { offset?: number; limit?: number },
-  options?: UseQueryOptions<FollowersResponse, FetchError, FollowersResponse, QueryKey>
+  options?: Omit<UseQueryOptions<FollowersResponse, FetchError, FollowersResponse, QueryKey>, "queryKey" | "queryFn">
 ) => {
   const { data, ...rest } = useQuery({
     queryFn: async () =>

@@ -43,7 +43,7 @@ export interface ExtendedAdminOrderResponse {
 
 export type ExtendedAdminOrder = Omit<HttpTypes.AdminOrder, "items" | "fulfillments"> & {
   canceled_at?: string | null
-  returns?: any[]
+  returns?: HttpTypes.AdminReturn[]
   discount_subtotal: number
   items: ExtendedAdminOrderLineItemWithInventory[]
   fulfillments?: ExtendedAdminOrderFulfillment[]
